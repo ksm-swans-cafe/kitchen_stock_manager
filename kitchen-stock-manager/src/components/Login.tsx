@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowRight } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { useCallback } from 'react';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -36,17 +37,15 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleLogin = async () => {
+  const handleLogin = useCallback(async () => {
     const pinCode = pin.join('');
     const pinInt = parseInt(pinCode, 10);
     setLoading(true);
     setError('');
 
     try {
-      // Simulate API call for demo
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Mock validation
       if (username.toLowerCase() === 'boss' && pinInt === 1234) {
         alert(`ยินดีต้อนรับคุณ BOSS NAJA`);
       } else if (username.toLowerCase() === 'sunny' && pinInt === 5678) {
@@ -57,25 +56,23 @@ const Login: React.FC = () => {
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
     } finally {
       setLoading(false);
     }
-  };
-
-  // useEffect(() => {
-  //   if (!pin.includes('') && username) {
-  //     handleLogin();
-  //   }
-  // }, [pin]);
+  }, [pin, username]);
 
   useEffect(() => {
-    const login = async () => {
-      if (!pin.includes('') && username) {
-        await handleLogin();
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleLogin();
       }
     };
-  }, [pin, username, handleLogin]);
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [handleLogin, username]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4 relative overflow-hidden">
