@@ -43,7 +43,7 @@ const IngredientManagement = () => {
 
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
-  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
+  // const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [newIngredient, setNewIngredient] = useState<NewIngredient>({
     name: "",
     unit: "",
