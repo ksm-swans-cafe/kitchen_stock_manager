@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation';
 
 
 const Login: React.FC = () => {
-  const router = useRouter();
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState<string[]>(['', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -66,11 +65,19 @@ const Login: React.FC = () => {
     }
   };
 
+  // useEffect(() => {
+  //   if (!pin.includes('') && username) {
+  //     handleLogin();
+  //   }
+  // }, [pin]);
+
   useEffect(() => {
+  const handleLogin = async () => { 
     if (!pin.includes('') && username) {
       handleLogin();
     }
-  }, [pin]);
+   };
+}, [handleLogin, username]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4 relative overflow-hidden">
