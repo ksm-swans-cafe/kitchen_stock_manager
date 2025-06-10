@@ -7,8 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowRight } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { useRouter } from 'next/navigation';
-
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -72,12 +70,12 @@ const Login: React.FC = () => {
   // }, [pin]);
 
   useEffect(() => {
-  const handleLogin = async () => { 
-    if (!pin.includes('') && username) {
-      handleLogin();
-    }
-   };
-}, [handleLogin, username]);
+    const login = async () => {
+      if (!pin.includes('') && username) {
+        await handleLogin();
+      }
+    };
+  }, [pin, username, handleLogin]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4 relative overflow-hidden">
