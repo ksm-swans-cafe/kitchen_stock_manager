@@ -16,7 +16,7 @@ const TITLES = [
 
 const fuse = new Fuse(TITLES, {
   threshold: 0.3,
-  minMatchCharLength: 2,
+  minMatchCharLength: 0,
   includeScore: true,
   shouldSort: true,
 });

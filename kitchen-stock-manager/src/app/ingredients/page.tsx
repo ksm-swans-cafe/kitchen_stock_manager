@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import SearchBox from "@/components/SearchBox";
-import IngredientFilter from "@/ingredients/IngredientFilter";
+import SearchBox from "@/components/SearchBox_v2";
+import IngredientFilter from "@/components/IngredientFilter";
 import {
   Dialog,
   DialogContent,
@@ -15,13 +15,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, Search, Calendar, AlertTriangle } from "lucide-react";
+import { Package, Search, Calendar, AlertTriangle,Filter } from "lucide-react";
 import { toast } from "sonner";
 
 interface Ingredient {
@@ -43,6 +49,10 @@ interface NewIngredient {
 interface StockStatus {
   color: "destructive" | "warning" | "success";
   label: string;
+}
+
+interface StatusFilterProps {
+  onFilterChange: (selectedStatuses: string[]) => void;
 }
 
 const IngredientManagement = () => {
@@ -97,9 +107,13 @@ const IngredientManagement = () => {
     },
   ]);
 
+  const ingredientNames = ingredients.map(ingredient => ingredient.name);
+
+  
+
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
-  // const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [newIngredient, setNewIngredient] = useState<NewIngredient>({
     name: "",
     unit: "",
@@ -107,9 +121,49 @@ const IngredientManagement = () => {
     threshold: 0,
   });
 
-  const filteredIngredients = ingredients.filter((ingredient: Ingredient) =>
-    ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // const getStockStatus = (ingredient: Ingredient): StockStatus => {
+  //   if (ingredient.currentStock <= ingredient.threshold) {
+  //     return { color: "destructive", label: "ใกล้หมด" };
+  //   } else if (ingredient.currentStock <= ingredient.threshold * 1.5) {
+  //     return { color: "warning", label: "ปานกลาง" };
+  //   } else {
+  //     return { color: "success", label: "เพียงพอ" };
+  //   }
+  // };
+
+  // ฟังก์ชันตรวจสอบสถานะสต็อก
+  const getStockStatus = (ingredient: Ingredient): { label: string; color: string } => {
+    if (ingredient.currentStock <= ingredient.threshold) {
+      return { label: "ใกล้หมด", color: "destructive" };
+    } else if (ingredient.currentStock <= ingredient.threshold * 1.5) {
+      return { label: "ปานกลาง", color: "warning" };
+    } else {
+      return { label: "เพียงพอ", color: "success" };
+    }
+  };
+
+  // กรองข้อมูลตามคำค้นหาและสถานะ
+  const filteredIngredients = ingredients.filter((ingredient) => {
+    // กรองตามคำค้นหา
+    const matchesSearch = ingredient.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // กรองตามสถานะ
+    const matchesStatus = selectedStatuses.length === 0 
+      ? true 
+      : selectedStatuses.includes(getStockStatus(ingredient).label);
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // ฟังก์ชันจัดการการเปลี่ยนสถานะ
+  const handleStatusFilterChange = (statuses: string[]) => {
+    setSelectedStatuses(statuses);
+  };
+
+  // ฟังก์ชันจัดการการค้นหา
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
 
   const lowStockIngredients = ingredients.filter(
     (ingredient: Ingredient) => ingredient.currentStock <= ingredient.threshold
@@ -152,32 +206,70 @@ const IngredientManagement = () => {
     toast.success("อัปเดตสต็อกเสร็จสิ้น");
   };
 
-  const getStockStatus = (ingredient: Ingredient): StockStatus => {
-    if (ingredient.currentStock <= ingredient.threshold) {
-      return { color: "destructive", label: "ใกล้หมด" };
-    } else if (ingredient.currentStock <= ingredient.threshold * 1.5) {
-      return { color: "warning", label: "ปานกลาง" };
-    } else {
-      return { color: "success", label: "เพียงพอ" };
-    }
-  };
-
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">จัดการวัตถุดิบ</h2>
-          <p className="text-muted-foreground">
-            เพิ่ม แก้ไข และติดตามวัตถุดิบในคลัง
-          </p>
-        </div>
+    <div className="min-h-screen bg-white ">
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+    <div className="flex flex-row items-center gap-2 w-full mb-2">
+      
+      {/* SearchBox */}
+      <div className="relative flex-1 min-w-[120px] ml-4">
+        <SearchBox dataSource={ingredientNames} onSelect={(val) => console.log("Selected:", val)} />
+      </div>
+
+      <div className="flex flex-row justify-center sm:justify-end gap-2 w-full sm:w-auto">
+      {/* Status Filter Button */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="flex items-center">
+            {/* <Filter className="w-4 h-4" /> */}
+            <span>status</span>
+            {selectedStatuses.length > 0 && (
+              <span className="ml-1 bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
+                {selectedStatuses.length}
+              </span>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48">
+          <DropdownMenuCheckboxItem
+            checked={selectedStatuses.includes("ใกล้หมด")}
+            onCheckedChange={() => handleStatusFilterChange(
+              selectedStatuses.includes("ใกล้หมด")
+                ? selectedStatuses.filter(s => s !== "ใกล้หมด")
+                : [...selectedStatuses, "ใกล้หมด"]
+            )}
+          >
+            ใกล้หมด
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={selectedStatuses.includes("ปานกลาง")}
+            onCheckedChange={() => handleStatusFilterChange(
+              selectedStatuses.includes("ปานกลาง")
+                ? selectedStatuses.filter(s => s !== "ปานกลาง")
+                : [...selectedStatuses, "ปานกลาง"]
+            )}
+          >
+            ปานกลาง
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuCheckboxItem
+            checked={selectedStatuses.includes("เพียงพอ")}
+            onCheckedChange={() => handleStatusFilterChange(
+              selectedStatuses.includes("เพียงพอ")
+                ? selectedStatuses.filter(s => s !== "เพียงพอ")
+                : [...selectedStatuses, "เพียงพอ"]
+            )}
+          >
+            เพียงพอ
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* เพิ่มวัตถุดิบใหม่ */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
-              <Package className="w-4 h-4 mr-2" />
-              เพิ่มวัตถุดิบใหม่
+              {/* <Package className="w-4 h-4" /> */}
+              create
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -252,20 +344,8 @@ const IngredientManagement = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-
-      {/* Search Bar ที่ปรับปรุงแล้ว */}
-
-      <div className="w-full max-w-2xl">
-        <SearchBox />
-      </div>
-
-      {/* status */}
-      {/* <IngredientFilter
-        onSearch={handleSearch}
-        onStatusFilter={handleStatusFilter}
-        onCreate={handleCreate}
-      /> */}
+        </div>
+    </div>
 
       {/* Low Stock Alert ที่ปรับปรุงแล้ว */}
       {lowStockIngredients.length > 0 && (
@@ -292,90 +372,6 @@ const IngredientManagement = () => {
           </div>
         </Card>
       )}
-
-      {/* ส่วนแสดงผลแบบตารางสำหรับหน้าจอขนาดใหญ่ */}
-      {/* <div className="hidden lg:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-              <tr>
-                <th scope="col" className="px-6 py-3">ชื่อวัตถุดิบ</th>
-                <th scope="col" className="px-6 py-3">คงเหลือ</th>
-                <th scope="col" className="px-6 py-3">ระดับแจ้งเตือน</th>
-                <th scope="col" className="px-6 py-3">สถานะ</th>
-                <th scope="col" className="px-6 py-3">อัปเดตล่าสุด</th>
-                <th scope="col" className="px-6 py-3">การดำเนินการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredIngredients.map((ingredient) => {
-                const status = getStockStatus(ingredient);
-                return (
-                  <tr key={ingredient.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                      {ingredient.name}
-                    </td>
-                    <td className="px-6 py-4">
-                      {ingredient.currentStock} {ingredient.unit}
-                    </td>
-                    <td className="px-6 py-4">
-                      {ingredient.threshold} {ingredient.unit}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge 
-                      // variant={status.color}
-                      >
-                        {status.label}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {ingredient.lastUpdated}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            เพิ่มสต็อก
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>เพิ่มสต็อก: {ingredient.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>จำนวนที่ต้องการเพิ่ม ({ingredient.unit})</Label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          onChange={(e) => {
-                            const addAmount = Number(e.target.value);
-                            if (addAmount > 0) {
-                              handleUpdateStock(ingredient.id, ingredient.currentStock + addAmount);
-                            }
-                          }}
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        สต็อกปัจจุบัน: {ingredient.currentStock} {ingredient.unit}
-                      </p>
-                    </div>
-                  </DialogContent>
-                      </Dialog>
-                      <Button size="sm" variant="outline">
-                        แก้ไข
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div> */}
 
       {/* ส่วนแสดงผลแบบการ์ดสำหรับหน้าจอขนาดเล็ก */}
       <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
