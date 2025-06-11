@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 
   try {
     const results = fuse.search(query)
-      .slice(0, 5) // Limit to 5 suggestions
+      .slice(0, 5)
       .map(result => result.item);
 
     await new Promise(resolve => setTimeout(resolve, 150));

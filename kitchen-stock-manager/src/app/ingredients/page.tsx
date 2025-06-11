@@ -5,8 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SearchBox from "@/components/SearchBox";
+import IngredientFilter from "@/ingredients/IngredientFilter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Package, Search, Calendar, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,12 +47,54 @@ interface StockStatus {
 
 const IngredientManagement = () => {
   const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { id: 1, name: "ข้าวสวย", unit: "kg", currentStock: 25, threshold: 10, lastUpdated: "2024-06-08" },
-    { id: 2, name: "ไข่ไก่", unit: "ฟอง", currentStock: 15, threshold: 30, lastUpdated: "2024-06-08" },
-    { id: 3, name: "น้ำมันพืช", unit: "ลิตร", currentStock: 0.5, threshold: 2, lastUpdated: "2024-06-07" },
-    { id: 4, name: "เนื้อหมู", unit: "kg", currentStock: 8, threshold: 5, lastUpdated: "2024-06-08" },
-    { id: 5, name: "ผักกาดขาว", unit: "kg", currentStock: 3, threshold: 2, lastUpdated: "2024-06-08" },
-    { id: 6, name: "กุ้งสด", unit: "kg", currentStock: 1.5, threshold: 1, lastUpdated: "2024-06-08" },
+    {
+      id: 1,
+      name: "ข้าวสวย",
+      unit: "kg",
+      currentStock: 25,
+      threshold: 10,
+      lastUpdated: "2024-06-08",
+    },
+    {
+      id: 2,
+      name: "ไข่ไก่",
+      unit: "ฟอง",
+      currentStock: 15,
+      threshold: 30,
+      lastUpdated: "2024-06-08",
+    },
+    {
+      id: 3,
+      name: "น้ำมันพืช",
+      unit: "ลิตร",
+      currentStock: 0.5,
+      threshold: 2,
+      lastUpdated: "2024-06-07",
+    },
+    {
+      id: 4,
+      name: "เนื้อหมู",
+      unit: "kg",
+      currentStock: 8,
+      threshold: 5,
+      lastUpdated: "2024-06-08",
+    },
+    {
+      id: 5,
+      name: "ผักกาดขาว",
+      unit: "kg",
+      currentStock: 3,
+      threshold: 2,
+      lastUpdated: "2024-06-08",
+    },
+    {
+      id: 6,
+      name: "กุ้งสด",
+      unit: "kg",
+      currentStock: 1.5,
+      threshold: 1,
+      lastUpdated: "2024-06-08",
+    },
   ]);
 
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -55,38 +111,44 @@ const IngredientManagement = () => {
     ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const lowStockIngredients = ingredients.filter((ingredient: Ingredient) => 
-    ingredient.currentStock <= ingredient.threshold
+  const lowStockIngredients = ingredients.filter(
+    (ingredient: Ingredient) => ingredient.currentStock <= ingredient.threshold
   );
 
   const handleAddIngredient = (): void => {
     if (!newIngredient.name || !newIngredient.unit) {
-      toast("ข้อมูลไม่ครบถ้วน",{
+      toast("ข้อมูลไม่ครบถ้วน", {
         description: "กรุณากรอกชื่อวัตถุดิบและหน่วยให้ครบถ้วน",
-    });
+      });
       return;
     }
 
     const ingredient: Ingredient = {
-      id: Math.max(...ingredients.map(i => i.id)) + 1,
+      id: Math.max(...ingredients.map((i) => i.id)) + 1,
       ...newIngredient,
-      lastUpdated: new Date().toISOString().split('T')[0],
+      lastUpdated: new Date().toISOString().split("T")[0],
     };
 
     setIngredients([...ingredients, ingredient]);
     setNewIngredient({ name: "", unit: "", currentStock: 0, threshold: 0 });
     setIsAddDialogOpen(false);
-    
+
     toast.success("เพิ่มวัตถุดิบเสร็จสิ้น");
   };
 
   const handleUpdateStock = (id: number, newStock: number): void => {
-    setIngredients(ingredients.map((ingredient: Ingredient) =>
-      ingredient.id === id
-        ? { ...ingredient, currentStock: newStock, lastUpdated: new Date().toISOString().split('T')[0] }
-        : ingredient
-    ));
-    
+    setIngredients(
+      ingredients.map((ingredient: Ingredient) =>
+        ingredient.id === id
+          ? {
+              ...ingredient,
+              currentStock: newStock,
+              lastUpdated: new Date().toISOString().split("T")[0],
+            }
+          : ingredient
+      )
+    );
+
     toast.success("อัปเดตสต็อกเสร็จสิ้น");
   };
 
@@ -101,16 +163,16 @@ const IngredientManagement = () => {
   };
 
   return (
-    
-    
     <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">จัดการวัตถุดิบ</h2>
-          <p className="text-muted-foreground">เพิ่ม แก้ไข และติดตามวัตถุดิบในคลัง</p>
+          <p className="text-muted-foreground">
+            เพิ่ม แก้ไข และติดตามวัตถุดิบในคลัง
+          </p>
         </div>
-        
+
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
@@ -128,7 +190,9 @@ const IngredientManagement = () => {
                 <Input
                   id="name"
                   value={newIngredient.name}
-                  onChange={(e) => setNewIngredient({ ...newIngredient, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewIngredient({ ...newIngredient, name: e.target.value })
+                  }
                   placeholder="เช่น ข้าวสวย, ไข่ไก่"
                 />
               </div>
@@ -136,7 +200,9 @@ const IngredientManagement = () => {
                 <Label htmlFor="unit">หน่วย</Label>
                 <Select
                   value={newIngredient.unit}
-                  onValueChange={(value: string) => setNewIngredient({ ...newIngredient, unit: value })}
+                  onValueChange={(value: string) =>
+                    setNewIngredient({ ...newIngredient, unit: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="เลือกหน่วย" />
@@ -157,7 +223,12 @@ const IngredientManagement = () => {
                   id="currentStock"
                   type="number"
                   value={newIngredient.currentStock}
-                  onChange={(e) => setNewIngredient({ ...newIngredient, currentStock: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setNewIngredient({
+                      ...newIngredient,
+                      currentStock: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
               <div>
@@ -166,7 +237,12 @@ const IngredientManagement = () => {
                   id="threshold"
                   type="number"
                   value={newIngredient.threshold}
-                  onChange={(e) => setNewIngredient({ ...newIngredient, threshold: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setNewIngredient({
+                      ...newIngredient,
+                      threshold: Number(e.target.value),
+                    })
+                  }
                   placeholder="จำนวนที่ต้องการแจ้งเตือน"
                 />
               </div>
@@ -179,19 +255,19 @@ const IngredientManagement = () => {
       </div>
 
       {/* Search Bar ที่ปรับปรุงแล้ว */}
-      <div className="relative max-w-md mx-auto sm:mx-0">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <Search className="w-5 h-5 text-gray-400" />
-        </div>
-        <Input
-          placeholder="ค้นหาวัตถุดิบ..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 w-full rounded-lg py-2 text-sm"
-        />
+
+      <div className="w-full max-w-2xl">
+        <SearchBox />
       </div>
 
-       {/* Low Stock Alert ที่ปรับปรุงแล้ว */}
+      {/* status */}
+      {/* <IngredientFilter
+        onSearch={handleSearch}
+        onStatusFilter={handleStatusFilter}
+        onCreate={handleCreate}
+      /> */}
+
+      {/* Low Stock Alert ที่ปรับปรุงแล้ว */}
       {lowStockIngredients.length > 0 && (
         <Card className="p-4 border-red-200 bg-red-50 dark:bg-red-900/20">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -203,12 +279,13 @@ const IngredientManagement = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               {lowStockIngredients.map((ingredient) => (
-                <Badge 
-                  key={ingredient.id} 
+                <Badge
+                  key={ingredient.id}
                   variant="destructive"
                   className="whitespace-nowrap"
                 >
-                  {ingredient.name} ({ingredient.currentStock} {ingredient.unit})
+                  {ingredient.name} ({ingredient.currentStock} {ingredient.unit}
+                  )
                 </Badge>
               ))}
             </div>
@@ -305,12 +382,15 @@ const IngredientManagement = () => {
         {filteredIngredients.map((ingredient) => {
           const status = getStockStatus(ingredient);
           return (
-            <Card key={ingredient.id} className="p-4 hover:shadow-md transition-shadow">
+            <Card
+              key={ingredient.id}
+              className="p-4 hover:shadow-md transition-shadow"
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold">{ingredient.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge 
+                    <Badge
                     // variant={status.color}
                     >
                       {status.label}
@@ -318,11 +398,15 @@ const IngredientManagement = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">{ingredient.currentStock} {ingredient.unit}</p>
-                  <p className="text-sm text-muted-foreground">เตือนที่ {ingredient.threshold}</p>
+                  <p className="font-medium">
+                    {ingredient.currentStock} {ingredient.unit}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    เตือนที่ {ingredient.threshold}
+                  </p>
                 </div>
               </div>
-              
+
               <div className="mt-3 flex justify-between items-center">
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
@@ -336,28 +420,34 @@ const IngredientManagement = () => {
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>เพิ่มสต็อก: {ingredient.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>จำนวนที่ต้องการเพิ่ม ({ingredient.unit})</Label>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          onChange={(e) => {
-                            const addAmount = Number(e.target.value);
-                            if (addAmount > 0) {
-                              handleUpdateStock(ingredient.id, ingredient.currentStock + addAmount);
-                            }
-                          }}
-                        />
+                      <DialogHeader>
+                        <DialogTitle>เพิ่มสต็อก: {ingredient.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>
+                            จำนวนที่ต้องการเพิ่ม ({ingredient.unit})
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            onChange={(e) => {
+                              const addAmount = Number(e.target.value);
+                              if (addAmount > 0) {
+                                handleUpdateStock(
+                                  ingredient.id,
+                                  ingredient.currentStock + addAmount
+                                );
+                              }
+                            }}
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          สต็อกปัจจุบัน: {ingredient.currentStock}{" "}
+                          {ingredient.unit}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        สต็อกปัจจุบัน: {ingredient.currentStock} {ingredient.unit}
-                      </p>
-                    </div>
-                  </DialogContent>
+                    </DialogContent>
                   </Dialog>
                 </div>
               </div>
@@ -369,8 +459,12 @@ const IngredientManagement = () => {
       {filteredIngredients.length === 0 && (
         <Card className="p-8 text-center">
           <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">ไม่พบวัตถุดิบ</h3>
-          <p className="text-gray-500">ลองค้นหาด้วยคำอื่น หรือเพิ่มวัตถุดิบใหม่</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            ไม่พบวัตถุดิบ
+          </h3>
+          <p className="text-gray-500">
+            ลองค้นหาด้วยคำอื่น หรือเพิ่มวัตถุดิบใหม่
+          </p>
         </Card>
       )}
     </div>
