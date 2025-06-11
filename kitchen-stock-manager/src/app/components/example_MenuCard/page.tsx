@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
-import MenuCard from "@/components/MenuCard";
+import MenuCard from "@/share/MenuCard";
 
 type MenuItem = {
   title: string;
