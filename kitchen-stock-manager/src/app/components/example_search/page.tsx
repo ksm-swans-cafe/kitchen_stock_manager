@@ -1,5 +1,5 @@
 'use client';
-import SearchBox from '@/components/SearchBox';
+import SearchBox from '@/share/order//SearchBox';
 
 export default function Order() {
   return (

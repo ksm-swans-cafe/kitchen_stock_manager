@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import SearchBox from '@/components/SearchBox_v2';
+import SearchBox from '@/share/order/SearchBox_v2';
 
 // วิธีที่ 1 Array in Memory
 const menus = [

@@ -1,5 +1,5 @@
 'use client';
-import SearchBox from '@/components/SearchBox';
+import SearchBox from '@/share/order/SearchBox';
 import { useEffect, useState } from 'react';
 
 export default function Order() {
