@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
+import { Button } from "@/share/ui/button";
 import { ArrowLeft, Home, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

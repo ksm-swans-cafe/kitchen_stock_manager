@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/share/ui/input";
+import { Button } from "@/share/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/share/ui/dropdown-menu";
 import { PlusCircle, Filter, Search } from "lucide-react";
 
 const IngredientFilter = ({

@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-
-interface SearchBoxProps {
-  apiUrl?: string;
-  dataSource?: string[];
-  minLength?: number;
-  onSelect?: (value: string) => void;
-}
+import { SearchBoxProps } from '@/models/order/search-model';
 
 export default function SearchBox({
   apiUrl,

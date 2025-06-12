@@ -1,13 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
-import MenuCard from "@/share/MenuCard";
-
-type MenuItem = {
-  title: string;
-  imageUrl?: string;
-  description: string;
-};
+import { MenuItem } from "@/models/order/menu-model";
+import MenuCard from "@/share/order/MenuCard";
 
 const allMenus: MenuItem[] = [
   { title: "ผัดกระเพราเนื้อ", description: "รสจัดจ้าน" },

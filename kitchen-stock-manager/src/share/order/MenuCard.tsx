@@ -1,14 +1,10 @@
-type MenuCardProps = {
-  title: string;
-  imageUrl?: string;  // เปลี่ยนเป็น optional เพื่อให้มีค่า default ได้
-  description: string;
-};
+import { MenuItem } from "@/models/order/menu-model";
 
 export default function MenuCard({
   title,
   imageUrl = "https://bulma.io/assets/images/placeholders/1280x960.png",
   description,
-}: MenuCardProps) {
+}: MenuItem) {
   return (
     <div className="column is-full-mobile is-one-third-tablet is-one-fifth-desktop is-one-sixth-widescreen">
 
