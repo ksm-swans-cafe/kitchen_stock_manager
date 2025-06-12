@@ -21,7 +21,7 @@ export default function MenuCard({
             {/* time */}
             {/* total - unit */}
             {/* status */}
-            {/* alert */}
+            {/* alert. */}
           </div>
         </div>
         <footer className="card-footer">
