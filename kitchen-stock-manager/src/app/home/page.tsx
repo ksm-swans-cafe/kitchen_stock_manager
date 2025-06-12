@@ -25,7 +25,7 @@ export default function Page() {
   };
 
   const handleAddIngredients = () => {
-    router.push('/add-ingredients');
+    router.push('/ingredients');
   };
 
   const handleOrder = () => {
@@ -33,7 +33,7 @@ export default function Page() {
   };
 
   const handleOrderHistory = () => {
-    router.push('/order-history');
+    router.push('/orderhistory');
   };
 
   return (

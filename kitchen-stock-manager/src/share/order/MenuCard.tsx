@@ -13,10 +13,10 @@ export default function MenuCard({
           <figure className="image is-4by3">
               <img src={imageUrl} alt={title} />
           </figure>
+          <div className="subtitle is-7 tag is-pulled-right">Status</div>
         </div>
-        <div className="mx-3 my-3">
+        <div className="mx-2 my-2">
           <div className="">
-
             <div className="subtitle is-7">{title}</div>
             <div className="subtitle is-7">{description}</div>
             {/* total - unit */}
@@ -24,7 +24,7 @@ export default function MenuCard({
             {/* time */}
             <span className="subtitle is-7 ">??-??-????</span>
             {/* status */}
-            <div className="subtitle is-7 tag is-pulled-right">Status</div>
+            
           </div>
         </div>
         <footer className="card-footer">

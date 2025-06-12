@@ -1,7 +1,5 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-
-import sql from '../../../../database/connect';
+import { NextResponse, NextRequest } from 'next/server';
+import sql from '@/app/database/connect';
 import { Employee } from '@/models/employee/employee-model';
 
 export async function GET(

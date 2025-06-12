@@ -3,6 +3,6 @@ export interface Employee {
     employee_username?: string,
     employee_firstname?: string,
     employee_lastname?: string,
-    employee_pin?: string,
+    employee_pin?: number,
     employee_role?: string
 };
