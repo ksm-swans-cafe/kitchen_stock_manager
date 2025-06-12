@@ -18,6 +18,10 @@ export default function MenuCard({
           <div className="content">
             <p className="title is-7">{title}</p>
             <p className="subtitle is-7">{description}</p>
+            {/* time */}
+            {/* total - unit */}
+            {/* status */}
+            {/* alert */}
           </div>
         </div>
         <footer className="card-footer">

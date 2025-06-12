@@ -96,8 +96,8 @@ export default function Home() {
         <div className="mb-3 has-text-centered">
           <h1 className="title">Menu</h1>
         </div>
-
-        <div className="columns is-multiline">
+        {/* lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 */}
+        <div className="justify-center columns grid is-multiline">
           {visibleMenus.map((menu, idx) => (
             <MenuCard key={idx} {...menu} />
           ))}
