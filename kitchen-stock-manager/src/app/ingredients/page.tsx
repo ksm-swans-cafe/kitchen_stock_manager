@@ -6,7 +6,7 @@ import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { Badge } from "@/share/ui/badge";
 import SearchBox from "@/share/order/SearchBox_v2";
-import IngredientFilter from "@/share/IngredientFilter";
+
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/share/ui/select";
-import { Package, Search, Calendar, AlertTriangle,Filter } from "lucide-react";
+import { Package, Calendar, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface Ingredient {
@@ -44,15 +44,6 @@ interface NewIngredient {
   unit: string;
   currentStock: number;
   threshold: number;
-}
-
-interface StockStatus {
-  color: "destructive" | "warning" | "success";
-  label: string;
-}
-
-interface StatusFilterProps {
-  onFilterChange: (selectedStatuses: string[]) => void;
 }
 
 const IngredientManagement = () => {
@@ -111,7 +102,7 @@ const IngredientManagement = () => {
 
   
 
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm] = useState<string>("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
   const [newIngredient, setNewIngredient] = useState<NewIngredient>({
@@ -158,11 +149,6 @@ const IngredientManagement = () => {
   // ฟังก์ชันจัดการการเปลี่ยนสถานะ
   const handleStatusFilterChange = (statuses: string[]) => {
     setSelectedStatuses(statuses);
-  };
-
-  // ฟังก์ชันจัดการการค้นหา
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
   };
 
   const lowStockIngredients = ingredients.filter(
