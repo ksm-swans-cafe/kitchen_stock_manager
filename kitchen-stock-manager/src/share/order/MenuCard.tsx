@@ -14,14 +14,17 @@ export default function MenuCard({
               <img src={imageUrl} alt={title} />
           </figure>
         </div>
-        <div className="card-content">
-          <div className="content">
-            <p className="title is-7">{title}</p>
-            <p className="subtitle is-7">{description}</p>
-            {/* time */}
+        <div className="mx-3 my-3">
+          <div className="">
+
+            <div className="subtitle is-7">{title}</div>
+            <div className="subtitle is-7">{description}</div>
             {/* total - unit */}
+            <div className="subtitle is-7">total 25  unit</div>
+            {/* time */}
+            <span className="subtitle is-7 ">??-??-????</span>
             {/* status */}
-            {/* alert */}
+            <div className="subtitle is-7 tag is-pulled-right">Status</div>
           </div>
         </div>
         <footer className="card-footer">
