@@ -1,5 +1,4 @@
 import { MenuItem } from "@/models/order/menu-model";
-import Image from 'next/image';
 
 export default function MenuCard({
   title,
@@ -12,7 +11,7 @@ export default function MenuCard({
       <div className="card" style={{ height: "100%" }}>
         <div className="card-image">
           <figure className="image is-4by3">
-              <Image src={imageUrl} alt={title || ""} />
+              <img src={imageUrl} alt={title} />
           </figure>
           <div className="subtitle is-7 tag is-pulled-right">Status</div>
         </div>
