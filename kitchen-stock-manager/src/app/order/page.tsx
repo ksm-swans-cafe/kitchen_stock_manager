@@ -51,9 +51,11 @@ const allMenus: MenuItem[] = [
   { title: "ข้าวผัดพริกแกง", description: "รสชาติจัดจ้าน" },
   { title: "แกงส้มปลากะพง", description: "รสเปรี้ยวหวาน" },
 ];
-
-const menus: any = allMenus.map((menu: MenuItem) => menu.title);
-
+// const menus: any = allMenus.map((menu: MenuItem) => menu.title);
+// ส่วนที่แก้ไปไอซันเช็คด้วย
+const menus: string[] = allMenus
+  .map((menu) => menu.title)
+  .filter((title): title is string => typeof title === 'string');
 
 export default function Order() {
   const chunkSize = 20;

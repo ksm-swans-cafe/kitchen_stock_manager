@@ -4,13 +4,14 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/share/ui/button";
 import { Card, CardContent, CardHeader } from "@/share/ui/card";
-import { ArrowLeft, Home, LogOut, Clock, User, Package, CheckCircle, XCircle, AlertCircle, Search, Filter, Download, ArrowUpDown, Calendar, Users, Hash, Star } from 'lucide-react';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/share/ui/accordion";
+// , Clock, User, Package, CheckCircle, XCircle, AlertCircle, Search, Calendar, Hash, Star
+import { ArrowLeft, Home, LogOut, Filter, Download, ArrowUpDown, Users } from 'lucide-react';
+// import {
+//   Accordion,
+//   AccordionContent,
+//   AccordionItem,
+//   AccordionTrigger,
+// } from "@/share/ui/accordion";
 import {
   Select,
   SelectContent,
@@ -97,7 +98,7 @@ const mockOrderHistory = [
 
 const OrderHistory: React.FC = () => {
   const router = useRouter();
-  const [orders, setOrders] = useState(mockOrderHistory);
+  const [orders] = useState(mockOrderHistory);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -106,7 +107,7 @@ const OrderHistory: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  const currentUser = { name: 'ผู้ใช้งาน', role: 'เชฟ' };
+  // const currentUser = { name: 'ผู้ใช้งาน', role: 'เชฟ' };
 
   const handleSignOut = () => router.push('/');
   const handleBackToDashboard = () => router.push('/dashboard');
@@ -121,9 +122,13 @@ const OrderHistory: React.FC = () => {
       default: return 'ไม่ทราบสถานะ';
     }
   };
+  type Order = typeof mockOrderHistory[number];
+
+
 
   const uniqueCreators = useMemo(() => [...new Set(orders.map(o => o.createdBy))], [orders]);
-
+  // เนื่องจากส่วนนี้ไม่ได้ใช้จะขอปิดไว้ถ้าไม่ได้ใช้จริงให้ลบออกโดยด่วน
+  // type SortableKey = Exclude<keyof Order, 'ingredients'>;
   const filteredAndSortedOrders = useMemo(() => {
     let filtered = [...orders];
     if (searchTerm) {
@@ -135,13 +140,23 @@ const OrderHistory: React.FC = () => {
     if (filterCreator !== 'ทั้งหมด') {
       filtered = filtered.filter(o => o.createdBy === filterCreator);
     }
-    filtered.sort((a, b) => {
-      let aVal: any = a[sortBy as keyof typeof a];
-      let bVal: any = b[sortBy as keyof typeof b];
+    filtered.sort((a: Order, b: Order) => {
+      if (sortBy === 'ingredients') {
+        return 0; // ไม่ sort หรือกำหนด logic เองถ้าต้องการ
+      }
+
+      type ValueType = string | number | Date | { name: string; quantity: string; unit: string }[];
+
+      let aVal: ValueType = a[sortBy as keyof Order];
+      let bVal: ValueType = b[sortBy as keyof Order];
+
+
       if (sortBy === 'date') {
         aVal = new Date(a.date + ' ' + a.time);
         bVal = new Date(b.date + ' ' + b.time);
       }
+      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
       return sortOrder === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
     });
     return filtered;

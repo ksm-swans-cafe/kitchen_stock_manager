@@ -1,14 +1,15 @@
-// app/(route)/home/order-history/page.tsx
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/share/ui/button';
 import { Card, CardContent, CardHeader } from '@/share/ui/card';
-import {
-  ArrowLeft, Home, LogOut, Clock, User, Package, CheckCircle, XCircle, AlertCircle,
-  Search, Filter, Download, ArrowUpDown, Calendar, DollarSign, Users, Hash, Star
-} from 'lucide-react';
+// ไม่ได้ถูกเรียกใช้จะขอปิดไว้
+// app/(route)/home/order-history/page.tsx
+// import { useRouter } from 'next/navigation';
+// import { Button } from '@/share/ui/button';
+// import {
+// ArrowLeft, Home, LogOut, Clock, User, Package, CheckCircle, XCircle, AlertCircle,
+// Search, Filter, Download, ArrowUpDown, Calendar, DollarSign, Users, Hash, Star
+// } from 'lucide-react';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/share/ui/select';
@@ -38,12 +39,12 @@ interface Order {
 }
 
 const Page = () => {
-  const router = useRouter();
+  // const router = useRouter();
 
-  const currentUser = {
-    name: 'สมชาย',
-    role: 'เชฟ',
-  };
+  // const currentUser = {
+  //   name: 'สมชาย',
+  //   role: 'เชฟ',
+  // };
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,8 @@ const Page = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [filterStatus, setFilterStatus] = useState('ทั้งหมด');
+  const [filterStatus] = useState('ทั้งหมด');
+  // , setFilterStatus
   const [filterCreator, setFilterCreator] = useState('ทั้งหมด');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -102,17 +104,26 @@ const Page = () => {
     }
 
     filtered.sort((a, b) => {
-      let aValue: any = a[sortBy as keyof Order];
-      let bValue: any = b[sortBy as keyof Order];
+      let aValue: string | number | Date | Ingredient[] = a[sortBy as keyof Order];
+      let bValue: string | number | Date | Ingredient[] = b[sortBy as keyof Order];
 
       if (sortBy === 'date') {
         aValue = new Date(`${a.date} ${a.time}`);
         bValue = new Date(`${b.date} ${b.time}`);
       }
 
-      return sortOrder === 'asc'
-        ? aValue > bValue ? 1 : -1
-        : aValue < bValue ? 1 : -1;
+      
+      if (Array.isArray(aValue) || Array.isArray(bValue)) {
+        return 0; 
+      }
+
+      if (aValue > bValue) {
+        return sortOrder === 'asc' ? 1 : -1;
+      } else if (aValue < bValue) {
+        return sortOrder === 'asc' ? -1 : 1;
+      } else {
+        return 0;
+      }
     });
 
     return filtered;

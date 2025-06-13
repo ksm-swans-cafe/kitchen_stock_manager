@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import sql from '@/app/database/connect'
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id } = params;
+export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+  const { id } = context.params;
     console.log(id)
     try {
         

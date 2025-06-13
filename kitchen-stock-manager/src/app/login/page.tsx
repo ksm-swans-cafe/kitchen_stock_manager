@@ -1,6 +1,5 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
-import { Button } from "@/share/ui/button";
 import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { Employee } from '@/models/employee/employee-model';
@@ -32,7 +31,7 @@ const Login: React.FC = () => {
   const apiUrl = 'api/get/user';
 
   const handlePinChange = (value: string, index: number) => {
-    
+
     if (/^\d?$/.test(value)) {
       const newPin = [...pin];
       newPin[index] = value;
@@ -41,7 +40,7 @@ const Login: React.FC = () => {
       if (value && index < 3) {
         inputRefs.current[index + 1]?.focus();
       }
-      
+
     }
 
   };
@@ -56,47 +55,47 @@ const Login: React.FC = () => {
   };
 
   const handleLogin = useCallback(async () => {
-  const pinCode = pin.join("");
-  const pinInt = parseInt(pinCode, 10);
-  setLoading(true);
-  setError("");
+    const pinCode = pin.join("");
+    const pinInt = parseInt(pinCode, 10);
+    setLoading(true);
+    setError("");
 
-  try {
-    const response = await fetch(apiUrl);
-    const employees: Employee[] = await response.json();
+    try {
+      const response = await fetch(apiUrl);
+      const employees: Employee[] = await response.json();
 
-    let matchedEmployee: Employee | null = null;
-    console.log("pin", pinInt)
-    console.log("user", username)
-    for (const emp of employees) {
-      console.log("ตรวจสอบ:", emp.employee_username, emp.employee_pin);
+      let matchedEmployee: Employee | null = null;
+      console.log("pin", pinInt)
+      console.log("user", username)
+      for (const emp of employees) {
+        console.log("ตรวจสอบ:", emp.employee_username, emp.employee_pin);
 
-      if (
-        emp.employee_username?.toLowerCase() == username.toLowerCase() &&
-        emp.employee_pin == pinInt
-      ) {
-        matchedEmployee = emp;
-        break;
+        if (
+          emp.employee_username?.toLowerCase() == username.toLowerCase() &&
+          emp.employee_pin == pinInt
+        ) {
+          matchedEmployee = emp;
+          break;
+        }
       }
-    }
-    console.log("matchuser", matchedEmployee)
+      console.log("matchuser", matchedEmployee)
 
-    if (matchedEmployee) {
-      console.log("เข้าสู่ระบบสำเร็จ:", matchedEmployee.employee_firstname);
-      alert(`ยินดีต้อนรับคุณ ${matchedEmployee.employee_firstname}`);
-      router.push("/home");
-    } else {
-      setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
-      setPin(["", "", "", ""]);
-      inputRefs.current[0]?.focus();
+      if (matchedEmployee) {
+        console.log("เข้าสู่ระบบสำเร็จ:", matchedEmployee.employee_firstname);
+        alert(`ยินดีต้อนรับคุณ ${matchedEmployee.employee_firstname}`);
+        router.push("/home");
+      } else {
+        setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
+        setPin(["", "", "", ""]);
+        inputRefs.current[0]?.focus();
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Login error:", error);
-    setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-  } finally {
-    setLoading(false);
-  }
-}, [pin, username]);
+  }, [pin, username, router]);
 
 
   useEffect(() => {
