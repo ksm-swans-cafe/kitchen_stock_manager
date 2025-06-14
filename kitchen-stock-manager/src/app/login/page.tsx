@@ -24,6 +24,10 @@ const Login: React.FC = () => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
 
+  const generateToken = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  };
+
   const setInputRef = (index: number) => (el: HTMLInputElement | null) => {
     inputRefs.current[index] = el;
   };
@@ -65,11 +69,7 @@ const Login: React.FC = () => {
       const employees: Employee[] = await response.json();
 
       let matchedEmployee: Employee | null = null;
-      console.log("pin", pinInt)
-      console.log("user", username)
       for (const emp of employees) {
-        console.log("ตรวจสอบ:", emp.employee_username, emp.employee_pin);
-
         if (
           emp.employee_username?.toLowerCase() == username.toLowerCase() &&
           emp.employee_pin == pinInt
@@ -78,19 +78,34 @@ const Login: React.FC = () => {
           break;
         }
       }
-      console.log("matchuser", matchedEmployee)
 
       if (matchedEmployee) {
-        console.log("เข้าสู่ระบบสำเร็จ:", matchedEmployee.employee_firstname);
-        alert(`ยินดีต้อนรับคุณ ${matchedEmployee.employee_firstname}`);
-        router.push("/home");
+        const token = generateToken();
+        const loginResponse = await fetch('/api/post/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            token,
+            username: matchedEmployee.employee_username,
+            name: `${matchedEmployee.employee_firstname} ${matchedEmployee.employee_lastname}`,
+            role: matchedEmployee.employee_role
+          }),
+        });
+
+        if (loginResponse.ok) {
+          await router.refresh();
+          router.push("/home");
+        } else {
+          throw new Error('Failed to set login cookie');
+        }
       } else {
         setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
         setPin(["", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      console.error("Login error:", error);
       setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
     } finally {
       setLoading(false);

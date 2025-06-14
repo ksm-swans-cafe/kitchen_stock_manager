@@ -29,7 +29,7 @@ export default function Page() {
   };
 
   const handleOrder = () => {
-    router.push('/order');
+    router.push('/home/order');
   };
 
   const handleOrderHistory = () => {

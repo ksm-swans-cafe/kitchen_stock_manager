@@ -8,6 +8,7 @@ export default function SearchBox({
   dataSource,
   minLength = 0,
   onSelect,
+  onChangeQuery,
 }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -87,6 +88,7 @@ export default function SearchBox({
         onChange={(e) => {
           setQuery(e.target.value);
           setActiveSuggestion(-1);
+          if (onChangeQuery) onChangeQuery(e.target.value);
         }}
         onFocus={() => setShowSuggestions(true)}
         onKeyDown={handleKeyDown}
