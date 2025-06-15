@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sql from "@/app/database/connect"
-
-export async function GET(request: Request) {
+// request: Request
+export async function GET() {
     try {
         const result = await sql`SELECT menu_image FROM menu ORDER BY menu_id DESC`;
         if (result.length === 0) {

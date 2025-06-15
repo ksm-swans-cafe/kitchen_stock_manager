@@ -28,18 +28,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/share/ui/select";
-import { Package, Calendar, AlertTriangle } from "lucide-react";
+import { Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 const IngredientManagement = () => {
   const chunkSize = 20;
   const [allIngredient, setIngredient] = useState<ingredient[]>([]);
-  const [visibleCount, setVisibleCount] = useState(chunkSize);
+  // , setVisibleCount
+  const [visibleCount] = useState(chunkSize);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -51,8 +52,12 @@ const IngredientManagement = () => {
         if (!res.ok) throw new Error("Failed to fetch menu list");
         const data = await res.json();
         setIngredient(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
+        }
       } finally {
         setLoading(false);
       }
@@ -80,11 +85,11 @@ const IngredientManagement = () => {
   
   const visibleingredient = filteredIngredient.slice(0, visibleCount);
 
-  const loadMore = () => {
-    setVisibleCount((prev) =>
-      Math.min(prev + chunkSize, filteredIngredient.length)
-    );
-  };
+  // const loadMore = () => {
+  //   setVisibleCount((prev) =>
+  //     Math.min(prev + chunkSize, filteredIngredient.length)
+  //   );
+  // };
 
   const ingredients = allIngredient
     .map((ingredient) => ingredient.ingredient_name)
@@ -133,7 +138,7 @@ const IngredientManagement = () => {
     //   `🔎 ${ingredient.ingredient_name}: total = ${total}, alert = ${alert} → isLow: ${isLow}`
     // );
 
-    // return isLow;
+    return isLow;
   });
 
   const handleAddIngredient = (): void => {
@@ -157,7 +162,7 @@ const IngredientManagement = () => {
     toast.success("เพิ่มวัตถุดิบเสร็จสิ้น");
   };
 
-  const handleUpdateStock = (id: number, newStock: number): void => {
+  // const handleUpdateStock = (id: number, newStock: number): void => {
     // setIngredients(
     //   ingredients.map((ingredient: ingredient) =>
     //     ingredient.id === id
@@ -170,8 +175,8 @@ const IngredientManagement = () => {
     //   )
     // );
 
-    toast.success("อัปเดตสต็อกเสร็จสิ้น");
-  };
+  //   toast.success("อัปเดตสต็อกเสร็จสิ้น");
+  // };
 
   return (
     <div className="min-h-screen bg-white ">

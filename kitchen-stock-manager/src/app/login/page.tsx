@@ -107,6 +107,7 @@ const Login: React.FC = () => {
       }
     } catch (error) {
       setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      console.log(error);
     } finally {
       setLoading(false);
     }
