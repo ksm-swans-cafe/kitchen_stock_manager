@@ -116,7 +116,7 @@ const fetchOrders = async () => {
         { totalPrice: 0, totalSets: 0 }
       );
 
-      // สร้าง orderNumber จาก 5 ตัวแรกของ cart_id
+      // สร้าง orderNumber จาก 5 ตัวแรกของ cart_idห
       const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || 'XXXXX'}`;
 
       return {
