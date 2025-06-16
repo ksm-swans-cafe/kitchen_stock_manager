@@ -7,7 +7,9 @@ import { Label } from "@/share/ui/label";
 import { Badge } from "@/share/ui/badge";
 import SearchBox from "@/share/order/SearchBox_v2";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
+import { newIngredient } from "@/models/menu_card/MenuCard-model";
 import MenuCard from "@/share/order/MenuCard";
+import { useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,11 +32,11 @@ import {
 } from "@/share/ui/select";
 import { Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import superjson from "superjson";
 
 const IngredientManagement = () => {
   const chunkSize = 20;
   const [allIngredient, setIngredient] = useState<ingredient[]>([]);
-  // , setVisibleCount
   const [visibleCount] = useState(chunkSize);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,8 +50,8 @@ const IngredientManagement = () => {
     const fetchingredients = async () => {
       try {
         setLoading(true);
-        const res = await fetch("api/get/ingredients");
-        if (!res.ok) throw new Error("Failed to fetch menu list");
+        const res = await fetch("/api/get/ingredients");
+        if (!res.ok) throw new Error("Failed to fetch ingredients list");
         const data = await res.json();
         setIngredient(data);
       } catch (err: unknown) {
@@ -64,14 +66,91 @@ const IngredientManagement = () => {
     };
     fetchingredients();
   }, []);
-  
-  // const filteredIngredient = allIngredient.filter((ingredient) =>
-  //   ingredient.ingredient_name
-  //     ?.toLowerCase()
-  //     .includes(searchQuery.toLowerCase())
-  // );
-  
-  // กรองข้อมูลตามคำค้นหาและสถานะ
+
+  const [newIngredient, setNewIngredient] = useState<newIngredient>({
+    ingredient_name: "",
+    ingredient_total: 0,
+    ingredient_unit: "",
+    ingredient_image: "",
+    ingredient_total_alert: 0,
+  });
+
+  const handleAddIngredient = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Validate required fields
+      if (
+        !(newIngredient.ingredient_name?.trim() ?? "") ||
+        !newIngredient.ingredient_unit ||
+        (newIngredient.ingredient_total ?? 0) <= 0 ||
+        (newIngredient.ingredient_total_alert ?? 0) <= 0
+      ) {
+        setError(
+          "กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง (ชื่อและหน่วยต้องไม่ว่าง, จำนวนต้องมากกว่า 0)"
+        );
+        return;
+      }
+
+      // Prepare payload, omit ingredient_image if empty
+      const payload = {
+        ingredient_name: newIngredient.ingredient_name?.trim() ?? "",
+        ingredient_total: Number(newIngredient.ingredient_total),
+        ingredient_unit: newIngredient.ingredient_unit,
+        ingredient_total_alert: Number(newIngredient.ingredient_total_alert),
+        ...(newIngredient.ingredient_image && {
+          ingredient_image: newIngredient.ingredient_image,
+        }),
+      };
+      // console.log("Sending payload:", payload);
+
+      const res = await fetch("/api/post/ingredients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: superjson.stringify(payload),
+      });
+
+      // อ่าน Response แบบ text ก่อน
+      const result = await res.json();
+      console.log("Full API Response:", result);
+
+      if (!res.ok) {
+        throw new Error(result.message || "Failed to add ingredient");
+      }
+
+      // วิธีที่ปลอดภัยที่สุด
+      const addedIngredient =
+        result?.ingredient?.[0] ?? // ถ้าเป็นรูปแบบ { ingredient: [...] }
+        result?.data ?? // ถ้าเป็นรูปแบบ { data: {...} }
+        result; // ถ้าเป็น object โดยตรง
+
+      if (!addedIngredient) {
+        throw new Error("Invalid response format: No ingredient data");
+      }
+
+      setIngredient((prev) => [...prev, addedIngredient]);
+      // Reset form
+      setNewIngredient({
+        ingredient_name: "",
+        ingredient_total: 0,
+        ingredient_unit: "",
+        ingredient_image: "",
+        ingredient_total_alert: 0,
+      });
+
+      setIsAddDialogOpen(false);
+      toast.success("เพิ่มวัตถุดิบสำเร็จ");
+    } catch (error) {
+      console.error("Error details:", error);
+      setError("เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบ");
+      toast.error("เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredIngredient = allIngredient.filter((ingredient) => {
     const matchesSearch = ingredient.ingredient_name
       ?.toLowerCase()
@@ -82,14 +161,8 @@ const IngredientManagement = () => {
         : selectedStatuses.includes(getStockStatus(ingredient).label);
     return matchesSearch && matchesStatus;
   });
-  
-  const visibleingredient = filteredIngredient.slice(0, visibleCount);
 
-  // const loadMore = () => {
-  //   setVisibleCount((prev) =>
-  //     Math.min(prev + chunkSize, filteredIngredient.length)
-  //   );
-  // };
+  const visibleingredient = filteredIngredient.slice(0, visibleCount);
 
   const ingredients = allIngredient
     .map((ingredient) => ingredient.ingredient_name)
@@ -98,7 +171,6 @@ const IngredientManagement = () => {
         typeof ingredient_name === "string"
     );
 
-  // ฟังก์ชันตรวจสอบสถานะสต็อก
   const getStockStatus = (
     ingredient: ingredient
   ): { label: string; color: string } => {
@@ -114,73 +186,52 @@ const IngredientManagement = () => {
     }
   };
 
-  // const [searchTerm] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
 
-  // const [newIngredient, setNewIngredient] = useState<NewIngredient>({
-  //   name: "",
-  //   unit: "",
-  //   currentStock: 0,
-  //   threshold: 0,
-  // });
-
-
-  // ฟังก์ชันจัดการการเปลี่ยนสถานะ
   const handleStatusFilterChange = (statuses: string[]) => {
     setSelectedStatuses(statuses);
+  };
+
+  const getIngredientStatus = (total: number, alert: number): string => {
+    if (total > alert * 2) return "เพียงพอ";
+    if (total > alert) return "ปานกลาง";
+    return "ใกล้หมด";
+  };
+
+  // const filteredIngredients = allIngredient.filter((ingredient) => {
+  //   const status = getIngredientStatus(
+  //     ingredient.ingredient_total ?? 0,
+  //     ingredient.ingredient_total_alert ?? 0
+  //   );
+  //   return selectedStatuses.length === 0 || selectedStatuses.includes(status);
+  // });
+
+  const filteredIngredients = useMemo(() => {
+    return allIngredient.filter((ingredient) => {
+      const status = getIngredientStatus(
+        ingredient.ingredient_total ?? 0,
+        ingredient.ingredient_total_alert ?? 0
+      );
+      return selectedStatuses.length === 0 || selectedStatuses.includes(status);
+    });
+  }, [ingredients, selectedStatuses]);
+
+  const toggleStatus = (status: string) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
   };
 
   const lowStockIngredients = allIngredient.filter((ingredient) => {
     const total = Number(ingredient.ingredient_total) || 0;
     const alert = Number(ingredient.ingredient_total_alert) || 0;
-    const isLow = total <= alert;
-    // console.log(
-    //   `🔎 ${ingredient.ingredient_name}: total = ${total}, alert = ${alert} → isLow: ${isLow}`
-    // );
-
-    return isLow;
+    return total <= alert;
   });
-
-  const handleAddIngredient = (): void => {
-    // if (!newIngredient.name || !newIngredient.unit) {
-    //   toast("ข้อมูลไม่ครบถ้วน", {
-    //     description: "กรุณากรอกชื่อวัตถุดิบและหน่วยให้ครบถ้วน",
-    //   });
-    //   return;
-    // }
-
-    // const ingredient: Ingredient = {
-    //   // id: Math.max(...ingredients.map((i) => i.id)) + 1,
-    //   // ...newIngredient,
-    //   lastUpdated: new Date().toISOString().split("T")[0],
-    // };
-
-    // setIngredients([...ingredients, ingredient]);
-    // setNewIngredient({ name: "", unit: "", currentStock: 0, threshold: 0 });
-    setIsAddDialogOpen(false);
-
-    toast.success("เพิ่มวัตถุดิบเสร็จสิ้น");
-  };
-
-  // const handleUpdateStock = (id: number, newStock: number): void => {
-    // setIngredients(
-    //   ingredients.map((ingredient: ingredient) =>
-    //     ingredient.id === id
-    //       ? {
-    //           ...ingredient,
-    //           currentStock: newStock,
-    //           lastUpdated: new Date().toISOString().split("T")[0],
-    //         }
-    //       : ingredient
-    //   )
-    // );
-
-  //   toast.success("อัปเดตสต็อกเสร็จสิ้น");
-  // };
 
   return (
     <div className="min-h-screen bg-white ">
-      {/* Low Stock Alert ที่ปรับปรุงแล้ว */}
       {lowStockIngredients.length > 0 && (
         <Card className="p-4 border-red-200 bg-red-50 dark:bg-red-900/20">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -208,7 +259,6 @@ const IngredientManagement = () => {
 
       <div className="container">
         <div className="flex flex-row items-center gap-2 w-full mb-2">
-          {/* SearchBox */}
           <div className="relative flex-1 min-w-[120px] ml-4">
             <SearchBox
               dataSource={ingredients}
@@ -217,64 +267,58 @@ const IngredientManagement = () => {
           </div>
 
           <div className="flex flex-row justify-center sm:justify-end gap-2 w-full sm:w-auto">
-            {/* Status Filter Button */}
+            
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center">
-                  {/* <Filter className="w-4 h-4" /> */}
-                  <span>status</span>
-                  {selectedStatuses.length > 0 && (
-                    <span className="ml-1 bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
-                      {selectedStatuses.length}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48">
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes("ใกล้หมด")}
-                  onCheckedChange={() =>
-                    handleStatusFilterChange(
-                      selectedStatuses.includes("ใกล้หมด")
-                        ? selectedStatuses.filter((s) => s !== "ใกล้หมด")
-                        : [...selectedStatuses, "ใกล้หมด"]
-                    )
-                  }
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="flex items-center">
+            <span>สถานะ</span>
+            {selectedStatuses.length > 0 && (
+              <span className="ml-2 bg-primary text-white rounded-full px-2 py-0.5 text-xs">
+                {selectedStatuses.length}
+              </span>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48">
+          {["ใกล้หมด", "ปานกลาง", "เพียงพอ"].map((status) => (
+            <DropdownMenuCheckboxItem
+              key={status}
+              checked={selectedStatuses.includes(status)}
+              onCheckedChange={() => toggleStatus(status)}
+            >
+              {status}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+            
+            {/* <div className="grid grid-cols-1 gap-4 mt-4">
+              {filteredIngredients.map((ingredient) => (
+                <div
+                  key={ingredient.ingredient_id}
+                  className="p-4 border rounded shadow-sm bg-white"
                 >
-                  ใกล้หมด
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes("ปานกลาง")}
-                  onCheckedChange={() =>
-                    handleStatusFilterChange(
-                      selectedStatuses.includes("ปานกลาง")
-                        ? selectedStatuses.filter((s) => s !== "ปานกลาง")
-                        : [...selectedStatuses, "ปานกลาง"]
-                    )
-                  }
-                >
-                  ปานกลาง
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedStatuses.includes("เพียงพอ")}
-                  onCheckedChange={() =>
-                    handleStatusFilterChange(
-                      selectedStatuses.includes("เพียงพอ")
-                        ? selectedStatuses.filter((s) => s !== "เพียงพอ")
-                        : [...selectedStatuses, "เพียงพอ"]
-                    )
-                  }
-                >
-                  เพียงพอ
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <div className="font-semibold">
+                    {ingredient.ingredient_name}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    จำนวน: {ingredient.ingredient_total}{" "}
+                    {ingredient.ingredient_unit}
+                  </div>
+                  <div className="text-sm text-blue-600">
+                    สถานะ:{" "}
+                    {getIngredientStatus(
+                      ingredient.ingredient_total ?? 0,
+                      ingredient.ingredient_total_alert ?? 0
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div> */}
 
-            {/* เพิ่มวัตถุดิบใหม่ */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600">
-                  {/* <Package className="w-4 h-4" /> */}
                   create
                 </Button>
               </DialogTrigger>
@@ -282,72 +326,117 @@ const IngredientManagement = () => {
                 <DialogHeader>
                   <DialogTitle>เพิ่มวัตถุดิบใหม่</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">ชื่อวัตถุดิบ</Label>
-                    <Input
-                      id="name"
-                      // value={newIngredient.name}
-                      // onChange={(e) =>
-                      //   setNewIngredient({ ...newIngredient, name: e.target.value })
-                      // }
-                      placeholder="เช่น ข้าวสวย, ไข่ไก่"
-                    />
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleAddIngredient();
+                  }}
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">ชื่อวัตถุดิบ</Label>
+                      <Input
+                        id="name"
+                        name="name"
+                        value={newIngredient.ingredient_name ?? ""}
+                        onChange={(e) =>
+                          setNewIngredient({
+                            ...newIngredient,
+                            ingredient_name: e.target.value,
+                          })
+                        }
+                        placeholder="เช่น ข้าวสวย, ไข่ไก่"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="unit">หน่วย</Label>
+                      <Select
+                        value={newIngredient.ingredient_unit ?? ""}
+                        onValueChange={(value) =>
+                          setNewIngredient({
+                            ...newIngredient,
+                            ingredient_unit: value,
+                          })
+                        }
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="เลือกหน่วย" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="กรัม">กรัม</SelectItem>
+                          <SelectItem value="kg">กิโลกรัม</SelectItem>
+                          <SelectItem value="ฟอง">ฟอง</SelectItem>
+                          <SelectItem value="ลิตร">ลิตร</SelectItem>
+                          <SelectItem value="มล.">มิลลิลิตร</SelectItem>
+                          <SelectItem value="ชิ้น">ชิ้น</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="currentStock">จำนวนปัจจุบัน</Label>
+                      <Input
+                        id="currentStock"
+                        type="number"
+                        value={newIngredient.ingredient_total ?? ""}
+                        onChange={(e) =>
+                          setNewIngredient({
+                            ...newIngredient,
+                            ingredient_total: Math.max(
+                              0,
+                              Number(e.target.value)
+                            ),
+                          })
+                        }
+                        min="1"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="threshold">ระดับแจ้งเตือน</Label>
+                      <Input
+                        id="threshold"
+                        type="number"
+                        value={newIngredient.ingredient_total_alert ?? ""}
+                        onChange={(e) =>
+                          setNewIngredient({
+                            ...newIngredient,
+                            ingredient_total_alert: Math.max(
+                              0,
+                              Number(e.target.value)
+                            ),
+                          })
+                        }
+                        min="1"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="image">URL รูปภาพ (ถ้ามี)</Label>
+                      <Input
+                        id="image"
+                        value={newIngredient.ingredient_image ?? ""}
+                        onChange={(e) =>
+                          setNewIngredient({
+                            ...newIngredient,
+                            ingredient_image: e.target.value,
+                          })
+                        }
+                        placeholder="URL รูปภาพ"
+                      />
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "กำลังเพิ่ม..." : "เพิ่มวัตถุดิบ"}
+                    </Button>
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
                   </div>
-                  <div>
-                    <Label htmlFor="unit">หน่วย</Label>
-                    <Select
-                    // value={newIngredient.unit}
-                    // onValueChange={(value: string) =>
-                    //   setNewIngredient({ ...newIngredient, unit: value })
-                    // }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="เลือกหน่วย" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="กรัม">กรัม</SelectItem>
-                        <SelectItem value="kg">กิโลกรัม</SelectItem>
-                        <SelectItem value="ฟอง">ฟอง</SelectItem>
-                        <SelectItem value="ลิตร">ลิตร</SelectItem>
-                        <SelectItem value="มล.">มิลลิลิตร</SelectItem>
-                        <SelectItem value="ชิ้น">ชิ้น</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="currentStock">จำนวนปัจจุบัน</Label>
-                    <Input
-                      id="currentStock"
-                      type="number"
-                      // value={newIngredient.currentStock}
-                      // onChange={(e) =>
-                      //   setNewIngredient({
-                      //     ...newIngredient,
-                      //     currentStock: Number(e.target.value),
-                      //   })
-                      // }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="threshold">ระดับแจ้งเตือน</Label>
-                    <Input
-                      id="threshold"
-                      type="number"
-                      // value={newIngredient.threshold}
-                      // onChange={(e) =>
-                      //   setNewIngredient({
-                      //     ...newIngredient,
-                      //     threshold: Number(e.target.value),
-                      //   })
-                      // }
-                      placeholder="จำนวนที่ต้องการแจ้งเตือน"
-                    />
-                  </div>
-                  <Button onClick={handleAddIngredient} className="w-full">
-                    เพิ่มวัตถุดิบ
-                  </Button>
-                </div>
+                </form>
               </DialogContent>
             </Dialog>
           </div>
@@ -357,7 +446,7 @@ const IngredientManagement = () => {
         {loading && <p>Loading...</p>}
 
         <div className="justify-center columns grid is-multiline">
-          {visibleingredient.map((ingredient, idx) => (
+          {filteredIngredients.map((ingredient, idx) => (
             <MenuCard mode="ingredient" key={idx} item={ingredient} />
           ))}
         </div>
@@ -365,98 +454,19 @@ const IngredientManagement = () => {
         {visibleCount < filteredIngredient.length && (
           <div ref={loadMoreRef} style={{ height: "1px" }} />
         )}
+
+        {filteredIngredient.length === 0 && (
+          <Card className="p-8 text-center">
+            <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              ไม่พบวัตถุดิบ
+            </h3>
+            <p className="text-gray-500">
+              ลองค้นหาด้วยคำอื่น หรือเพิ่มวัตถุดิบใหม่
+            </p>
+          </Card>
+        )}
       </div>
-
-      {/* ส่วนแสดงผลแบบการ์ดสำหรับหน้าจอขนาดเล็ก */}
-      {/* <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {filteredIngredients.map((ingredient) => {
-          const status = getStockStatus(ingredient);
-          return (
-            <Card
-              key={ingredient.ingredient_id}
-              className="p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold">{ingredient.ingredient_name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge
-                    variant={status.color}  
-                    >
-                      {status.label}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">
-                    {ingredient.currentStock} {ingredient.unit}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    เตือนที่ {ingredient.threshold}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 flex justify-between items-center">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  {ingredient.lastUpdated}
-                </div>
-                <div className="flex gap-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        เพิ่มสต็อก
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>เพิ่มสต็อก: {ingredient.name}</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label>
-                            จำนวนที่ต้องการเพิ่ม ({ingredient.unit})
-                          </Label>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            onChange={(e) => {
-                              const addAmount = Number(e.target.value);
-                              if (addAmount > 0) {
-                                handleUpdateStock(
-                                  ingredient.id,
-                                  ingredient.currentStock + addAmount
-                                );
-                              }
-                            }}
-                          />
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          สต็อกปัจจุบัน: {ingredient.currentStock}{" "}
-                          {ingredient.unit}
-                        </p>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div> */}
-
-      {filteredIngredient.length === 0 && (
-        <Card className="p-8 text-center">
-          <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            ไม่พบวัตถุดิบ
-          </h3>
-          <p className="text-gray-500">
-            ลองค้นหาด้วยคำอื่น หรือเพิ่มวัตถุดิบใหม่
-          </p>
-        </Card>
-      )}
     </div>
   );
 };

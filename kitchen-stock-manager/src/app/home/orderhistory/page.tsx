@@ -31,36 +31,43 @@ import {
 } from '@/share/ui/pagination';
 import { Input } from '@/share/ui/input';
 
-interface CartItem {
+interface Ingredient {
+  ingredient_name: string;
+  useItem: number;
+  calculatedTotal?: number; // เพิ่ม field นี้สำหรับเก็บผลลัพธ์การคำนวณ
+  sourceMenu?: string; // ระบุว่าใช้วัตถุดิบจากเมนูอะไร
+}
+
+interface MenuItem {
   menu_name: string;
-  price?: number;
-  quantity?: number;
-  ingredients?: Array<{
-    name: string;
-    quantity: string;
-    unit: string;
-  }>;
+  menu_total: number;
+  ingredients: Ingredient[];
+}
+
+interface CartItem extends MenuItem {
+  totalPrice?: number;
+}
+
+interface Cart {
+  id: string;
+  orderNumber: string;
+  name: string;
+  date: string;
+  time: string;
+  sets: number;
+  price: number;
+  status: string;
+  createdBy: string;
+  menuItems: CartItem[];
+  allIngredients: {
+    menuName: string;
+    ingredients: Ingredient[];
+  }[];
 }
 
 const OrderHistory: React.FC = () => {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
-  interface Order {
-    id: string;
-    orderNumber: string;
-    name: string;
-    date: string;
-    time: string;
-    sets: number;
-    price: number;
-    status: string; // 'pending', 'completed', 'success', 'cancelled'
-    createdBy: string; // ชื่อผู้สร้างออร์เดอร์
-    ingredients: Array<{
-      name: string;
-      quantity: string;
-      unit?: string; // อาจมีหรือไม่มี
-    }>;
-  }
+  const [carts, setCarts] = useState<Cart[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -76,76 +83,105 @@ const OrderHistory: React.FC = () => {
     role: 'เชฟ',
   };
 
-const fetchOrders = async () => {
-  setIsLoading(true);
-  setError(null);
-  try {
-    const response = await fetch('/api/get/carts');
-    if (!response.ok) throw new Error('Failed to fetch carts');
-    
-    const data = await response.json();
+  const safeParseJSON = (jsonString: string): CartItem[] => {
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      console.error('Failed to parse JSON:', e);
+      return [];
+    }
+  };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const formattedOrders: Order[] = data.map((cart: any) => {
-      // ตรวจสอบและแปลง cart_menu_items จาก JSON string เป็น object (ถ้าจำเป็น)
-      const menuItems: CartItem[] = 
-        typeof cart.cart_menu_items === 'string' 
-          ? JSON.parse(cart.cart_menu_items) 
-          : cart.cart_menu_items || [];
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/get/carts');
+      if (!response.ok) throw new Error('Failed to fetch carts');
       
-      const firstItem = menuItems[0] || {};
-
-      // คำนวณราคารวมและจำนวนเซ็ต
-      const { totalPrice, totalSets } = menuItems.reduce(
-        (acc, item) => ({
-          totalPrice: acc.totalPrice + (item.price || 0) * (item.quantity || 1),
-          totalSets: acc.totalSets + (item.quantity || 1)
-        }),
-        { totalPrice: 0, totalSets: 0 }
-      );
-
-      // สร้าง orderNumber จาก 5 ตัวแรกของ cart_idห
-      const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || 'XXXXX'}`;
-
-      return {
-        id: cart.cart_id || 'no-id',
-        orderNumber,
-        name: menuItems.length > 1
-          ? `${firstItem.menu_name || 'ไม่มีชื่อเมนู'} + ${menuItems.length - 1} รายการ`
-          : firstItem.menu_name || 'ไม่มีชื่อเมนู',
-        date: cart.cart_create_date
-          ? new Date(cart.cart_create_date).toLocaleDateString('th-TH')
-          : 'ไม่มีวันที่',
-        time: cart.cart_create_date
-          ? new Date(cart.cart_create_date).toLocaleTimeString('th-TH', {
+      const data = await response.json();
+  
+      const formattedOrders: Cart[] = data.map((cart: any) => {
+        const menuItems: MenuItem[] = 
+          typeof cart.cart_menu_items === 'string' 
+            ? safeParseJSON(cart.cart_menu_items) 
+            : cart.cart_menu_items || [];
+  
+        // คำนวณราคารวมและจำนวนเซ็ต
+        const totalSets = menuItems.reduce((sum, item) => sum + (item.menu_total || 0), 0);
+        
+        // สร้างชื่อสำหรับแสดงผล
+        const menuDisplayName = menuItems.length > 0
+          ? menuItems.map(item => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`).join(' + ')
+          : 'ไม่มีชื่อเมนู';
+  
+        // คำนวณวัตถุดิบที่ใช้ในแต่ละเมนู
+        const allIngredients = menuItems.map(menu => ({
+          menuName: menu.menu_name,
+          ingredients: menu.ingredients.map(ing => ({
+            ...ing,
+            calculatedTotal: ing.useItem * menu.menu_total,
+            sourceMenu: menu.menu_name
+          }))
+        }));
+  
+        // สร้าง orderNumber จาก 5 ตัวแรกของ cart_id
+        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || 'XXXXX'}`;
+  
+        const formatThaiTime = (dateString: string) => {
+          // ใช้เวลาเดิมโดยไม่บวก 7 ชั่วโมง
+          const date = new Date(dateString);
+          
+          return {
+            date: date.toLocaleDateString('th-TH', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            }),
+            time: date.toLocaleTimeString('th-TH', {
               hour: '2-digit',
               minute: '2-digit'
             })
-          : 'ไม่มีเวลา',
-        sets: totalSets,
-        price: totalPrice,
-        status: 'completed', // ตั้งค่าเริ่มต้นเนื่องจากข้อมูลไม่มี field status
-        createdBy: cart.cart_username || 'ไม่ทราบผู้สร้าง',
-        ingredients: firstItem.ingredients || [] // ตั้งค่าเริ่มต้นหากไม่มีข้อมูลวัตถุดิบ
-      };
-    });
-
-    setOrders(formattedOrders);
-  } catch (err) {
-    console.error('Error fetching orders:', err);
-    setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
-  } finally {
-    setIsLoading(false);
-  }
-};
+          };
+        };
+        
+        // ใช้แบบนี้
+        const { date: thaiDate, time: thaiTime } = formatThaiTime(cart.cart_create_date);
+        
+          return {
+          id: cart.cart_id || 'no-id',
+          orderNumber,
+          name: menuDisplayName,
+          date: thaiDate,
+          time: thaiTime,
+          sets: totalSets,
+          price: cart.cart_total_price || 0, // ใช้ cart_total_price จาก API หากมี
+          status: 'completed',
+          createdBy: cart.cart_username || 'ไม่ทราบผู้สร้าง',
+          menuItems: menuItems.map(item => ({
+            ...item,
+            // totalPrice: (item.menu_total || 0) * (item.price || 0) // คำนวณราคารวมของแต่ละเมนู
+          })),
+          allIngredients
+        };
+      });
+  
+      setCarts(formattedOrders);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  const handleSignOut = () => router.push('/');
-  const handleBackToDashboard = () => router.push('/dashboard');
-  const handleHomeClick = () => router.push('/dashboard');
+  const handleSignOut = () => router.push('/login');
+  const handleBackToDashboard = () => router.push('/home');
+  const handleHomeClick = () => router.push('/home');
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -193,11 +229,11 @@ const fetchOrders = async () => {
   };
 
   const uniqueCreators = useMemo(() => {
-    return [...new Set(orders.map((order) => order.createdBy))];
-  }, [orders]);
+    return [...new Set(carts.map((cart) => cart.createdBy))];
+  }, [carts]);
 
   const filteredAndSortedOrders = useMemo(() => {
-    let filtered = [...orders];
+    let filtered = [...carts];
 
     if (searchTerm) {
       filtered = filtered.filter((order) =>
@@ -238,7 +274,7 @@ const fetchOrders = async () => {
     });
 
     return filtered;
-  }, [orders, searchTerm, filterStatus, filterCreator, sortBy, sortOrder]);
+  }, [carts, searchTerm, filterStatus, filterCreator, sortBy, sortOrder]);
 
   const totalPages = Math.ceil(filteredAndSortedOrders.length / itemsPerPage);
   const paginatedOrders = filteredAndSortedOrders.slice(
@@ -250,15 +286,15 @@ const fetchOrders = async () => {
     const headers = ['เลขที่ออร์เดอร์', 'ชื่อเมนู', 'วันที่', 'เวลา', 'จำนวน Set', 'ราคา', 'สถานะ', 'ผู้สร้าง'];
     const csvContent = [
       headers.join(','),
-      ...filteredAndSortedOrders.map((order) => [
-        order.id,
-        order.name,
-        order.date,
-        order.time,
-        order.sets,
-        order.price,
-        getStatusText(order.status),
-        order.createdBy,
+      ...filteredAndSortedOrders.map((cart) => [
+        cart.id,
+        cart.name,
+        cart.date,
+        cart.time,
+        cart.sets,
+        cart.price,
+        getStatusText(cart.status),
+        cart.createdBy,
       ].join(','))
     ].join('\n');
 
@@ -279,15 +315,15 @@ const fetchOrders = async () => {
     doc.text('ประวัติคำสั่งซื้อ (Order History)', 14, 20);
 
     const tableColumn = ['เลขที่ออร์เดอร์', 'ชื่อเมนู', 'วันที่', 'เวลา', 'จำนวน Set', 'ราคา', 'สถานะ', 'ผู้สร้าง'];
-    const tableRows = filteredAndSortedOrders.map(order => [
-      order.id,
-      order.name,
-      order.date,
-      order.time,
-      order.sets,
-      order.price,
-      getStatusText(order.status),
-      order.createdBy,
+    const tableRows = filteredAndSortedOrders.map(cart => [
+      cart.id,
+      cart.name,
+      cart.date,
+      cart.time,
+      cart.sets,
+      cart.price,
+      getStatusText(cart.status),
+      cart.createdBy,
     ]);
 
     doc.autoTable({
@@ -302,7 +338,7 @@ const fetchOrders = async () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
-      <div className="w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/30 shadow-md">
+      {/* <div className="w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/30 shadow-md">
         <div className="p-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-black tracking-tight">
             SWANS <span className="text-sm font-medium text-slate-700">CAFE & BISTRO</span>
@@ -315,9 +351,9 @@ const fetchOrders = async () => {
             </Button>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="p-4 flex items-center justify-between bg-white/80 border-b border-slate-200">
+      {/* <div className="p-4 flex items-center justify-between bg-white/80 border-b border-slate-200">
         <Button variant="ghost" size="sm" onClick={handleBackToDashboard}>
           <ArrowLeft className="w-4 h-4 mr-1" /> กลับ
         </Button>
@@ -327,7 +363,7 @@ const fetchOrders = async () => {
           <span className="text-slate-400">/</span>
           <span className="font-semibold">Order History</span>
         </div>
-      </div>
+      </div> */}
 
       <div className="p-6">
         <h2 className="text-2xl font-bold mb-2">Order History</h2>
@@ -343,7 +379,7 @@ const fetchOrders = async () => {
           {/* Search */}
           <div className="lg:col-span-2">
             <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+              <Search className="absolute left-103 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
               <Input
                 placeholder="ค้นหาตามชื่อเมนู, เลขออร์เดอร์..."
                 value={searchTerm}
@@ -354,7 +390,7 @@ const fetchOrders = async () => {
           </div>
 
           {/* Sort By */}
-          <div>
+          <div >
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="h-10 rounded-lg border-slate-300 shadow-sm">
                 <ArrowUpDown className="w-4 h-4 mr-2 text-slate-500" />
@@ -441,87 +477,86 @@ const fetchOrders = async () => {
             </Card>
           ) : (
             <Accordion type="single" collapsible className="space-y-4">
-              {paginatedOrders.map((order) => (
-                <AccordionItem key={order.id} value={order.id} className="border-none">
-                  <Card className={`bg-gradient-to-r ${getStatusColor(order.status)} p-4 rounded-xl`}>
+              {paginatedOrders.map((cart) => (
+                <AccordionItem key={cart.id} value={cart.id} className="border-none">
+                  <Card className={`bg-gradient-to-r ${getStatusColor(cart.status)} p-4 rounded-xl`}>
                     <AccordionTrigger className="flex items-center justify-between w-full hover:no-underline gap-4">
                       <div className="flex flex-col md:flex-row justify-between w-full items-start gap-4">
                         <div className="flex items-start gap-4">
                           <div className="p-2 bg-white rounded-xl shadow">
-                            {getStatusIcon(order.status)}
+                            {getStatusIcon(cart.status)}
                           </div>
                           <div className="space-y-1">
-                            <h3 className="text-lg font-semibold text-left">{order.name}</h3>
+                            <h3 className="text-lg font-semibold text-left">{cart.name}</h3>
                             <div className="flex gap-1 flex-wrap text-xs text-slate-600">
                               <span className="flex items-center gap-0.5">
-                                <Hash className="w-3 h-3" /> {order.id}
+                                <Hash className="w-3 h-3" /> {cart.id}
                               </span>
                               <span className="flex items-center gap-0.5">
-                                <Calendar className="w-3 h-3" /> {order.date}
+                                <Calendar className="w-3 h-3" /> {cart.date}
                               </span>
                               <span className="flex items-center gap-0.5">
-                                <Clock className="w-3 h-3" /> {order.time}
+                                <Clock className="w-3 h-3" /> {cart.time}
                               </span>
                               <span className="flex items-center gap-0.5">
-                                <Package className="w-3 h-3" /> {order.sets} Set
+                                <Package className="w-3 h-3" /> {cart.sets} Set
                               </span>
                             </div>
                           </div>
                         </div>
 
                         <div className="text-right ml-auto">
-                          <p className="text-xl font-bold">฿{order.price.toLocaleString()}</p>
+                          <p className="text-xl font-bold">฿{cart.price.toLocaleString()}</p>
                           <span className="inline-block mt-1 bg-white px-3 py-1 rounded-full text-xs font-medium text-black shadow-sm">
-                            {getStatusText(order.status)}
+                            {getStatusText(cart.status)}
                           </span>
                         </div>
                       </div>
                     </AccordionTrigger>
 
                     <AccordionContent className="mt-4">
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="text-sm font-bold text-blue-700 mb-2 flex items-center gap-2">
-                            <Star className="w-4 h-4" /> วัตถุดิบที่ใช้
-                          </h4>
-                          {order.ingredients.map((ing, idx) => (
-                            <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm mb-2">
-                              <span className="font-medium text-black">{ing.name}</span>
-                              <span className="bg-slate-100 px-3 py-1 rounded text-sm text-slate-700">{ing.quantity}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
-                            <User className="w-4 h-4" /> ข้อมูลออร์เดอร์
-                          </h4>
-                          <div className="space-y-2">
-                            <div className="flex justify-between bg-white p-3 rounded-lg shadow-sm">
-                              <span>จำนวน Set</span>
-                              <span className="text-slate-700">{order.sets} Set</span>
-                            </div>
-                            <div className="flex justify-between bg-white p-3 rounded-lg shadow-sm">
-                              <span>วันที่สั่ง</span>
-                              <span className="text-slate-700">{order.date}</span>
-                            </div>
-                            <div className="flex justify-between bg-white p-3 rounded-lg shadow-sm">
-                              <span>เวลาที่สั่ง</span>
-                              <span className="text-slate-700">{order.time}</span>
-                            </div>
-                            <div className="flex justify-between bg-white p-3 rounded-lg shadow-sm">
-                              <span>ผู้สร้างออร์เดอร์</span>
-                              <span className="text-slate-700">{order.createdBy}</span>
-                            </div>
-                            <div className="flex justify-between bg-white p-3 rounded-lg shadow-sm">
-                              <span>สถานะ</span>
-                              <span className="inline-block px-3 py-1 rounded-full text-xs font-medium text-black bg-yellow-100">
-                                {getStatusText(order.status)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </AccordionContent>
+  <div className="grid md:grid-cols-2 gap-6">
+    <div>
+      <h4 className="text-sm font-bold text-blue-700 mb-2 flex items-center gap-2">
+        <Package className="w-4 h-4" /> เมนูที่สั่ง
+      </h4>
+      {cart.menuItems.map((item, idx) => (
+        <div key={idx} className="bg-white p-3 rounded-lg shadow-sm mb-2">
+          <div className="font-medium text-black">
+            {item.menu_name} <span className="text-blue-600">({item.menu_total} กล่อง)</span>
+          </div>
+          {item.totalPrice && (
+            <div className="text-sm text-slate-600 mt-1">
+              ราคารวม: ฿{item.totalPrice.toLocaleString()}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+    <div>
+      <h4 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
+        <User className="w-4 h-4" /> วัตถุดิบที่ใช้
+      </h4>
+      {cart.allIngredients.map((menuGroup, groupIdx) => (
+        <div key={groupIdx} className="mb-4">
+          <div className="font-medium text-black mb-2">
+            {menuGroup.menuName} <span className="text-sm text-slate-500">({cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} กล่อง)</span>
+          </div>
+          <div className="space-y-2">
+            {menuGroup.ingredients.map((ing, idx) => (
+              <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                <span className="text-slate-700">{ing.ingredient_name}</span>
+                <span className="bg-slate-100 px-3 py-1 rounded text-sm text-slate-700">
+                  ใช้ {ing.useItem} กรัมต่อกล่อง × {cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} = {ing.calculatedTotal} กรัม
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</AccordionContent>
                   </Card>
                 </AccordionItem>
               ))}

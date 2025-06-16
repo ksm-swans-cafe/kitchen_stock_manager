@@ -13,11 +13,22 @@ export interface MenuItem {
 }
 
 export interface ingredient{
-  ingredient_id? : string,
-  ingredient_name? : string,
-  ingredient_total? : number,
-  ingredient_unit? : string,
-  ingredient_lastupdate? : string,
-  ingredient_image? : string
-  ingredient_total_alert? : number
+  ingredient_id? : string;
+  ingredient_name? : string;
+  ingredient_total? : number;
+  ingredient_unit? : string;
+  ingredient_lastupdate? : string;
+  ingredient_image? : string;
+  ingredient_total_alert? : number;
+  ingredient_status? : string;
+};
+
+export interface newIngredient{
+  ingredient_id? : string;
+  ingredient_name? : string;
+  ingredient_total? : number;
+  ingredient_unit? : string;
+  ingredient_lastupdate? : string;
+  ingredient_image? : string;
+  ingredient_total_alert? : number;
 };

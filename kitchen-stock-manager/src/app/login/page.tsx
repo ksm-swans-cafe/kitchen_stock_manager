@@ -95,8 +95,8 @@ const Login: React.FC = () => {
         });
 
         if (loginResponse.ok) {
-          await router.refresh();
           router.push("/home");
+          router.refresh();
         } else {
           throw new Error('Failed to set login cookie');
         }

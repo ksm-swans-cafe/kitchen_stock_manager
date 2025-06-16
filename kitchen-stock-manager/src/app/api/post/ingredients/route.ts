@@ -10,13 +10,11 @@ export async function POST(request: NextRequest) {
       ingredient_unit,
       ingredient_image,
       ingredient_total_alert,
-    } = body;
-
-    if (
+    } = body.json;
+   if (
       !ingredient_name ||
       !ingredient_total ||
       !ingredient_unit ||
-      !ingredient_image ||
       !ingredient_total_alert
     ) {
       return NextResponse.json(

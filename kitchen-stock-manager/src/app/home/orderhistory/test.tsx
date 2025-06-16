@@ -236,3 +236,46 @@
 // };
 
 // export default Page;
+
+
+
+
+
+// {lowStockIngredients.length > 0 && (
+//         <Card className="p-4 border-red-200 bg-red-50 dark:bg-red-900/20">
+//           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+//             <div className="flex items-center gap-2">
+//               <AlertTriangle className="w-5 h-5 text-red-500" />
+//               <h3 className="font-semibold text-red-800 dark:text-red-200">
+//                 แจ้งเตือน: วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)
+//               </h3>
+//             </div>
+//             <div className="flex flex-wrap gap-2">
+//               {lowStockIngredients.map((ingredient) => (
+//                 <Badge
+//                   key={ingredient.ingredient_id}
+//                   variant="destructive"
+//                   className="whitespace-nowrap"
+//                 >
+//                   {ingredient.ingredient_name} ({ingredient.ingredient_total} /{" "}
+//                   {ingredient.ingredient_total_alert})
+//                 </Badge>
+//               ))}
+//             </div>
+//           </div>
+//         </Card>
+//       )}
+
+
+
+
+// const lowStockIngredients = allIngredient.filter((ingredient) => {
+//     const total = Number(ingredient.ingredient_total) || 0;
+//     const alert = Number(ingredient.ingredient_total_alert) || 0;
+//     const isLow = total <= alert;
+//     // console.log(
+//     //   `🔎 ${ingredient.ingredient_name}: total = ${total}, alert = ${alert} → isLow: ${isLow}`
+//     // );
+
+//     return isLow;
+//   });

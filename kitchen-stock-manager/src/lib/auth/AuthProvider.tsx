@@ -78,8 +78,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsAuthenticated(false);
         setUserRole(null);
         setUserName(null);
-        router.push('/login');
-        router.refresh();
+        location.href = '/login';
+        // router.push('/login');
+        // router.refresh();
       }
     } catch (error) {
       console.error('Logout failed:', error);

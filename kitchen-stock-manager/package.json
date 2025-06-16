@@ -12,6 +12,9 @@
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@neon/serverless": "npm:@jsr/neon__serverless@^1.0.1",
     "@neondatabase/serverless": "^1.0.1",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -43,9 +46,11 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.6.2",
     "sonner": "^2.0.5",
+    "superjson": "^2.2.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "tw-animate-css": "^1.3.4"
+    "tw-animate-css": "^1.3.4",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
