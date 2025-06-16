@@ -56,18 +56,18 @@ export async function PATCH(
     });
 
   } catch (error: unknown) {
-    console.error('เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ:', error);
-    
-    // จัดการ error แบบ type-safe
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : 'เกิดข้อผิดพลาดที่ไม่รู้จัก';
-    
+    console.error('Error updating ingredient:', error);
+  
+    let errorMessage = 'An error occurred';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
       { 
         error: errorMessage,
         ...(process.env.NODE_ENV === 'development' && {
-          stack: error instanceof Error ? error.stack : undefined
+          details: error instanceof Error ? error.stack : undefined
         })
       },
       { status: 500 }
