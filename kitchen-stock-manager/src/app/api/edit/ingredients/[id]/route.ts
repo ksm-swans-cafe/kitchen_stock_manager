@@ -1,15 +1,28 @@
-import { NextResponse } from 'next/server';
+// src/app/api/edit/ingredients/[id]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/app/database/connect';
 
 export async function PATCH(
-  request: Request,
-  context: { params: { id: string } }
-) {
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
   try {
-    const { id } = context.params;
-    const { ingredient_total, ingredient_total_alert } = await request.json();
+    const { id } = params;
+    
+    // ตรวจสอบและแปลงข้อมูล JSON
+    let requestBody;
+    try {
+      requestBody = await request.json();
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'รูปแบบข้อมูล JSON ไม่ถูกต้อง' },
+        { status: 400 }
+      );
+    }
 
-    // Validate input
+    const { ingredient_total, ingredient_total_alert } = requestBody;
+
+    // ตรวจสอบข้อมูลที่จำเป็น
     if (ingredient_total === undefined && ingredient_total_alert === undefined) {
       return NextResponse.json(
         { error: 'ต้องระบุ ingredient_total หรือ ingredient_total_alert' },
@@ -17,6 +30,7 @@ export async function PATCH(
       );
     }
 
+    // อัปเดตฐานข้อมูล
     const result = await sql`
       UPDATE ingredients 
       SET 
@@ -27,13 +41,15 @@ export async function PATCH(
       RETURNING *
     `;
 
-    if (result.length === 0) {
+    // ตรวจสอบผลลัพธ์
+    if (!result || result.length === 0) {
       return NextResponse.json(
         { error: 'ไม่พบวัตถุดิบที่ต้องการอัปเดต' },
         { status: 404 }
       );
     }
 
+    // ส่งคำตอบสำเร็จ
     return NextResponse.json({
       success: true,
       data: result[0]
@@ -42,11 +58,11 @@ export async function PATCH(
   } catch (error: unknown) {
     console.error('เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ:', error);
     
-    let errorMessage = 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-
+    // จัดการ error แบบ type-safe
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'เกิดข้อผิดพลาดที่ไม่รู้จัก';
+    
     return NextResponse.json(
       { 
         error: errorMessage,
