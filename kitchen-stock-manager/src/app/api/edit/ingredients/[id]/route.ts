@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import sql from '@/app/database/connect';
 
 export async function PATCH(
-  request: Request,  // Changed from NextRequest to Request
-  { params }: { params: { id: string } }  // Simplified params destructuring
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
-  const { id } = params;
-  
   try {
+    const { id } = params;
     const { ingredient_total, ingredient_total_alert } = await request.json();
 
+    // Validate input
     if (ingredient_total === undefined && ingredient_total_alert === undefined) {
       return NextResponse.json(
         { error: 'ต้องระบุ ingredient_total หรือ ingredient_total_alert' },
@@ -17,6 +17,7 @@ export async function PATCH(
       );
     }
 
+    // Update database
     const result = await sql`
       UPDATE ingredients 
       SET 
@@ -36,11 +37,11 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      data: result[0]  // Assuming you want to return the first (and only) updated record
+      data: result[0]
     });
 
   } catch (error) {
-    console.error('Error updating ingredient:', error);
+    console.error('เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ:', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล' },
       { status: 500 }
