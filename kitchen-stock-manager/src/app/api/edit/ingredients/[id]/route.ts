@@ -11,7 +11,8 @@ export async function PATCH(
     let requestBody;
     try {
       requestBody = await request.json();
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Invalid JSON format:', error);
       return NextResponse.json(
         { error: 'Invalid JSON format' },
         { status: 400 }
