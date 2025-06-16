@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import sql from '@/app/database/connect';
 
+// @ts-ignore
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
