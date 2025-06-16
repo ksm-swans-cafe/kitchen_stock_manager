@@ -3,10 +3,10 @@ import sql from '@/app/database/connect';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const { id } = context.params;
     const { ingredient_total, ingredient_total_alert } = await request.json();
 
     // Validate input
@@ -39,7 +39,7 @@ export async function PATCH(
       data: result[0]
     });
 
-  } catch (error: unknown) { // ระบุ type เป็น unknown อย่างชัดเจน
+  } catch (error: unknown) {
     console.error('เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ:', error);
     
     let errorMessage = 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
