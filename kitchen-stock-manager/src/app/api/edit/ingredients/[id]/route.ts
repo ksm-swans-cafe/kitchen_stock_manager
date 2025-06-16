@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import sql from '@/app/database/connect';
 
-// @ts-ignore
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
@@ -18,7 +17,6 @@ export async function PATCH(
       );
     }
 
-    // Update database
     const result = await sql`
       UPDATE ingredients 
       SET 
@@ -41,10 +39,21 @@ export async function PATCH(
       data: result[0]
     });
 
-  } catch (error) {
+  } catch (error: unknown) { // ระบุ type เป็น unknown อย่างชัดเจน
     console.error('เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ:', error);
+    
+    let errorMessage = 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล' },
+      { 
+        error: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && {
+          stack: error instanceof Error ? error.stack : undefined
+        })
+      },
       { status: 500 }
     );
   }
