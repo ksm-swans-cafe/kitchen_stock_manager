@@ -1,37 +1,14 @@
-import { NextResponse, NextRequest } from 'next/server';
-
-import sql from '@/app/database/connect'
-
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+import { NextResponse } from 'next/server';
+import sql from '@/app/database/connect';
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: RouteParams
-): Promise<NextResponse>  {
+  request: Request,  // Changed from NextRequest to Request
+  { params }: { params: { id: string } }  // Simplified params destructuring
+) {
   const { id } = params;
-  console.log(id)
+  
   try {
-
     const { ingredient_total, ingredient_total_alert } = await request.json();
-
-    const updates = [];
-    if (ingredient_total !== undefined) {
-      updates.push(sql`ingredient_total = ${ingredient_total}`);
-    }
-    if (ingredient_total_alert !== undefined) {
-      updates.push(sql`ingredient_total_alert = ${ingredient_total_alert}`);
-    }
-
-    if (updates.length === 0) {
-      return NextResponse.json(
-        { error: 'ต้องระบุ ingredient_total หรือ ingredient_total_alert' },
-        { status: 400 }
-      );
-    }
 
     if (ingredient_total === undefined && ingredient_total_alert === undefined) {
       return NextResponse.json(
@@ -41,14 +18,14 @@ export async function PATCH(
     }
 
     const result = await sql`
-        UPDATE ingredients 
-        SET 
-          ingredient_total = ${ingredient_total},
-          ingredient_total_alert = ${ingredient_total_alert},
-          ingredient_lastupdate = NOW()
-        WHERE ingredient_id = ${id}
-        RETURNING *
-      `;
+      UPDATE ingredients 
+      SET 
+        ingredient_total = COALESCE(${ingredient_total}, ingredient_total),
+        ingredient_total_alert = COALESCE(${ingredient_total_alert}, ingredient_total_alert),
+        ingredient_lastupdate = NOW()
+      WHERE ingredient_id = ${id}
+      RETURNING *
+    `;
 
     if (result.length === 0) {
       return NextResponse.json(
@@ -59,7 +36,7 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      data: result[0],
+      data: result[0]  // Assuming you want to return the first (and only) updated record
     });
 
   } catch (error) {
