@@ -1,4 +1,3 @@
-// src/app/api/edit/ingredients/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/app/database/connect';
 
@@ -9,28 +8,25 @@ export async function PATCH(
   try {
     const { id } = params;
     
-    // ตรวจสอบและแปลงข้อมูล JSON
     let requestBody;
     try {
       requestBody = await request.json();
     } catch (error) {
       return NextResponse.json(
-        { error: 'รูปแบบข้อมูล JSON ไม่ถูกต้อง' },
+        { error: 'Invalid JSON format' },
         { status: 400 }
       );
     }
 
     const { ingredient_total, ingredient_total_alert } = requestBody;
 
-    // ตรวจสอบข้อมูลที่จำเป็น
     if (ingredient_total === undefined && ingredient_total_alert === undefined) {
       return NextResponse.json(
-        { error: 'ต้องระบุ ingredient_total หรือ ingredient_total_alert' },
+        { error: 'Must specify either ingredient_total or ingredient_total_alert' },
         { status: 400 }
       );
     }
 
-    // อัปเดตฐานข้อมูล
     const result = await sql`
       UPDATE ingredients 
       SET 
@@ -41,15 +37,13 @@ export async function PATCH(
       RETURNING *
     `;
 
-    // ตรวจสอบผลลัพธ์
     if (!result || result.length === 0) {
       return NextResponse.json(
-        { error: 'ไม่พบวัตถุดิบที่ต้องการอัปเดต' },
+        { error: 'Ingredient not found' },
         { status: 404 }
       );
     }
 
-    // ส่งคำตอบสำเร็จ
     return NextResponse.json({
       success: true,
       data: result[0]
@@ -57,20 +51,14 @@ export async function PATCH(
 
   } catch (error: unknown) {
     console.error('Error updating ingredient:', error);
-  
-    let errorMessage = 'An error occurred';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
+    
+    const errorResponse = {
+      error: 'Failed to update ingredient',
+      ...(process.env.NODE_ENV === 'development' && {
+        details: error instanceof Error ? error.message : String(error)
+      })
+    };
 
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        ...(process.env.NODE_ENV === 'development' && {
-          details: error instanceof Error ? error.stack : undefined
-        })
-      },
-      { status: 500 }
-    );
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
