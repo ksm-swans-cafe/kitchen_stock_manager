@@ -1,8 +1,8 @@
-'use client';
+"use client";
 import { useState, useEffect } from "react";
 import { MenuItem, ingredient } from "@/models/menu_card/MenuCard-model";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
 import { Button } from "@/share/ui/button";
 import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
+import { useCartStore } from "@/stores/store";
 
 type Mode = "menu" | "ingredient";
 
@@ -28,10 +29,10 @@ interface MenuCardProps {
   item: MenuItem | ingredient;
 }
 
-export default function MenuCard({
-  mode,
-  item,
-}: MenuCardProps) {
+export default function MenuCard({ mode, item }: MenuCardProps) {
+  const addItem = useCartStore((state) => state.addItem);
+  const removeItem = useCartStore((state) => state.removeItem);
+
   let title: string | undefined;
   let imageUrl: string | undefined;
   let description: string | undefined;
@@ -49,30 +50,48 @@ export default function MenuCard({
     ingredient_total_alert: 0,
     ingredient_lastupdate: "",
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-  const ingredientItem = mode === "ingredient" ? (item as ingredient) : undefined;
+  const ingredientItem =
+    mode === "ingredient" ? (item as ingredient) : undefined;
 
   // Map ค่าหน่วยจากฐานข้อมูลเป็น display value
   const unitDisplayMap: { [key: string]: string } = {
-    "กิโลกรัม": "kg",
-    "กก.": "kg",
-    "กรัม": "กรัม",
-    "ฟอง": "ฟอง",
-    "ลิตร": "ลิตร",
-    "มิลลิลิตร": "มล.",
-    "มล.": "มล.",
-    "ชิ้น": "ชิ้น",
+    กิโลกรัม: "กิโลกรัม",
+    // "กก.": "kg",
+    กรัม: "กรัม",
+    ฟอง: "ฟอง",
+    ลิตร: "ลิตร",
+    มิลลิลิตร: "มิลลิลิตร",
+    // "มล.": "มล.",
+    ชิ้น: "ชิ้น",
   };
 
   // Map ค่าหน่วยจาก display value ไปยังค่าที่แสดงใน UI
   const unitLabelMap: { [key: string]: string } = {
-    "kg": "กิโลกรัม",
-    "กรัม": "กรัม",
-    "ฟอง": "ฟอง",
-    "ลิตร": "ลิตร",
-    "มล.": "มิลลิลิตร",
-    "ชิ้น": "ชิ้น",
+    กิโลกรัม: "กิโลกรัม",
+    กรัม: "กรัม",
+    ฟอง: "ฟอง",
+    ลิตร: "ลิตร",
+    มิลลิลิตร: "มิลลิลิตร",
+    ชิ้น: "ชิ้น",
   };
+
+  const getStockStatus = (
+    ingredient: ingredient
+  ): { label: string; color: string } => {
+    const total = Number(ingredient.ingredient_total ?? 0);
+    const alert = Number(ingredient.ingredient_total_alert ?? 0);
+    
+    if (total >= alert * 2) {
+      return { label: "เพียงพอ", color: "success" };
+    } else if (total >= 1.5 * alert && total <= 2 * alert) {
+      return { label: "ปานกลาง", color: "warning" };
+    } else {
+      return { label: "ใกล้หมด", color: "destructive" };
+    }
+  };
+  const status = getStockStatus(newIngredient);
 
   // ตั้งค่าเริ่มต้นจาก prop item เมื่อเป็น ingredient
   useEffect(() => {
@@ -83,7 +102,10 @@ export default function MenuCard({
         ingredient_name: ingredientItem.ingredient_name || "",
         ingredient_image: ingredientItem.ingredient_image || "",
         ingredient_total: ingredientItem.ingredient_total || 0,
-        ingredient_unit: unitDisplayMap[ingredientItem.ingredient_unit ?? ""] || ingredientItem.ingredient_unit || "",
+        ingredient_unit:
+          unitDisplayMap[ingredientItem.ingredient_unit ?? ""] ||
+          ingredientItem.ingredient_unit ||
+          "",
         ingredient_total_alert: ingredientItem.ingredient_total_alert || 0,
         ingredient_lastupdate: ingredientItem.ingredient_lastupdate || "",
       });
@@ -101,7 +123,7 @@ export default function MenuCard({
 
       const ingredientItem = item as ingredient;
       const rawId = ingredientItem.ingredient_id;
-      const id = rawId != null ? String(rawId).trim() : '';
+      const id = rawId != null ? String(rawId).trim() : "";
       if (!id) {
         console.error("Invalid or missing ingredient_id:", rawId);
         setError("ID ของวัตถุดิบไม่ถูกต้อง");
@@ -113,11 +135,14 @@ export default function MenuCard({
         setLoading(true);
         const res = await fetch(`/api/get/ingredients/${id}`);
         console.log(`API response status: ${res.status}`);
-        console.log(`API response headers:`, Object.fromEntries(res.headers.entries()));
+        console.log(
+          `API response headers:`,
+          Object.fromEntries(res.headers.entries())
+        );
 
         // ตรวจสอบ Content-Type
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
           const text = await res.text();
           console.error("Non-JSON response received:", text.slice(0, 100));
           throw new Error("ได้รับข้อมูลที่ไม่ใช่ JSON จากเซิร์ฟเวอร์");
@@ -130,19 +155,25 @@ export default function MenuCard({
           if (res.status === 404) {
             throw new Error("วัตถุดิบไม่พบในระบบ");
           }
-          throw new Error(`Failed to load ingredient data: ${data.error || res.statusText}`);
+          throw new Error(
+            `Failed to load ingredient data: ${data.error || res.statusText}`
+          );
         }
 
         setNewIngredient({
           ingredient_name: data.ingredient_name || "",
           ingredient_image: data.ingredient_image || "",
           ingredient_total: data.ingredient_total || 0,
-          ingredient_unit: unitDisplayMap[data.ingredient_unit ?? ""] || data.ingredient_unit || "",
+          ingredient_unit:
+            unitDisplayMap[data.ingredient_unit ?? ""] ||
+            data.ingredient_unit ||
+            "",
           ingredient_total_alert: data.ingredient_total_alert || 0,
           ingredient_lastupdate: data.ingredient_lastupdate || "",
         });
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลวัตถุดิบได้";
+        const errorMessage =
+          err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลวัตถุดิบได้";
         setError(errorMessage);
         console.error("Fetch error:", errorMessage);
       } finally {
@@ -165,7 +196,7 @@ export default function MenuCard({
 
     const ingredientItem = item as ingredient;
     const rawId = ingredientItem.ingredient_id;
-    const id = rawId != null ? String(rawId).trim() : '';
+    const id = rawId != null ? String(rawId).trim() : "";
     if (!id) {
       setError("ID ของวัตถุดิบไม่ถูกต้อง");
       setLoading(false);
@@ -173,33 +204,56 @@ export default function MenuCard({
       return;
     }
 
-    if (newIngredient.ingredient_total === undefined && newIngredient.ingredient_total_alert === undefined) {
-      setError("กรุณากรอกจำนวนปัจจุบันหรือระดับแจ้งเตือนอย่างน้อยหนึ่งรายการ");
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!newIngredient?.ingredient_name?.trim()) {
+      setError("ชื่อวัตถุดิบต้องไม่ว่างเปล่า");
       setLoading(false);
-      console.error("Missing required fields for edit");
+      return;
+    }
+
+    if (!Number.isFinite(Number(newIngredient.ingredient_total)) || Number(newIngredient.ingredient_total) <= 0) {
+      setError("จำนวนปัจจุบันต้องเป็นตัวเลขที่มากกว่า 0");
+      setLoading(false);
+      return;
+    }
+
+    if (!newIngredient?.ingredient_unit?.trim()) {
+      setError("หน่วยต้องไม่ว่างเปล่า");
+      setLoading(false);
+      return;
+    }
+
+    if (!Number.isFinite(Number(newIngredient.ingredient_total_alert)) || Number(newIngredient.ingredient_total_alert) <= 0) {
+      setError("ระดับแจ้งเตือนต้องเป็นตัวเลขที่มากกว่า 0");
+      setLoading(false);
       return;
     }
 
     try {
-      const payload = {
-        ingredient_total: newIngredient.ingredient_total,
-        ingredient_total_alert: newIngredient.ingredient_total_alert,
-      };
-      console.log("Sending PATCH request with payload:", payload);
+      const formData = new FormData();
+      formData.append("ingredient_name", newIngredient.ingredient_name);
+      formData.append("ingredient_total", String(newIngredient.ingredient_total));
+      formData.append("ingredient_unit", newIngredient.ingredient_unit);
+      formData.append("ingredient_total_alert", String(newIngredient.ingredient_total_alert));
+      if (selectedImage) {
+        formData.append("ingredient_image", selectedImage);
+      }
+
+      console.log("Sending PATCH request with formData:", Object.fromEntries(formData));
 
       const res = await fetch(`/api/edit/ingredients/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
-      // ตรวจสอบ Content-Type สำหรับ PATCH
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
+      // ตรวจสอบ Content-Type
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
         const text = await res.text();
-        console.error("Non-JSON response received for PATCH:", text.slice(0, 100));
+        console.error(
+          "Non-JSON response received for PATCH:",
+          text.slice(0, 100)
+        );
         throw new Error("ได้รับข้อมูลที่ไม่ใช่ JSON จากเซิร์ฟเวอร์");
       }
 
@@ -213,12 +267,19 @@ export default function MenuCard({
       // อัปเดต state ด้วยข้อมูลที่คืนมาจาก API
       setNewIngredient({
         ...newIngredient,
-        ...response.data,
-        ingredient_unit: unitDisplayMap[response.data.ingredient_unit ?? ""] || response.data.ingredient_unit || "",
+        ...response.ingredient,
+        ingredient_unit:
+          unitDisplayMap[response.ingredient.ingredient_unit ?? ""] ||
+          response.ingredient.ingredient_unit ||
+          "",
       });
+      setSelectedImage(null); // รีเซ็ตไฟล์รูปภาพ
       setIsAddDialogOpen(false);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "ไม่สามารถแก้ไขวัตถุดิบได้ กรุณาลองใหม่";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "ไม่สามารถแก้ไขวัตถุดิบได้ กรุณาลองใหม่";
       setError(errorMessage);
       console.error("Patch error:", errorMessage);
     } finally {
@@ -231,19 +292,26 @@ export default function MenuCard({
     title = menuItem.menu_name;
     imageUrl = menuItem.imageUrl;
     description = menuItem.description;
-    total = menuItem.menu_total;
+
+    total = useCartStore(
+      (state) =>
+        state.items.find((i) => i.menu_id === menuItem.menu_id)?.menu_total ?? 0
+    );
   } else {
     const ingredientItem = item as ingredient;
     title = ingredientItem.ingredient_name;
     imageUrl = ingredientItem.ingredient_image;
     total = ingredientItem.ingredient_total;
-    unit = unitLabelMap[ingredientItem.ingredient_unit ?? ""] || ingredientItem.ingredient_unit || "";
+    unit =
+      unitLabelMap[ingredientItem.ingredient_unit ?? ""] ||
+      ingredientItem.ingredient_unit ||
+      "";
     lastUpdate = ingredientItem.ingredient_lastupdate;
   }
 
   return (
     <div className="column is-full-mobile is-one-third-tablet is-one-fifth-desktop is-one-sixth-widescreen">
-      <div className="card" style={{ height: "100%" }}>
+      <div className="card flex flex-col h-full">
         <div className="card-image">
           <figure className="image is-4by3">
             <img
@@ -255,56 +323,58 @@ export default function MenuCard({
             />
           </figure>
           {mode === "ingredient" && (
-            <div className="subtitle is-7 tag is-pulled-right">Status</div>
+            <div className="mt-2 subtitle is-6 tag is-pulled-right">{status.label}</div>
           )}
         </div>
 
         {/* Mode Menu */}
         {mode === "menu" && (
-          <div className="mx-2 my-2">
-            <div className="subtitle is-7">{title}</div>
-            <div className="subtitle is-7">{description}</div>
+          <div className="flex flex-col px-2 py-2 items-center">
+            <div className="title is-6">{title}</div>
           </div>
         )}
         {mode === "menu" && (
-          <footer className="card-footer">
-            <a href="#" className="card-footer-item">
-              <span className="icon">
-                <FontAwesomeIcon icon={faPlus} />
-              </span>
-            </a>
+          <footer className="card-footer" style={{ height: '10%' }}>
+            <button
+              className="card-footer-item"
+              onClick={() => removeItem((item as MenuItem).menu_id!)}
+            >
+              <FontAwesomeIcon icon={faMinus} />
+            </button>
             <div className="card-footer-item">
               <span className="subtitle is-6">{total}</span>
             </div>
-            <a href="#" className="card-footer-item">
-              <span className="icon">
-                <FontAwesomeIcon icon={faMinus} />
-              </span>
-            </a>
+            <button
+              className="card-footer-item"
+              onClick={() => addItem(item as MenuItem)}
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
           </footer>
         )}
 
         {/* Mode Ingredient */}
         {mode === "ingredient" && (
           <div className="mx-2 my-2">
-            <div className="subtitle is-7">{title}</div>
-            <div className="subtitle is-7">total {total} {unit}</div>
+            <div className="subtitle is-4 ">{title}</div>
+            <div className="subtitle is-6">
+              total {total} {unit}
+            </div>
             <span className="subtitle is-7">{lastUpdate}</span>
           </div>
         )}
         {mode === "ingredient" && (
           <footer className="card-footer">
-            <a href="#" className="card-footer-item">
-              Add
-            </a>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button
-                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                  disabled={!ingredientItem?.ingredient_id}
-                >
-                  Edit
-                </Button>
+                <div className="flex items-center justify-center w-full h-full">
+                  <Button
+                    className="flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-2 text-white font-semibold rounded-md"
+                    disabled={!ingredientItem?.ingredient_id}
+                  >
+                    Edit
+                  </Button>
+                </div>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -325,45 +395,34 @@ export default function MenuCard({
                           })
                         }
                         placeholder="เช่น ข้าวสวย, ไข่ไก่"
-                        disabled
+                        required
                       />
                     </div>
 
                     <div>
                       <Label htmlFor="unit">หน่วย</Label>
-                      {newIngredient.ingredient_unit && !Object.values(unitDisplayMap).includes(newIngredient.ingredient_unit) ? (
-                        <Input
-                          id="unit"
-                          value={newIngredient.ingredient_unit}
-                          disabled
-                        />
-                      ) : (
-                        <Select
-                          value={newIngredient.ingredient_unit || ""}
-                          onValueChange={(value) =>
-                            setNewIngredient({
-                              ...newIngredient,
-                              ingredient_unit: value,
-                            })
-                          }
-                          disabled
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="เลือกหน่วย" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="กรัม">กรัม</SelectItem>
-                            <SelectItem value="kg">กิโลกรัม</SelectItem>
-                            <SelectItem value="ฟอง">ฟอง</SelectItem>
-                            <SelectItem value="ลิตร">ลิตร</SelectItem>
-                            <SelectItem value="มล.">มิลลิลิตร</SelectItem>
-                            <SelectItem value="ชิ้น">ชิ้น</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                      {newIngredient.ingredient_unit && !Object.values(unitDisplayMap).includes(newIngredient.ingredient_unit) && (
-                        <p className="text-red-500 text-sm">หน่วยไม่ตรงกับตัวเลือกที่กำหนด</p>
-                      )}
+                      <Select
+                        value={newIngredient.ingredient_unit || ""}
+                        onValueChange={(value) =>
+                          setNewIngredient({
+                            ...newIngredient,
+                            ingredient_unit: value,
+                          })
+                        }
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="เลือกหน่วย" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="กรัม">กรัม</SelectItem>
+                          <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem>
+                          <SelectItem value="ฟอง">ฟอง</SelectItem>
+                          <SelectItem value="ลิตร">ลิตร</SelectItem>
+                          <SelectItem value="มิลลิลิตร">มิลลิลิตร</SelectItem>
+                          <SelectItem value="ชิ้น">ชิ้น</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div>
@@ -375,7 +434,10 @@ export default function MenuCard({
                         onChange={(e) =>
                           setNewIngredient({
                             ...newIngredient,
-                            ingredient_total: Math.max(0, Number(e.target.value)),
+                            ingredient_total: Math.max(
+                              0,
+                              Number(e.target.value)
+                            ),
                           })
                         }
                         min="0"
@@ -392,7 +454,10 @@ export default function MenuCard({
                         onChange={(e) =>
                           setNewIngredient({
                             ...newIngredient,
-                            ingredient_total_alert: Math.max(0, Number(e.target.value)),
+                            ingredient_total_alert: Math.max(
+                              0,
+                              Number(e.target.value)
+                            ),
                           })
                         }
                         min="0"
@@ -401,19 +466,24 @@ export default function MenuCard({
                     </div>
 
                     <div>
-                      <Label htmlFor="image">URL รูปภาพ</Label>
+                      <Label htmlFor="image">รูปภาพ</Label>
                       <Input
                         id="image"
-                        value={newIngredient.ingredient_image}
+                        type="file"
+                        accept="image/*"
                         onChange={(e) =>
-                          setNewIngredient({
-                            ...newIngredient,
-                            ingredient_image: e.target.value,
-                          })
+                          setSelectedImage(e.target.files?.[0] || null)
                         }
-                        placeholder="URL รูปภาพ"
-                        disabled
                       />
+                      {newIngredient.ingredient_image && (
+                        <div className="mt-2">
+                          <img
+                            src={newIngredient.ingredient_image}
+                            alt="Current ingredient"
+                            className="h-20 w-20 object-cover"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <Button type="submit" className="w-full" disabled={loading}>

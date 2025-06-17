@@ -1,0 +1,10 @@
+.container {
+  border: none;
+  padding: 0;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.columns {
+  margin: 0;
+  padding: 0;
+}

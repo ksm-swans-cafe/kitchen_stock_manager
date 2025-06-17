@@ -1,21 +1,21 @@
 'use client';
 
 import SearchBox from '@/share/order/SearchBox_v2';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MenuItem } from "@/models/menu_card/MenuCard-model";
 import MenuCard from "@/share/order/MenuCard";
+import '@/app/home/Order/style.css';
+
 
 export default function Order() {
   const chunkSize = 10;
 
-  const [allMenus, setAllMenus] = useState<MenuItem[]>([]);
   const [visibleCount, setVisibleCount] = useState(chunkSize);
-  const [loading, setLoading] = useState(false);
+  const [allMenus, setAllMenus] = useState<MenuItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const [searchQuery, setSearchQuery] = useState('');
-
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -44,12 +44,11 @@ export default function Order() {
 
   const visibleMenus = filteredMenus.slice(0, visibleCount);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     setVisibleCount((prev) => Math.min(prev + chunkSize, filteredMenus.length));
-  };
+  }, [filteredMenus.length]);
 
   useEffect(() => {
-    const currentRef = loadMoreRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
@@ -63,11 +62,13 @@ export default function Order() {
         threshold: 1.0,
       }
     );
-
+    
+    const currentRef = loadMoreRef.current;
     if (currentRef) observer.observe(currentRef);
 
     return () => {
       if (currentRef) observer.unobserve(currentRef);
+      observer.disconnect();
     };
   }, [visibleCount, filteredMenus]);
 
@@ -76,7 +77,7 @@ export default function Order() {
     .filter((menu_name): menu_name is string => typeof menu_name === 'string');
 
   return (
-    <main className="flex min-h-screen flex-col items-center pt-6 px-6">
+    <main className="flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto">
       <SearchBox
         dataSource={menus}
         onSelect={(val) => setSearchQuery(val)}
@@ -89,7 +90,7 @@ export default function Order() {
 
       <div className='container'>
         <div className='p-3 has-text-centered'>
-          <h1 className='title'>Menu</h1>
+          {/* <h1 className='title'>Menu</h1> */}
         </div>
 
         {error && <p className="has-text-danger">Error: {error}</p>}
@@ -102,7 +103,10 @@ export default function Order() {
         </div>
 
         {visibleCount < filteredMenus.length && (
-          <div ref={loadMoreRef} style={{ height: "1px" }} />
+          <div ref={loadMoreRef} style={{ 
+            height: "20%", 
+            width: "100%" 
+          }} />
         )}
       </div>
     </main>

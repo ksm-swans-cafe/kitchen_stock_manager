@@ -1,15 +1,16 @@
-export interface MenuIngredient {
-  useItem: number;
-  ingredient_id: number;
+export interface Ingredients {
+  useItem?: number;
+  ingredient_id?: string;
 }
 
 export interface MenuItem {
   imageUrl?: string;
   menu_id?: string;
   menu_name?: string;
-  menu_ingredients?: MenuIngredient[];
-  menu_total?: string;
-  description: string;
+  menu_price?: number;
+  menu_ingredients?: Ingredients[];
+  menu_total?: number;
+  description?: string;
 }
 
 export interface ingredient{
@@ -31,4 +32,5 @@ export interface newIngredient{
   ingredient_lastupdate? : string;
   ingredient_image? : string;
   ingredient_total_alert? : number;
+  ingredient_status? : string;
 };

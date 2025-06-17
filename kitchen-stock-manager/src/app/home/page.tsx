@@ -24,7 +24,7 @@ export default function Page() {
   const lowStockIngredients = allIngredient.filter((ingredient) => {
     const total = Number(ingredient.ingredient_total) || 0;
     const alert = Number(ingredient.ingredient_total_alert) || 0;
-    return ;
+    return total <= alert;
   });
 
   useEffect(() => {
@@ -78,15 +78,21 @@ export default function Page() {
               </h3>
             </div>
             <div className="flex flex-wrap gap-2">
-              {lowStockIngredients.map((ingredient) => (
-                <Badge
-                  key={ingredient.ingredient_id}
-                  variant="destructive"
-                  className="whitespace-nowrap"
-                >
-                  {ingredient.ingredient_name} ({ingredient.ingredient_total} / {ingredient.ingredient_total_alert})
-                </Badge>
-              ))}
+              {lowStockIngredients.slice(0, 4).map((ingredient) => (
+                  <Badge
+                    key={ingredient.ingredient_id}
+                    variant="destructive"
+                    className="whitespace-nowrap"
+                  >
+                    {ingredient.ingredient_name} ({ingredient.ingredient_total}{" "}
+                    / {ingredient.ingredient_total_alert})
+                  </Badge>
+                ))}
+                {lowStockIngredients.length > 4 && (
+                  <Badge variant="destructive" className="whitespace-nowrap">
+                    ...
+                  </Badge>
+                )}
             </div>
           </div>
         </Card>

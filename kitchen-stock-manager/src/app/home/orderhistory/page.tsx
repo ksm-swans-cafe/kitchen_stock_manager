@@ -30,12 +30,13 @@ import {
   PaginationPrevious,
 } from '@/share/ui/pagination';
 import { Input } from '@/share/ui/input';
+import superjson from 'superjson';
 
 interface Ingredient {
   ingredient_name: string;
   useItem: number;
-  calculatedTotal?: number; // เพิ่ม field นี้สำหรับเก็บผลลัพธ์การคำนวณ
-  sourceMenu?: string; // ระบุว่าใช้วัตถุดิบจากเมนูอะไร
+  calculatedTotal?: number;
+  sourceMenu?: string;
 }
 
 interface MenuItem {
@@ -78,11 +79,6 @@ const OrderHistory: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const currentUser = {
-    name: 'ผู้ใช้งาน',
-    role: 'เชฟ',
-  };
-
   const safeParseJSON = (jsonString: string): CartItem[] => {
     try {
       return JSON.parse(jsonString);
@@ -101,66 +97,75 @@ const OrderHistory: React.FC = () => {
       
       const data = await response.json();
   
+      // ดึงข้อมูลจากตาราง menu
+      const menuResponse = await fetch('/api/get/menu-list');
+      if (!menuResponse.ok) throw new Error('Failed to fetch menu');
+      const menuData = await menuResponse.json();
+  
+      // ดึงข้อมูลจากตาราง ingredient
+      const ingredientResponse = await fetch('/api/get/ingredients');
+      if (!ingredientResponse.ok) throw new Error('Failed to fetch ingredients');
+      const ingredientData = await ingredientResponse.json();
+  
       const formattedOrders: Cart[] = data.map((cart: any) => {
         const menuItems: MenuItem[] = 
           typeof cart.cart_menu_items === 'string' 
             ? safeParseJSON(cart.cart_menu_items) 
             : cart.cart_menu_items || [];
   
-        // คำนวณราคารวมและจำนวนเซ็ต
         const totalSets = menuItems.reduce((sum, item) => sum + (item.menu_total || 0), 0);
-        
-        // สร้างชื่อสำหรับแสดงผล
         const menuDisplayName = menuItems.length > 0
           ? menuItems.map(item => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`).join(' + ')
           : 'ไม่มีชื่อเมนู';
   
-        // คำนวณวัตถุดิบที่ใช้ในแต่ละเมนู
-        const allIngredients = menuItems.map(menu => ({
-          menuName: menu.menu_name,
-          ingredients: menu.ingredients.map(ing => ({
-            ...ing,
-            calculatedTotal: ing.useItem * menu.menu_total,
-            sourceMenu: menu.menu_name
-          }))
-        }));
+        const allIngredients = menuItems.map(menu => {
+          // ค้นหาข้อมูลจากตาราง menu ที่มี menu_name ตรงกัน
+          const menuFromDB = menuData.find((m: any) => m.menu_name === menu.menu_name);
+          console.log('menuFromDB:', menuFromDB); // ตรวจสอบข้อมูล
   
-        // สร้าง orderNumber จาก 5 ตัวแรกของ cart_id
-        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || 'XXXXX'}`;
+          // ใช้ menu_ingredients จากตาราง menu ถ้ามี หรือใช้จาก cart_menu_items ถ้าไม่มี
+          const dbIngredients = Array.isArray(menuFromDB?.menu_ingredients) 
+            ? menuFromDB.menu_ingredients 
+            : menu.ingredients || [];
   
-        const formatThaiTime = (dateString: string) => {
-          // ใช้เวลาเดิมโดยไม่บวก 7 ชั่วโมง
-          const date = new Date(dateString);
-          
           return {
-            date: date.toLocaleDateString('th-TH', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            }),
-            time: date.toLocaleTimeString('th-TH', {
-              hour: '2-digit',
-              minute: '2-digit'
+            menuName: menu.menu_name,
+            ingredients: dbIngredients.map((dbIng: any) => {
+              // ค้นหาข้อมูลจากตาราง ingredient ด้วย ingredient_id
+              const ingredientFromDB = ingredientData.find((ing: any) => ing.ingredient_id === dbIng.ingredient_id);
+              console.log('ingredientFromDB:', ingredientFromDB); // ตรวจสอบข้อมูล
+              const ingredientName = ingredientFromDB?.ingredient_name || `ไม่พบวัตถุดิบ (ID: ${dbIng.ingredient_id})`;
+              console.log('ingredientName: ' ,ingredientName);
+              return {
+                ...dbIng,
+                ingredient_name: ingredientName || dbIng.ingredient_name, // ใช้จาก ingredient หรือ cart ถ้าไม่มี
+                calculatedTotal: dbIng.useItem * menu.menu_total,
+                sourceMenu: menu.menu_name
+              };
             })
           };
-        };
-        
-        // ใช้แบบนี้
-        const { date: thaiDate, time: thaiTime } = formatThaiTime(cart.cart_create_date);
-        
-          return {
+        });
+  
+        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || 'XXXXX'}`;
+        const date = new Date(cart.cart_create_date);
+        const formattedDate = date.toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }).replace(/ /g, ' ');
+        const formattedTime = cart.cart_create_date.split('T')[1].split('.')[0].slice(0, 5); // แยกเวลาออกมาเป็น HH:MM
+        return {
           id: cart.cart_id || 'no-id',
           orderNumber,
           name: menuDisplayName,
-          date: thaiDate,
-          time: thaiTime,
+          date: formattedDate,
+          time: formattedTime,
           sets: totalSets,
-          price: cart.cart_total_price || 0, // ใช้ cart_total_price จาก API หากมี
+          price: cart.cart_total_price || 0,
           status: 'completed',
           createdBy: cart.cart_username || 'ไม่ทราบผู้สร้าง',
           menuItems: menuItems.map(item => ({
             ...item,
-            // totalPrice: (item.menu_total || 0) * (item.price || 0) // คำนวณราคารวมของแต่ละเมนู
           })),
           allIngredients
         };
@@ -254,9 +259,7 @@ const OrderHistory: React.FC = () => {
     }
 
     filtered.sort((a, b) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let aVal: any = a[sortBy as keyof typeof a];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let bVal: any = b[sortBy as keyof typeof b];
 
       if (sortBy === 'date') {
@@ -338,33 +341,6 @@ const OrderHistory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
-      {/* <div className="w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/30 shadow-md">
-        <div className="p-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-black tracking-tight">
-            SWANS <span className="text-sm font-medium text-slate-700">CAFE & BISTRO</span>
-          </h1>
-          <div className="flex items-center space-x-3 text-sm">
-            <span className="font-semibold bg-blue-100 px-3 py-1.5 rounded-full text-blue-800">{currentUser.role}</span>
-            <span className="font-semibold">{currentUser.name}</span>
-            <Button variant="destructive" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-1" /> ออกจากระบบ
-            </Button>
-          </div>
-        </div>
-      </div> */}
-
-      {/* <div className="p-4 flex items-center justify-between bg-white/80 border-b border-slate-200">
-        <Button variant="ghost" size="sm" onClick={handleBackToDashboard}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> กลับ
-        </Button>
-        <div className="flex items-center space-x-2 text-sm">
-          <Home className="w-4 h-4 text-slate-500" />
-          <button onClick={handleHomeClick} className="text-blue-600 font-medium">Home</button>
-          <span className="text-slate-400">/</span>
-          <span className="font-semibold">Order History</span>
-        </div>
-      </div> */}
-
       <div className="p-6">
         <h2 className="text-2xl font-bold mb-2">Order History</h2>
         <p className="text-slate-600 mb-4">จัดการและติดตามประวัติการสั่งซื้อทั้งหมด</p>
@@ -376,7 +352,6 @@ const OrderHistory: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4 mb-6">
-          {/* Search */}
           <div className="lg:col-span-2">
             <div className="relative group">
               <Search className="absolute left-103 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
@@ -389,8 +364,7 @@ const OrderHistory: React.FC = () => {
             </div>
           </div>
 
-          {/* Sort By */}
-          <div >
+          <div>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="h-10 rounded-lg border-slate-300 shadow-sm">
                 <ArrowUpDown className="w-4 h-4 mr-2 text-slate-500" />
@@ -404,7 +378,6 @@ const OrderHistory: React.FC = () => {
             </Select>
           </div>
 
-          {/* Sort Order */}
           <div>
             <Select value={sortOrder} onValueChange={(val: 'asc' | 'desc') => setSortOrder(val)}>
               <SelectTrigger className="h-10 rounded-lg border-slate-300 shadow-sm">
@@ -417,7 +390,6 @@ const OrderHistory: React.FC = () => {
             </Select>
           </div>
 
-          {/* Filter by Status */}
           <div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="h-10 rounded-lg border-slate-300 shadow-sm">
@@ -434,7 +406,6 @@ const OrderHistory: React.FC = () => {
             </Select>
           </div>
 
-          {/* Filter by Creator */}
           <div>
             <Select value={filterCreator} onValueChange={setFilterCreator}>
               <SelectTrigger className="h-10 rounded-lg border-slate-300 shadow-sm">
@@ -442,7 +413,7 @@ const OrderHistory: React.FC = () => {
                 <SelectValue placeholder="ผู้สร้างทั้งหมด" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ทั้งหมด">ผู้สร้างทั้งหมด</SelectItem>
+                <SelectItem value="ทั้งหมด">คนสั่ง Order ทั้งหมด</SelectItem>
                 {uniqueCreators.map((creator) => (
                   <SelectItem key={creator} value={creator}>{creator}</SelectItem>
                 ))}
@@ -481,82 +452,84 @@ const OrderHistory: React.FC = () => {
                 <AccordionItem key={cart.id} value={cart.id} className="border-none">
                   <Card className={`bg-gradient-to-r ${getStatusColor(cart.status)} p-4 rounded-xl`}>
                     <AccordionTrigger className="flex items-center justify-between w-full hover:no-underline gap-4">
-                      <div className="flex flex-col md:flex-row justify-between w-full items-start gap-4">
-                        <div className="flex items-start gap-4">
-                          <div className="p-2 bg-white rounded-xl shadow">
-                            {getStatusIcon(cart.status)}
-                          </div>
-                          <div className="space-y-1">
-                            <h3 className="text-lg font-semibold text-left">{cart.name}</h3>
-                            <div className="flex gap-1 flex-wrap text-xs text-slate-600">
-                              <span className="flex items-center gap-0.5">
-                                <Hash className="w-3 h-3" /> {cart.id}
-                              </span>
-                              <span className="flex items-center gap-0.5">
-                                <Calendar className="w-3 h-3" /> {cart.date}
-                              </span>
-                              <span className="flex items-center gap-0.5">
-                                <Clock className="w-3 h-3" /> {cart.time}
-                              </span>
-                              <span className="flex items-center gap-0.5">
-                                <Package className="w-3 h-3" /> {cart.sets} Set
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right ml-auto">
-                          <p className="text-xl font-bold">฿{cart.price.toLocaleString()}</p>
-                          <span className="inline-block mt-1 bg-white px-3 py-1 rounded-full text-xs font-medium text-black shadow-sm">
-                            {getStatusText(cart.status)}
-                          </span>
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-
-                    <AccordionContent className="mt-4">
-  <div className="grid md:grid-cols-2 gap-6">
-    <div>
-      <h4 className="text-sm font-bold text-blue-700 mb-2 flex items-center gap-2">
-        <Package className="w-4 h-4" /> เมนูที่สั่ง
-      </h4>
-      {cart.menuItems.map((item, idx) => (
-        <div key={idx} className="bg-white p-3 rounded-lg shadow-sm mb-2">
-          <div className="font-medium text-black">
-            {item.menu_name} <span className="text-blue-600">({item.menu_total} กล่อง)</span>
-          </div>
-          {item.totalPrice && (
-            <div className="text-sm text-slate-600 mt-1">
-              ราคารวม: ฿{item.totalPrice.toLocaleString()}
-            </div>
-          )}
+  <div className="flex flex-col md:flex-row justify-between w-full items-start gap-4">
+    <div className="flex items-start gap-4">
+      <div className="p-2 bg-white rounded-xl shadow">
+        {getStatusIcon(cart.status)}
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-lg font-semibold text-left">{cart.name}</h3>
+        <div className="flex gap-1 flex-wrap text-xs text-slate-600">
+          <span className="flex items-center gap-0.5">
+            <Hash className="w-3 h-3" /> Order id: {cart.id}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Calendar className="w-3 h-3" /> วันที่ {cart.date}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Clock className="w-3 h-3" /> เวลา {cart.time} น.
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Package className="w-3 h-3" /> จำนวนทั้งหมด {cart.sets} กล่อง
+          </span>
+          <span className="flex items-center gap-0.5">
+            <User className="w-3 h-3" /> Order ของคุณ: {cart.createdBy}
+          </span>
         </div>
-      ))}
+      </div>
     </div>
-    <div>
-      <h4 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
-        <User className="w-4 h-4" /> วัตถุดิบที่ใช้
-      </h4>
-      {cart.allIngredients.map((menuGroup, groupIdx) => (
-        <div key={groupIdx} className="mb-4">
-          <div className="font-medium text-black mb-2">
-            {menuGroup.menuName} <span className="text-sm text-slate-500">({cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} กล่อง)</span>
-          </div>
-          <div className="space-y-2">
-            {menuGroup.ingredients.map((ing, idx) => (
-              <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
-                <span className="text-slate-700">{ing.ingredient_name}</span>
-                <span className="bg-slate-100 px-3 py-1 rounded text-sm text-slate-700">
-                  ใช้ {ing.useItem} กรัมต่อกล่อง × {cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} = {ing.calculatedTotal} กรัม
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+
+    <div className="text-right ml-auto">
+      <p className="text-xl font-bold">฿{cart.price.toLocaleString()}</p>
+      <span className="inline-block mt-1 bg-white px-3 py-1 rounded-full text-xs font-medium text-black shadow-sm">
+        {getStatusText(cart.status)}
+      </span>
     </div>
   </div>
-</AccordionContent>
+</AccordionTrigger>
+                    <AccordionContent className="mt-4">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-sm font-bold text-blue-700 mb-2 flex items-center gap-2">
+                            <Package className="w-4 h-4" /> เมนูที่สั่ง
+                          </h4>
+                          {cart.menuItems.map((item, idx) => (
+                            <div key={idx} className="bg-white p-3 rounded-lg shadow-sm mb-2">
+                              <div className="font-medium text-black">
+                                {item.menu_name} <span className="text-blue-600">({item.menu_total} กล่อง)</span>
+                              </div>
+                              {/* {item.totalPrice && (
+                                <div className="text-sm text-slate-600 mt-1">
+                                  ราคารวม: ฿{item.totalPrice.toLocaleString()}
+                                </div>
+                              )} */}
+                            </div>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
+                            <User className="w-4 h-4" /> วัตถุดิบที่ใช้
+                          </h4>
+                          {cart.allIngredients.map((menuGroup, groupIdx) => (
+                            <div key={groupIdx} className="mb-4">
+                              <div className="font-medium text-black mb-2">
+                                {menuGroup.menuName} <span className="text-sm text-slate-500">({cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} กล่อง)</span>
+                              </div>
+                              <div className="space-y-2">
+                                {menuGroup.ingredients.map((ing, idx) => (
+                                  <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                    <span className="text-slate-700">{ing.ingredient_name}</span>
+                                    <span className="bg-slate-100 px-3 py-1 rounded text-sm text-slate-700">
+                                      ใช้ {ing.useItem} กรัมต่อกล่อง × {cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} = {ing.calculatedTotal} กรัม
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </AccordionContent>
                   </Card>
                 </AccordionItem>
               ))}
