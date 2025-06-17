@@ -40,8 +40,12 @@ export default function CartList() {
       }
 
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "เกิดข้อผิดพลาดในการส่งคำสั่งซื้อ");
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError("เกิดข้อผิดพลาดในการส่งคำสั่งซื้อ");
+        }
     } finally {
       setLoading(false);
     }

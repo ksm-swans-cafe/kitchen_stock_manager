@@ -7,10 +7,11 @@ import { Card, CardContent } from '@/share/ui/card';
 import { Plus, ShoppingCart, History, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/share/ui/badge';
+import { ingredient } from '@/models/menu_card/MenuCard-model'
 
 export default function Page() {
   const router = useRouter();
-  const [allIngredient, setAllIngredient] = useState<any[]>([]);
+  const [allIngredient, setAllIngredient] = useState<ingredient[]>([]);
 
   useEffect(() => {
   const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
@@ -38,7 +39,7 @@ export default function Page() {
 
         // แจ้งเตือนแบบ toast เมื่อมีวัตถุดิบใกล้หมด
         const lowStock = data.filter(
-          (item: any) =>
+          (item: ingredient) =>
             Number(item.ingredient_total) > Number(item.ingredient_total_alert)
         );
         if (lowStock.length > 0) {
