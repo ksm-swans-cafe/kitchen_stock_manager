@@ -4,7 +4,7 @@ import SearchBox from '@/share/order/SearchBox_v2';
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MenuItem } from "@/models/menu_card/MenuCard-model";
 import MenuCard from "@/share/order/MenuCard";
-import '@/app/home/Order/style.css';
+import 'style.css';
 
 
 export default function Order() {
