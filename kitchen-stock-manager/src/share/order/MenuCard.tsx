@@ -27,11 +27,13 @@ type Mode = "menu" | "ingredient";
 interface MenuCardProps {
   mode: Mode;
   item: MenuItem | ingredient;
+  onImageClick?: () => void;
 }
 
-export default function MenuCard({ mode, item }: MenuCardProps) {
+export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const removeItem = useCartStore((state) => state.removeItem);
+  const setItemQuantity = useCartStore((state) => state.setItemQuantity);
 
   let title: string | undefined;
   let imageUrl: string | undefined;
@@ -42,7 +44,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [newIngredient, setNewIngredient] = useState<ingredient>({
+  const [Ingredient, setIngredient] = useState<ingredient>({
     ingredient_name: "",
     ingredient_image: "",
     ingredient_total: 0,
@@ -55,19 +57,15 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   const ingredientItem =
     mode === "ingredient" ? (item as ingredient) : undefined;
 
-  // Map ค่าหน่วยจากฐานข้อมูลเป็น display value
   const unitDisplayMap: { [key: string]: string } = {
     กิโลกรัม: "กิโลกรัม",
-    // "กก.": "kg",
     กรัม: "กรัม",
     ฟอง: "ฟอง",
     ลิตร: "ลิตร",
     มิลลิลิตร: "มิลลิลิตร",
-    // "มล.": "มล.",
     ชิ้น: "ชิ้น",
   };
 
-  // Map ค่าหน่วยจาก display value ไปยังค่าที่แสดงใน UI
   const unitLabelMap: { [key: string]: string } = {
     กิโลกรัม: "กิโลกรัม",
     กรัม: "กรัม",
@@ -77,12 +75,30 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
     ชิ้น: "ชิ้น",
   };
 
+  const getStepValue = (unit: string): string => {
+    if (["กรัม", "ฟอง", "ชิ้น"].includes(unit)) {
+      return "1";
+    } else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
+      return "0.01";
+    }
+    return "0.01";
+  };
+
+  const formatNumber = (value: number, unit: string): number => {
+    if (["กรัม", "ฟอง", "ชิ้น"].includes(unit)) {
+      return Math.floor(value);
+    } else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
+      return Number(value.toFixed(2));
+    }
+    return value;
+  };
+
   const getStockStatus = (
     ingredient: ingredient
   ): { label: string; color: string } => {
     const total = Number(ingredient.ingredient_total ?? 0);
     const alert = Number(ingredient.ingredient_total_alert ?? 0);
-    
+
     if (total >= alert * 2) {
       return { label: "เพียงพอ", color: "success" };
     } else if (total >= 1.5 * alert && total <= 2 * alert) {
@@ -91,14 +107,14 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
       return { label: "ใกล้หมด", color: "destructive" };
     }
   };
-  const status = getStockStatus(newIngredient);
+  const status = getStockStatus(Ingredient);
 
   // ตั้งค่าเริ่มต้นจาก prop item เมื่อเป็น ingredient
   useEffect(() => {
     if (mode === "ingredient") {
       const ingredientItem = item as ingredient;
       console.log("Setting initial ingredient from item:", ingredientItem);
-      setNewIngredient({
+      setIngredient({
         ingredient_name: ingredientItem.ingredient_name || "",
         ingredient_image: ingredientItem.ingredient_image || "",
         ingredient_total: ingredientItem.ingredient_total || 0,
@@ -160,7 +176,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
           );
         }
 
-        setNewIngredient({
+        setIngredient({
           ingredient_name: data.ingredient_name || "",
           ingredient_image: data.ingredient_image || "",
           ingredient_total: data.ingredient_total || 0,
@@ -182,6 +198,12 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
     };
     fetchIngredient();
   }, [isAddDialogOpen, item, mode]);
+
+  const handleChangeQuantity = (itemId: string | number, quantity: number) => {
+    if (quantity >= 1) {
+      setItemQuantity(itemId, quantity);
+    }
+  };
 
   const handleEditIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,25 +227,31 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
     }
 
     // ตรวจสอบข้อมูลที่จำเป็น
-    if (!newIngredient?.ingredient_name?.trim()) {
+    if (!Ingredient?.ingredient_name?.trim()) {
       setError("ชื่อวัตถุดิบต้องไม่ว่างเปล่า");
       setLoading(false);
       return;
     }
 
-    if (!Number.isFinite(Number(newIngredient.ingredient_total)) || Number(newIngredient.ingredient_total) <= 0) {
+    if (
+      !Number.isFinite(Number(Ingredient.ingredient_total)) ||
+      Number(Ingredient.ingredient_total) <= 0
+    ) {
       setError("จำนวนปัจจุบันต้องเป็นตัวเลขที่มากกว่า 0");
       setLoading(false);
       return;
     }
 
-    if (!newIngredient?.ingredient_unit?.trim()) {
+    if (!Ingredient?.ingredient_unit?.trim()) {
       setError("หน่วยต้องไม่ว่างเปล่า");
       setLoading(false);
       return;
     }
 
-    if (!Number.isFinite(Number(newIngredient.ingredient_total_alert)) || Number(newIngredient.ingredient_total_alert) <= 0) {
+    if (
+      !Number.isFinite(Number(Ingredient.ingredient_total_alert)) ||
+      Number(Ingredient.ingredient_total_alert) <= 0
+    ) {
       setError("ระดับแจ้งเตือนต้องเป็นตัวเลขที่มากกว่า 0");
       setLoading(false);
       return;
@@ -231,15 +259,21 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
 
     try {
       const formData = new FormData();
-      formData.append("ingredient_name", newIngredient.ingredient_name);
-      formData.append("ingredient_total", String(newIngredient.ingredient_total));
-      formData.append("ingredient_unit", newIngredient.ingredient_unit);
-      formData.append("ingredient_total_alert", String(newIngredient.ingredient_total_alert));
+      formData.append("ingredient_name", Ingredient.ingredient_name);
+      formData.append("ingredient_total", String(Ingredient.ingredient_total));
+      formData.append("ingredient_unit", Ingredient.ingredient_unit);
+      formData.append(
+        "ingredient_total_alert",
+        String(Ingredient.ingredient_total_alert)
+      );
       if (selectedImage) {
         formData.append("ingredient_image", selectedImage);
       }
 
-      console.log("Sending PATCH request with formData:", Object.fromEntries(formData));
+      console.log(
+        "Sending PATCH request with formData:",
+        Object.fromEntries(formData)
+      );
 
       const res = await fetch(`/api/edit/ingredients/${id}`, {
         method: "PATCH",
@@ -264,9 +298,8 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
         throw new Error(response.error || "Failed to update ingredient");
       }
 
-      // อัปเดต state ด้วยข้อมูลที่คืนมาจาก API
-      setNewIngredient({
-        ...newIngredient,
+      setIngredient({
+        ...Ingredient,
         ...response.ingredient,
         ingredient_unit:
           unitDisplayMap[response.ingredient.ingredient_unit ?? ""] ||
@@ -309,194 +342,330 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
     lastUpdate = ingredientItem.ingredient_lastupdate;
   }
 
+  const formatTotal = (value: number | undefined): string => {
+    if (value === undefined || value === null) return "0";
+    if (Number.isInteger(value) || value % 1 === 0) {
+      return Math.floor(value).toString(); // แสดงจำนวนเต็ม
+    }
+    return Number(value).toFixed(2);
+  };
+
   return (
-    <div className="column is-full-mobile is-one-third-tablet is-one-fifth-desktop is-one-sixth-widescreen">
-      <div className="card flex flex-col h-full">
-        <div className="card-image">
-          <figure className="image is-4by3">
-            <img
-              src={
-                imageUrl ||
-                "https://bulma.io/assets/images/placeholders/1280x960.png"
-              }
-              alt={title}
-            />
-          </figure>
-          {mode === "ingredient" && (
-            <div className="mt-2 subtitle is-6 tag is-pulled-right">{status.label}</div>
+    <>
+      <div className="column is-full-mobile is-one-third-tablet is-one-fifth-desktop is-one-sixth-widescreen">
+        <div className="card flex flex-col h-full">
+          <div className="card-image">
+            <figure className="image is-4by3 sm:is-3by2">
+              <img
+                src={
+                  imageUrl ||
+                  "https://bulma.io/assets/images/placeholders/1280x960.png"
+                }
+                alt={title}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  cursor: "pointer",
+                  touchAction: "manipulation",
+                }}
+                onClick={onImageClick}
+                onTouchStart={onImageClick}
+                onError={(e) => {
+                  e.currentTarget.src =
+                    "https://bulma.io/assets/images/placeholders/1280x960.png";
+                }}
+              />
+            </figure>
+            {mode === "ingredient" && (
+              <div className="mt-2 subtitle is-6 tag is-pulled-right">
+                {status.label}
+              </div>
+            )}
+          </div>
+
+          {/* Mode Menu */}
+          {mode === "menu" && (
+            <div className="flex flex-col px-2 py-2 items-center">
+              <div className="title is-6">{title}</div>
+            </div>
           )}
-        </div>
+          {mode === "menu" && (
+            <footer className="card-footer" style={{ height: "10%" }}>
+              <button
+                className="card-footer-item"
+                onClick={() => removeItem((item as MenuItem).menu_id!)}
+              >
+                <FontAwesomeIcon icon={faMinus} />
+              </button>
+              <div className="card-footer-item" style={{ flex: 1 }}>
+                <input
+                  type="number"
+                  value={total}
+                  onChange={(e) =>
+                    handleChangeQuantity(
+                      (item as MenuItem).menu_id!,
+                      Number(e.target.value)
+                    )
+                  }
+                  className="custom-input"
+                />
+              </div>
+              <button
+                className="card-footer-item"
+                onClick={() => addItem(item as MenuItem)}
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </footer>
+          )}
 
-        {/* Mode Menu */}
-        {mode === "menu" && (
-          <div className="flex flex-col px-2 py-2 items-center">
-            <div className="title is-6">{title}</div>
-          </div>
-        )}
-        {mode === "menu" && (
-          <footer className="card-footer" style={{ height: '10%' }}>
-            <button
-              className="card-footer-item"
-              onClick={() => removeItem((item as MenuItem).menu_id!)}
-            >
-              <FontAwesomeIcon icon={faMinus} />
-            </button>
-            <div className="card-footer-item">
-              <span className="subtitle is-6">{total}</span>
-            </div>
-            <button
-              className="card-footer-item"
-              onClick={() => addItem(item as MenuItem)}
-            >
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          </footer>
-        )}
-
-        {/* Mode Ingredient */}
-        {mode === "ingredient" && (
-          <div className="mx-2 my-2">
-            <div className="subtitle is-4 ">{title}</div>
-            <div className="subtitle is-6">
-              total {total} {unit}
-            </div>
-            <span className="subtitle is-7">{lastUpdate}</span>
-          </div>
-        )}
-        {mode === "ingredient" && (
-          <footer className="card-footer">
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <div className="flex items-center justify-center w-full h-full">
-                  <Button
-                    className="flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-2 text-white font-semibold rounded-md"
-                    disabled={!ingredientItem?.ingredient_id}
-                  >
-                    Edit
-                  </Button>
+          {/* Mode Ingredient */}
+          {mode === "ingredient" && (
+            <div className="mx-2 my-2">
+              <div className="subtitle is-5 ">{title}</div>
+              <div className="subtitle is-7">
+                คงเหลือ {formatTotal(total as number)} {unit}
+              </div>
+              {lastUpdate && (
+                <div className="subtitle is-7">
+                  Updated at{" "}
+                  {new Date(lastUpdate).toLocaleDateString("th-TH", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>แก้ไขวัตถุดิบ</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleEditIngredient}>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">ชื่อวัตถุดิบ</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={newIngredient.ingredient_name}
-                        onChange={(e) =>
-                          setNewIngredient({
-                            ...newIngredient,
-                            ingredient_name: e.target.value,
-                          })
-                        }
-                        placeholder="เช่น ข้าวสวย, ไข่ไก่"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="unit">หน่วย</Label>
-                      <Select
-                        value={newIngredient.ingredient_unit || ""}
-                        onValueChange={(value) =>
-                          setNewIngredient({
-                            ...newIngredient,
-                            ingredient_unit: value,
-                          })
-                        }
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="เลือกหน่วย" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="กรัม">กรัม</SelectItem>
-                          <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem>
-                          <SelectItem value="ฟอง">ฟอง</SelectItem>
-                          <SelectItem value="ลิตร">ลิตร</SelectItem>
-                          <SelectItem value="มิลลิลิตร">มิลลิลิตร</SelectItem>
-                          <SelectItem value="ชิ้น">ชิ้น</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="currentStock">จำนวนปัจจุบัน</Label>
-                      <Input
-                        id="currentStock"
-                        type="number"
-                        value={newIngredient.ingredient_total}
-                        onChange={(e) =>
-                          setNewIngredient({
-                            ...newIngredient,
-                            ingredient_total: Math.max(
-                              0,
-                              Number(e.target.value)
-                            ),
-                          })
-                        }
-                        min="0"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="threshold">ระดับแจ้งเตือน</Label>
-                      <Input
-                        id="threshold"
-                        type="number"
-                        value={newIngredient.ingredient_total_alert}
-                        onChange={(e) =>
-                          setNewIngredient({
-                            ...newIngredient,
-                            ingredient_total_alert: Math.max(
-                              0,
-                              Number(e.target.value)
-                            ),
-                          })
-                        }
-                        min="0"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="image">รูปภาพ</Label>
-                      <Input
-                        id="image"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setSelectedImage(e.target.files?.[0] || null)
-                        }
-                      />
-                      {newIngredient.ingredient_image && (
-                        <div className="mt-2">
-                          <img
-                            src={newIngredient.ingredient_image}
-                            alt="Current ingredient"
-                            className="h-20 w-20 object-cover"
+              )}
+            </div>
+          )}
+          {mode === "ingredient" && (
+            <footer className="card-footer">
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <div className="flex items-center justify-center w-full h-full">
+                    <Button
+                      className="flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-2 text-white font-semibold rounded-md"
+                      disabled={!ingredientItem?.ingredient_id}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                </DialogTrigger>
+                <DialogContent>
+                  <form onSubmit={handleEditIngredient}>
+                    <div className="space-y-4">
+                      <DialogHeader>
+                        <DialogTitle style={{ color: "#000000" }}>
+                          แก้ไขวัตถุดิบ
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div style={{ color: "#000000" }}>
+                        <Label htmlFor="name">ชื่อวัตถุดิบ</Label>
+                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                          <Input
+                            id="name"
+                            name="name"
+                            value={Ingredient.ingredient_name}
+                            onChange={(e) =>
+                              setIngredient({
+                                ...Ingredient,
+                                ingredient_name: e.target.value,
+                              })
+                            }
+                            placeholder="เช่น ข้าวสวย, ไข่ไก่"
+                            required
                           />
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "กำลังแก้ไข..." : "แก้ไขวัตถุดิบ"}
-                    </Button>
-                    {error && <p className="text-red-500 text-sm">{error}</p>}
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </footer>
-        )}
+                      <div style={{ color: "#000000" }}>
+                        <Label htmlFor="unit">หน่วย</Label>
+                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                          <Select
+                            value={Ingredient.ingredient_unit || ""}
+                            onValueChange={(value) =>
+                              setIngredient({
+                                ...Ingredient,
+                                ingredient_unit: value,
+                                ingredient_total: 0,
+                                ingredient_total_alert: 0,
+                              })
+                            }
+                            required
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="เลือกหน่วย" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="กรัม">กรัม</SelectItem>
+                              <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem>
+                              <SelectItem value="ฟอง">ฟอง</SelectItem>
+                              <SelectItem value="ลิตร">ลิตร</SelectItem>
+                              <SelectItem value="มิลลิลิตร">
+                                มิลลิลิตร
+                              </SelectItem>
+                              <SelectItem value="ชิ้น">ชิ้น</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div style={{ color: "#000000" }}>
+                        <Label htmlFor="category">ประเภท</Label>
+                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                          <Select
+                            value={Ingredient.ingredient_category ?? ""}
+                            onValueChange={(value) =>
+                              setIngredient({
+                                ...Ingredient,
+                                ingredient_category: value,
+                              })
+                            }
+                            required
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="เลือกประเภท" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="วัตถุดิบหลัก">
+                                วัตถุดิบหลัก
+                              </SelectItem>
+                              <SelectItem value="ผักและผลไม้">
+                                ผักและผลไม้
+                              </SelectItem>
+                              <SelectItem value="ธัญพืชและแป้ง">
+                                ธัญพืชและแป้ง
+                              </SelectItem>
+                              <SelectItem value="เครื่องปรุงรส">
+                                เครื่องปรุงรส
+                              </SelectItem>
+                              <SelectItem value="วัตถุดิบแช่แข็งและแปรรูป">
+                                วัตถุดิบแช่แข็งและแปรรูป
+                              </SelectItem>
+                              <SelectItem value="ของแห้งและของแปรรูป">
+                                ของแห้งและของแปรรูป
+                              </SelectItem>
+                              <SelectItem value="เครื่องดื่มและส่วนผสมอื่น">
+                                เครื่องดื่มและส่วนผสมอื่น
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div style={{ color: "#000000" }}>
+                        <Label htmlFor="currentStock">จำนวนปัจจุบัน</Label>
+                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                          <Input
+                            id="currentStock"
+                            type="number"
+                            value={Ingredient.ingredient_total}
+                            onChange={(e) => {
+                              let value = Number(e.target.value);
+                              if (
+                                ["กรัม", "ฟอง", "ชิ้น"].includes(
+                                  Ingredient.ingredient_unit ?? ""
+                                )
+                              ) {
+                                value = Math.floor(value);
+                              }
+                              setIngredient({
+                                ...Ingredient,
+                                ingredient_total: Math.max(
+                                  0,
+                                  Number(e.target.value)
+                                ),
+                              });
+                            }}
+                            min="0"
+                            max="1000"
+                            step={getStepValue(
+                              Ingredient.ingredient_unit ?? ""
+                            )}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ color: "#000000" }}>
+                        <Label htmlFor="threshold">ระดับแจ้งเตือน</Label>
+                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                          <Input
+                            id="threshold"
+                            type="number"
+                            value={Ingredient.ingredient_total_alert}
+                            onChange={(e) => {
+                              let value = Number(e.target.value);
+                              if (
+                                ["กรัม", "ฟอง", "ชิ้น"].includes(
+                                  Ingredient.ingredient_unit ?? ""
+                                )
+                              ) {
+                                value = Math.floor(value);
+                              }
+                              setIngredient({
+                                ...Ingredient,
+                                ingredient_total_alert: Math.max(
+                                  0,
+                                  Number(e.target.value)
+                                ),
+                              });
+                            }}
+                            min="0"
+                            max="1000"
+                            step={getStepValue(
+                              Ingredient.ingredient_unit ?? ""
+                            )}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ color: "#000000" }}>
+                        <Label htmlFor="image">รูปภาพ</Label>
+                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                          <Input
+                            id="image"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              setSelectedImage(e.target.files?.[0] || null)
+                            }
+                          />
+                          {Ingredient.ingredient_image && (
+                            <div className="mt-2">
+                              <img
+                                src={Ingredient.ingredient_image}
+                                alt="Current ingredient"
+                                className="h-20 w-20 object-cover"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+
+                        // className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400"
+                        className="w-full "
+                        disabled={loading}
+                        style={{ color: "#000000" }}
+                      >
+                        {loading ? "กำลังแก้ไข..." : "แก้ไขวัตถุดิบ"}
+                      </Button>
+                      {error && <p className="text-red-500 text-sm">{error}</p>}
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </footer>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

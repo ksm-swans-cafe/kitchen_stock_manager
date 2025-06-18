@@ -3,7 +3,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { MenuItem } from "@/models/menu_card/MenuCard-model";
 
-// ✅ CartItem ต้องมี ingredients เพราะสืบทอดจาก MenuItem
 export interface CartItem extends MenuItem {
   menu_total: number;
 }
@@ -12,6 +11,7 @@ interface CartState {
   items: CartItem[];
   addItem: (item: MenuItem) => void;
   removeItem: (itemId: string | number) => void;
+  setItemQuantity: (itemId: string | number, quantity: number) => void;
   clearCart: () => void;
 }
 
@@ -52,6 +52,14 @@ export const useCartStore = create<CartState>()(
             items: items.filter((i) => i.menu_id !== itemId),
           });
         }
+      },
+      setItemQuantity: (itemId, quantity) => {
+        const { items } = get();
+        set({
+          items: items.map((i) =>
+            i.menu_id === itemId ? { ...i, menu_total: quantity } : i
+          ),
+        });
       },
       clearCart: () => {
         set({ items: [] });

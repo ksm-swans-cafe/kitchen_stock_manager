@@ -3,7 +3,7 @@ import sql from '@/app/database/connect';
 
 export async function GET() {
   try {
-    const result = await sql`SELECT * FROM cart ORDER BY cart_create_date DESC`;
+    const result = await sql`SELECT * FROM cart ORDER BY cart_create_date ASC`;
     if (result.length === 0) {
       return NextResponse.json({ message: 'No carts found' }, { status: 404 });
     }

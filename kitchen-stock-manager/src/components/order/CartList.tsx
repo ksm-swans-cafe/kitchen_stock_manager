@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import { useCartStore } from "@/stores/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useRouter } from "next/navigation";
+import './style.css'
 
 export default function CartList() {
-  const { items, addItem, removeItem, clearCart } = useCartStore();
+  const { items, addItem, removeItem, clearCart, setItemQuantity } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -53,7 +54,13 @@ export default function CartList() {
 
   const handleDone = () => {
     clearCart();
-    router.push("/home/order");
+    router.push("/home/orderhistory");
+  };
+
+  const handleChangeQuantity = (itemId: string | number, quantity: number) => {
+    if (quantity >= 1) {
+      setItemQuantity(itemId, quantity);
+    }
   };
 
   return (
@@ -81,10 +88,20 @@ export default function CartList() {
                       <button
                         onClick={() => removeItem(item.menu_id!)}
                         className="px-3 py-1 bg-red-500 text-white rounded"
+                        style={{
+                          MozAppearance: 'textfield',
+                        }}
                       >
                         −
                       </button>
-                      <span>{item.menu_total}</span>
+                      <input
+                        type="number"
+                        value={item.menu_total}
+                        onChange={(e) =>
+                          handleChangeQuantity(item.menu_id!, Number(e.target.value))
+                        }
+                        className="w-16 text-center border rounded"
+                      />
                       <button
                         onClick={() => addItem(item)}
                         className="px-3 py-1 bg-green-500 text-white rounded"

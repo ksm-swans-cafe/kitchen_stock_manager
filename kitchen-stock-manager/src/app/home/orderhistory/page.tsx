@@ -33,6 +33,7 @@ import { Input } from '@/share/ui/input';
 import superjson from 'superjson';
 
 interface Ingredient {
+  ingredient_id?: number;
   ingredient_name: string;
   useItem: number;
   calculatedTotal?: number;
@@ -119,11 +120,9 @@ const OrderHistory: React.FC = () => {
           : 'ไม่มีชื่อเมนู';
   
         const allIngredients = menuItems.map(menu => {
-          // ค้นหาข้อมูลจากตาราง menu ที่มี menu_name ตรงกัน
           const menuFromDB = menuData.find((m: any) => m.menu_name === menu.menu_name);
-          console.log('menuFromDB:', menuFromDB); // ตรวจสอบข้อมูล
+          console.log('menuFromDB:', menuFromDB);
   
-          // ใช้ menu_ingredients จากตาราง menu ถ้ามี หรือใช้จาก cart_menu_items ถ้าไม่มี
           const dbIngredients = Array.isArray(menuFromDB?.menu_ingredients) 
             ? menuFromDB.menu_ingredients 
             : menu.ingredients || [];
@@ -131,14 +130,13 @@ const OrderHistory: React.FC = () => {
           return {
             menuName: menu.menu_name,
             ingredients: dbIngredients.map((dbIng: any) => {
-              // ค้นหาข้อมูลจากตาราง ingredient ด้วย ingredient_id
               const ingredientFromDB = ingredientData.find((ing: any) => ing.ingredient_id === dbIng.ingredient_id);
-              console.log('ingredientFromDB:', ingredientFromDB); // ตรวจสอบข้อมูล
+              console.log('ingredientFromDB:', ingredientFromDB);
               const ingredientName = ingredientFromDB?.ingredient_name || `ไม่พบวัตถุดิบ (ID: ${dbIng.ingredient_id})`;
               console.log('ingredientName: ' ,ingredientName);
               return {
                 ...dbIng,
-                ingredient_name: ingredientName || dbIng.ingredient_name, // ใช้จาก ingredient หรือ cart ถ้าไม่มี
+                ingredient_name: ingredientName || dbIng.ingredient_name,
                 calculatedTotal: dbIng.useItem * menu.menu_total,
                 sourceMenu: menu.menu_name
               };
@@ -153,7 +151,7 @@ const OrderHistory: React.FC = () => {
           month: 'short',
           year: 'numeric',
         }).replace(/ /g, ' ');
-        const formattedTime = cart.cart_create_date.split('T')[1].split('.')[0].slice(0, 5); // แยกเวลาออกมาเป็น HH:MM
+        const formattedTime = cart.cart_create_date.split('T')[1].split('.')[0].slice(0, 5);
         return {
           id: cart.cart_id || 'no-id',
           orderNumber,
@@ -169,6 +167,13 @@ const OrderHistory: React.FC = () => {
           })),
           allIngredients
         };
+      });
+  
+      // เรียงลำดับตามวันที่ล่าสุดก่อน
+      formattedOrders.sort((a, b) => {
+        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateB = new Date(`${b.date} ${b.time}`);
+        return dateB.getTime() - dateA.getTime(); // desc: ล่าสุดก่อน
       });
   
       setCarts(formattedOrders);
@@ -384,8 +389,8 @@ const OrderHistory: React.FC = () => {
                 <SelectValue placeholder="ลำดับ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="asc">น้อย → มาก</SelectItem>
-                <SelectItem value="desc">มาก → น้อย</SelectItem>
+                <SelectItem value="desc">ล่าสุดก่อน</SelectItem>
+                <SelectItem value="asc">เก่าก่อน</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -452,6 +457,8 @@ const OrderHistory: React.FC = () => {
                 <AccordionItem key={cart.id} value={cart.id} className="border-none">
                   <Card className={`bg-gradient-to-r ${getStatusColor(cart.status)} p-4 rounded-xl`}>
                     <AccordionTrigger className="flex items-center justify-between w-full hover:no-underline gap-4">
+  <>
+  
   <div className="flex flex-col md:flex-row justify-between w-full items-start gap-4">
     <div className="flex items-start gap-4">
       <div className="p-2 bg-white rounded-xl shadow">
@@ -486,47 +493,47 @@ const OrderHistory: React.FC = () => {
       </span>
     </div>
   </div>
+  </>
 </AccordionTrigger>
                     <AccordionContent className="mt-4">
                       <div className="grid md:grid-cols-2 gap-6">
                         <div>
-                          <h4 className="text-sm font-bold text-blue-700 mb-2 flex items-center gap-2">
-                            <Package className="w-4 h-4" /> เมนูที่สั่ง
-                          </h4>
-                          {cart.menuItems.map((item, idx) => (
-                            <div key={idx} className="bg-white p-3 rounded-lg shadow-sm mb-2">
-                              <div className="font-medium text-black">
-                                {item.menu_name} <span className="text-blue-600">({item.menu_total} กล่อง)</span>
-                              </div>
-                              {/* {item.totalPrice && (
-                                <div className="text-sm text-slate-600 mt-1">
-                                  ราคารวม: ฿{item.totalPrice.toLocaleString()}
-                                </div>
-                              )} */}
-                            </div>
-                          ))}
-                        </div>
-                        <div>
+
+                            
                           <h4 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
                             <User className="w-4 h-4" /> วัตถุดิบที่ใช้
                           </h4>
                           {cart.allIngredients.map((menuGroup, groupIdx) => (
-                            <div key={groupIdx} className="mb-4">
-                              <div className="font-medium text-black mb-2">
-                                {menuGroup.menuName} <span className="text-sm text-slate-500">({cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} กล่อง)</span>
-                              </div>
-                              <div className="space-y-2">
-                                {menuGroup.ingredients.map((ing, idx) => (
-                                  <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
-                                    <span className="text-slate-700">{ing.ingredient_name}</span>
-                                    <span className="bg-slate-100 px-3 py-1 rounded text-sm text-slate-700">
-                                      ใช้ {ing.useItem} กรัมต่อกล่อง × {cart.menuItems.find(m => m.menu_name === menuGroup.menuName)?.menu_total} = {ing.calculatedTotal} กรัม
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+                            <Accordion type="multiple" className="space-y-3">
+  {cart.allIngredients.map((menuGroup, groupIdx) => {
+    const totalBox = cart.menuItems.find(item => item.menu_name === menuGroup.menuName)?.menu_total || 0;
+
+    return (
+      <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+        <AccordionTrigger className="flex justify-between items-center font-semibold text-slate-800 hover:no-underline">
+          <span>{menuGroup.menuName}</span>
+          <span className="text-blue-600 text-sm">({totalBox} กล่อง)</span>
+        </AccordionTrigger>
+        <AccordionContent className="pt-3 space-y-2">
+          {menuGroup.ingredients.map((ing, idx) => (
+            <div key={idx} className="flex justify-between items-center bg-slate-50 rounded-lg px-3 py-2 border border-slate-100 text-sm">
+              <span className="text-slate-700">
+                {ing.ingredient_name || `ไม่พบวัตถุดิบ (ID: ${ing.ingredient_id})`}
+              </span>
+              <span className="text-slate-600">
+                ใช้ {ing.useItem} กรัม/กล่อง × {totalBox} = <strong>{ing.calculatedTotal}</strong> กรัม
+              </span>
+            </div>
+          ))}
+        </AccordionContent>
+      </AccordionItem>
+    );
+  })}
+</Accordion>
+
+
                           ))}
+
                         </div>
                       </div>
                     </AccordionContent>

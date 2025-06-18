@@ -15,7 +15,10 @@ export async function PATCH(
     const ingredient_name = formData.get('ingredient_name')?.toString()?.trim();
     const ingredient_total = formData.get('ingredient_total');
     const ingredient_unit = formData.get('ingredient_unit')?.toString()?.trim();
+    const ingredient_category = formData.get('ingredient_category')?.toString()?.trim();
+    const ingredient_sub_category = formData.get('ingredient_sub_category')?.toString()?.trim();
     const ingredient_total_alert = formData.get('ingredient_total_alert');
+    const ingredient_price = formData.get('ingredient_price');
     const file = formData.get('ingredient_image') as File | null;
 
     // ตรวจสอบข้อมูลที่จำเป็นถ้ามีการส่งมา
@@ -61,7 +64,6 @@ export async function PATCH(
       );
     }
 
-    // ตรวจสอบชื่อซ้ำถ้ามีการส่งชื่อใหม่มา
     if (ingredient_name) {
       const duplicateName = await sql`
         SELECT ingredient_name 
@@ -78,7 +80,6 @@ export async function PATCH(
       }
     }
 
-    // อัปโหลดรูปภาพใหม่และลบรูปเก่าถ้ามี
     let ingredient_image_url = null;
     if (file && file.name) {
       // ดึง URL รูปภาพเก่าถ้ามี
@@ -98,21 +99,23 @@ export async function PATCH(
           console.log('Deleted old image:', oldImageUrl);
         } catch (deleteError) {
           console.error('Failed to delete old image:', deleteError);
-          // ไม่ให้ error นี้ทำให้การอัปเดตล้มเหลว
         }
       }
     }
 
-    // อัปเดตเฉพาะฟิลด์ที่มีการส่งมา
     const result = await sql`
       UPDATE ingredients 
       SET 
         ingredient_name = COALESCE(${ingredient_name}, ingredient_name),
         ingredient_total = COALESCE(${ingredient_total ? Number(ingredient_total) : null}, ingredient_total),
         ingredient_unit = COALESCE(${ingredient_unit}, ingredient_unit),
+        ingredient_category = COALESCE(${ingredient_category}, ingredient_category),
+        ingredient_sub_category = COALESCE(${ingredient_sub_category}, ingredient_sub_category),
         ingredient_total_alert = COALESCE(${ingredient_total_alert ? Number(ingredient_total_alert) : null}, ingredient_total_alert),
+        ingredient_price = COALESCE(${ingredient_price ? Number(ingredient_price) : null}, ingredient_price),
         ingredient_image = COALESCE(${ingredient_image_url}, ingredient_image),
         ingredient_lastupdate = NOW()
+
       WHERE ingredient_id = ${id}
       RETURNING *
     `;

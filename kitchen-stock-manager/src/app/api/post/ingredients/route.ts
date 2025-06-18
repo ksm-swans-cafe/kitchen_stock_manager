@@ -7,14 +7,15 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
 
-    // รับข้อมูลจาก formData
     const ingredient_name = formData.get('ingredient_name')?.toString();
     const ingredient_total = Number(formData.get('ingredient_total'));
     const ingredient_unit = formData.get('ingredient_unit')?.toString();
+    const ingredient_category = formData.get('ingredient_category')?.toString();
+    const ingredient_sub_category = formData.get('ingredient_sub_category')?.toString();
     const ingredient_total_alert = Number(formData.get('ingredient_total_alert'));
+    const ingredient_price = Number(formData.get('ingredient_price'));
     const file = formData.get('ingredient_image') as File | null;
 
-    // เช็คช่องว่าง
     if (
       !ingredient_name?.trim() ||
       !Number.isFinite(ingredient_total) ||
@@ -29,7 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ตรวจสอบซ้ำชื่อ
     const existingIngredient = await sql`
       SELECT ingredient_name 
       FROM ingredients 
@@ -57,14 +57,20 @@ export async function POST(request: NextRequest) {
         ingredient_name,
         ingredient_total,
         ingredient_unit,
+        ingredient_category,
+        ingredient_sub_category,
         ingredient_image,
-        ingredient_total_alert
+        ingredient_total_alert,
+        ingredient_price,
       ) VALUES (
         ${ingredient_name},
         ${ingredient_total},
         ${ingredient_unit},
+        ${ingredient_category},
+        ${ingredient_sub_category},
         ${ingredient_image},
-        ${ingredient_total_alert}
+        ${ingredient_total_alert},
+        ${ingredient_price}
       ) RETURNING *
     `;
 

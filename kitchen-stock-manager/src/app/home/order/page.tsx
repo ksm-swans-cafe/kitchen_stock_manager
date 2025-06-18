@@ -38,9 +38,15 @@ export default function Order() {
     fetchMenus();
   }, []);
 
-  const filteredMenus = allMenus.filter(menu =>
+  const filteredMenus = allMenus
+  .filter(menu =>
     menu.menu_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  )
+  .sort((a, b) => {
+    const nameA = a.menu_name?.toLowerCase() || '';
+    const nameB = b.menu_name?.toLowerCase() || '';
+    return nameA.localeCompare(nameB);
+  });
 
   const visibleMenus = filteredMenus.slice(0, visibleCount);
 
