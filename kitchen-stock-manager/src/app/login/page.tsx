@@ -15,6 +15,7 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCallback } from "react";
 import { useRouter } from 'next/navigation';
+import './style.css'
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -150,9 +151,17 @@ const Login: React.FC = () => {
         )}
 
         <CardHeader className="space-y-2 text-center pb-6">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          {/* <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
             <ArrowRight className="w-8 h-8 text-primary-foreground" />
+          </div> */}
+          <div className="mx-auto flex items-center justify-center mb-4">
+            <img
+              src="https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/logo/S__3842055-Pzp1LBEQErI3yqCqwKiiCxobjW6Y8K.jpg"
+              className="custom-logo-img cursor-pointer border border-gray-300 rounded-full transition-transform duration-200 transform hover:scale-125 inline-block"
+              alt="Logo"
+            />
           </div>
+
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             เข้าสู่ระบบ
           </CardTitle>

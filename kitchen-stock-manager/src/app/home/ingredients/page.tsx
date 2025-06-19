@@ -7,6 +7,7 @@ import { Label } from "@/share/ui/label";
 import { Badge } from "@/share/ui/badge";
 import SearchBox from "@/share/order/SearchBox_v2";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
+import { Employee } from "@/models/employee/employee-model";
 import MenuCard from "@/share/order/MenuCard";
 import {
   Dialog,
@@ -24,10 +25,19 @@ import {
 } from "@/share/ui/select";
 import { Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth/AuthProvider";
+
+const normalizeThaiVowel = (text: string): string => {
+  if (!text) return "";
+  return text
+    .replace(/เเ/g, "แ") 
+    .normalize("NFC");
+};
 
 export default function IngredientManagement() {
   const chunkSize = 1000;
   const [allIngredient, setIngredient] = useState<ingredient[]>([]);
+  const [allEmployee, setEmployee] = useState<Employee[]>([]);
   const [visibleCount, setVisibleCount] = useState(chunkSize);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +48,7 @@ export default function IngredientManagement() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const { userName } = useAuth();
 
   // Detect mobile device based on window width
   useEffect(() => {
@@ -88,6 +99,7 @@ export default function IngredientManagement() {
     ingredient_category: "",
     ingredient_sub_category: "",
     ingredient_status: "",
+    ingredient_price: 0,
   });
 
   const getStepValue = (unit: string): string => {
@@ -114,7 +126,9 @@ export default function IngredientManagement() {
     setError(null);
 
     try {
-      const trimmedName = ingredient.ingredient_name?.trim();
+      const trimmedName = normalizeThaiVowel(
+        ingredient.ingredient_name?.trim() || ""
+      );
       let total = Number(ingredient.ingredient_total);
       let alert = Number(ingredient.ingredient_total_alert);
 
@@ -134,20 +148,30 @@ export default function IngredientManagement() {
         throw new Error("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
       }
 
-      const formData = new FormData();
-      formData.append("ingredient_name", trimmedName);
-      formData.append("ingredient_total", String(total));
-      formData.append("ingredient_unit", ingredient.ingredient_unit.trim());
-      formData.append("ingredient_total_alert", String(alert));
-      formData.append("ingredient_category", ingredient.ingredient_category.trim());
-      formData.append("ingredient_sub_category", ingredient.ingredient_sub_category.trim());
+      const formDataIngredient = new FormData();
+      formDataIngredient.append("ingredient_name", trimmedName);
+      formDataIngredient.append("ingredient_total", String(total));
+      formDataIngredient.append("ingredient_unit", ingredient.ingredient_unit.trim());
+      formDataIngredient.append("ingredient_total_alert", String(alert));
+      formDataIngredient.append(
+        "ingredient_category",
+        ingredient.ingredient_category.trim()
+      );
+      formDataIngredient.append(
+        "ingredient_sub_category",
+        ingredient.ingredient_sub_category.trim()
+      );
+      formDataIngredient.append(
+        "ingredient_price",
+        String(ingredient.ingredient_price ?? 0).trim()
+      );
       if (imageFile) {
-        formData.append("ingredient_image", imageFile);
+        formDataIngredient.append("ingredient_image", imageFile);
       }
 
       const res = await fetch("/api/post/ingredients", {
         method: "POST",
-        body: formData,
+        body: formDataIngredient,
       });
 
       const result = await res.json();
@@ -163,9 +187,31 @@ export default function IngredientManagement() {
       }
 
       const addedIngredient = result?.ingredient?.[0] ?? result?.data ?? result;
-
       if (!addedIngredient) {
         throw new Error("Invalid response format: No ingredient data");
+      }
+
+      const type = "add";
+      const formDataTransaction = new FormData();
+      formDataTransaction.append("transaction_from_username", userName ?? "");
+      formDataTransaction.append("transaction_total_price", String(ingredient.ingredient_price ?? 0));
+      formDataTransaction.append("transaction_quantity", String(total));
+      formDataTransaction.append("transaction_units", ingredient.ingredient_unit.trim());
+
+      const encodedIngredientName = encodeURIComponent(trimmedName);
+      const resTran = await fetch(`/api/post/${type}/stock/${encodedIngredientName}`, {
+        method: "POST",
+        body: formDataTransaction,
+      });
+
+      if (!resTran.ok) {
+        const tranError = await resTran.json();
+        throw new Error(tranError.error || "เกิดข้อผิดพลาดในการเพิ่มรายการธุรกรรม");
+      }
+
+      const transactionResult = await resTran.json();
+      if (!transactionResult.transaction_type) {
+        throw new Error("Invalid transaction response format");
       }
 
       setIngredient((prev) => [...prev, addedIngredient]);
@@ -178,15 +224,16 @@ export default function IngredientManagement() {
         ingredient_category: "",
         ingredient_sub_category: "",
         ingredient_status: "",
+        ingredient_price: 0,
       });
       setImageFile(null);
       setIsAddDialogOpen(false);
-      toast.success("เพิ่มวัตถุดิบสำเร็จ");
+      toast.success("เพิ่มวัตถุดิบและบันทึกธุรกรรมสำเร็จ");
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบ";
+          : "เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบหรือธุรกรรม";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -212,9 +259,13 @@ export default function IngredientManagement() {
   const filteredIngredient = useMemo(
     () =>
       allIngredient.filter((ingredient) => {
-        const matchesSearch = ingredient.ingredient_name
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase());
+        const normalizedIngredientName = normalizeThaiVowel(
+          ingredient.ingredient_name || ""
+        );
+        const normalizedSearchQuery = normalizeThaiVowel(searchQuery);
+        const matchesSearch = normalizedIngredientName
+          .toLowerCase()
+          .includes(normalizedSearchQuery.toLowerCase());
         const matchesStatus =
           selectedStatus === "ทั้งหมด" ||
           getStockStatus(ingredient).label === selectedStatus;
@@ -245,7 +296,7 @@ export default function IngredientManagement() {
   );
 
   const ingredients = allIngredient
-    .map((ingredient) => ingredient.ingredient_name)
+    .map((ingredient) => normalizeThaiVowel(ingredient.ingredient_name || ""))
     .filter(
       (ingredient_name): ingredient_name is string =>
         typeof ingredient_name === "string"
@@ -292,13 +343,17 @@ export default function IngredientManagement() {
   }, [loadMore]);
 
   const subCategoryMap: Record<string, string[]> = {
-    "วัตถุดิบหลัก": ["เนื้อสัตว์", "ไข่และผลิตภัณฑ์จากไข่", "ผลิตภัณฑ์นม"],
-    "ผักและผลไม้": ["ผักสด", "ผลไม้สด"],
-    "ธัญพืชและแป้ง": ["ข้าว", "แป้ง", "ซีเรียลและขนมปัง"],
-    "เครื่องปรุงรส": ["ซอส", "เครื่องเทศ", "เครื่องปรุงรสพิเศษ"],
-    "วัตถุดิบแช่แข็งและแปรรูป": ["เนื้อสัตว์แช่แข็ง", "อาหารกึ่งสำเร็จรูป", "อาหารกระป๋อง"],
-    "ของแห้งและของแปรรูป": ["ถั่วแห้งและเมล็ดพืช", "ของหมักดอง", "ผลไม้แห้ง"],
-    "เครื่องดื่มและส่วนผสมอื่น": ["ส่วนผสมเบเกอรี่", "เครื่องดื่ม"],
+    วัตถุดิบหลัก: ["เนื้อสัตว์", "ไข่และผลิตภัณฑ์จากไข่", "ผลิตภัณฑ์นม"],
+    ผักและผลไม้: ["ผักสด", "ผลไม้สด"],
+    ธัญพืชและแป้ง: ["ข้าว", "แป้ง", "ซีเรียลและขนมปัง"],
+    เครื่องปรุงรส: ["ซอส", "เครื่องเทศ", "เครื่องปรุงรสพิเศษ"],
+    วัตถุดิบแช่แข็งและแปรรูป: [
+      "เนื้อสัตว์แช่แข็ง",
+      "อาหารกึ่งสำเร็จรูป",
+      "อาหารกระป๋อง",
+    ],
+    ของแห้งและของแปรรูป: ["ถั่วแห้งและเมล็ดพืช", "ของหมักดอง", "ผลไม้แห้ง"],
+    เครื่องดื่มและส่วนผสมอื่น: ["ส่วนผสมเบเกอรี่", "เครื่องดื่ม"],
   };
 
   const handleImageClick = (imageUrl: string) => {
@@ -314,7 +369,8 @@ export default function IngredientManagement() {
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
                 <h3 className="font-semibold text-red-800 dark:text-red-200">
-                  แจ้งเตือน: วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)
+                  แจ้งเตือน: วัตถุดิบใกล้หมด ({lowStockIngredients.length}{" "}
+                  รายการ)
                 </h3>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -324,8 +380,8 @@ export default function IngredientManagement() {
                     variant="destructive"
                     className="whitespace-nowrap"
                   >
-                    {ingredient.ingredient_name} ({ingredient.ingredient_total} /{" "}
-                    {ingredient.ingredient_total_alert})
+                    {ingredient.ingredient_name} ({ingredient.ingredient_total}{" "}
+                    / {ingredient.ingredient_total_alert})
                   </Badge>
                 ))}
                 {lowStockIngredients.length > 2 && (
@@ -355,7 +411,6 @@ export default function IngredientManagement() {
               minLength={1}
             />
           </div>
-
           <div
             style={{ color: "#000000" }}
             className="flex flex-row justify-center sm:justify-end gap-2 w-full sm:w-auto"
@@ -395,7 +450,6 @@ export default function IngredientManagement() {
                     เพิ่มวัตถุดิบใหม่
                   </DialogTitle>
 
-
                   <div style={{ color: "#000000" }} className="space-y-4">
                     <div>
                       <Label htmlFor="name">ชื่อวัตถุดิบ</Label>
@@ -418,7 +472,7 @@ export default function IngredientManagement() {
 
                     <div>
                       <Label htmlFor="unit">หน่วย</Label>
-                      <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                      <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-200 hover:bg-gray-300 border border-gray-400">
                         <Select
                           value={ingredient.ingredient_unit ?? ""}
                           onValueChange={(value) =>
@@ -464,13 +518,27 @@ export default function IngredientManagement() {
                             <SelectValue placeholder="เลือกประเภท" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="วัตถุดิบหลัก">วัตถุดิบหลัก</SelectItem>
-                            <SelectItem value="ผักและผลไม้">ผักและผลไม้</SelectItem>
-                            <SelectItem value="ธัญพืชและแป้ง">ธัญพืชและแป้ง</SelectItem>
-                            <SelectItem value="เครื่องปรุงรส">เครื่องปรุงรส</SelectItem>
-                            <SelectItem value="วัตถุดิบแช่แข็งและแปรรูป">วัตถุดิบแช่แข็งและแปรรูป</SelectItem>
-                            <SelectItem value="ของแห้งและของแปรรูป">ของแห้งและของแปรรูป</SelectItem>
-                            <SelectItem value="เครื่องดื่มและส่วนผสมอื่น">เครื่องดื่มและส่วนผสมอื่น</SelectItem>
+                            <SelectItem value="วัตถุดิบหลัก">
+                              วัตถุดิบหลัก
+                            </SelectItem>
+                            <SelectItem value="ผักและผลไม้">
+                              ผักและผลไม้
+                            </SelectItem>
+                            <SelectItem value="ธัญพืชและแป้ง">
+                              ธัญพืชและแป้ง
+                            </SelectItem>
+                            <SelectItem value="เครื่องปรุงรส">
+                              เครื่องปรุงรส
+                            </SelectItem>
+                            <SelectItem value="วัตถุดิบแช่แข็งและแปรรูป">
+                              วัตถุดิบแช่แข็งและแปรรูป
+                            </SelectItem>
+                            <SelectItem value="ของแห้งและของแปรรูป">
+                              ของแห้งและของแปรรูป
+                            </SelectItem>
+                            <SelectItem value="เครื่องดื่มและส่วนผสมอื่น">
+                              เครื่องดื่มและส่วนผสมอื่น
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -494,7 +562,9 @@ export default function IngredientManagement() {
                               <SelectValue placeholder="เลือกประเภทย่อย" />
                             </SelectTrigger>
                             <SelectContent>
-                              {subCategoryMap[ingredient.ingredient_category ?? ""].map((sub) => (
+                              {subCategoryMap[
+                                ingredient.ingredient_category ?? ""
+                              ].map((sub) => (
                                 <SelectItem key={sub} value={sub}>
                                   {sub}
                                 </SelectItem>
@@ -558,6 +628,27 @@ export default function IngredientManagement() {
                           min="0"
                           max="1000"
                           step={getStepValue(ingredient.ingredient_unit ?? "")}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="threshold">ราคา (บาท) </Label>
+                      <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                        <Input
+                          id="threshold"
+                          type="number"
+                          value={ingredient.ingredient_price ?? ""}
+                          onChange={(e) => {
+                            setingredient({
+                              ...ingredient,
+                              ingredient_price: Number(e.target.value),
+                            });
+                          }}
+                          min="0"
+                          max="100000"
+                          step="0.01"
                           required
                         />
                       </div>
@@ -628,7 +719,9 @@ export default function IngredientManagement() {
             aria-label="Image popup"
           >
             <div
-              className={`relative ${isMobile ? 'w-[95vw] h-[80vh]' : 'max-w-[90vw] max-h-[90vh]'}`}
+              className={`relative ${
+                isMobile ? "w-[95vw] h-[80vh]" : "max-w-[90vw] max-h-[90vh]"
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
               <img
@@ -636,7 +729,8 @@ export default function IngredientManagement() {
                 alt="Ingredient"
                 className="w-full h-full object-contain rounded-lg"
                 onError={(e) => {
-                  e.currentTarget.src = "https://bulma.io/assets/images/placeholders/1280x960.png";
+                  e.currentTarget.src =
+                    "https://bulma.io/assets/images/placeholders/1280x960.png";
                 }}
               />
               {isMobile && (

@@ -21,6 +21,8 @@ import { Button } from "@/share/ui/button";
 import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { useCartStore } from "@/stores/store";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { toast } from "sonner";
 
 type Mode = "menu" | "ingredient";
 
@@ -30,10 +32,18 @@ interface MenuCardProps {
   onImageClick?: () => void;
 }
 
+const normalizeThaiVowel = (text: string): string => {
+  if (!text) return "";
+  return text
+    .replace(/เเ/g, "แ")
+    .normalize("NFC");
+};
+
 export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const removeItem = useCartStore((state) => state.removeItem);
   const setItemQuantity = useCartStore((state) => state.setItemQuantity);
+  const { userName } = useAuth(); // ย้าย useAuth ออกนอก try block
 
   let title: string | undefined;
   let imageUrl: string | undefined;
@@ -50,9 +60,13 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
     ingredient_total: 0,
     ingredient_unit: "",
     ingredient_total_alert: 0,
+    ingredient_category: "",
+    ingredient_sub_category: "",
+    ingredient_price: 0,
     ingredient_lastupdate: "",
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [originalTotal, setOriginalTotal] = useState<number>(0); // เพิ่ม state เพื่อเก็บจำนวนเดิม
 
   const ingredientItem =
     mode === "ingredient" ? (item as ingredient) : undefined;
@@ -123,8 +137,12 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
           ingredientItem.ingredient_unit ||
           "",
         ingredient_total_alert: ingredientItem.ingredient_total_alert || 0,
+        ingredient_category: ingredientItem.ingredient_category || "",
+        ingredient_sub_category: ingredientItem.ingredient_sub_category || "",
+        ingredient_price: ingredientItem.ingredient_price || 0,
         ingredient_lastupdate: ingredientItem.ingredient_lastupdate || "",
       });
+      setOriginalTotal(ingredientItem.ingredient_total || 0); // เก็บจำนวนเดิม
       if (!ingredientItem.ingredient_id) {
         console.error("No ingredient_id in item:", ingredientItem);
         setError("ไม่พบ ID ของวัตถุดิบในข้อมูล");
@@ -156,7 +174,6 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
           Object.fromEntries(res.headers.entries())
         );
 
-        // ตรวจสอบ Content-Type
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           const text = await res.text();
@@ -185,8 +202,12 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
             data.ingredient_unit ||
             "",
           ingredient_total_alert: data.ingredient_total_alert || 0,
+          ingredient_price: data.ingredient_price || 0,
+          ingredient_category: data.ingredient_category || "",
+          ingredient_sub_category: data.ingredient_sub_category || "",
           ingredient_lastupdate: data.ingredient_lastupdate || "",
         });
+        setOriginalTotal(data.ingredient_total || 0); // อัปเดตจำนวนเดิม
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลวัตถุดิบได้";
@@ -227,16 +248,19 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
     }
 
     // ตรวจสอบข้อมูลที่จำเป็น
-    if (!Ingredient?.ingredient_name?.trim()) {
+    const trimmedName = normalizeThaiVowel(Ingredient?.ingredient_name?.trim() || "");
+    if (!trimmedName) {
       setError("ชื่อวัตถุดิบต้องไม่ว่างเปล่า");
       setLoading(false);
       return;
     }
 
-    if (
-      !Number.isFinite(Number(Ingredient.ingredient_total)) ||
-      Number(Ingredient.ingredient_total) <= 0
-    ) {
+    let total = Number(Ingredient.ingredient_total);
+    let alert = Number(Ingredient.ingredient_total_alert);
+    total = formatNumber(total, Ingredient.ingredient_unit ?? "");
+    alert = formatNumber(alert, Ingredient.ingredient_unit ?? "");
+
+    if (isNaN(total) || total <= 0) {
       setError("จำนวนปัจจุบันต้องเป็นตัวเลขที่มากกว่า 0");
       setLoading(false);
       return;
@@ -248,24 +272,27 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
       return;
     }
 
-    if (
-      !Number.isFinite(Number(Ingredient.ingredient_total_alert)) ||
-      Number(Ingredient.ingredient_total_alert) <= 0
-    ) {
+    if (isNaN(alert) || alert <= 0) {
       setError("ระดับแจ้งเตือนต้องเป็นตัวเลขที่มากกว่า 0");
+      setLoading(false);
+      return;
+    }
+
+    if (!userName) {
+      setError("ไม่พบข้อมูลผู้ใช้สำหรับบันทึกธุรกรรม");
       setLoading(false);
       return;
     }
 
     try {
       const formData = new FormData();
-      formData.append("ingredient_name", Ingredient.ingredient_name);
-      formData.append("ingredient_total", String(Ingredient.ingredient_total));
-      formData.append("ingredient_unit", Ingredient.ingredient_unit);
-      formData.append(
-        "ingredient_total_alert",
-        String(Ingredient.ingredient_total_alert)
-      );
+      formData.append("ingredient_name", trimmedName);
+      formData.append("ingredient_total", String(total));
+      formData.append("ingredient_unit", Ingredient.ingredient_unit.trim());
+      formData.append("ingredient_total_alert", String(alert));
+      formData.append("ingredient_category", Ingredient.ingredient_category?.trim() || "");
+      formData.append("ingredient_sub_category", Ingredient.ingredient_sub_category?.trim() || "");
+      formData.append("ingredient_price", String(Ingredient.ingredient_price ?? 0));
       if (selectedImage) {
         formData.append("ingredient_image", selectedImage);
       }
@@ -280,7 +307,6 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
         body: formData,
       });
 
-      // ตรวจสอบ Content-Type
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await res.text();
@@ -298,6 +324,58 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
         throw new Error(response.error || "Failed to update ingredient");
       }
 
+      // คำนวณการเปลี่ยนแปลงของจำนวน
+        const type = "change";
+        const formDataTransaction = new FormData();
+        formDataTransaction.append("transaction_from_username", userName);
+        formDataTransaction.append(
+          "transaction_total_price",
+          String(Ingredient.ingredient_price ?? 0)
+        );
+        formDataTransaction.append(
+          "transaction_quantity",
+          String(total)
+        );
+        formDataTransaction.append(
+          "transaction_units",
+          Ingredient.ingredient_unit.trim()
+        );
+
+        const encodedIngredientName = encodeURIComponent(trimmedName);
+        const resTran = await fetch(
+          `/api/post/${type}/stock/${encodedIngredientName}`,
+          {
+            method: "POST",
+            body: formDataTransaction,
+          }
+        );
+
+        if (!resTran.ok) {
+          const tranError = await resTran.json();
+          throw new Error(tranError.error || "เกิดข้อผิดพลาดในการเพิ่มรายการธุรกรรม");
+        }  
+
+        const tranContentType = resTran.headers.get("content-type");
+        if (!tranContentType || !tranContentType.includes("application/json")) {
+          const text = await resTran.text();
+          console.error(
+            "Non-JSON response received for transaction:",
+            text.slice(0, 100)
+          );
+          throw new Error("ได้รับข้อมูลที่ไม่ใช่ JSON จากเซิร์ฟเวอร์สำหรับธุรกรรม");
+        }
+
+        const transactionResult = await resTran.json();
+        if (!resTran.ok) {
+          throw new Error(
+            transactionResult.error || "เกิดข้อผิดพลาดในการเพิ่มรายการธุรกรรม"
+          );
+        }
+
+        if (!transactionResult.transaction_type) {
+          throw new Error("Invalid transaction response format");
+        }
+
       setIngredient({
         ...Ingredient,
         ...response.ingredient,
@@ -306,15 +384,17 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
           response.ingredient.ingredient_unit ||
           "",
       });
-      setSelectedImage(null); // รีเซ็ตไฟล์รูปภาพ
+      setSelectedImage(null);
       setIsAddDialogOpen(false);
+      toast.success("แก้ไขวัตถุดิบและบันทึกธุรกรรมสำเร็จ");
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "ไม่สามารถแก้ไขวัตถุดิบได้ กรุณาลองใหม่";
+          : "ไม่สามารถแก้ไขวัตถุดิบหรือบันทึกธุรกรรมได้";
       setError(errorMessage);
-      console.error("Patch error:", errorMessage);
+      toast.error(errorMessage);
+      console.error("Error in handleEditIngredient:", err);
     } finally {
       setLoading(false);
     }
@@ -345,7 +425,7 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
   const formatTotal = (value: number | undefined): string => {
     if (value === undefined || value === null) return "0";
     if (Number.isInteger(value) || value % 1 === 0) {
-      return Math.floor(value).toString(); // แสดงจำนวนเต็ม
+      return Math.floor(value).toString();
     }
     return Number(value).toFixed(2);
   };
@@ -384,7 +464,6 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
             )}
           </div>
 
-          {/* Mode Menu */}
           {mode === "menu" && (
             <div className="flex flex-col px-2 py-2 items-center">
               <div className="title is-6">{title}</div>
@@ -420,10 +499,9 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
             </footer>
           )}
 
-          {/* Mode Ingredient */}
           {mode === "ingredient" && (
             <div className="mx-2 my-2">
-              <div className="subtitle is-5 ">{title}</div>
+              <div className="subtitle is-5">{title}</div>
               <div className="subtitle is-7">
                 คงเหลือ {formatTotal(total as number)} {unit}
               </div>
@@ -624,6 +702,27 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
                         </div>
                       </div>
 
+                      <div>
+                        <Label htmlFor="threshold">ราคา (บาท) </Label>
+                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
+                          <Input
+                            id="threshold"
+                            type="number"
+                            value={Ingredient.ingredient_price ?? ""}
+                            onChange={(e) => {
+                              setIngredient({
+                                ...Ingredient,
+                                ingredient_price: Number(e.target.value),
+                              });
+                            }}
+                            min="0"
+                            max="100000"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                      </div>
+
                       <div style={{ color: "#000000" }}>
                         <Label htmlFor="image">รูปภาพ</Label>
                         <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
@@ -649,8 +748,6 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
 
                       <Button
                         type="submit"
-
-                        // className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400"
                         className="w-full "
                         disabled={loading}
                         style={{ color: "#000000" }}

@@ -11,15 +11,32 @@ const TITLES = [
   "ข้าวผัดไข่",
   "ข้าวผัดหมู",
   "ข้าวมันไก่",
-
 ];
 
-const fuse = new Fuse(TITLES, {
-  threshold: 0.3,
-  minMatchCharLength: 0,
-  includeScore: true,
-  shouldSort: true,
-});
+// Function to normalize Thai vowels (แ -> เเ and vice versa, but keep single เ distinct)
+const normalizeVowels = (text: string): string => {
+  // Only normalize แ and เเ to a common form, leave single เ untouched
+  return text
+    .replace(/แ/g, 'เเ') // Convert แ to เเ
+    .replace(/เเ/g, 'แ'); // Convert เเ to แ (handles both directions)
+};
+
+// Create a normalized version of TITLES for searching
+const normalizedTitles = TITLES.map(title => ({
+  original: title,
+  normalized: normalizeVowels(title)
+}));
+
+const fuse = new Fuse(
+  normalizedTitles,
+  {
+    threshold: 0.3,
+    minMatchCharLength: 0,
+    includeScore: true,
+    shouldSort: true,
+    keys: ['normalized'], // Search on the normalized field
+  }
+);
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -33,9 +50,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const results = fuse.search(query)
+    // Normalize the query, but only for แ and เเ, leaving single เ intact
+    const normalizedQuery = normalizeVowels(query);
+
+    // Perform the search on normalized titles
+    const results = fuse.search(normalizedQuery)
       .slice(0, 5)
-      .map(result => result.item);
+      .map(result => result.item.original); // Return the original title
 
     await new Promise(resolve => setTimeout(resolve, 150));
 

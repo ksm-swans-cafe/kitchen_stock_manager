@@ -25,6 +25,7 @@ export interface ingredient{
   ingredient_category?: string;
   ingredient_sub_category?: string;
   ingredient_price? : number;
+  transaction_from_username? : string;
 };
 
 // export interface newIngredient{

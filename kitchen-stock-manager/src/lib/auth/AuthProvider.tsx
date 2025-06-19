@@ -10,7 +10,7 @@ type AuthContextType = {
   isLoading: boolean;
   userRole: EmployeeRole | null;
   userName: string | null;
-  checkAuth: (preventRedirect?: boolean) => Promise<boolean>; // เปลี่ยนเป็นคืนค่า boolean
+  checkAuth: (preventRedirect?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
 };
 

@@ -11,10 +11,23 @@ export async function POST(request: NextRequest) {
     }
 
     const menuItemsJson = JSON.stringify(cart_menu_items);
+    const cartCreateDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const orderNumber = (
+      await sql`
+        SELECT LPAD(
+          CAST(
+            (SELECT COUNT(*) + 1 FROM cart c2
+             WHERE DATE(c2.cart_create_date) = DATE(${cartCreateDate})
+             AND c2.cart_create_date <= ${cartCreateDate}) AS TEXT
+          ),
+          3,
+          '0'
+        ) AS order_num`
+    )[0].order_num;
 
     const result = await sql`
-      INSERT INTO cart (cart_username, cart_menu_items) 
-      VALUES (${cart_username}, ${menuItemsJson}::jsonb)
+      INSERT INTO cart (cart_username, cart_menu_items, cart_create_date, cart_order_number)
+      VALUES (${cart_username}, ${menuItemsJson}::jsonb, ${cartCreateDate}, ${orderNumber})
       RETURNING *`;
 
     return NextResponse.json({ message: 'Cart created successfully', cart: result[0] }, { status: 201 });

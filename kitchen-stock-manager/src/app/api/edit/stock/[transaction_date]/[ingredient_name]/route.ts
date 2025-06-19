@@ -23,8 +23,8 @@ export async function PATCH(
       .get("transaction_from_username")
       ?.toString()
       .trim();
-    const add_decrease = formData
-      .get("transaction_add_decrease")
+    const type = formData
+      .get("transaction_type")
       ?.toString()
       .trim();
     const total_price = formData.get("transaction_total_price");
@@ -42,7 +42,7 @@ export async function PATCH(
       UPDATE ingredient_transactions
       SET
         transaction_from_username = ${username},
-        transaction_add_decrease = ${add_decrease},
+        transaction_type = ${type},
         transaction_total_price = ${total_price},
         transaction_quantity = ${quantity},
         transaction_units = ${unit}

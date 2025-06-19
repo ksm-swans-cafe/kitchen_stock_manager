@@ -1,3 +1,4 @@
+// src/app/api/post/[transaction_type]/stock/[ingredient_name]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@app/database/connect";
 
@@ -6,14 +7,11 @@ export async function POST(
   {
     params,
   }: {
-    params: {
-      transaction_add_decrease: string;
-      ingredient_name: string;
-    };
+    params: Promise<{ transaction_type: string; ingredient_name: string }>;
   }
 ) {
-  const ingredientName = params.ingredient_name;
-  const add_decrease = params.transaction_add_decrease;
+  // Await params เพื่อรับค่า dynamic parameters
+  const { ingredient_name: ingredientName, transaction_type: type } = await params;
 
   try {
     const formData = await req.formData();
@@ -22,7 +20,7 @@ export async function POST(
     const quantity = formData.get("transaction_quantity");
     const unit = formData.get("transaction_units")?.toString()?.trim();
 
-    if (!username || !add_decrease || !total_price || !ingredientName || !quantity || !unit) {
+    if (!username || !type || !total_price || !ingredientName || !quantity || !unit) {
       return NextResponse.json(
         { error: "All fields are required." },
         { status: 400 }
@@ -32,7 +30,7 @@ export async function POST(
     const result = await sql`
       INSERT INTO ingredient_transactions (
         transaction_from_username,
-        transaction_add_decrease,
+        transaction_type,
         ingredient_name,
         transaction_total_price,
         transaction_quantity,
@@ -40,7 +38,7 @@ export async function POST(
       )
       VALUES (
         ${username},
-        ${add_decrease},
+        ${type},
         ${ingredientName},
         ${total_price},
         ${quantity},

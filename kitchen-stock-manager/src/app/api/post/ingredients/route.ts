@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         ingredient_sub_category,
         ingredient_image,
         ingredient_total_alert,
-        ingredient_price,
+        ingredient_price
       ) VALUES (
         ${ingredient_name},
         ${ingredient_total},
