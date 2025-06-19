@@ -6,7 +6,8 @@ import { Button } from '@/share/ui/button';
 import { Card, CardContent} from '@/share/ui/card';
 import { ArrowLeft, Home, LogOut, Clock, User, Package, CheckCircle, XCircle, AlertCircle, Search, Filter, Download, ArrowUpDown, Calendar, Users, Hash, Star } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+
 
 import {
   Accordion,
@@ -155,7 +156,6 @@ const OrderHistory: React.FC = () => {
         return {
           id: cart.cart_id || 'no-id',
           orderNumber,
-          name: menuDisplayName,
           date: formattedDate,
           time: formattedTime,
           sets: totalSets,
@@ -316,33 +316,34 @@ const OrderHistory: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
+ const handleExportPDF = () => {
+  const doc = new jsPDF();
 
-    doc.setFontSize(16);
-    doc.text('ประวัติคำสั่งซื้อ (Order History)', 14, 20);
+  doc.setFont('helvetica'); // หรือ 'times', 'courier'
+  doc.setFontSize(16);
+  doc.text('Order History', 14, 20);
 
-    const tableColumn = ['เลขที่ออร์เดอร์', 'ชื่อเมนู', 'วันที่', 'เวลา', 'จำนวน Set', 'ราคา', 'สถานะ', 'ผู้สร้าง'];
-    const tableRows = filteredAndSortedOrders.map(cart => [
-      cart.id,
-      cart.name,
-      cart.date,
-      cart.time,
-      cart.sets,
-      cart.price,
-      getStatusText(cart.status),
-      cart.createdBy,
-    ]);
+  const tableColumn = ['Order ID', 'Menu', 'Date', 'Time', 'Sets', 'Price', 'Status', 'Created By'];
+  const tableRows = filteredAndSortedOrders.map(cart => [
+    cart.id,
+    cart.name,
+    cart.date,
+    cart.time,
+    cart.sets,
+    cart.price,
+    getStatusText(cart.status),
+    cart.createdBy,
+  ]);
 
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 30,
-      styles: { fontSize: 10 },
-    });
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 30,
+    styles: { font: 'helvetica', fontSize: 10 },
+  });
 
-    doc.save('order_history.pdf');
-  };
+  doc.save('order_history.pdf');
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
@@ -456,72 +457,83 @@ const OrderHistory: React.FC = () => {
               {paginatedOrders.map((cart) => (
                 <AccordionItem key={cart.id} value={cart.id} className="border-none">
                   <Card className={`bg-gradient-to-r ${getStatusColor(cart.status)} p-4 rounded-xl`}>
-                    <AccordionTrigger className="flex items-center justify-between w-full hover:no-underline gap-4">
-  <>
-  
-  <div className="flex flex-col md:flex-row justify-between w-full items-start gap-4">
-    <div className="flex items-start gap-4">
-      <div className="p-2 bg-white rounded-xl shadow">
-        {getStatusIcon(cart.status)}
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-left">{cart.name}</h3>
-        <div className="flex gap-1 flex-wrap text-xs text-slate-600">
-          <span className="flex items-center gap-0.5">
-            <Hash className="w-3 h-3" /> Order id: {cart.id}
-          </span>
-          <span className="flex items-center gap-0.5">
-            <Calendar className="w-3 h-3" /> วันที่ {cart.date}
-          </span>
-          <span className="flex items-center gap-0.5">
-            <Clock className="w-3 h-3" /> เวลา {cart.time} น.
-          </span>
-          <span className="flex items-center gap-0.5">
-            <Package className="w-3 h-3" /> จำนวนทั้งหมด {cart.sets} กล่อง
-          </span>
-          <span className="flex items-center gap-0.5">
-            <User className="w-3 h-3" /> Order ของคุณ: {cart.createdBy}
-          </span>
-        </div>
-      </div>
-    </div>
+                    <AccordionTrigger className="w-full hover:no-underline px-0">
+                    <div className="flex flex-col w-full gap-2">
+                      {/* บรรทัดบน */}
+                      <div className="flex flex-wrap justify-between items-center">
+                        <div className="flex items-center gap-2 text-base font-medium text-slate-800">
+                          <Package className="w-5 h-5 text-blue-500" />
+                          <span>Created by: {cart.createdBy}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-base font-semibold text-black">
+                          <div className="flex items-center gap-1">
+                            <span>฿{cart.price.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Package className="w-4 h-4" />
+                            <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
+                          </div>
+                        </div>
+                      </div>
 
-    <div className="text-right ml-auto">
-      <p className="text-xl font-bold">฿{cart.price.toLocaleString()}</p>
-      <span className="inline-block mt-1 bg-white px-3 py-1 rounded-full text-xs font-medium text-black shadow-sm">
-        {getStatusText(cart.status)}
-      </span>
-    </div>
-  </div>
-  </>
-</AccordionTrigger>
+                      {/* บรรทัดล่าง */}
+                      <div className="flex flex-wrap justify-between items-center text-sm text-slate-600">
+                        <div className="flex flex-col gap-0.5 text-xs text-slate-600">
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-1 h-1" />
+                              <span>วันที่ {cart.date}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-1 h-1" />
+                              <span>{cart.time} น.</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 text-slate-500">
+                            <Hash className="w-1 h-1" />
+                            <span>Order id: {cart.id}</span>
+                          </div>
+                        </div>
+
+
+                        <div className="rounded-full text-sm font-bold bg-white shadow px-4 py-1">
+                          {getStatusText(cart.status)}
+                        </div>
+
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+
                     <AccordionContent className="mt-4">
                       <div className="grid md:grid-cols-2 gap-6">
                         <div>
 
                             
                           <h4 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
-                            <User className="w-4 h-4" /> วัตถุดิบที่ใช้
+                            <User className="w-4 h-4" /> เมนูที่สั่ง
                           </h4>
-                          {cart.allIngredients.map((menuGroup, groupIdx) => (
-                            <Accordion type="multiple" className="space-y-3">
+                          <Accordion type="multiple" className="space-y-3">
   {cart.allIngredients.map((menuGroup, groupIdx) => {
     const totalBox = cart.menuItems.find(item => item.menu_name === menuGroup.menuName)?.menu_total || 0;
 
     return (
       <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
-        <AccordionTrigger className="flex justify-between items-center font-semibold text-slate-800 hover:no-underline">
-          <span>{menuGroup.menuName}</span>
-          <span className="text-blue-600 text-sm">({totalBox} กล่อง)</span>
-        </AccordionTrigger>
+      <AccordionTrigger className="flex items-center w-full px-4 py-3 font-semibold text-slate-800 hover:no-underline">
+        <span className="truncate">{menuGroup.menuName}</span>
+        <span className="ml-auto mr-2 text-blue-600 text-sm font-mono">({totalBox} กล่อง)</span>
+      </AccordionTrigger>
+
+
+
         <AccordionContent className="pt-3 space-y-2">
           {menuGroup.ingredients.map((ing, idx) => (
             <div key={idx} className="flex justify-between items-center bg-slate-50 rounded-lg px-3 py-2 border border-slate-100 text-sm">
               <span className="text-slate-700">
                 {ing.ingredient_name || `ไม่พบวัตถุดิบ (ID: ${ing.ingredient_id})`}
               </span>
-              <span className="text-slate-600">
-                ใช้ {ing.useItem} กรัม/กล่อง × {totalBox} = <strong>{ing.calculatedTotal}</strong> กรัม
+              <span className="text-slate-700">
+                ใช้ {ing.useItem} กรัม/กล่อง × {totalBox} ={' '}
+                <strong className="!text-black font-semibold">{ing.calculatedTotal}</strong> กรัม
               </span>
             </div>
           ))}
@@ -531,8 +543,6 @@ const OrderHistory: React.FC = () => {
   })}
 </Accordion>
 
-
-                          ))}
 
                         </div>
                       </div>
