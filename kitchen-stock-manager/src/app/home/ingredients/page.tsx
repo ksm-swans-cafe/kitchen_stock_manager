@@ -7,12 +7,12 @@ import { Label } from "@/share/ui/label";
 import { Badge } from "@/share/ui/badge";
 import SearchBox from "@/share/order/SearchBox_v2";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
-import { Employee } from "@/models/employee/employee-model";
+// import { Employee } from "@/models/employee/employee-model";
 import MenuCard from "@/share/order/MenuCard";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
+  // DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/share/ui/dialog";
@@ -37,7 +37,7 @@ const normalizeThaiVowel = (text: string): string => {
 export default function IngredientManagement() {
   const chunkSize = 1000;
   const [allIngredient, setIngredient] = useState<ingredient[]>([]);
-  const [allEmployee, setEmployee] = useState<Employee[]>([]);
+  // const [allEmployee, setEmployee] = useState<Employee[]>([]);
   const [visibleCount, setVisibleCount] = useState(chunkSize);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
