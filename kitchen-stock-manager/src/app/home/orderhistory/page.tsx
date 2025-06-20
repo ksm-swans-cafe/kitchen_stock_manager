@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
+
 import {
   ArrowLeft,
   Home,
@@ -156,25 +157,27 @@ const OrderHistory: React.FC = () => {
           const menuFromDB = menuData.find(
             (m: any) => m.menu_name === menu.menu_name
           );
-          console.log("menuFromDB:", menuFromDB);
+          // console.log("menuFromDB:", menuFromDB);
 
           const dbIngredients = Array.isArray(menuFromDB?.menu_ingredients)
             ? menuFromDB.menu_ingredients
             : menu.ingredients || [];
 
+          // console.log("dbIngredients:", dbIngredients);
           return {
             menuName: menu.menu_name,
             ingredients: dbIngredients.map((dbIng: any) => {
               const ingredientFromDB = ingredientData.find(
-                (ing: any) => ing.ingredient_id === dbIng.ingredient_id
+                (ing: any) => ing.ingredient_name === dbIng.ingredient_name
               );
-              console.log("ingredientFromDB:", ingredientFromDB);
+              // console.log("ingredientFromDB:", ingredientFromDB);
               const ingredientName =
                 ingredientFromDB?.ingredient_name ||
-                `ไม่พบวัตถุดิบ (ID: ${dbIng.ingredient_id})`;
-              console.log("ingredientName: ", ingredientName);
+                `ไม่พบวัตถุดิบ (ID: ${dbIng.ingredient_name})`;
+              // console.log("ingredientName: ", ingredientName);
               return {
                 ...dbIng,
+                ingredient_id: ingredientFromDB?.ingredient_id,
                 ingredient_name: ingredientName || dbIng.ingredient_name,
                 calculatedTotal: dbIng.useItem * menu.menu_total,
                 sourceMenu: menu.menu_name,
@@ -378,7 +381,7 @@ const OrderHistory: React.FC = () => {
   const handleExportPDF = () => {
     const doc = new jsPDF();
 
-    doc.setFont("helvetica"); // หรือ 'times', 'courier'
+    doc.setFont("halvaria"); 
     doc.setFontSize(16);
     doc.text("Order History", 14, 20);
 
@@ -616,16 +619,13 @@ const OrderHistory: React.FC = () => {
                           <span className="truncate">Order id: {cart.id}</span> */}
                           <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                         </div>
-
-                        {/* สถานะ */}
-                        <div>
-                          <StatusDropdown cartId={cart.id} defaultStatus={cart.status} />
-                          {/* <span className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow">
-                            {getStatusText(cart.status)}
-                          </span> */}
-                        </div>
                       </div>
                     </AccordionTrigger>
+
+                    {/* สถานะ */}
+                    <div className="flex justify-center">
+                      <StatusDropdown cartId={cart.id} allIngredients={cart.allIngredients} defaultStatus={cart.status} />
+                    </div>
 
                     <AccordionContent className="mt-4">
                       <div className="grid md:grid-cols-2 gap-6">
@@ -665,7 +665,7 @@ const OrderHistory: React.FC = () => {
                                       >
                                         <span className="text-slate-700">
                                           {ing.ingredient_name ||
-                                            `ไม่พบวัตถุดิบ (ID: ${ing.ingredient_id})`}
+                                            `ไม่พบวัตถุดิบ (ID: ${ing.ingredient_name})`}
                                         </span>
                                         <span className="text-slate-700">
                                           ใช้ {ing.useItem} กรัม/กล่อง ×{" "}

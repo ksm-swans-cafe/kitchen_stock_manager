@@ -96,8 +96,8 @@ export default function IngredientManagement() {
     ingredient_unit: "",
     ingredient_image: "",
     ingredient_total_alert: 0,
-    ingredient_category: "",
-    ingredient_sub_category: "",
+    // ingredient_category: "",
+    // ingredient_sub_category: "",
     ingredient_status: "",
     ingredient_price: 0,
   });
@@ -138,8 +138,8 @@ export default function IngredientManagement() {
       if (
         !trimmedName ||
         !ingredient.ingredient_unit?.trim() ||
-        !ingredient.ingredient_category?.trim() ||
-        !ingredient.ingredient_sub_category?.trim() ||
+        // !ingredient.ingredient_category?.trim() ||
+        // !ingredient.ingredient_sub_category?.trim() ||
         isNaN(total) ||
         total <= 0 ||
         isNaN(alert) ||
@@ -153,14 +153,14 @@ export default function IngredientManagement() {
       formDataIngredient.append("ingredient_total", String(total));
       formDataIngredient.append("ingredient_unit", ingredient.ingredient_unit.trim());
       formDataIngredient.append("ingredient_total_alert", String(alert));
-      formDataIngredient.append(
-        "ingredient_category",
-        ingredient.ingredient_category.trim()
-      );
-      formDataIngredient.append(
-        "ingredient_sub_category",
-        ingredient.ingredient_sub_category.trim()
-      );
+      // formDataIngredient.append(
+      //   "ingredient_category",
+      //   ingredient.ingredient_category.trim()
+      // );
+      // formDataIngredient.append(
+      //   "ingredient_sub_category",
+      //   ingredient.ingredient_sub_category.trim()
+      // );
       formDataIngredient.append(
         "ingredient_price",
         String(ingredient.ingredient_price ?? 0).trim()
@@ -221,8 +221,8 @@ export default function IngredientManagement() {
         ingredient_unit: "",
         ingredient_image: "",
         ingredient_total_alert: 0,
-        ingredient_category: "",
-        ingredient_sub_category: "",
+        // ingredient_category: "",
+        // ingredient_sub_category: "",
         ingredient_status: "",
         ingredient_price: 0,
       });
@@ -419,7 +419,7 @@ export default function IngredientManagement() {
               <Select
                 value={selectedStatus}
                 onValueChange={(value) => {
-                  console.log("Selected status:", value);
+                  // console.log("Selected status:", value);
                   setSelectedStatus(value);
                 }}
               >
@@ -500,7 +500,7 @@ export default function IngredientManagement() {
                       </div>
                     </div>
 
-                    <div>
+                    {/* <div>
                       <Label htmlFor="category">ประเภท</Label>
                       <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
                         <Select
@@ -542,9 +542,9 @@ export default function IngredientManagement() {
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
+                    </div> */}
 
-                    {subCategoryMap[ingredient.ingredient_category ?? ""] && (
+                    {/* {subCategoryMap[ingredient.ingredient_category ?? ""] && (
                       <div>
                         <Label htmlFor="sub-category">ประเภทย่อย</Label>
                         <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
@@ -573,7 +573,7 @@ export default function IngredientManagement() {
                           </Select>
                         </div>
                       </div>
-                    )}
+                    )} */}
 
                     <div>
                       <Label htmlFor="currentStock">จำนวนปัจจุบัน</Label>
@@ -654,7 +654,7 @@ export default function IngredientManagement() {
                       </div>
                     </div>
 
-                    <div>
+                    {/* <div>
                       <Label htmlFor="image">รูปภาพวัตถุดิบ (ถ้ามี)</Label>
                       <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
                         <Input
@@ -666,7 +666,7 @@ export default function IngredientManagement() {
                           }
                         />
                       </div>
-                    </div>
+                    </div> */}
 
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "กำลังเพิ่ม..." : "เพิ่มวัตถุดิบ"}

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     const menuItemsJson = JSON.stringify(cart_menu_items);
-    const cartCreateDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const cartCreateDate = new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
     const orderNumber = (
       await sql`
         SELECT LPAD(

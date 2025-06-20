@@ -15,8 +15,8 @@ export async function PATCH(
     const ingredient_name = formData.get('ingredient_name')?.toString()?.trim();
     const ingredient_total = formData.get('ingredient_total');
     const ingredient_unit = formData.get('ingredient_unit')?.toString()?.trim();
-    const ingredient_category = formData.get('ingredient_category')?.toString()?.trim();
-    const ingredient_sub_category = formData.get('ingredient_sub_category')?.toString()?.trim();
+    // const ingredient_category = formData.get('ingredient_category')?.toString()?.trim();
+    // const ingredient_sub_category = formData.get('ingredient_sub_category')?.toString()?.trim();
     const ingredient_total_alert = formData.get('ingredient_total_alert');
     const ingredient_price = formData.get('ingredient_price');
     const file = formData.get('ingredient_image') as File | null;
@@ -109,16 +109,29 @@ export async function PATCH(
         ingredient_name = COALESCE(${ingredient_name}, ingredient_name),
         ingredient_total = COALESCE(${ingredient_total ? Number(ingredient_total) : null}, ingredient_total),
         ingredient_unit = COALESCE(${ingredient_unit}, ingredient_unit),
-        ingredient_category = COALESCE(${ingredient_category}, ingredient_category),
-        ingredient_sub_category = COALESCE(${ingredient_sub_category}, ingredient_sub_category),
         ingredient_total_alert = COALESCE(${ingredient_total_alert ? Number(ingredient_total_alert) : null}, ingredient_total_alert),
         ingredient_price = COALESCE(${ingredient_price ? Number(ingredient_price) : null}, ingredient_price),
         ingredient_image = COALESCE(${ingredient_image_url}, ingredient_image),
         ingredient_lastupdate = NOW()
-
       WHERE ingredient_id = ${id}
       RETURNING *
     `;
+
+    // const result = await sql`
+    //   UPDATE ingredients 
+    //   SET 
+    //     ingredient_name = COALESCE(${ingredient_name}, ingredient_name),
+    //     ingredient_total = COALESCE(${ingredient_total ? Number(ingredient_total) : null}, ingredient_total),
+    //     ingredient_unit = COALESCE(${ingredient_unit}, ingredient_unit),
+    //     ingredient_category = COALESCE(${ingredient_category}, ingredient_category),
+    //     ingredient_sub_category = COALESCE(${ingredient_sub_category}, ingredient_sub_category),
+    //     ingredient_total_alert = COALESCE(${ingredient_total_alert ? Number(ingredient_total_alert) : null}, ingredient_total_alert),
+    //     ingredient_price = COALESCE(${ingredient_price ? Number(ingredient_price) : null}, ingredient_price),
+    //     ingredient_image = COALESCE(${ingredient_image_url}, ingredient_image),
+    //     ingredient_lastupdate = NOW()
+    //   WHERE ingredient_id = ${id}
+    //   RETURNING *
+    // `;
 
     if (!result || result.length === 0) {
       return NextResponse.json(
