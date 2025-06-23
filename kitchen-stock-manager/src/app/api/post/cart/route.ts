@@ -4,7 +4,10 @@ import sql from '@/app/database/connect';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { cart_username, cart_menu_items } = body;
+    const { cart_username, cart_menu_items, 
+      cart_customer_name, cart_customer_tel, 
+      cart_delivery_date, cart_location_send, 
+      cart_export_time, cart_recieve_time } = body;
 
     if (!cart_username || !cart_menu_items) {
       return NextResponse.json({ error: 'Username and menu items are required' }, { status: 400 });
@@ -26,8 +29,16 @@ export async function POST(request: NextRequest) {
     )[0].order_num;
 
     const result = await sql`
-      INSERT INTO cart (cart_username, cart_menu_items, cart_create_date, cart_order_number)
-      VALUES (${cart_username}, ${menuItemsJson}::jsonb, ${cartCreateDate}, ${orderNumber})
+      INSERT INTO cart (cart_username, cart_menu_items, 
+      cart_create_date, cart_order_number,  
+      cart_customer_name, cart_customer_tel, 
+      cart_delivery_date, cart_location_send, 
+      cart_export_time, cart_recieve_time)
+      VALUES (${cart_username}, ${menuItemsJson}::jsonb, 
+      ${cartCreateDate}, ${orderNumber},  
+      ${cart_customer_name}, ${cart_customer_tel}, 
+      ${cart_delivery_date}, ${cart_location_send}, 
+      ${cart_export_time}, ${cart_recieve_time})
       RETURNING *`;
 
     return NextResponse.json({ message: 'Cart created successfully', cart: result[0] }, { status: 201 });

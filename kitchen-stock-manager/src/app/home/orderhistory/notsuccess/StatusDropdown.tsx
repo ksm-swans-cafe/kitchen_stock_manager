@@ -19,7 +19,7 @@ type StatusOption = {
 const statusOptions: StatusOption[] = [
   { label: "รอดำเนินการ", value: "pending" },
   { label: "ยืนยันแล้ว", value: "completed" },
-  { label: "เสร็จสิ้น", value: "success" },
+  { label: "ส่งแล้ว", value: "success" },
   { label: "ยกเลิก", value: "cancelled" },
 ];
 
@@ -50,7 +50,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       setIsSubmitting(true);
 
       // ✅ ถ้าเลือก success → จัดการ ingredients ก่อน
-      if (selectedStatus === "success") {
+      if (selectedStatus === "completed") {
         for (const menu of allIngredients) {
           for (const ingredient of menu.ingredients) {
             if (!ingredient.ingredient_id) continue;

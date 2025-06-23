@@ -3,9 +3,8 @@
 import SearchBox from '@/share/order/SearchBox_v2';
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MenuItem } from "@/models/menu_card/MenuCard-model";
-import MenuCard from "@/share/order/MenuCard";
+import MenuCard from "@/share/order/MenuCardForMenu";
 import './style.css';
-
 
 export default function Order() {
   const chunkSize = 10;
@@ -23,7 +22,25 @@ export default function Order() {
         setLoading(true);
         const res = await fetch("/api/get/menu-list");
         if (!res.ok) throw new Error("Failed to fetch menu list");
-        const data = await res.json();
+        let data: MenuItem[] = await res.json();
+
+        // ✅ ใช้ menu_subname ถ้ามี, ลบซ้ำ, ข้าม null, แก้ "เเ" เป็น "แ"
+        const seen = new Set<string>();
+        data = data.filter((menu) => {
+          let name = menu.menu_subname ?? null;
+          if (!name) return false;
+
+          // แก้ "เเ" เป็น "แ"
+          name = name.replace(/เเ/g, 'แ');
+
+          // เก็บชื่อใหม่ไว้ใน object
+          menu.menu_subname = name;
+
+          if (seen.has(name)) return false;
+          seen.add(name);
+          return true;
+        });
+
         setAllMenus(data);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -38,15 +55,16 @@ export default function Order() {
     fetchMenus();
   }, []);
 
+  // ✅ ใช้ menu_subname แทน menu_name
   const filteredMenus = allMenus
-  .filter(menu =>
-    menu.menu_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  .sort((a, b) => {
-    const nameA = a.menu_name?.toLowerCase() || '';
-    const nameB = b.menu_name?.toLowerCase() || '';
-    return nameA.localeCompare(nameB);
-  });
+    .filter(menu =>
+      menu.menu_subname?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const nameA = a.menu_subname?.toLowerCase() || '';
+      const nameB = b.menu_subname?.toLowerCase() || '';
+      return nameA.localeCompare(nameB);
+    });
 
   const visibleMenus = filteredMenus.slice(0, visibleCount);
 
@@ -78,9 +96,10 @@ export default function Order() {
     };
   }, [visibleCount, filteredMenus]);
 
+  // ✅ SearchBox ใช้ชื่อ menu_subname แทน
   const menus = allMenus
-    .map((menu) => menu.menu_name)
-    .filter((menu_name): menu_name is string => typeof menu_name === 'string');
+    .map((menu) => menu.menu_subname)
+    .filter((name): name is string => typeof name === 'string');
 
   return (
     <main className="flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto">

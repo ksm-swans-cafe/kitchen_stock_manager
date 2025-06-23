@@ -103,20 +103,16 @@ export default function IngredientManagement() {
   });
 
   const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ชิ้น"].includes(unit)) {
+    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
       return "1";
-    } else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
-      return "0.01";
     }
     return "0.01";
   };
 
   const formatNumber = (value: number, unit: string): number => {
-    if (["กรัม", "ฟอง", "ชิ้น"].includes(unit)) {
+    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
       return Math.floor(value);
-    } else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
-      return Number(value.toFixed(2));
-    }
+    } 
     return value;
   };
 
@@ -490,9 +486,9 @@ export default function IngredientManagement() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="กรัม">กรัม</SelectItem>
-                            <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem>
+                            {/* <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem> */}
                             <SelectItem value="ฟอง">ฟอง</SelectItem>
-                            <SelectItem value="ลิตร">ลิตร</SelectItem>
+                            {/* <SelectItem value="ลิตร">ลิตร</SelectItem> */}
                             <SelectItem value="มิลลิลิตร">มิลลิลิตร</SelectItem>
                             <SelectItem value="ชิ้น">ชิ้น</SelectItem>
                           </SelectContent>
