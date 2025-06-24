@@ -29,9 +29,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 
 const normalizeThaiVowel = (text: string): string => {
   if (!text) return "";
-  return text
-    .replace(/เเ/g, "แ") 
-    .normalize("NFC");
+  return text.replace(/เเ/g, "แ").normalize("NFC");
 };
 
 export default function IngredientManagement() {
@@ -112,7 +110,7 @@ export default function IngredientManagement() {
   const formatNumber = (value: number, unit: string): number => {
     if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
       return Math.floor(value);
-    } 
+    }
     return value;
   };
 
@@ -147,7 +145,10 @@ export default function IngredientManagement() {
       const formDataIngredient = new FormData();
       formDataIngredient.append("ingredient_name", trimmedName);
       formDataIngredient.append("ingredient_total", String(total));
-      formDataIngredient.append("ingredient_unit", ingredient.ingredient_unit.trim());
+      formDataIngredient.append(
+        "ingredient_unit",
+        ingredient.ingredient_unit.trim()
+      );
       formDataIngredient.append("ingredient_total_alert", String(alert));
       // formDataIngredient.append(
       //   "ingredient_category",
@@ -190,19 +191,30 @@ export default function IngredientManagement() {
       const type = "add";
       const formDataTransaction = new FormData();
       formDataTransaction.append("transaction_from_username", userName ?? "");
-      formDataTransaction.append("transaction_total_price", String(ingredient.ingredient_price ?? 0));
+      formDataTransaction.append(
+        "transaction_total_price",
+        String(ingredient.ingredient_price ?? 0)
+      );
       formDataTransaction.append("transaction_quantity", String(total));
-      formDataTransaction.append("transaction_units", ingredient.ingredient_unit.trim());
+      formDataTransaction.append(
+        "transaction_units",
+        ingredient.ingredient_unit.trim()
+      );
 
       const encodedIngredientName = encodeURIComponent(trimmedName);
-      const resTran = await fetch(`/api/post/${type}/stock/${encodedIngredientName}`, {
-        method: "POST",
-        body: formDataTransaction,
-      });
+      const resTran = await fetch(
+        `/api/post/${type}/stock/${encodedIngredientName}`,
+        {
+          method: "POST",
+          body: formDataTransaction,
+        }
+      );
 
       if (!resTran.ok) {
         const tranError = await resTran.json();
-        throw new Error(tranError.error || "เกิดข้อผิดพลาดในการเพิ่มรายการธุรกรรม");
+        throw new Error(
+          tranError.error || "เกิดข้อผิดพลาดในการเพิ่มรายการธุรกรรม"
+        );
       }
 
       const transactionResult = await resTran.json();
@@ -337,20 +349,6 @@ export default function IngredientManagement() {
       observer.disconnect();
     };
   }, [loadMore]);
-
-  const subCategoryMap: Record<string, string[]> = {
-    วัตถุดิบหลัก: ["เนื้อสัตว์", "ไข่และผลิตภัณฑ์จากไข่", "ผลิตภัณฑ์นม"],
-    ผักและผลไม้: ["ผักสด", "ผลไม้สด"],
-    ธัญพืชและแป้ง: ["ข้าว", "แป้ง", "ซีเรียลและขนมปัง"],
-    เครื่องปรุงรส: ["ซอส", "เครื่องเทศ", "เครื่องปรุงรสพิเศษ"],
-    วัตถุดิบแช่แข็งและแปรรูป: [
-      "เนื้อสัตว์แช่แข็ง",
-      "อาหารกึ่งสำเร็จรูป",
-      "อาหารกระป๋อง",
-    ],
-    ของแห้งและของแปรรูป: ["ถั่วแห้งและเมล็ดพืช", "ของหมักดอง", "ผลไม้แห้ง"],
-    เครื่องดื่มและส่วนผสมอื่น: ["ส่วนผสมเบเกอรี่", "เครื่องดื่ม"],
-  };
 
   const handleImageClick = (imageUrl: string) => {
     setSelectedImage(imageUrl);
