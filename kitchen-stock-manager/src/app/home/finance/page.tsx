@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/share/ui/button";
 import {
   Card,
@@ -16,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/share/ui/table";
-// import { Input } from "@/share/ui/input";
 import {
   Select,
   SelectContent,
@@ -31,25 +33,23 @@ import {
   TrendingUp,
   TrendingDown,
   PlusCircle,
-  // Minus,
   BarChart3,
   Target,
   ShoppingCart,
   Package,
   Calculator,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const Finance: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [selectedPeriod, setSelectedPeriod] = useState("month");
 
   const handleBackToDashboard = () => {
-    navigate("/dashboard");
+    router.push("/dashboard");
   };
 
   const handleSignOut = () => {
-    navigate("/");
+    router.push("/");
   };
 
   // Mock data สำหรับแสดงผล
@@ -482,11 +482,11 @@ const Finance: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>สินค้า</TableHead>
+                      <TableHead>商品</TableHead>
                       <TableHead>จำนวนขาย</TableHead>
                       <TableHead>รายรับ</TableHead>
                       <TableHead>กำไร</TableHead>
-                      <TableHead className="text-right">อัตรากำไร</TableHead>
+                      <TableHead className="text-right">อัตรกำไร</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -501,7 +501,7 @@ const Finance: React.FC = () => {
                           ฿{item.profit.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                          <span className="text-green px-2 py-1 bg-green-100 text-green-700 rounded-sm">
                             {Math.round((item.profit / item.revenue) * 100)}%
                           </span>
                         </TableCell>
@@ -521,15 +521,15 @@ const Finance: React.FC = () => {
                   <div>
                     <CardTitle className="flex items-center">
                       <Target className="w-5 h-5 mr-2" />
-                      การจัดการงบประมาณ
+                      การจัดการงบประมาณการเงิน
                     </CardTitle>
                     <CardDescription>
-                      ติดตามการใช้จ่ายตามงบประมาณ
+                      การติดตามการใช้จ่ายเงินตามงบประมาณที่กำหนด
                     </CardDescription>
                   </div>
                   <Button size="sm">
                     <PlusCircle className="w-4 h-4 mr-2" />
-                    ตั้งงบประมาณ
+                    เพิ่มงบประมาณ
                   </Button>
                 </div>
               </CardHeader>
@@ -560,11 +560,15 @@ const Finance: React.FC = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-green-600">
-                          เหลือ: ฿{budget.remaining.toLocaleString()}
+                          <span>
+                            เหลือ: ฿{budget.remaining.toLocaleString()}
+                          </span>
                         </span>
                         <span className="text-muted-foreground">
-                          ใช้ไป:{" "}
-                          {Math.round((budget.used / budget.budget) * 100)}%
+                          <span>
+                            ใช้ไป:{" "}
+                            {Math.round((budget.used / budget.budget) * 100)}%
+                          </span>
                         </span>
                       </div>
                     </div>
