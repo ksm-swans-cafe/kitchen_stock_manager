@@ -1,27 +1,37 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
+
+// import Calendar from "@/components/ui/Calendar";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { formatDate } from "@fullcalendar/core";
+import {
+  Dialog,
+  DialogContent,
+} from "@/app/components/ui/dialog";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
 import {
-  ArrowLeft,
-  Home,
-  LogOut,
+  // ArrowLeft,
+  // Home,
+  // LogOut,
   Clock,
   User,
   Package,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
+  // CheckCircle,
+  // XCircle,
+  // AlertCircle,
   Search,
   Filter,
   Download,
-  ArrowUpDown,
-  Calendar,
+  // ArrowUpDown,
+  // Calendar,
   Users,
-  Hash,
-  Star,
+  // Hash,
+  // Star,
   Edit2,
 } from "lucide-react";
 import jsPDF from "jspdf";
@@ -48,7 +58,6 @@ import {
   PaginationPrevious,
 } from "@/share/ui/pagination";
 import { Input } from "@/share/ui/input";
-import superjson from "superjson";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 
@@ -90,11 +99,23 @@ interface Cart {
   order_number: string;
 }
 
+type RawCart = {
+  cart_id: string;
+  cart_menu_items: string | MenuItem[];
+  cart_create_date: string;
+  cart_total_price: number;
+  cart_status: string;
+  cart_order_number: string;
+  cart_username: string;
+  // ...add any other fields from the API as needed
+};
+
 const OrderHistory: React.FC = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const [carts, setCarts] = useState<Cart[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("date");
+  // setSortBy
+  const [sortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
   const [filterCreator, setFilterCreator] = useState("ทั้งหมด");
@@ -107,7 +128,29 @@ const OrderHistory: React.FC = () => {
     menuName: string;
   } | null>(null);
   const [editTotalBox, setEditTotalBox] = useState<number>(0);
-  const [isSaving, setIsSaving] = useState<string | null>(null); // เพิ่มสถานะการบันทึก
+  const [isSaving, setIsSaving] = useState<string | null>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  // calendar
+  const handleOpenDatePicker = () => {
+    setIsDatePickerOpen(true);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    setIsDatePickerOpen(false);
+    setCarts((prevCarts) =>
+      prevCarts.filter((cart) => {
+        const cartDate = new Date(cart.date);
+        return (
+          cartDate.getFullYear() === date.getFullYear() &&
+          cartDate.getMonth() === date.getMonth() &&
+          cartDate.getDate() === date.getDate()
+        );
+      })
+    );
+  };
 
   const safeParseJSON = (jsonString: string): CartItem[] => {
     try {
@@ -132,10 +175,11 @@ const OrderHistory: React.FC = () => {
       const menuData = await menuResponse.json();
 
       const ingredientResponse = await fetch("/api/get/ingredients");
-      if (!ingredientResponse.ok) throw new Error("Failed to fetch ingredients");
+      if (!ingredientResponse.ok)
+        throw new Error("Failed to fetch ingredients");
       const ingredientData = await ingredientResponse.json();
 
-      const formattedOrders: Cart[] = data.map((cart: any) => {
+      const formattedOrders: Cart[] = data.map((cart: RawCart) => {
         const menuItems: MenuItem[] =
           typeof cart.cart_menu_items === "string"
             ? safeParseJSON(cart.cart_menu_items)
@@ -148,13 +192,15 @@ const OrderHistory: React.FC = () => {
         const menuDisplayName =
           menuItems.length > 0
             ? menuItems
-                .map((item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`)
+                .map(
+                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+                )
                 .join(" + ")
             : "ไม่มีชื่อเมนู";
 
         const allIngredients = menuItems.map((menu) => {
           const menuFromDB = menuData.find(
-            (m: any) => m.menu_name === menu.menu_name
+            (m: MenuItem) => m.menu_name === menu.menu_name
           );
           const dbIngredients = Array.isArray(menuFromDB?.menu_ingredients)
             ? menuFromDB.menu_ingredients
@@ -162,9 +208,10 @@ const OrderHistory: React.FC = () => {
 
           return {
             menuName: menu.menu_name,
-            ingredients: dbIngredients.map((dbIng: any) => {
+            ingredients: dbIngredients.map((dbIng: Ingredient) => {
               const ingredientFromDB = ingredientData.find(
-                (ing: any) => ing.ingredient_name === dbIng.ingredient_name
+                (ing: Ingredient) =>
+                  ing.ingredient_name === dbIng.ingredient_name
               );
               const ingredientName =
                 ingredientFromDB?.ingredient_name ||
@@ -180,7 +227,9 @@ const OrderHistory: React.FC = () => {
           };
         });
 
-        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
+        const orderNumber = `ORD${
+          cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+        }`;
         const date = new Date(cart.cart_create_date);
         const formattedDate = date
           .toLocaleDateString("th-TH", {
@@ -210,7 +259,7 @@ const OrderHistory: React.FC = () => {
       });
 
       formattedOrders.sort((a, b) => {
-        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateA = new Date(`${a.date} patternA ${a.time}`);
         const dateB = new Date(`${b.date} ${b.time}`);
         return dateB.getTime() - dateA.getTime();
       });
@@ -230,9 +279,6 @@ const OrderHistory: React.FC = () => {
     fetchOrders();
   }, []);
 
-  const handleSignOut = () => router.push("/login");
-  const handleBackToDashboard = () => router.push("/home");
-  const handleHomeClick = () => router.push("/home");
   const handleEditTotalBox = (
     cartId: string,
     menuName: string,
@@ -242,118 +288,80 @@ const OrderHistory: React.FC = () => {
     setEditTotalBox(currentTotal);
   };
 
-const handleSaveTotalBox = async (cartId: string, menuName: string) => {
-  if (editTotalBox < 0) {
-    setError("จำนวนกล่องต้องไม่น้อยกว่า 0");
-    return;
-  }
-  if (!menuName) {
-    setError("ชื่อเมนูไม่ถูกต้อง");
-    return;
-  }
-
-  const cleanedMenuName = menuName.trim();
-  console.log("Preparing to update menu:", cleanedMenuName);
-
-  setIsSaving(cartId);
-  try {
-    // เรียก API GET เพื่อดึง cart_menu_items
-    // const getResponse = await fetch(`/api/get/cart_menu/${cartId}`);
-    // if (!getResponse.ok) {
-    //   const errorData = await getResponse.json();
-    //   throw new Error(errorData.error || "Failed to fetch cart data");
-    // }
-
-    // const { menuItems } = await getResponse.json();
-    // console.log("Fetched menuItems:", menuItems);
-
-    // // ตรวจสอบว่า menuName มีอยู่ใน menuItems
-    // const menuExists = menuItems.some(
-    //   (item: any) => item.menu_name === cleanedMenuName
-    // );
-    // if (!menuExists) {
-    //   setError(`เมนู "${cleanedMenuName}" ไม่พบในตะกร้า`);
-    //   await fetchOrders();
-    //   return;
-    // }
-
-    // เรียก API PATCH เพื่ออัปเดต
-    const patchResponse = await fetch(`/api/edit/cart_menu/${cartId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ menuName: menuName, menu_total: editTotalBox }),
-    });
-
-    if (!patchResponse.ok) {
-      const errorData = await patchResponse.json();
-      console.error("PATCH API error:", errorData);
-      throw new Error(errorData.error || "Failed to update total box");
+  const handleSaveTotalBox = async (cartId: string, menuName: string) => {
+    if (editTotalBox < 0) {
+      setError("จำนวนกล่องต้องไม่น้อยกว่า 0");
+      return;
+    }
+    if (!menuName) {
+      setError("ชื่อเมนูไม่ถูกต้อง");
+      return;
     }
 
-    // อัปเดต state ใน frontend
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              menuItems: cart.menuItems.map((item) =>
-                item.menu_name === cleanedMenuName
-                  ? { ...item, menu_total: editTotalBox }
-                  : item
-              ),
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === cleanedMenuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) => ({
-                        ...ing,
-                        calculatedTotal: ing.useItem * editTotalBox,
-                      })),
-                    }
-                  : group
-              ),
-              sets: cart.menuItems.reduce(
-                (sum, item) =>
-                  sum +
-                  (item.menu_name === cleanedMenuName
-                    ? editTotalBox
-                    : item.menu_total),
-                0
-              ),
-            }
-          : cart
-      )
-    );
+    const cleanedMenuName = menuName.trim();
+    console.log("Preparing to update menu:", cleanedMenuName);
 
-    // เพิ่มการแจ้งเตือนเมื่อบันทึกสำเร็จ
-    alert(`อัปเดตจำนวนกล่องสำหรับ "${cleanedMenuName}" สำเร็จ!`);
-    await fetchOrders();
-    setEditingMenu(null);
-  } catch (err) {
-    console.error("Error updating total box:", err);
-    setError(
-      err instanceof Error
-        ? `ไม่สามารถอัปเดตจำนวนกล่อง: ${err.message}`
-        : "เกิดข้อผิดพลาดในการอัปเดตจำนวนกล่อง"
-    );
-    await fetchOrders();
-  } finally {
-    setIsSaving(null);
-  }
-};
+    setIsSaving(cartId);
+    try {
+      const patchResponse = await fetch(`/api/edit/cart_menu/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuName: menuName, menu_total: editTotalBox }),
+      });
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="w-4 h-4 text-amber-600" />;
-      case "completed":
-        return <Package className="w-4 h-4 text-blue-600" />;
-      case "success":
-        return <CheckCircle className="w-4 h-4 text-emerald-600" />;
-      case "cancelled":
-        return <XCircle className="w-4 h-4 text-rose-600" />;
-      default:
-        return <AlertCircle className="w-4 h-4 text-slate-500" />;
+      if (!patchResponse.ok) {
+        const errorData = await patchResponse.json();
+        console.error("PATCH API error:", errorData);
+        throw new Error(errorData.error || "Failed to update total box");
+      }
+
+      setCarts((prevCarts) =>
+        prevCarts.map((cart) =>
+          cart.id === cartId
+            ? {
+                ...cart,
+                menuItems: cart.menuItems.map((item) =>
+                  item.menu_name === cleanedMenuName
+                    ? { ...item, menu_total: editTotalBox }
+                    : item
+                ),
+                allIngredients: cart.allIngredients.map((group) =>
+                  group.menuName === cleanedMenuName
+                    ? {
+                        ...group,
+                        ingredients: group.ingredients.map((ing) => ({
+                          ...ing,
+                          calculatedTotal: ing.useItem * editTotalBox,
+                        })),
+                      }
+                    : group
+                ),
+                sets: cart.menuItems.reduce(
+                  (sum, item) =>
+                    sum +
+                    (item.menu_name === cleanedMenuName
+                      ? editTotalBox
+                      : item.menu_total),
+                  0
+                ),
+              }
+            : cart
+        )
+      );
+
+      alert(`อัปเดตจำนวนกล่องสำหรับ "${cleanedMenuName}" สำเร็จ!`);
+      await fetchOrders();
+      setEditingMenu(null);
+    } catch (err) {
+      console.error("Error updating total box:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตจำนวนกล่อง: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตจำนวนกล่อง"
+      );
+      await fetchOrders();
+    } finally {
+      setIsSaving(null);
     }
   };
 
@@ -394,6 +402,17 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
   const filteredAndSortedOrders = useMemo(() => {
     let filtered = [...carts];
 
+    if (selectedDate) {
+      filtered = filtered.filter((order) => {
+        const cartDate = new Date(order.date);
+        return (
+          cartDate.getFullYear() === selectedDate.getFullYear() &&
+          cartDate.getMonth() === selectedDate.getMonth() &&
+          cartDate.getDate() === selectedDate.getDate()
+        );
+      });
+    }
+
     if (searchTerm) {
       filtered = filtered.filter((order) =>
         [order.name, order.id, order.createdBy].some((field) =>
@@ -413,15 +432,25 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
     }
 
     filtered.sort((a, b) => {
-      let aVal: any = a[sortBy as keyof typeof a];
-      let bVal: any = b[sortBy as keyof typeof b];
+      let aVal: string | number | Date = a[sortBy as keyof typeof a] as
+        | string
+        | number;
+      let bVal: string | number | Date = b[sortBy as keyof typeof b] as
+        | string
+        | number;
 
       if (sortBy === "date") {
         aVal = new Date(`${a.date} ${a.time}`);
         bVal = new Date(`${b.date} ${b.time}`);
       }
 
-      return sortOrder === "asc" ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
+      return sortOrder === "asc"
+        ? aVal > bVal
+          ? 1
+          : -1
+        : aVal < bVal
+        ? 1
+        : -1;
     });
 
     return filtered;
@@ -535,17 +564,40 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
           </div>
 
           <div>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full h-10 rounded-lg border border-slate-300 shadow-sm">
-                <ArrowUpDown className="w-4 h-4 mr-2 text-slate-500" />
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent side="bottom" align="start" avoidCollisions={false}>
-                <SelectItem value="date">Date</SelectItem>
-                <SelectItem value="price">Price</SelectItem>
-                <SelectItem value="sets">Sets</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button
+              onClick={handleOpenDatePicker}
+              className="w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-between px-3"
+            >
+              <span>
+                {selectedDate
+                  ? formatDate(selectedDate, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "Select Date"}
+              </span>
+            </Button>
+
+            <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+              <DialogContent>
+                <FullCalendar
+                  height="400px"
+                  plugins={[dayGridPlugin, interactionPlugin]}
+                  initialView="dayGridMonth"
+                  selectable={true}
+                  select={(selectInfo) => {
+                    const date = selectInfo.start;
+                    handleDateSelect(date);
+                  }}
+                  headerToolbar={{
+                    left: "prev,next today",
+                    center: "title",
+                    right: "",
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div>
@@ -556,7 +608,11 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
               <SelectTrigger className="w-full h-10 rounded-lg border-slate-300 shadow-sm">
                 <SelectValue placeholder="Order" />
               </SelectTrigger>
-              <SelectContent side="bottom" align="start" avoidCollisions={false}>
+              <SelectContent
+                side="bottom"
+                align="start"
+                avoidCollisions={false}
+              >
                 <SelectItem value="desc">Latest first</SelectItem>
                 <SelectItem value="asc">Oldest first</SelectItem>
               </SelectContent>
@@ -569,12 +625,16 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                 <Filter className="w-4 h-4 mr-2 text-slate-500" />
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
-              <SelectContent side="bottom" align="start" avoidCollisions={false}>
-                <SelectItem value="All">All statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectContent
+                side="bottom"
+                align="start"
+                avoidCollisions={false}
+              >
+                <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
+                <SelectItem value="รอดำเนินการ">รอดำเนินการ</SelectItem>
+                <SelectItem value="ยืนยันแล้ว">ยืนยันแล้ว</SelectItem>
+                <SelectItem value="เสร็จสิ้น">เสร็จสิ้น</SelectItem>
+                <SelectItem value="ยกเลิก">ยกเลิก</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -585,8 +645,12 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                 <Users className="w-4 h-4 mr-2 text-slate-500" />
                 <SelectValue placeholder="All creators" />
               </SelectTrigger>
-              <SelectContent side="bottom" align="start" avoidCollisions={false}>
-                <SelectItem value="All">All creators</SelectItem>
+              <SelectContent
+                side="bottom"
+                align="start"
+                avoidCollisions={false}
+              >
+                <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
                 {uniqueCreators.map((creator) => (
                   <SelectItem key={creator} value={creator}>
                     {creator}
@@ -666,7 +730,7 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                         </div>
                         <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600">
                           <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                            {/* <Calendar className="w-4 h-4" /> */}
                             <span>Date {cart.date}</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -717,13 +781,20 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                                     <span className="truncate text-sm text-gray-700">
                                       {menuGroup.menuName}
                                     </span>
+                                    <span className="text-sm font-mono text-blue-600">
+                                      ({totalBox} boxes)
+                                    </span>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="pt-3 space-y-2">
                                     {isEditingThisMenu ? (
-                                      <div className="flex items-center gap-2 ml-auto">
+                                      <div className="flex items-center gap-2 mb-3">
                                         <Input
                                           type="number"
                                           value={editTotalBox}
                                           onChange={(e) =>
-                                            setEditTotalBox(Number(e.target.value))
+                                            setEditTotalBox(
+                                              Number(e.target.value)
+                                            )
                                           }
                                           className="w-20 h-8 text-sm rounded-md border-gray-300"
                                           min="0"
@@ -732,13 +803,12 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
+                                          onClick={() =>
                                             handleSaveTotalBox(
                                               cart.id,
                                               menuGroup.menuName
-                                            );
-                                          }}
+                                            )
+                                          }
                                           className="h-8 px-2 text-blue-600 hover:bg-blue-50"
                                           aria-label="Save box quantity"
                                           disabled={isSaving === cart.id}
@@ -750,10 +820,7 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditingMenu(null);
-                                          }}
+                                          onClick={() => setEditingMenu(null)}
                                           className="h-8 px-2 text-gray-600 hover:bg-gray-50"
                                           aria-label="Cancel edit"
                                           disabled={isSaving === cart.id}
@@ -762,21 +829,17 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                                         </Button>
                                       </div>
                                     ) : (
-                                      <div className="flex items-center gap-2 ml-auto mr-2">
-                                        <span className="text-sm font-mono text-blue-600">
-                                          ({totalBox} boxes)
-                                        </span>
+                                      <div className="flex items-center gap-2 mb-3">
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
+                                          onClick={() =>
                                             handleEditTotalBox(
                                               cart.id,
                                               menuGroup.menuName,
                                               totalBox
-                                            );
-                                          }}
+                                            )
+                                          }
                                           className="h-8 px-2 text-blue-600 hover:bg-blue-100"
                                           aria-label="Edit box quantity"
                                         >
@@ -784,29 +847,28 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                                         </Button>
                                       </div>
                                     )}
-                                  </AccordionTrigger>
-                                  <AccordionContent className="pt-3 space-y-2">
                                     {menuGroup.ingredients.map((ing, idx) => (
                                       <div
-                                          key={idx}
-                                          className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 text-sm"
-                                        >
-                                          <span className="text-gray-700">
-                                            {ing.ingredient_name ||
-                                              `Unknown ingredient (ID: ${ing.ingredient_id})`}
-                                          </span>
-                                          <span className="text-gray-600">
-                                            Use {ing.useItem} g/box × {totalBox} ={" "}
-                                            <strong className="font-bold text-black">
-                                              {ing.calculatedTotal}
-                                            </strong>{" "}
-                                            g
-                                          </span>
-                                        </div>
-                                      ))}
-                                </AccordionContent>
-                              </AccordionItem>
-                            )})}
+                                        key={idx}
+                                        className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-100 text-sm"
+                                      >
+                                        <span className="text-gray-700">
+                                          {ing.ingredient_name ||
+                                            `Unknown ingredient (ID: ${ing.ingredient_id})`}
+                                        </span>
+                                        <span className="text-gray-600">
+                                          Use {ing.useItem} g/box × {totalBox} ={" "}
+                                          <strong className="font-bold text-black">
+                                            {ing.calculatedTotal}
+                                          </strong>{" "}
+                                          g
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              );
+                            })}
                           </Accordion>
                         </div>
                       </div>
@@ -828,19 +890,20 @@ const handleSaveTotalBox = async (cartId: string, menuName: string) => {
                   />
                 </PaginationItem>
                 {[...Array(totalPages)].map((_, i) => (
-                    <PaginationItem key={i}>
-                      <PaginationLink
-                        isActive={currentPage === i + 1}
-                        onClick={() => setCurrentPage(i + 1)}
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      isActive={currentPage === i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
                 <PaginationItem>
                   <PaginationNext
                     onClick={() =>
-                      setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
                   />
                 </PaginationItem>
               </PaginationContent>
