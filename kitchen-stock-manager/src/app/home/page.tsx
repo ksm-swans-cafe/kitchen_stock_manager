@@ -8,6 +8,7 @@ import { Plus, ShoppingCart, History, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/share/ui/badge";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
+import { DollarSign } from "lucide-react";
 
 export default function Page() {
   const router = useRouter();
@@ -66,6 +67,10 @@ export default function Page() {
 
   const handleOrderHistory = () => {
     router.push("/home/orderhistory");
+  };
+
+  const handleFinance = () => {
+    router.push("/home/finance");
   };
 
   return (
@@ -149,6 +154,7 @@ export default function Page() {
               </div>
             </Card>
           )} */}
+
           {/* Add Ingredients */}
           <Card className="group hover:shadow-xl transition-all ...">
             <CardContent className="p-0">
@@ -196,6 +202,22 @@ export default function Page() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Finance Card */}
+            <Card className="group hover:shadow-xl transition-all ...">
+              <CardContent className="p-0">
+                <Button 
+                  variant="ghost" 
+                  className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
+                  onClick={handleFinance}
+                >
+                  <div className="w-12 h-12 bg-amber-500/10 group-hover:bg-amber-500/20 rounded-xl flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <span className="text-base">Finance</span>
+                </Button>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </div>
