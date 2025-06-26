@@ -129,7 +129,7 @@ export default function Order() {
 
         {visibleCount < filteredMenus.length && (
           <div ref={loadMoreRef} style={{ 
-            height: "20%", 
+            height: "50px", 
             width: "100%" 
           }} />
         )}

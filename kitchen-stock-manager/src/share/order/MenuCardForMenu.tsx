@@ -30,13 +30,11 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
 
   let title: string | undefined;
-
   if (mode === "menu") {
     const menuItem = item as MenuItem;
     title = menuItem.menu_subname;
   }
 
-  // โหลดข้อมูลรายการเมนูที่ตรงกับ title เมื่อเปิด popup
   useEffect(() => {
     if (showPopup && title) {
       setLoading(true);
@@ -46,10 +44,11 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
           const filtered = data.filter((menu) => menu.menu_subname === title);
           setFilteredMenuList(filtered);
 
-          // ตั้งค่า quantity เริ่มต้นเป็น 1 สำหรับแต่ละเมนู
+          const cartItems = useCartStore.getState().items;
           const initialQuantities: { [key: string]: number } = {};
           filtered.forEach((menu) => {
-            initialQuantities[menu.menu_id] = 1;
+            const inCart = cartItems.find((item) => item.menu_id === menu.menu_id);
+            initialQuantities[menu.menu_id] = inCart?.menu_total ?? 0;
           });
           setQuantities(initialQuantities);
 
@@ -63,44 +62,44 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
     }
   }, [showPopup, title]);
 
-  const handleAddClick = () => {
-    setShowPopup(true);
-  };
+
+  const handleAddClick = () => setShowPopup(true);
+  const handleCancel = () => setShowPopup(false);
 
   const handleConfirm = () => {
-    // เซ็ตจำนวนสินค้าใน store ตาม quantities ของแต่ละเมนู
     filteredMenuList.forEach((menu) => {
-      const qty = quantities[menu.menu_id] ?? 1;
+      const qty = quantities[menu.menu_id] ?? 0;
       if (qty > 0) {
+        const existing = useCartStore.getState().items.find(
+          (item) => item.menu_id === menu.menu_id
+        );
+        if (!existing) {
+          addItem({ ...menu, menu_total: 0 }); // ให้ menu_total เริ่มที่ 0
+        }
         setItemQuantity(menu.menu_id, qty);
       }
     });
     setShowPopup(false);
   };
 
-  const handleCancel = () => {
-    setShowPopup(false);
-  };
-
-  // ปรับจำนวนเพิ่ม-ลด-เปลี่ยนค่าจำนวนของแต่ละเมนู
   const handleIncrease = (menu_id: string) => {
     setQuantities((prev) => ({
       ...prev,
-      [menu_id]: (prev[menu_id] || 1) + 1,
+      [menu_id]: (prev[menu_id] ?? 0) + 1,
     }));
   };
 
   const handleDecrease = (menu_id: string) => {
     setQuantities((prev) => ({
       ...prev,
-      [menu_id]: prev[menu_id] > 1 ? prev[menu_id] - 1 : 1,
+      [menu_id]: Math.max((prev[menu_id] ?? 0) - 1, 0),
     }));
   };
 
   const handleChangeQuantity = (menu_id: string, value: number) => {
     setQuantities((prev) => ({
       ...prev,
-      [menu_id]: value < 1 ? 1 : value,
+      [menu_id]: value < 0 ? 0 : value,
     }));
   };
 
@@ -150,18 +149,21 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
                       >
                         <FontAwesomeIcon icon={faMinus} />
                       </button>
-                      <input
-                        type="number"
-                        value={quantities[menu.menu_id] ?? 1}
-                        onChange={(e) =>
-                          handleChangeQuantity(
-                            menu.menu_id,
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-16 text-center border rounded px-2 py-1"
-                        min={1}
-                      />
+                        <input
+                          type="number"
+                          value={quantities[menu.menu_id] ?? 0}
+                          onChange={(e) => {
+                            const inputVal = e.target.value;
+                            if (inputVal === '') {
+                              handleChangeQuantity(menu.menu_id, 0);
+                              return;
+                            }
+                            const filteredVal = inputVal.replace(/^0+/, '') || '0';
+                            handleChangeQuantity(menu.menu_id, Number(filteredVal));
+                          }}
+                          className="w-16 text-center border rounded px-2 py-1"
+                          min={0}
+                        />
                       <button
                         onClick={() => handleIncrease(menu.menu_id)}
                         className="px-2 py-1 rounded bg-gray-300 text-gray-700 font-bold hover:bg-gray-400 transition"

@@ -3,12 +3,15 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useCartStore } from "@/stores/store";
 
 export default function Navigatebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMounted, setIsMounted] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
+
+  const items = useCartStore((state : any) => state.items);
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -47,6 +50,8 @@ export default function Navigatebar() {
   const goBack = () => {
     router.back();
   };
+
+  const totalQuantity = items.reduce((sum : any, item : any) => sum + item.menu_total, 0);
 
   return (
     <nav
@@ -138,6 +143,19 @@ export default function Navigatebar() {
                   <circle cx="20" cy="21" r="1"></circle>
                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                 </svg>
+
+                {/* badge แสดงจำนวน */}
+                {totalQuantity > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center
+                      animate-pulse
+                    "
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    {totalQuantity}
+                  </span>
+                )}
               </Link>
             )}
             {!isOrderPage && (

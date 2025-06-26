@@ -39,6 +39,7 @@ import {
   Package,
   Calculator,
 } from "lucide-react";
+import DailyOrderSummary from '@/components/ui/DailyOrderSummary';
 
 const Finance: React.FC = () => {
   const router = useRouter();
@@ -54,79 +55,32 @@ const Finance: React.FC = () => {
 
   // Mock data สำหรับแสดงผล
   const incomeExpenseData = [
-    {
-      date: "2024-06-20",
-      type: "income",
-      description: "ขายกาแฟ",
-      amount: 1500,
-      category: "ยอดขาย",
-    },
-    {
-      date: "2024-06-20",
-      type: "expense",
-      description: "ซื้อเมล็ดกาแฟ",
-      amount: -800,
-      category: "วัตถุดิบ",
-    },
-    {
-      date: "2024-06-19",
-      type: "income",
-      description: "ขายเบเกอรี่",
-      amount: 2200,
-      category: "ยอดขาย",
-    },
-    {
-      date: "2024-06-19",
-      type: "expense",
-      description: "ค่าไฟฟ้า",
-      amount: -500,
-      category: "ค่าใช้จ่าย",
-    },
-    {
-      date: "2024-06-18",
-      type: "income",
-      description: "ขายน้ำปั่น",
-      amount: 1800,
-      category: "ยอดขาย",
-    },
+    { date: '2024-06-20', type: 'income', description: 'ขายกาแฟ', amount: 1500, category: 'ยอดขาย' },
+    { date: '2024-06-20', type: 'expense', description: 'ซื้อเมล็ดกาแฟ', amount: -800, category: 'วัตถุดิบ' },
+    { date: '2024-06-19', type: 'income', description: 'ขายเบเกอรี่', amount: 2200, category: 'ยอดขาย' },
+    { date: '2024-06-19', type: 'expense', description: 'ค่าไฟฟ้า', amount: -500, category: 'ค่าใช้จ่าย' },
+    { date: '2024-06-18', type: 'income', description: 'ขายน้ำปั่น', amount: 1800, category: 'ยอดขาย' },
   ];
 
   const rawMaterials = [
-    {
-      id: 1,
-      name: "เมล็ดกาแฟ อราบิก้า",
-      cost: 800,
-      unit: "กก.",
-      lastUpdated: "2024-06-20",
-    },
-    { id: 2, name: "นมสด", cost: 35, unit: "ลิตร", lastUpdated: "2024-06-20" },
-    {
-      id: 3,
-      name: "แป้งสาลี",
-      cost: 45,
-      unit: "กก.",
-      lastUpdated: "2024-06-19",
-    },
-    { id: 4, name: "น้ำตาล", cost: 25, unit: "กก.", lastUpdated: "2024-06-19" },
+    { id: 1, name: 'เมล็ดกาแฟ อราบิก้า', cost: 800, unit: 'กก.', lastUpdated: '2024-06-20' },
+    { id: 2, name: 'นมสด', cost: 35, unit: 'ลิตร', lastUpdated: '2024-06-20' },
+    { id: 3, name: 'แป้งสาลี', cost: 45, unit: 'กก.', lastUpdated: '2024-06-19' },
+    { id: 4, name: 'น้ำตาล', cost: 25, unit: 'กก.', lastUpdated: '2024-06-19' },
   ];
 
   const salesData = [
-    { product: "กาแฟอเมริกาโน่", sold: 45, revenue: 2250, profit: 1350 },
-    { product: "กาแฟลาเต้", sold: 32, revenue: 1920, profit: 1152 },
-    { product: "ครัวซองต์", sold: 28, revenue: 1400, profit: 840 },
-    { product: "น้ำปั่นสตรอเบอรี่", sold: 22, revenue: 1320, profit: 792 },
+    { product: 'กาแฟอเมริกาโน่', sold: 45, revenue: 2250, profit: 1350 },
+    { product: 'กาแฟลาเต้', sold: 32, revenue: 1920, profit: 1152 },
+    { product: 'ครัวซองต์', sold: 28, revenue: 1400, profit: 840 },
+    { product: 'น้ำปั่นสตรอเบอรี่', sold: 22, revenue: 1320, profit: 792 },
   ];
 
   const budgetData = [
-    { category: "วัตถุดิบ", budget: 50000, used: 35000, remaining: 15000 },
-    {
-      category: "ค่าใช้จ่ายดำเนินงาน",
-      budget: 20000,
-      used: 15500,
-      remaining: 4500,
-    },
-    { category: "การตลาด", budget: 10000, used: 6000, remaining: 4000 },
-    { category: "บำรุงรักษา", budget: 5000, used: 2000, remaining: 3000 },
+    { category: 'วัตถุดิบ', budget: 50000, used: 35000, remaining: 15000 },
+    { category: 'ค่าใช้จ่ายดำเนินงาน', budget: 20000, used: 15500, remaining: 4500 },
+    { category: 'การตลาด', budget: 10000, used: 6000, remaining: 4000 },
+    { category: 'บำรุงรักษา', budget: 5000, used: 2000, remaining: 3000 },
   ];
 
   const totalIncome = incomeExpenseData
@@ -141,54 +95,6 @@ const Finance: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background">
-      {/* Menu Bar */}
-      <div className="w-full bg-card/80 backdrop-blur-sm border-b border-border shadow-sm">
-        <div className="p-4 flex justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            <span className="text-xl md:text-2xl">SWANS</span>{" "}
-            <span className="text-sm md:text-lg font-medium">
-              CAFE & BISTRO
-            </span>
-          </h1>
-          <div className="flex items-center space-x-4 md:space-x-6">
-            <div className="hidden md:flex items-center space-x-4 text-sm text-muted-foreground">
-              <DollarSign className="w-4 h-4" />
-              <span>Finance Management</span>
-            </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleSignOut}
-              className="flex items-center space-x-2 shadow-sm hover:shadow-md transition-all text-xs md:text-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Bar */}
-      <div className="w-full bg-secondary/20 border-b border-border/50">
-        <div className="p-3 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToDashboard}
-            className="flex items-center hover:bg-accent/50 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            <span>Back to Dashboard</span>
-          </Button>
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Home className="w-4 h-4" />
-            <span>/</span>
-            <DollarSign className="w-4 h-4" />
-            <span>Finance</span>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="container mx-auto p-6 space-y-6">
         {/* Overview Cards */}
@@ -244,12 +150,18 @@ const Finance: React.FC = () => {
         {/* Tabs for different sections */}
         <Tabs defaultValue="income-expense" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="daily-summary">สรุปรายวัน</TabsTrigger>
             <TabsTrigger value="income-expense">รายรับ-รายจ่าย</TabsTrigger>
             <TabsTrigger value="raw-materials">ต้นทุนวัตถุดิบ</TabsTrigger>
             <TabsTrigger value="profit-loss">กำไร-ขาดทุน</TabsTrigger>
             <TabsTrigger value="sales">ยอดขาย</TabsTrigger>
             <TabsTrigger value="budget">งบประมาณ</TabsTrigger>
           </TabsList>
+
+          {/* สรุปรายวัน */}
+          <TabsContent value="daily-summary">
+            <DailyOrderSummary />
+          </TabsContent>
 
           {/* รายรับ-รายจ่าย */}
           <TabsContent value="income-expense">
@@ -289,11 +201,11 @@ const Finance: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>วันที่</TableHead>
-                      <TableHead>ประเภท</TableHead>
-                      <TableHead>รายการ</TableHead>
-                      <TableHead>หมวดหมู่</TableHead>
-                      <TableHead className="text-right">จำนวนเงิน</TableHead>
+                      <TableHead className="!text-black">วันที่</TableHead>
+                      <TableHead className="!text-black">ประเภท</TableHead>
+                      <TableHead className="!text-black">รายการ</TableHead>
+                      <TableHead className="!text-black">หมวดหมู่</TableHead>
+                      <TableHead className="!text-black">จำนวนเงิน</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -352,11 +264,11 @@ const Finance: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ชื่อวัตถุดิบ</TableHead>
-                      <TableHead>ราคาต่อหน่วย</TableHead>
-                      <TableHead>หน่วย</TableHead>
-                      <TableHead>อัพเดทล่าสุด</TableHead>
-                      <TableHead className="text-right">การจัดการ</TableHead>
+                      <TableHead className="!text-black">ชื่อวัตถุดิบ</TableHead>
+                      <TableHead className="!text-black">ราคาต่อหน่วย</TableHead>
+                      <TableHead className="!text-black">หน่วย</TableHead>
+                      <TableHead className="!text-black">อัพเดทล่าสุด</TableHead>
+                      <TableHead className="!text-black">การจัดการ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -482,11 +394,11 @@ const Finance: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>商品</TableHead>
-                      <TableHead>จำนวนขาย</TableHead>
-                      <TableHead>รายรับ</TableHead>
-                      <TableHead>กำไร</TableHead>
-                      <TableHead className="text-right">อัตรกำไร</TableHead>
+                      <TableHead className="!text-black">รายการ</TableHead>
+                      <TableHead className="!text-black">จำนวนขาย</TableHead>
+                      <TableHead className="!text-black">รายรับ</TableHead>
+                      <TableHead className="!text-black">กำไร</TableHead>
+                      <TableHead className="!text-black">อัตรกำไร</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

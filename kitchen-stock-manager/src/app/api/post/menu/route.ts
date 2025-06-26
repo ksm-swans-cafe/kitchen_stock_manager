@@ -9,6 +9,7 @@ export async function POST(
     const formData = await req.formData();
     const menu_name = formData.get("menu_name")?.toString().trim();
     const menu_ingredients = formData.get("menu_ingredients")?.toString().trim();
+    const menu_subname = formData.get("menu_subname")?.toString().trim();
 
     if (!menu_name || !menu_ingredients) {
       return NextResponse.json(
@@ -19,10 +20,11 @@ export async function POST(
 
     console.log("Creating menu with name:", menu_name);
     console.log("Menu ingredients:", menu_ingredients);
+    console.log("Creating menu with subname:", menu_subname);
 
     const result = await sql`
-      INSERT INTO menu (menu_name, menu_ingredients)
-      VALUES (${menu_name}, ${menu_ingredients})
+      INSERT INTO menu (menu_name, menu_ingredients, menu_subname)
+      VALUES (${menu_name}, ${menu_ingredients}, ${menu_subname})
       RETURNING *;
     `;
 

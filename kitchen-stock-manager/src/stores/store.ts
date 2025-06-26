@@ -1,4 +1,3 @@
-// stores/store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { MenuItem } from "@/models/menu_card/MenuCard-model";
@@ -22,17 +21,9 @@ export const useCartStore = create<CartState>()(
       addItem: (item) => {
         const { items } = get();
         const existing = items.find((i) => i.menu_id === item.menu_id);
-        if (existing) {
+        if (!existing) {
           set({
-            items: items.map((i) =>
-              i.menu_id === item.menu_id
-                ? { ...i, menu_total: i.menu_total + 1 }
-                : i
-            ),
-          });
-        } else {
-          set({
-            items: [...items, { ...item, menu_total: 1 }],
+            items: [...items, { ...item, menu_total: 0 }],
           });
         }
       },
