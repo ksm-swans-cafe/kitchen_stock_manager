@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { Button } from "@/share/ui/button";
 import {
   Card,
@@ -27,8 +27,8 @@ import {
   SelectValue,
 } from "@/share/ui/select";
 import {
-  ArrowLeft,
-  Home,
+  // ArrowLeft,
+  // Home,
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -42,16 +42,16 @@ import {
 import DailyOrderSummary from '@/components/ui/DailyOrderSummary';
 
 const Finance: React.FC = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const [selectedPeriod, setSelectedPeriod] = useState("month");
 
-  const handleBackToDashboard = () => {
-    router.push("/dashboard");
-  };
+  // const handleBackToDashboard = () => {
+  //   router.push("/dashboard");
+  // };
 
-  const handleSignOut = () => {
-    router.push("/");
-  };
+  // const handleSignOut = () => {
+  //   router.push("/");
+  // };
 
   // Mock data สำหรับแสดงผล
   const incomeExpenseData = [
