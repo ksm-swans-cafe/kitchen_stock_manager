@@ -31,7 +31,7 @@ export default function Order() {
           if (!name) return false;
 
           // แก้ "เเ" เป็น "แ"
-          name = name.replace(/เเ/g, 'แ');
+          name = name.replace(/เเ/g, "แ").normalize("NFC")
 
           // เก็บชื่อใหม่ไว้ใน object
           menu.menu_subname = name;

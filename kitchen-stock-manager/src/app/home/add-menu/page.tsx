@@ -141,7 +141,7 @@ export default function AddMenuPage() {
       const formData = new FormData();
       formData.append("menu_name", menuName);
       formData.append("menu_ingredients", JSON.stringify(ingredients));
-      formData.append("menu_sub_name", menuSubName);
+      formData.append("menu_subname", menuSubName);
 
       const response = await fetch("/api/post/menu", {
         method: "POST",
@@ -296,7 +296,7 @@ export default function AddMenuPage() {
             type="text"
             id="menuName"
             value={menuSubName}
-            onChange={(e) => setMenuName(e.target.value)}
+            onChange={(e) => setMenuSubName(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             placeholder="Enter menu name"
             required

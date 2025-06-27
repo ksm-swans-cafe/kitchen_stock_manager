@@ -9,6 +9,7 @@ export default function Home() {
     { label: 'example_search', path: '/components/example_search' },
     { label: 'example_search_v2', path: '/components/example_search_v2' },
     { label: 'example_MenuCard', path: '/components/example_MenuCard' },
+    { label: 'example_AlertCalendar', path: '/components/example_AlertCalendar' },
     { label: 'home', path: '/' },
   ]
 

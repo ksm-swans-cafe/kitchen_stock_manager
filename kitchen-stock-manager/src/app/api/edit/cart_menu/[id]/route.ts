@@ -8,6 +8,7 @@ interface MenuItem {
     useItem: number;
     ingredient_id?: number;
     ingredient_name?: string;
+    ingredient_status?: boolean;
   }[];
 }
 
