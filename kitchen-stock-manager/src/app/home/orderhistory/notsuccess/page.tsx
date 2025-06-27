@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 
-import Calendar from "@/components/ui/Calendar";
+// import Calendar from "@/components/ui/Calendar";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { formatDate } from "@fullcalendar/core";
+import { formatDate, EventInput } from "@fullcalendar/core";
 import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
@@ -108,12 +108,12 @@ type RawCart = {
   cart_receive_time: string;
 };
 
-interface StatusDropdownProps {
-  cartId: string;
-  allIngredients: { menuName: string; ingredients: any[] }[];
-  defaultStatus: string;
-  onStatusChange?: () => void; // เพิ่ม prop นี้
-}
+// interface StatusDropdownProps {
+//   cartId: string;
+//   allIngredients: { menuName: string; ingredients: any[] }[];
+//   defaultStatus: string;
+//   onStatusChange?: () => void; // เพิ่ม prop นี้
+// }
 
 const OrderHistory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -135,7 +135,7 @@ const OrderHistory: React.FC = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<Cart[]>([]);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
@@ -145,13 +145,6 @@ const OrderHistory: React.FC = () => {
   const handleOpenDatePicker = () => {
     setIsDatePickerOpen(true);
   };
-
-  // const handleDateSelect = (date: Date) => {
-  //   const selectedDateISO = date.toISOString().split("T")[0];
-  //   setSelectedDate(date);
-  //   setIsDatePickerOpen(false);
-  //   setCarts(allCarts.filter((cart) => cart.dateISO === selectedDateISO));
-  // };
 
   const safeParseJSON = (jsonString: string): CartItem[] => {
     try {
@@ -184,39 +177,35 @@ const OrderHistory: React.FC = () => {
       const ingredientData = await ingredientResponse.json();
 
       const formattedOrders: Cart[] = data.map((cart: RawCart) => {
-        console.log("Processing cart:", cart.cart_create_date);
-        const [rawDate, rawTime] = cart.cart_create_date.split("T");
-        const [year, month, day] = rawDate.split("-");
-        const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
-        const formattedDate = dateObjectForLocale
-        .toLocaleDateString("th-TH", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
-        .replace(/ /g, " ");
-
-        const date = new Date(cart.cart_create_date);
-        const formattedDateISO = date.toISOString().split("T")[0];
-        // const formattedDate = date
-        //   .toLocaleDateString("th-TH", {
-        //     day: "numeric",
-        //     month: "short",
-        //     year: "numeric",
-        //   })
-        //   .replace(/ /g, " ");
-
-        const formattedTime = cart.cart_create_date
-          .split("T")[1]
-          .split(".")[0]
-          .slice(0, 5);
-
         console.log(
           "Processing cart ID:",
           cart.cart_id,
           "cart_menu_items:",
           cart.cart_menu_items
         );
+        const [rawDate] = cart.cart_create_date.split("T");
+        const [year, month, day] = rawDate.split("-");
+        const dateObjectForLocale = new Date(
+          Number(year),
+          Number(month) - 1,
+          Number(day)
+        );
+        const formattedDate = dateObjectForLocale
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ");
+
+        const date = new Date(cart.cart_create_date);
+        const formattedDateISO = date.toISOString().split("T")[0];
+        const formattedTime = cart.cart_create_date
+          .split("T")[1]
+          .split(".")[0]
+          .slice(0, 5);
+
+        // Parse cart_menu_items
         const menuItems: MenuItem[] =
           typeof cart.cart_menu_items === "string" && cart.cart_menu_items
             ? safeParseJSON(cart.cart_menu_items)
@@ -245,57 +234,46 @@ const OrderHistory: React.FC = () => {
                 .join(" + ")
             : "ไม่มีชื่อเมนู";
 
-            const allIngredients = menuItems.map((menu) => {
-              const menuFromDB = menuData.find(
-                (m: MenuItem) => m.menu_name === menu.menu_name
-              );
-              const dbIngredients = Array.isArray(menuFromDB?.menu_ingredients)
-                ? menuFromDB.menu_ingredients
-                : menu.menu_ingredients || [];
-            
-              return {
-                menuName: menu.menu_name,
-                ingredients: dbIngredients.map((dbIng: Ingredient) => {
-                  const ingredientFromDB = ingredientData.find(
-                    (ing: Ingredient) =>
-                      ing.ingredient_name === dbIng.ingredient_name
-                  );
-                  const ingredientName =
-                    ingredientFromDB?.ingredient_name ||
-                    `ไม่พบวัตถุดิบ (ID: ${dbIng.ingredient_name})`;
-                  return {
-                    ...dbIng,
-                    ingredient_id: ingredientFromDB?.ingredient_id,
-                    ingredient_name: ingredientName || dbIng.ingredient_name,
-                    calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-                    sourceMenu: menu.menu_name,
-                    isChecked: dbIng.isChecked || false, // เพิ่มการกำหนดค่าเริ่มต้น
-                  };
-                }),
-              };
-            });
-            
-            const orderNumber = `ORD${
-              cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-            }`;
-            return {
-              id: cart.cart_id || "no-id",
-              orderNumber,
-              name: menuDisplayName,
-              date: formattedDate,
-              dateISO: formattedDateISO,
-              time: formattedTime, // แก้จาก formatted FormattingTime เป็น formattedTime
-              sets: totalSets,
-              price: cart.cart_total_price || 0,
-              status: cart.cart_status,
-              createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
-              menuItems: menuItems.map((item) => ({ ...item })),
-              allIngredients,
-              order_number: cart.cart_order_number,
-              cart_delivery_date: cart.cart_delivery_date,
-              cart_customer_tel: cart.cart_customer_tel,
-              cart_location_send: cart.cart_location_send,
-            };
+        // Map allIngredients directly from menuItems
+        const allIngredients = menuItems.map((menu) => ({
+          menuName: menu.menu_name,
+          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
+            ...dbIng,
+            ingredient_id: dbIng.ingredient_id || undefined,
+            ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+            calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+            sourceMenu: menu.menu_name,
+            isChecked: dbIng.ingredient_status ?? false, // ใช้ ingredient_status จาก cart_menu_items
+            ingredient_status: dbIng.ingredient_status ?? false, // รักษา ingredient_status สำหรับ debug
+          })),
+          ingredient_status: menu.menu_ingredients.every(
+            (ing: Ingredient) => ing.ingredient_status ?? false
+          ), // สถานะกลุ่ม
+        }));
+
+        console.log("Mapped allIngredients:", allIngredients);
+
+        const orderNumber = `ORD${
+          cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+        }`;
+        return {
+          id: cart.cart_id || "no-id",
+          orderNumber,
+          name: menuDisplayName,
+          date: formattedDate,
+          dateISO: formattedDateISO,
+          time: formattedTime,
+          sets: totalSets,
+          price: cart.cart_total_price || 0,
+          status: cart.cart_status,
+          createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
+          menuItems: menuItems.map((item) => ({ ...item })),
+          allIngredients,
+          order_number: cart.cart_order_number,
+          cart_delivery_date: cart.cart_delivery_date,
+          cart_customer_tel: cart.cart_customer_tel,
+          cart_location_send: cart.cart_location_send,
+        };
       });
 
       formattedOrders.sort((a, b) => {
@@ -322,6 +300,13 @@ const OrderHistory: React.FC = () => {
   ) => {
     // Optimistic update
     const previousCarts = [...carts];
+    const currentCart = carts.find((cart) => cart.id === cartId);
+    const currentIngredient = currentCart?.allIngredients
+      .find((group) => group.menuName === menuName)
+      ?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
+
+    const newCheckedStatus = !currentIngredient?.isChecked;
+
     setCarts((prevCarts) =>
       prevCarts.map((cart) =>
         cart.id === cartId
@@ -333,11 +318,17 @@ const OrderHistory: React.FC = () => {
                       ...group,
                       ingredients: group.ingredients.map((ing) =>
                         ing.ingredient_name === ingredientName
-                          ? { ...ing, isChecked: !ing.isChecked }
+                          ? {
+                              ...ing,
+                              isChecked: newCheckedStatus,
+                              ingredient_status: newCheckedStatus,
+                            }
                           : ing
                       ),
-                      ingredient_status: group.ingredients.every(
-                        (ing) => ing.ingredient_name === ingredientName ? !ing.isChecked : ing.isChecked
+                      ingredient_status: group.ingredients.every((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? newCheckedStatus
+                          : ing.isChecked
                       ),
                     }
                   : group
@@ -346,26 +337,39 @@ const OrderHistory: React.FC = () => {
           : cart
       )
     );
-  
+
     try {
-      const response = await fetch(`/api/edit/cart_menu_ingredient_status/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menuName,
-          ingredientName, // ใช้ ingredientName แทน ingredientId
-          isChecked: !carts
-            .find((cart) => cart.id === cartId)
-            ?.allIngredients.find((group) => group.menuName === menuName)
-            ?.ingredients.find((ing) => ing.ingredient_name === ingredientName)?.isChecked,
-        }),
-      });
-  
+      const response = await fetch(
+        `/api/edit/cart_menu_ingredient_status/${cartId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            menuName,
+            ingredientName,
+            isChecked: newCheckedStatus,
+          }),
+        }
+      );
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error("PATCH API error:", errorData);
-        throw new Error(errorData.error || "Failed to update ingredient status");
+        throw new Error(
+          errorData.error || "Failed to update ingredient status"
+        );
       }
+
+      // รีเฟรชข้อมูลจาก backend
+      await fetchOrders();
+      console.log(
+        "Successfully updated ingredient status for cart:",
+        cartId,
+        "ingredient:",
+        ingredientName,
+        "to:",
+        newCheckedStatus
+      );
     } catch (err) {
       console.error("Error updating ingredient status:", err);
       setError(
@@ -374,6 +378,68 @@ const OrderHistory: React.FC = () => {
           : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบ"
       );
       setCarts(previousCarts); // Revert optimistic update
+    }
+  };
+
+  const handleCheckAllIngredients = async (cartId: string) => {
+    const previousCarts = [...carts];
+    setIsSaving(cartId);
+
+    // Optimistic update
+    setCarts((prevCarts) =>
+      prevCarts.map((cart) =>
+        cart.id === cartId
+          ? {
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
+                  ingredient_status: true,
+                })),
+                ingredient_status: true,
+              })),
+            }
+          : cart
+      )
+    );
+
+    try {
+      const response = await fetch(
+        `/api/edit/cart_menu_all_ingredients_status/${cartId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isChecked: true }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("PATCH API error:", errorData);
+        throw new Error(
+          errorData.error || "Failed to update all ingredients status"
+        );
+      }
+
+      // รีเฟรชข้อมูลจาก backend
+      await fetchOrders();
+      console.log(
+        "Successfully updated all ingredients status for cart:",
+        cartId
+      );
+      setIsSummaryModalOpen(false); // ปิด Dialog หลังจากอัปเดตสำเร็จ
+    } catch (err) {
+      console.error("Error updating all ingredients status:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด"
+      );
+      setCarts(previousCarts); // Revert optimistic update
+    } finally {
+      setIsSaving(null);
     }
   };
 
@@ -415,7 +481,7 @@ const OrderHistory: React.FC = () => {
             },
           };
         })
-        .filter((event: any) => event !== null);
+        .filter((event: EventInput) => event !== null);
 
       setCalendarEvents(events);
     } catch (err) {
@@ -429,7 +495,7 @@ const OrderHistory: React.FC = () => {
     fetchCalendars();
   }, []);
 
-  const handleDateClick = (info: any) => {
+  const handleDateClick = (info: { dateStr: string }) => {
     const selectedDate = info.dateStr;
     console.log("Selected Date:", selectedDate); // ตรวจสอบว่า selectedDate เป็น YYYY-MM-DD
     const filteredOrders = allCarts.filter(
@@ -658,13 +724,20 @@ const OrderHistory: React.FC = () => {
       });
     });
 
-    return Object.entries(ingredientSummary).map(
-      ([name, { checked, total }]) => ({
-        name,
-        checked,
-        total,
-      })
+    const allIngredientsChecked = cart.allIngredients.every((menuGroup) =>
+      menuGroup.ingredients.every((ing) => ing.isChecked)
     );
+
+    return {
+      summary: Object.entries(ingredientSummary).map(
+        ([name, { checked, total }]) => ({
+          name,
+          checked,
+          total,
+        })
+      ),
+      allIngredientsChecked,
+    };
   };
 
   const totalPages = Math.ceil(filteredAndSortedOrders.length / itemsPerPage);
@@ -909,254 +982,424 @@ const OrderHistory: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-  {isLoading ? (
-    <Card>
-      <CardContent className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <span className="text-slate-500">Loading...</span>
-      </CardContent>
-    </Card>
-  ) : paginatedOrders.length === 0 ? (
-    <Card>
-      <CardContent className="text-center py-12">
-        <Package className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-        <span className="text-slate-500">No orders found</span>
-      </CardContent>
-    </Card>
-  ) : (
-    <Accordion type="multiple" className="space-y-4">
-      {paginatedOrders.map((cart) => (
-        <AccordionItem
-          key={cart.id}
-          value={cart.id}
-          className="border-none"
-        >
-          <Card
-            className={`bg-gradient-to-r ${getStatusColor(
-              cart.status
-            )} p-4 rounded-xl shadow-sm`}
-          >
-            <AccordionTrigger className="w-full hover:no-underline px-0">
-              <div className="flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base">
-                <div>
-                  Order ID: {cart.id.slice(0, 8)}... (No:{" "}
-                  {String(cart.order_number).padStart(3, "0")})
-                </div>
-                <div className="flex items-center gap-2 font-medium text-slate-800">
-                  <Package className="w-4 h-4 text-blue-500" />
-                  <span className="truncate text-sm sm:text-base">
-                    Created by:{" "}
-                    <span className="font-semibold">
-                      {cart.createdBy}
-                    </span>
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-semibold text-black">
-                  <div className="flex items-center gap-1 text-sm sm:text-base">
-                    <Package className="w-4 h-4" />
-                    <span>Total {cart.sets} boxes</span>
-                    <span className="text-sm sm:text-base">
-                      ฿{cart.price.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <span>Date {cart.date}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{cart.time}</span>
-                  </div>
-                </div>
-                <div className="hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500">
-                  <ResponsiveOrderId
-                    id={cart.id}
-                    maxFontSize={10}
-                    minFontSize={10}
-                  />
-                </div>
-              </div>
-            </AccordionTrigger>
-            <div className="flex justify-center">
-              <StatusDropdown
-                cartId={cart.id}
-                allIngredients={cart.allIngredients}
-                defaultStatus={cart.status}
-              />
-            </div>
-            <AccordionContent className="mt-4">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
-                    <User className="w-4 h-4" /> Ordered Menus
-                  </h4>
-                  <Accordion type="multiple" className="space-y-3">
-                    {cart.allIngredients.map((menuGroup, groupIdx) => {
-                      const totalBox =
-                        cart.menuItems.find(
-                          (item) =>
-                            item.menu_name === menuGroup.menuName
-                        )?.menu_total || 0;
-                      const isEditingThisMenu =
-                        editingMenu?.cartId === cart.id &&
-                        editingMenu?.menuName === menuGroup.menuName;
-                      // const allIngredientsChecked =
-                      //   menuGroup.ingredients.length > 0 &&
-                      //   menuGroup.ingredients.every(
-                      //     (ing) => ing.isChecked
-                      //   );
-                      const allIngredientsChecked =
-                      menuGroup.ingredients.length > 0 &&
-                      menuGroup.ingredients.every((ing) => ing.isChecked);
-                      
-                      return (
-                        <AccordionItem
-                          key={groupIdx}
-                          value={`menu-${groupIdx}`}
-                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
-                            allIngredientsChecked
-                              ? "bg-green-50 border-green-200"
-                              : "bg-red-50 border-red-200"
-                          }`}
-                        >
-                          <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
-                            <span className="truncate text-sm text-gray-700">
-                              {menuGroup.menuName}
+          {isLoading ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <span className="text-slate-500">Loading...</span>
+              </CardContent>
+            </Card>
+          ) : paginatedOrders.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Package className="w-12 h-12 text-slate-400 mx-auto mb-2" />
+                <span className="text-slate-500">No orders found</span>
+              </CardContent>
+            </Card>
+          ) : (
+            <Accordion type="multiple" className="space-y-4">
+              {paginatedOrders.map((cart) => (
+                <AccordionItem
+                  key={cart.id}
+                  value={cart.id}
+                  className="border-none"
+                >
+                  <Card
+                    className={`bg-gradient-to-r ${getStatusColor(
+                      cart.status
+                    )} p-4 rounded-xl shadow-sm`}
+                  >
+                    <AccordionTrigger className="w-full hover:no-underline px-0">
+                      <div className="flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base">
+                        <div>
+                          Order ID: {cart.id.slice(0, 8)}... (No:{" "}
+                          {String(cart.order_number).padStart(3, "0")})
+                        </div>
+                        <div className="flex items-center gap-2 font-medium text-slate-800">
+                          <Package className="w-4 h-4 text-blue-500" />
+                          <span className="truncate text-sm sm:text-base">
+                            Created by:{" "}
+                            <span className="font-semibold">
+                              {cart.createdBy}
                             </span>
-                            <span className="text-sm font-mono text-blue-600">
-                              ({totalBox} boxes)
+                          </span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-semibold text-black">
+                          <div className="flex items-center gap-1 text-sm sm:text-base">
+                            <Package className="w-4 h-4" />
+                            <span>Total {cart.sets} boxes</span>
+                            <span className="text-sm sm:text-base">
+                              ฿{cart.price.toLocaleString()}
                             </span>
-                          </AccordionTrigger>
-                          <AccordionContent className="pt-3 space-y-2">
-                            {isEditingThisMenu ? (
-                              <div className="flex items-center gap-2 mb-3">
-                                <Input
-                                  type="number"
-                                  value={editTotalBox}
-                                  onChange={(e) =>
-                                    setEditTotalBox(
-                                      Number(e.target.value)
-                                    )
-                                  }
-                                  className="w-20 h-8 text-sm rounded-md border-gray-300"
-                                  min="0"
-                                  aria-label="Edit box quantity"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleSaveTotalBox(
-                                      cart.id,
-                                      menuGroup.menuName
-                                    )
-                                  }
-                                  className="h-8 px-2 text-blue-600 hover:bg-blue-50"
-                                  aria-label="Save box quantity"
-                                  disabled={isSaving === cart.id}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <span>Date {cart.date}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{cart.time}</span>
+                          </div>
+                        </div>
+                        <div className="hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500">
+                          <ResponsiveOrderId
+                            id={cart.id}
+                            maxFontSize={10}
+                            minFontSize={10}
+                          />
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <div className="flex justify-center">
+                      <StatusDropdown
+                        cartId={cart.id}
+                        allIngredients={cart.allIngredients}
+                        defaultStatus={cart.status}
+                      />
+                    </div>
+                    <AccordionContent className="mt-4">
+                      {/* <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
+                            <User className="w-4 h-4" /> Ordered Menus
+                          </h4>
+                          <Accordion type="multiple" className="space-y-3">
+                            {cart.allIngredients.map((menuGroup, groupIdx) => {
+                              const totalBox =
+                                cart.menuItems.find(
+                                  (item) =>
+                                    item.menu_name === menuGroup.menuName
+                                )?.menu_total || 0;
+                              const isEditingThisMenu =
+                                editingMenu?.cartId === cart.id &&
+                                editingMenu?.menuName === menuGroup.menuName;
+
+                              const allIngredientsChecked =
+                                menuGroup.ingredients.length > 0 &&
+                                menuGroup.ingredients.every(
+                                  (ing) => ing.isChecked
+                                );
+
+                              return (
+                                <AccordionItem
+                                  key={groupIdx}
+                                  value={`menu-${groupIdx}`}
+                                  className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
+                                    allIngredientsChecked
+                                      ? "bg-green-50 border-green-200"
+                                      : "bg-red-50 border-red-200"
+                                  }`}
                                 >
-                                  {isSaving === cart.id
-                                    ? "Saving..."
-                                    : "Save"}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setEditingMenu(null)}
-                                  className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-                                  aria-label="Cancel edit"
-                                  disabled={isSaving === cart.id}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 mb-3">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleEditTotalBox(
-                                      cart.id,
-                                      menuGroup.menuName,
-                                      totalBox
-                                    )
-                                  }
-                                  className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
-                            {menuGroup.ingredients.map((ing, idx) => (
-                              <div
-                                key={idx}
-                                className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                  ing.isChecked
-                                    ? "bg-green-50 border-green-200"
-                                    : "bg-red-50 border-red-200"
-                                } text-sm`}
-                              >
-                                <span className="text-gray-700">
-                                  {ing.ingredient_name ||
-                                    `Unknown ingredient`}
-                                </span>
-                                <div className="flex items-center gap-4">
-                                  <span className="text-gray-600">
-                                    Use {ing.useItem} g/box × {totalBox}{" "}
-                                    ={" "}
-                                    <strong className="font-bold text-black">
-                                      {ing.calculatedTotal}
-                                    </strong>{" "}
-                                    g
-                                  </span>
-                                  <label className="cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={ing.isChecked || false}
-                                      onChange={() =>
-                                        handleToggleIngredientCheck(
-                                          cart.id,
-                                          menuGroup.menuName,
-                                          ing.ingredient_name
-                                        )
-                                      }
-                                      className="hidden"
-                                    />
-                                    <span
-                                      className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                        ing.isChecked
-                                          ? "bg-green-500"
-                                          : "bg-red-500"
-                                      }`}
-                                    >
-                                      <span
-                                        className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                          ing.isChecked
-                                            ? "translate-x-5"
-                                            : "translate-x-0.5"
-                                        }`}
-                                      />
+                                  <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
+                                    <span className="truncate text-sm text-gray-700">
+                                      {menuGroup.menuName}
                                     </span>
-                                  </label>
-                                </div>
+                                    <span className="text-sm font-mono text-blue-600">
+                                      ({totalBox} boxes)
+                                    </span>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="pt-3 space-y-2">
+                                    {isEditingThisMenu ? (
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <Input
+                                          type="number"
+                                          value={editTotalBox}
+                                          onChange={(e) =>
+                                            setEditTotalBox(
+                                              Number(e.target.value)
+                                            )
+                                          }
+                                          className="w-20 h-8 text-sm rounded-md border-gray-300"
+                                          min="0"
+                                          aria-label="Edit box quantity"
+                                        />
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleSaveTotalBox(
+                                              cart.id,
+                                              menuGroup.menuName
+                                            )
+                                          }
+                                          className="h-8 px-2 text-blue-600 hover:bg-blue-50"
+                                          aria-label="Save box quantity"
+                                          disabled={isSaving === cart.id}
+                                        >
+                                          {isSaving === cart.id
+                                            ? "Saving..."
+                                            : "Save"}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => setEditingMenu(null)}
+                                          className="h-8 px-2 text-gray-600 hover:bg-gray-50"
+                                          aria-label="Cancel edit"
+                                          disabled={isSaving === cart.id}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleEditTotalBox(
+                                              cart.id,
+                                              menuGroup.menuName,
+                                              totalBox
+                                            )
+                                          }
+                                          className="h-8 px-2 text-blue-600 hover:bg-blue-100"
+                                        >
+                                          <Edit2 className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                    {menuGroup.ingredients.map((ing, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
+                                          ing.isChecked
+                                            ? "bg-green-50 border-green-200"
+                                            : "bg-red-50 border-red-200"
+                                        } text-sm`}
+                                      >
+                                        <span className="text-gray-700">
+                                          {ing.ingredient_name ||
+                                            `Unknown ingredient`}
+                                        </span>
+                                        <div className="flex items-center gap-4">
+                                          <span className="text-gray-600">
+                                            Use {ing.useItem} g/box × {totalBox}{" "}
+                                            ={" "}
+                                            <strong className="font-bold text-black">
+                                              {ing.calculatedTotal}
+                                            </strong>{" "}
+                                            g
+                                          </span>
+                                          <label className="cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={ing.isChecked || false}
+                                              onChange={() =>
+                                                handleToggleIngredientCheck(
+                                                  cart.id,
+                                                  menuGroup.menuName,
+                                                  ing.ingredient_name
+                                                )
+                                              }
+                                              className="hidden"
+                                            />
+                                            <span
+                                              className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                                ing.isChecked
+                                                  ? "bg-green-500"
+                                                  : "bg-red-500"
+                                              }`}
+                                            >
+                                              <span
+                                                className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                                  ing.isChecked
+                                                    ? "translate-x-5"
+                                                    : "translate-x-0.5"
+                                                }`}
+                                              />
+                                            </span>
+                                          </label>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              );
+                            })}
+                          </Accordion>
+                        </div>
+                      </div> */}
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
+                            <User className="w-4 h-4" /> Ordered Menus
+                          </h4>
+                          <Accordion type="multiple" className="space-y-3">
+                            {cart.allIngredients.map((menuGroup, groupIdx) => {
+                              const totalBox =
+                                cart.menuItems.find(
+                                  (item) =>
+                                    item.menu_name === menuGroup.menuName
+                                )?.menu_total || 0;
+                              const isEditingThisMenu =
+                                editingMenu?.cartId === cart.id &&
+                                editingMenu?.menuName === menuGroup.menuName;
+                              const allIngredientsChecked =
+                                menuGroup.ingredients.every(
+                                  (ing) => ing.isChecked
+                                );
+
+                              return (
+                                <AccordionItem
+                                  key={groupIdx}
+                                  value={`menu-${groupIdx}`}
+                                  className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
+                                    allIngredientsChecked
+                                      ? "bg-green-50 border-green-200"
+                                      : "bg-red-50 border-red-200"
+                                  }`}
+                                >
+                                  <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
+                                    <span className="truncate text-sm text-gray-700">
+                                      {menuGroup.menuName}
+                                    </span>
+                                    <span className="text-sm font-mono text-blue-600">
+                                      ({totalBox} boxes)
+                                    </span>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="pt-3 space-y-2">
+                                    {isEditingThisMenu ? (
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <Input
+                                          type="number"
+                                          value={editTotalBox}
+                                          onChange={(e) =>
+                                            setEditTotalBox(
+                                              Number(e.target.value)
+                                            )
+                                          }
+                                          className="w-20 h-8 text-sm rounded-md border-gray-300"
+                                          min="0"
+                                          aria-label="Edit box quantity"
+                                        />
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleSaveTotalBox(
+                                              cart.id,
+                                              menuGroup.menuName
+                                            )
+                                          }
+                                          className="h-8 px-2 text-blue-600 hover:bg-blue-50"
+                                          aria-label="Save box quantity"
+                                          disabled={isSaving === cart.id}
+                                        >
+                                          {isSaving === cart.id
+                                            ? "Saving..."
+                                            : "Save"}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => setEditingMenu(null)}
+                                          className="h-8 px-2 text-gray-600 hover:bg-gray-50"
+                                          aria-label="Cancel edit"
+                                          disabled={isSaving === cart.id}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleEditTotalBox(
+                                              cart.id,
+                                              menuGroup.menuName,
+                                              totalBox
+                                            )
+                                          }
+                                          className="h-8 px-2 text-blue-600 hover:bg-blue-100"
+                                        >
+                                          <Edit2 className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                    {menuGroup.ingredients.map((ing, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
+                                          ing.isChecked
+                                            ? "bg-green-50 border-green-200"
+                                            : "bg-red-50 border-red-200"
+                                        } text-sm`}
+                                      >
+                                        <span className="text-gray-700">
+                                          {ing.ingredient_name ||
+                                            `Unknown ingredient`}
+                                        </span>
+                                        <div className="flex items-center gap-4">
+                                          <span className="text-gray-600">
+                                            Use {ing.useItem} g/box × {totalBox}{" "}
+                                            ={" "}
+                                            <strong className="font-bold text-black">
+                                              {ing.calculatedTotal}
+                                            </strong>{" "}
+                                            g
+                                          </span>
+                                          <label className="cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={ing.isChecked || false}
+                                              onChange={() =>
+                                                handleToggleIngredientCheck(
+                                                  cart.id,
+                                                  menuGroup.menuName,
+                                                  ing.ingredient_name
+                                                )
+                                              }
+                                              className="hidden"
+                                            />
+                                            <span
+                                              className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                                ing.isChecked
+                                                  ? "bg-green-500"
+                                                  : "bg-red-500"
+                                              }`}
+                                            >
+                                              <span
+                                                className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                                  ing.isChecked
+                                                    ? "translate-x-5"
+                                                    : "translate-x-0.5"
+                                                }`}
+                                              />
+                                            </span>
+                                          </label>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              );
+                            })}
+                            <div className="flex justify-end">
+                              <div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSummaryClick(cart)}
+                                  className="h-8 px-2 text-emerald-600 hover:bg-emerald-100"
+                                >
+                                  สรุปวัตถุดิบทั้งหมด
+                                </Button>
                               </div>
-                            ))}
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
-                </div>
-              </div>
-            </AccordionContent>
-          </Card>
-        </AccordionItem>
-      ))}
-    </Accordion>
-  )}
-</div>
+                            </div>
+                          </Accordion>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </Card>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
+        </div>
 
         <Dialog open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen}>
           <DialogContent className="max-w-md">
@@ -1168,18 +1411,26 @@ const OrderHistory: React.FC = () => {
                   {String(selectedCart.order_number).padStart(3, "0")})
                 </h4>
                 <div className="space-y-2">
-                  {summarizeIngredients(selectedCart).map((ing, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
-                    >
-                      <span className="text-gray-700">{ing.name}</span>
-                      <span className="text-gray-600">
-                        {ing.checked}/{ing.total} กรัม
-                      </span>
-                    </div>
-                  ))}
+                  {summarizeIngredients(selectedCart).summary.map(
+                    (ing, idx) => (
+                      <div
+                        key={idx}
+                        className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
+                      >
+                        <span className="text-gray-700">{ing.name}</span>
+                        <span className="text-gray-600">
+                          {ing.checked}/{ing.total} กรัม
+                        </span>
+                      </div>
+                    )
+                  )}
                 </div>
+                <Button
+                  onClick={() => handleCheckAllIngredients(selectedCart.id)}
+                  className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
+                >
+                  เตรียมวัตถุดิบทั้งหมดแล้ว
+                </Button>
                 <Button
                   onClick={() => setIsSummaryModalOpen(false)}
                   className="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg"
