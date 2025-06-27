@@ -108,13 +108,6 @@ type RawCart = {
   cart_receive_time: string;
 };
 
-// interface StatusDropdownProps {
-//   cartId: string;
-//   allIngredients: { menuName: string; ingredients: any[] }[];
-//   defaultStatus: string;
-//   onStatusChange?: () => void; // เพิ่ม prop นี้
-// }
-
 const OrderHistory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   // setSortBy
@@ -169,12 +162,12 @@ const OrderHistory: React.FC = () => {
 
       const menuResponse = await fetch("/api/get/menu-list");
       if (!menuResponse.ok) throw new Error("Failed to fetch menu");
-      const menuData = await menuResponse.json();
+      // const menuData = await menuResponse.json();
 
       const ingredientResponse = await fetch("/api/get/ingredients");
       if (!ingredientResponse.ok)
         throw new Error("Failed to fetch ingredients");
-      const ingredientData = await ingredientResponse.json();
+      // const ingredientData = await ingredientResponse.json();
 
       const formattedOrders: Cart[] = data.map((cart: RawCart) => {
         console.log(
@@ -205,7 +198,6 @@ const OrderHistory: React.FC = () => {
           .split(".")[0]
           .slice(0, 5);
 
-        // Parse cart_menu_items
         const menuItems: MenuItem[] =
           typeof cart.cart_menu_items === "string" && cart.cart_menu_items
             ? safeParseJSON(cart.cart_menu_items)
@@ -234,7 +226,6 @@ const OrderHistory: React.FC = () => {
                 .join(" + ")
             : "ไม่มีชื่อเมนู";
 
-        // Map allIngredients directly from menuItems
         const allIngredients = menuItems.map((menu) => ({
           menuName: menu.menu_name,
           ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
@@ -243,12 +234,12 @@ const OrderHistory: React.FC = () => {
             ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
             calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
             sourceMenu: menu.menu_name,
-            isChecked: dbIng.ingredient_status ?? false, // ใช้ ingredient_status จาก cart_menu_items
-            ingredient_status: dbIng.ingredient_status ?? false, // รักษา ingredient_status สำหรับ debug
+            isChecked: dbIng.ingredient_status ?? false,
+            ingredient_status: dbIng.ingredient_status ?? false,
           })),
           ingredient_status: menu.menu_ingredients.every(
             (ing: Ingredient) => ing.ingredient_status ?? false
-          ), // สถานะกลุ่ม
+          ),
         }));
 
         console.log("Mapped allIngredients:", allIngredients);
@@ -276,11 +267,21 @@ const OrderHistory: React.FC = () => {
         };
       });
 
+      // ในฟังก์ชัน fetchOrders หลังจาก formattedOrders
       formattedOrders.sort((a, b) => {
-        const dateA = new Date(`${a.dateISO}T${a.time}:00`);
-        const dateB = new Date(`${b.dateISO}T${b.time}:00`);
-        return dateB.getTime() - dateA.getTime();
+        const orderNumA = parseInt(a.order_number || "0"); // แปลง varchar เป็นตัวเลข
+        const orderNumB = parseInt(b.order_number || "0");
+        if (orderNumB !== orderNumA) {
+          return orderNumB - orderNumA; // เรียงตาม cart_order_number จากมากไปน้อย
+        }
+        console.log(orderNumA);
+        console.log(orderNumB);
+        // ถ้า cart_order_number เท่ากัน ให้เรียงตามวันที่ล่าสุด
+        const dateA = new Date(a.dateISO + "T" + a.time + ":00");
+        const dateB = new Date(b.dateISO + "T" + b.time + ":00");
+        return dateB.getTime() - dateA.getTime(); // เรียงตามวันที่จากใหม่ไปเก่า
       });
+
       setAllCarts(formattedOrders);
       setCarts(formattedOrders);
     } catch (err) {
@@ -642,17 +643,61 @@ const OrderHistory: React.FC = () => {
     return [...new Set(carts.map((cart) => cart.createdBy))];
   }, [carts]);
 
+  // const filteredAndSortedOrders = useMemo(() => {
+  //   let filtered = [...carts].filter(
+  //     (cart) => cart.status === "pending" || cart.status === "completed"
+  //   );
+  //   console.log("Carts before filtering:", filtered);
+
+  //   if (selectedDate) {
+  //     const selectedDateISO = selectedDate.toISOString().split("T")[0];
+  //     filtered = filtered.filter((order) => order.dateISO === selectedDateISO);
+  //   }
+
+  //   if (searchTerm) {
+  //     filtered = filtered.filter((order) =>
+  //       [order.name, order.id, order.createdBy].some((field) =>
+  //         (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+  //       )
+  //     );
+  //   }
+  //   if (filterStatus !== "ทั้งหมด") {
+  //     filtered = filtered.filter(
+  //       (order) => getStatusText(order.status) === filterStatus
+  //     );
+  //   }
+  //   if (filterCreator !== "ทั้งหมด") {
+  //     filtered = filtered.filter((order) => order.createdBy === filterCreator);
+  //   }
+
+  //   filtered.sort((a, b) => {
+  //     // เรียงตาม cart_create_date (dateISO + time) จากใหม่ไปเก่า
+  //     const dateA = new Date(a.dateISO + "T" + a.time + ":00").getTime();
+  //     const dateB = new Date(b.dateISO + "T" + b.time + ":00").getTime();
+  //     if (dateB !== dateA) {
+  //       return dateB - dateA; // เรียงจากใหม่ไปเก่า
+  //     }
+  //     // ถ้า cart_create_date เท่ากัน ให้เรียงตาม cart_order_number จากมากไปน้อย
+  //     const orderNumA = parseInt(a.order_number || "0");
+  //     const orderNumB = parseInt(b.order_number || "0");
+  //     return orderNumB - orderNumA; // เรียง cart_order_number จากมากไปน้อย
+  //   });
+  //   console.log("Filtered and Sorted Orders:", filtered);
+
+  //   return filtered;
+  // }, [carts, searchTerm, filterStatus, filterCreator, selectedDate]);
+
   const filteredAndSortedOrders = useMemo(() => {
     let filtered = [...carts].filter(
       (cart) => cart.status === "pending" || cart.status === "completed"
     );
     console.log("Carts before filtering:", filtered);
-
+  
     if (selectedDate) {
-      const selectedDateISO = selectedDate.toISOString().split("T")[0]; // YYYY-MM-DD
+      const selectedDateISO = selectedDate.toISOString().split("T")[0];
       filtered = filtered.filter((order) => order.dateISO === selectedDateISO);
     }
-
+  
     if (searchTerm) {
       filtered = filtered.filter((order) =>
         [order.name, order.id, order.createdBy].some((field) =>
@@ -668,38 +713,29 @@ const OrderHistory: React.FC = () => {
     if (filterCreator !== "ทั้งหมด") {
       filtered = filtered.filter((order) => order.createdBy === filterCreator);
     }
-
+  
     filtered.sort((a, b) => {
-      let aVal: string | number = a[sortBy as keyof typeof a] as
-        | string
-        | number;
-      let bVal: string | number = b[sortBy as keyof typeof b] as
-        | string
-        | number;
-      if (sortBy === "date") {
-        aVal = a.dateISO;
-        bVal = b.dateISO;
+      const dateA = new Date(a.dateISO + "T" + a.time + ":00").getTime();
+      const dateB = new Date(b.dateISO + "T" + b.time + ":00").getTime();
+      const orderNumA = parseInt(a.order_number || "0");
+      const orderNumB = parseInt(b.order_number || "0");
+  
+      if (sortOrder === "asc") {
+        if (dateA !== dateB) {
+          return dateA - dateB; // Sort by date ascending (oldest first)
+        }
+        return orderNumA - orderNumB; // If dates are equal, sort by order_number ascending
+      } else {
+        if (dateB !== dateA) {
+          return dateB - dateA; // Sort by date descending (newest first)
+        }
+        return orderNumB - orderNumA; // If dates are equal, sort by order_number descending
       }
-      return sortOrder === "asc"
-        ? aVal > bVal
-          ? 1
-          : -1
-        : aVal < bVal
-        ? 1
-        : -1;
     });
     console.log("Filtered and Sorted Orders:", filtered);
-
+  
     return filtered;
-  }, [
-    carts,
-    searchTerm,
-    filterStatus,
-    filterCreator,
-    sortBy,
-    sortOrder,
-    selectedDate,
-  ]);
+  }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
 
   const handleSummaryClick = (cart: Cart) => {
     setSelectedCart(cart);
@@ -910,8 +946,8 @@ const OrderHistory: React.FC = () => {
                 align="start"
                 avoidCollisions={false}
               >
-                <SelectItem value="desc">Latest first</SelectItem>
-                <SelectItem value="asc">Oldest first</SelectItem>
+                <SelectItem value="desc">เรียงจากใหม่ไปเก่า</SelectItem>
+                <SelectItem value="asc">เรียงจากเก่าไปใหม่</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1059,168 +1095,6 @@ const OrderHistory: React.FC = () => {
                       />
                     </div>
                     <AccordionContent className="mt-4">
-                      {/* <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
-                            <User className="w-4 h-4" /> Ordered Menus
-                          </h4>
-                          <Accordion type="multiple" className="space-y-3">
-                            {cart.allIngredients.map((menuGroup, groupIdx) => {
-                              const totalBox =
-                                cart.menuItems.find(
-                                  (item) =>
-                                    item.menu_name === menuGroup.menuName
-                                )?.menu_total || 0;
-                              const isEditingThisMenu =
-                                editingMenu?.cartId === cart.id &&
-                                editingMenu?.menuName === menuGroup.menuName;
-
-                              const allIngredientsChecked =
-                                menuGroup.ingredients.length > 0 &&
-                                menuGroup.ingredients.every(
-                                  (ing) => ing.isChecked
-                                );
-
-                              return (
-                                <AccordionItem
-                                  key={groupIdx}
-                                  value={`menu-${groupIdx}`}
-                                  className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
-                                    allIngredientsChecked
-                                      ? "bg-green-50 border-green-200"
-                                      : "bg-red-50 border-red-200"
-                                  }`}
-                                >
-                                  <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
-                                    <span className="truncate text-sm text-gray-700">
-                                      {menuGroup.menuName}
-                                    </span>
-                                    <span className="text-sm font-mono text-blue-600">
-                                      ({totalBox} boxes)
-                                    </span>
-                                  </AccordionTrigger>
-                                  <AccordionContent className="pt-3 space-y-2">
-                                    {isEditingThisMenu ? (
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Input
-                                          type="number"
-                                          value={editTotalBox}
-                                          onChange={(e) =>
-                                            setEditTotalBox(
-                                              Number(e.target.value)
-                                            )
-                                          }
-                                          className="w-20 h-8 text-sm rounded-md border-gray-300"
-                                          min="0"
-                                          aria-label="Edit box quantity"
-                                        />
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleSaveTotalBox(
-                                              cart.id,
-                                              menuGroup.menuName
-                                            )
-                                          }
-                                          className="h-8 px-2 text-blue-600 hover:bg-blue-50"
-                                          aria-label="Save box quantity"
-                                          disabled={isSaving === cart.id}
-                                        >
-                                          {isSaving === cart.id
-                                            ? "Saving..."
-                                            : "Save"}
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => setEditingMenu(null)}
-                                          className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-                                          aria-label="Cancel edit"
-                                          disabled={isSaving === cart.id}
-                                        >
-                                          Cancel
-                                        </Button>
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleEditTotalBox(
-                                              cart.id,
-                                              menuGroup.menuName,
-                                              totalBox
-                                            )
-                                          }
-                                          className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-                                        >
-                                          <Edit2 className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                    )}
-                                    {menuGroup.ingredients.map((ing, idx) => (
-                                      <div
-                                        key={idx}
-                                        className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                          ing.isChecked
-                                            ? "bg-green-50 border-green-200"
-                                            : "bg-red-50 border-red-200"
-                                        } text-sm`}
-                                      >
-                                        <span className="text-gray-700">
-                                          {ing.ingredient_name ||
-                                            `Unknown ingredient`}
-                                        </span>
-                                        <div className="flex items-center gap-4">
-                                          <span className="text-gray-600">
-                                            Use {ing.useItem} g/box × {totalBox}{" "}
-                                            ={" "}
-                                            <strong className="font-bold text-black">
-                                              {ing.calculatedTotal}
-                                            </strong>{" "}
-                                            g
-                                          </span>
-                                          <label className="cursor-pointer">
-                                            <input
-                                              type="checkbox"
-                                              checked={ing.isChecked || false}
-                                              onChange={() =>
-                                                handleToggleIngredientCheck(
-                                                  cart.id,
-                                                  menuGroup.menuName,
-                                                  ing.ingredient_name
-                                                )
-                                              }
-                                              className="hidden"
-                                            />
-                                            <span
-                                              className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                                ing.isChecked
-                                                  ? "bg-green-500"
-                                                  : "bg-red-500"
-                                              }`}
-                                            >
-                                              <span
-                                                className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                                  ing.isChecked
-                                                    ? "translate-x-5"
-                                                    : "translate-x-0.5"
-                                                }`}
-                                              />
-                                            </span>
-                                          </label>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </AccordionContent>
-                                </AccordionItem>
-                              );
-                            })}
-                          </Accordion>
-                        </div>
-                      </div> */}
                       <div className="grid md:grid-cols-2 gap-6">
                         <div>
                           <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
@@ -1335,12 +1209,12 @@ const OrderHistory: React.FC = () => {
                                         </span>
                                         <div className="flex items-center gap-4">
                                           <span className="text-gray-600">
-                                            Use {ing.useItem} g/box × {totalBox}{" "}
-                                            ={" "}
-                                            <strong className="font-bold text-black">
+                                            ใช้ {ing.useItem} กรัม × {totalBox}{" "}
+                                            กล่อง ={" "}
+                                            <strong className="text-black-600" style={{ color: "#000000" }}>
                                               {ing.calculatedTotal}
                                             </strong>{" "}
-                                            g
+                                            กรัม
                                           </span>
                                           <label className="cursor-pointer">
                                             <input
@@ -1403,42 +1277,78 @@ const OrderHistory: React.FC = () => {
 
         <Dialog open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen}>
           <DialogContent className="max-w-md">
-            <DialogTitle>สรุปวัตถุดิบทั้งหมด</DialogTitle>
-            {selectedCart && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold text-emerald-700">
-                  Order ID: {selectedCart.id.slice(0, 8)}... (No:{" "}
-                  {String(selectedCart.order_number).padStart(3, "0")})
-                </h4>
-                <div className="space-y-2">
-                  {summarizeIngredients(selectedCart).summary.map(
-                    (ing, idx) => (
-                      <div
-                        key={idx}
-                        className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
-                      >
-                        <span className="text-gray-700">{ing.name}</span>
-                        <span className="text-gray-600">
-                          {ing.checked}/{ing.total} กรัม
-                        </span>
+            <DialogTitle className="text-lg font-bold mb-4">
+              สรุปวัตถุดิบทั้งหมดของออร์เดอร์
+              {selectedCart &&
+                (() => {
+                  const { summary, allIngredientsChecked } =
+                    summarizeIngredients(selectedCart);
+                  return (
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-bold text-emerald-700">
+                        Order ID: {selectedCart.id.slice(0, 8)}... (No:{" "}
+                        {String(selectedCart.order_number).padStart(3, "0")})
+                      </h4>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-semibold text-gray-700">
+                            สรุปวัตถุดิบรวม
+                          </h5>
+                          {summary.map((ing, idx) => (
+                            <div
+                              key={idx}
+                              className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
+                            >
+                              <span className="text-gray-700">{ing.name}</span>
+                              <span className="text-gray-600">
+                                {ing.checked}/{ing.total} กรัม
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="cursor-pointer flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={allIngredientsChecked}
+                              onChange={() =>
+                                handleCheckAllIngredients(selectedCart.id)
+                              }
+                              className="hidden"
+                              aria-label="เตรียมวัตถุดิบทั้งหมดแล้ว"
+                              disabled={isSaving === selectedCart.id}
+                            />
+                            <span
+                              className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                allIngredientsChecked
+                                  ? "bg-green-500"
+                                  : "bg-red-500"
+                              }`}
+                            >
+                              <span
+                                className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                  allIngredientsChecked
+                                    ? "translate-x-5"
+                                    : "translate-x-0.5"
+                                }`}
+                              />
+                            </span>
+                            <span className="text-sm text-gray-700">
+                              เตรียมวัตถุดิบทั้งหมดแล้ว
+                            </span>
+                          </label>
+                        </div>
                       </div>
-                    )
-                  )}
-                </div>
-                <Button
-                  onClick={() => handleCheckAllIngredients(selectedCart.id)}
-                  className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
-                >
-                  เตรียมวัตถุดิบทั้งหมดแล้ว
-                </Button>
-                <Button
-                  onClick={() => setIsSummaryModalOpen(false)}
-                  className="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg"
-                >
-                  ปิด
-                </Button>
-              </div>
-            )}
+                      <Button
+                        onClick={() => setIsSummaryModalOpen(false)}
+                        className="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg"
+                      >
+                        ปิด
+                      </Button>
+                    </div>
+                  );
+                })()}
+            </DialogTitle>
           </DialogContent>
         </Dialog>
 

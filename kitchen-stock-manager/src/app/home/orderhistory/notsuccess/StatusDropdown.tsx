@@ -48,13 +48,13 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-  
+
       // ถ้าเลือก completed → จัดการ ingredients ก่อน
       if (selectedStatus === "completed") {
         for (const menu of allIngredients) {
           for (const ingredient of menu.ingredients) {
             if (!ingredient.ingredient_id) continue;
-  
+
             // GET ปริมาณคงเหลือ
             const res = await fetch(
               `/api/get/ingredients/${ingredient.ingredient_id}`
@@ -66,10 +66,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             }
             const data = await res.json();
             const currentTotal = data.ingredient_total;
-  
+
             // ลบออกตาม calculatedTotal
             const remaining = currentTotal - (ingredient.calculatedTotal || 0);
-  
+
             // ถ้าติดลบหรือหมด → ยืนยัน
             if (remaining <= 0) {
               const confirmUpdate = window.confirm(
@@ -80,7 +80,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                 return;
               }
             }
-  
+
             // PATCH กลับไปเก็บคงเหลือใหม่
             const formData = new FormData();
             formData.append("ingredient_total", String(remaining));
@@ -99,22 +99,23 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           }
         }
       }
-  
+
       // PATCH cart status ทุกกรณี
       const formData = new FormData();
       formData.append("cart_status", selectedStatus);
       formData.append("cart_last_update", userName ?? "unknown");
-  
-      const res = await fetch(`/api/edit/cart_status/${cartId}`, { // แก้ไขตรงนี้
+
+      const res = await fetch(`/api/edit/cart_status/${cartId}`, {
+        // แก้ไขตรงนี้
         method: "PATCH",
         body: formData,
       });
-  
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to update status");
       }
-  
+
       // Lock ปุ่มถ้า success หรือ cancelled
       if (selectedStatus === "success" || selectedStatus === "cancelled") {
         setIsLocked(true);
@@ -140,9 +141,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       )}
 
       <div className="relative px-4">
-        <button
-          className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
-        >
+        <button className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow">
           {statusOptions.find((o) => o.value === selectedStatus)?.label}
         </button>
         <select
