@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
-import { Plus, ShoppingCart, History, AlertTriangle } from "lucide-react";
+import { CheckCircle, Clock, History} from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/share/ui/badge";
+// import { Badge } from "@/share/ui/badge";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
 
 export default function Page() {
@@ -64,76 +64,50 @@ export default function Page() {
     router.push("/home/orderhistory/success");
   };
 
-  const handlesumary= () => {
+  const handlesumary = () => {
     router.push("/home/orderhistory/sumary");
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background p-4">
-
       {/* เมนูหลัก */}
       <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-140px)]">
         <div className="w-full max-w-md flex flex-col gap-6">
           {/* {lowStockIngredients.length > 0 && (
-            <Card className="p-4 border-red-200 bg-red-50 dark:bg-red-900/20">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <h3 className="font-semibold text-red-800 dark:text-red-200">
-                    แจ้งเตือน: วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)
-                  </h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {lowStockIngredients.slice(0, 4).map((ingredient) => (
-                      <Badge
-                        key={ingredient.ingredient_id}
-                        variant="destructive"
-                        className="whitespace-nowrap"
-                      >
-                        {ingredient.ingredient_name} ({ingredient.ingredient_total}{" "}
-                        / {ingredient.ingredient_total_alert})
-                      </Badge>
-                    ))}
-                    {lowStockIngredients.length > 4 && (
-                      <Badge variant="destructive" className="whitespace-nowrap">
-                        ...
-                      </Badge>
-                    )}
-                </div>
-              </div>
-            </Card>
           )} */}
           {/* Add Ingredients */}
-          <Card className="group hover:shadow-xl transition-all ...">
-            <CardContent className="p-0">
-              <Button
-                variant="ghost"
-                onClick={handlenotsuccess}
-                className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
-              >
-                <div className="w-12 h-12 bg-green-500/10 group-hover:bg-green-500/20 rounded-xl flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-green-600" />
-                </div>
-                <span className="text-base"> ยังไม่เสร็จ </span>
-              </Button>
-            </CardContent>
-          </Card>
+          {/* ยังไม่เสร็จ */}
+<Card className="group hover:shadow-xl transition-all">
+  <CardContent className="p-0">
+    <Button
+      variant="ghost"
+      onClick={handlenotsuccess}
+      className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
+    >
+      <div className="w-12 h-12 bg-yellow-500/10 group-hover:bg-yellow-500/20 rounded-xl flex items-center justify-center">
+        <Clock className="w-6 h-6 text-yellow-600" /> {/* เปลี่ยนจาก Plus */}
+      </div>
+      <span className="text-base"> ยังไม่เสร็จ </span>
+    </Button>
+  </CardContent>
+</Card>
 
-          {/* Order */}
-          <Card className="group hover:shadow-xl transition-all ...">
-            <CardContent className="p-0">
-              <Button
-                variant="ghost"
-                onClick={handlesuccess}
-                className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
-              >
-                <div className="w-12 h-12 bg-blue-500/10 group-hover:bg-blue-500/20 rounded-xl flex items-center justify-center">
-                  <ShoppingCart className="w-6 h-6 text-blue-600" />
-                </div>
-                <span className="text-base"> เสร็จแล้ว </span>
-              </Button>
-            </CardContent>
-          </Card>
+{/* เสร็จแล้ว */}
+<Card className="group hover:shadow-xl transition-all">
+  <CardContent className="p-0">
+    <Button
+      variant="ghost"
+      onClick={handlesuccess}
+      className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
+    >
+      <div className="w-12 h-12 bg-green-500/10 group-hover:bg-green-500/20 rounded-xl flex items-center justify-center">
+        <CheckCircle className="w-6 h-6 text-green-600" /> {/* เปลี่ยนจาก ShoppingCart */}
+      </div>
+      <span className="text-base"> เสร็จแล้ว </span>
+    </Button>
+  </CardContent>
+</Card>
+
 
           {/* Order History */}
           <Card className="group hover:shadow-xl transition-all ...">
