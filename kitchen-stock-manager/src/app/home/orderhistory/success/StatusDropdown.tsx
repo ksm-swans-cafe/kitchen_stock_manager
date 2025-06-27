@@ -17,8 +17,8 @@ type StatusOption = {
 };
 
 const statusOptions: StatusOption[] = [
-  // { label: "รอดำเนินการ", value: "pending" },
-  // { label: "ยืนยันแล้ว", value: "completed" },
+  { label: "รอดำเนินการ", value: "pending" },
+  { label: "ยืนยันแล้ว", value: "completed" },
   { label: "ส่งแล้ว", value: "success" },
   { label: "ยกเลิก", value: "cancelled" },
 ];
@@ -49,7 +49,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     try {
       setIsSubmitting(true);
 
-      // ✅ ถ้าเลือก success → จัดการ ingredients ก่อน
+      // ถ้าเลือก completed → จัดการ ingredients ก่อน
       if (selectedStatus === "completed") {
         for (const menu of allIngredients) {
           for (const ingredient of menu.ingredients) {
@@ -68,8 +68,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             const currentTotal = data.ingredient_total;
 
             // ลบออกตาม calculatedTotal
-            const remaining =
-              currentTotal - (ingredient.calculatedTotal || 0);
+            const remaining = currentTotal - (ingredient.calculatedTotal || 0);
 
             // ถ้าติดลบหรือหมด → ยืนยัน
             if (remaining <= 0) {
@@ -101,21 +100,23 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         }
       }
 
-      // ✅ PATCH cart status ทุกกรณี
+      // PATCH cart status ทุกกรณี
       const formData = new FormData();
       formData.append("cart_status", selectedStatus);
       formData.append("cart_last_update", userName ?? "unknown");
 
-      const res = await fetch(`/api/edit/cart/${cartId}`, {
+      const res = await fetch(`/api/edit/cart_status/${cartId}`, {
+        // แก้ไขตรงนี้
         method: "PATCH",
         body: formData,
       });
 
       if (!res.ok) {
-        throw new Error("Failed to update status");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update status");
       }
 
-      // ✅ Lock ปุ่มถ้า success หรือ cancelled
+      // Lock ปุ่มถ้า success หรือ cancelled
       if (selectedStatus === "success" || selectedStatus === "cancelled") {
         setIsLocked(true);
       }
@@ -140,9 +141,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       )}
 
       <div className="relative px-4">
-        <button
-          className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
-        >
+        <button className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow">
           {statusOptions.find((o) => o.value === selectedStatus)?.label}
         </button>
         <select
