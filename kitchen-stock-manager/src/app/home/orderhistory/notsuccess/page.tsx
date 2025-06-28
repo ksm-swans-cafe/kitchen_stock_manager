@@ -46,6 +46,7 @@ import {
 import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
+import { useRouter } from "next/navigation";
 
 interface Ingredient {
   ingredient_id?: number;
@@ -856,6 +857,9 @@ const OrderHistory: React.FC = () => {
     doc.save("order_history.pdf");
   };
 
+  const router = useRouter();
+  const handleUpdate = () => router.refresh();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
       <div className="p-6">
@@ -1048,8 +1052,8 @@ const OrderHistory: React.FC = () => {
                     <AccordionTrigger className="w-full hover:no-underline px-0">
                       <div className="flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base">
                         <div>
-                          Order ID: {cart.id.slice(0, 8)}... (No:{" "}
-                          {String(cart.order_number).padStart(3, "0")})
+                          Order No.{""}
+                          {String(cart.order_number).padStart(3, "0")}
                         </div>
                         <div className="flex items-center gap-2 font-medium text-slate-800">
                           <Package className="w-4 h-4 text-blue-500" />
@@ -1092,6 +1096,7 @@ const OrderHistory: React.FC = () => {
                         cartId={cart.id}
                         allIngredients={cart.allIngredients}
                         defaultStatus={cart.status}
+                        onUpdated={handleUpdate}
                       />
                     </div>
                     <AccordionContent className="mt-4">

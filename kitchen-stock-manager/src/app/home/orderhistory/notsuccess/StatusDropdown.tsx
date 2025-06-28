@@ -30,6 +30,7 @@ type StatusDropdownProps = {
     ingredients: Ingredient[];
   }[];
   defaultStatus?: string;
+  onUpdated?: () => void;
 };
 
 const StatusDropdown: React.FC<StatusDropdownProps> = ({
@@ -125,6 +126,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       alert("เกิดข้อผิดพลาด: " + (error as Error).message);
     } finally {
       setIsSubmitting(false);
+      window.location.reload();
     }
   };
 
