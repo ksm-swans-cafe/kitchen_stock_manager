@@ -8,6 +8,7 @@ import { Plus, ShoppingCart, History, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/share/ui/badge";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
+import { DollarSign } from "lucide-react";
 
 export default function Page() {
   const router = useRouter();
@@ -66,6 +67,10 @@ export default function Page() {
 
   const handleOrderHistory = () => {
     router.push("/home/orderhistory");
+  };
+
+  const handleFinance = () => {
+    router.push("/home/finance");
   };
 
   return (
@@ -149,6 +154,7 @@ export default function Page() {
               </div>
             </Card>
           )} */}
+
           {/* Add Ingredients */}
           <Card className="group hover:shadow-xl transition-all ...">
             <CardContent className="p-0">
@@ -160,7 +166,7 @@ export default function Page() {
                 <div className="w-12 h-12 bg-green-500/10 group-hover:bg-green-500/20 rounded-xl flex items-center justify-center">
                   <Plus className="w-6 h-6 text-green-600" />
                 </div>
-                <span className="text-base">Add Ingredients</span>
+                <span className="text-base">เพิ่มวัตถุดิบ</span>
               </Button>
             </CardContent>
           </Card>
@@ -176,7 +182,7 @@ export default function Page() {
                 <div className="w-12 h-12 bg-blue-500/10 group-hover:bg-blue-500/20 rounded-xl flex items-center justify-center">
                   <ShoppingCart className="w-6 h-6 text-blue-600" />
                 </div>
-                <span className="text-base">Order</span>
+                <span className="text-base">สั่งอาหาร</span>
               </Button>
             </CardContent>
           </Card>
@@ -192,10 +198,30 @@ export default function Page() {
                 <div className="w-12 h-12 bg-purple-500/10 group-hover:bg-purple-500/20 rounded-xl flex items-center justify-center">
                   <History className="w-6 h-6 text-purple-600" />
                 </div>
-                <span className="text-base">Order History</span>
+                <span className="text-base">ประวัติการสั่งอาหาร</span>
               </Button>
             </CardContent>
           </Card>
+
+          {/* Finance Card */}
+            <Card className="group hover:shadow-xl transition-all ...">
+
+              <CardContent className="relative p-0">
+                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md z-10">
+                  Demo
+                </div>
+                <Button 
+                  variant="ghost" 
+                  className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
+                  onClick={handleFinance}
+                >
+                  <div className="w-12 h-12 bg-amber-500/10 group-hover:bg-amber-500/20 rounded-xl flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <span className="text-base">การเงิน</span>
+                </Button>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </div>

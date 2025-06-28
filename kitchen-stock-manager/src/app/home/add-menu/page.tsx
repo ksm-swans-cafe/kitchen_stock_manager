@@ -18,6 +18,7 @@ export default function AddMenuPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { useItem: 0, ingredient_name: "" },
   ]);
+  const [menuSubName, setMenuSubName] = useState("");
   const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([]);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,20 +39,22 @@ export default function AddMenuPage() {
   }, []);
 
   const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ชิ้น"].includes(unit)) {
+    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
       return "1";
-    } else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
-      return "0.01";
     }
+    //  else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
+    //   return "0.01";
+    // }
     return "0.01";
   };
 
   const formatNumber = (value: number, unit: string): number => {
-    if (["กรัม", "ฟอง", "ชิ้น"].includes(unit)) {
+    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
       return Math.floor(value);
-    } else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
-      return Number(value.toFixed(2));
-    }
+    } 
+    // else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
+    //   return Number(value.toFixed(2));
+    // }
     return value;
   };
 
@@ -112,6 +115,12 @@ export default function AddMenuPage() {
       return;
     }
 
+    if (!menuSubName.trim()) {
+      setError("Menu sub name is required");
+      setIsSubmitting(false);
+      return;
+    }
+
     // Prepare data for confirmation
     const confirmationMessage = `
       Please confirm the following details:
@@ -119,6 +128,7 @@ export default function AddMenuPage() {
       - Ingredients: ${ingredients
         .map((ing) => `${ing.useItem} x ${ing.ingredient_name}`)
         .join(", ")}
+      - Sub Name: ${menuSubName}
       Do you want to proceed?
     `;
 
@@ -131,6 +141,7 @@ export default function AddMenuPage() {
       const formData = new FormData();
       formData.append("menu_name", menuName);
       formData.append("menu_ingredients", JSON.stringify(ingredients));
+      formData.append("menu_subname", menuSubName);
 
       const response = await fetch("/api/post/menu", {
         method: "POST",
@@ -145,6 +156,7 @@ export default function AddMenuPage() {
       // Reset form fields instead of navigating
       setMenuName("");
       setIngredients([{ useItem: 0, ingredient_name: "" }]);
+      setMenuSubName("");
       setError("Menu created successfully!"); // Optional success message
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -263,6 +275,7 @@ export default function AddMenuPage() {
               </div>
             );
           })}
+
           <button
             type="button"
             onClick={handleAddIngredient}
@@ -270,6 +283,24 @@ export default function AddMenuPage() {
           >
             + Add Ingredient
           </button>
+        </div>
+        
+<div>
+          <label
+            htmlFor="menuName"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Menu SubName
+          </label>
+          <input
+            type="text"
+            id="menuName"
+            value={menuSubName}
+            onChange={(e) => setMenuSubName(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            placeholder="Enter menu name"
+            required
+          />
         </div>
 
         <div className="flex justify-end">
