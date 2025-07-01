@@ -71,27 +71,33 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
 
   const unitDisplayMap: { [key: string]: string } = {
     กรัม: "กรัม",
-    ฟอง: "ฟอง",
     มิลลิลิตร: "มิลลิลิตร",
-    ชิ้น: "ชิ้น",
+    ฟอง: "ฟอง",
+    ลูก: "ลูก",
+    // ชิ้น: "ชิ้น",
   };
 
   const unitLabelMap: { [key: string]: string } = {
     กรัม: "กรัม",
-    ฟอง: "ฟอง",
     มิลลิลิตร: "มิลลิลิตร",
-    ชิ้น: "ชิ้น",
+    ฟอง: "ฟอง",
+    ลูก: "ลูก",
+    // ชิ้น: "ชิ้น",
   };
 
   const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
+    if (["กรัม", "ฟอง", ,"ลูก",
+      // "ชิ้น", 
+      "มิลลิลิตร"].includes(unit)) {
       return "1";
     } 
     return "0.01";
   };
 
   const formatNumber = (value: number, unit: string): number => {
-    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
+    if (["กรัม", "ฟอง", ,"ลูก",
+      // "ชิ้น",
+       "มิลลิลิตร"].includes(unit)) {
       return Math.floor(value);
     } 
     return value;
@@ -584,11 +590,12 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="กรัม">กรัม</SelectItem>
-                              <SelectItem value="ฟอง">ฟอง</SelectItem>
                               <SelectItem value="มิลลิลิตร">
                                 มิลลิลิตร
                               </SelectItem>
-                              <SelectItem value="ชิ้น">ชิ้น</SelectItem>
+                              <SelectItem value="ฟอง">ฟอง</SelectItem>
+                              <SelectItem value="ลูก">ลูก</SelectItem>
+                              {/* <SelectItem value="ชิ้น">ชิ้น</SelectItem> */}
                             </SelectContent>
                           </Select>
                         </div>

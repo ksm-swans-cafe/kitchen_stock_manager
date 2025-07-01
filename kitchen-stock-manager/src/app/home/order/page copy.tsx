@@ -6,8 +6,7 @@ import { MenuItem } from "@/models/menu_card/MenuCard-model";
 import MenuCard from "@/share/order/MenuCardForMenu";
 import './style.css';
 
-
-export default function Menu() {
+export default function Order() {
   const chunkSize = 10;
 
   const [visibleCount, setVisibleCount] = useState(chunkSize);

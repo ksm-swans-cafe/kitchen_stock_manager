@@ -20,9 +20,8 @@ export default function CartList() {
   const { userName } = useAuth();
   const router = useRouter();
 
-  // ฟังก์ชันจัดการเบอร์โทรแบบเติม "-" อัตโนมัติ
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ""); // ลบทุกอย่างที่ไม่ใช่ตัวเลข
+    let value = e.target.value.replace(/\D/g, "");
 
     if (value.length > 3 && value.length <= 6) {
       value = `${value.slice(0, 3)}-${value.slice(3)}`;
@@ -83,7 +82,7 @@ export default function CartList() {
 
   const handleDone = () => {
     clearCart();
-    router.push("/home/orderhistory/notsuccess");
+    router.push("/home/summarylist");
   };
 
   const handleChangeQuantity = (itemId: string | number, quantity: number) => {
@@ -95,8 +94,17 @@ export default function CartList() {
       <div className="p-4 max-w-md mx-auto">
         <h1 className="text-2xl font-bold mb-4">🛒 รายการในตะกร้า</h1>
 
-        {items.length === 0 ? (
-          <p className="text-gray-500">ยังไม่มีรายการในตะกร้า</p>
+        {items.length === -1 ? (
+          <div className="text-center text-gray-500 space-y-4">
+            <div className="border p-4 rounded">
+                <button
+                  onClick={() => router.push("/home/order/menu")}
+                  className="w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  ➕ เพิ่มเมนู
+                </button>
+              </div>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -138,6 +146,7 @@ export default function CartList() {
                 <input
                   type="date"
                   value={rawDate}
+                  min={new Date().toISOString().split("T")[0]}
                   onChange={(e) => {
                     const value = e.target.value;
                     setRawDate(value);
@@ -193,7 +202,17 @@ export default function CartList() {
                   </li>
                 ) : null
               )}
+
+              <div className="border p-4 rounded">
+                <button
+                  onClick={() => router.push("/home/order/menu")}
+                  className="w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  ➕ เพิ่มเมนู
+                </button>
+              </div>
             </ul>
+
 
             <button
               onClick={confirmOrder}
@@ -202,8 +221,8 @@ export default function CartList() {
                 backgroundColor: loading
                   ? "#a0aec0"
                   : errors.length === 0
-                  ? "#38a169" // สีเขียว
-                  : "#e53e3e", // สีแดง
+                  ? "#38a169"
+                  : "#e53e3e",
                 cursor: loading ? "not-allowed" : "pointer",
                 color: "white",
               }}

@@ -17,8 +17,8 @@ type StatusOption = {
 };
 
 const statusOptions: StatusOption[] = [
-  { label: "รอดำเนินการ", value: "pending" },
-  { label: "ยืนยันแล้ว", value: "completed" },
+  { label: "รอมัดจำ", value: "pending" },
+  { label: "ชำระเงินเเล้ว", value: "completed" },
   { label: "ส่งแล้ว", value: "success" },
   { label: "ยกเลิก", value: "cancelled" },
 ];

@@ -65,9 +65,14 @@ export default function Page() {
     router.push("/home/order");
   };
 
+  const handleSummaryList = () => {
+    router.push("/home/summarylist")
+  }
+
   const handleOrderHistory = () => {
     router.push("/home/orderhistory");
   };
+
 
   const handleFinance = () => {
     router.push("/home/finance");
@@ -182,7 +187,22 @@ export default function Page() {
                 <div className="w-12 h-12 bg-blue-500/10 group-hover:bg-blue-500/20 rounded-xl flex items-center justify-center">
                   <ShoppingCart className="w-6 h-6 text-blue-600" />
                 </div>
-                <span className="text-base">สั่งอาหาร</span>
+                <span className="text-base">คำสั่งซื้อ</span>
+              </Button>
+            </CardContent>
+          </Card>
+          
+        <Card className="group hover:shadow-xl transition-all ...">
+            <CardContent className="p-0">
+              <Button
+                variant="ghost"
+                onClick={handleSummaryList}
+                className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
+              >
+                <div className="w-12 h-12 bg-purple-500/10 group-hover:bg-purple-500/20 rounded-xl flex items-center justify-center">
+                  <History className="w-6 h-6 text-purple-600" />
+                </div>
+                <span className="text-base">สรุปรายการ</span>
               </Button>
             </CardContent>
           </Card>

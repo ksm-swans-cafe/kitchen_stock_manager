@@ -46,6 +46,7 @@ import {
 import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
+import { useRouter } from "next/navigation";
 
 interface Ingredient {
   ingredient_id?: number;
@@ -612,11 +613,11 @@ const OrderHistory: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case "pending":
-        return "รอดำเนินการ";
+        return "รอมัดจำ";
       case "completed":
-        return "ยืนยันแล้ว";
+        return "ชำระเงินเเล้ว";
       case "success":
-        return "ส่งแล้ว";
+        return "เสร็จสิ้น";
       case "cancelled":
         return "ยกเลิก";
       default:
@@ -645,7 +646,7 @@ const OrderHistory: React.FC = () => {
 
   // const filteredAndSortedOrders = useMemo(() => {
   //   let filtered = [...carts].filter(
-  //     (cart) => cart.status === "cancelled" || cart.status === "success"
+  //     (cart) => cart.status === "pending" || cart.status === "completed"
   //   );
   //   console.log("Carts before filtering:", filtered);
 
@@ -687,10 +688,9 @@ const OrderHistory: React.FC = () => {
   //   return filtered;
   // }, [carts, searchTerm, filterStatus, filterCreator, selectedDate]);
 
-  
   const filteredAndSortedOrders = useMemo(() => {
     let filtered = [...carts].filter(
-      (cart) => cart.status === "cancelled" || cart.status === "success"
+      (cart) => cart.status === "pending" || cart.status === "completed"
     );
     console.log("Carts before filtering:", filtered);
   
@@ -737,7 +737,7 @@ const OrderHistory: React.FC = () => {
   
     return filtered;
   }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
-  
+
   const handleSummaryClick = (cart: Cart) => {
     setSelectedCart(cart);
     setIsSummaryModalOpen(true);
@@ -857,6 +857,9 @@ const OrderHistory: React.FC = () => {
     doc.save("order_history.pdf");
   };
 
+  const router = useRouter();
+  const handleUpdate = () => router.refresh();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
       <div className="p-6">
@@ -965,8 +968,8 @@ const OrderHistory: React.FC = () => {
                 avoidCollisions={false}
               >
                 <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
-                <SelectItem value="ส่งแล้ว">ส่งแล้ว</SelectItem>
-                <SelectItem value="ยกเลิก">ยกเลิก</SelectItem>
+                <SelectItem value="รอมัดจำ">รอมัดจำ</SelectItem>
+                <SelectItem value="ชำระเงินเเล้ว">ชำระเงินเเล้ว</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1049,8 +1052,8 @@ const OrderHistory: React.FC = () => {
                     <AccordionTrigger className="w-full hover:no-underline px-0">
                       <div className="flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base">
                         <div>
-                          Order ID: {cart.id.slice(0, 8)}... (No:{" "}
-                          {String(cart.order_number).padStart(3, "0")})
+                          Order No.{""}
+                          {String(cart.order_number).padStart(3, "0")}
                         </div>
                         <div className="flex items-center gap-2 font-medium text-slate-800">
                           <Package className="w-4 h-4 text-blue-500" />
@@ -1093,6 +1096,7 @@ const OrderHistory: React.FC = () => {
                         cartId={cart.id}
                         allIngredients={cart.allIngredients}
                         defaultStatus={cart.status}
+                        onUpdated={handleUpdate}
                       />
                     </div>
                     <AccordionContent className="mt-4">
@@ -1108,9 +1112,9 @@ const OrderHistory: React.FC = () => {
                                   (item) =>
                                     item.menu_name === menuGroup.menuName
                                 )?.menu_total || 0;
-                              // const isEditingThisMenu =
-                              //   editingMenu?.cartId === cart.id &&
-                              //   editingMenu?.menuName === menuGroup.menuName;
+                              const isEditingThisMenu =
+                                editingMenu?.cartId === cart.id &&
+                                editingMenu?.menuName === menuGroup.menuName;
                               const allIngredientsChecked =
                                 menuGroup.ingredients.every(
                                   (ing) => ing.isChecked
@@ -1135,7 +1139,7 @@ const OrderHistory: React.FC = () => {
                                     </span>
                                   </AccordionTrigger>
                                   <AccordionContent className="pt-3 space-y-2">
-                                    {/* {isEditingThisMenu ? (
+                                    {isEditingThisMenu ? (
                                       <div className="flex items-center gap-2 mb-3">
                                         <Input
                                           type="number"
@@ -1194,7 +1198,7 @@ const OrderHistory: React.FC = () => {
                                           <Edit2 className="w-4 h-4" />
                                         </Button>
                                       </div>
-                                    )} */}
+                                    )}
                                     {menuGroup.ingredients.map((ing, idx) => (
                                       <div
                                         key={idx}
@@ -1212,10 +1216,7 @@ const OrderHistory: React.FC = () => {
                                           <span className="text-gray-600">
                                             ใช้ {ing.useItem} กรัม × {totalBox}{" "}
                                             กล่อง ={" "}
-                                            <strong
-                                              className="text-black-600"
-                                              style={{ color: "#000000" }}
-                                            >
+                                            <strong className="text-black-600" style={{ color: "#000000" }}>
                                               {ing.calculatedTotal}
                                             </strong>{" "}
                                             กรัม
