@@ -1,10 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
-import { Plus, ShoppingCart, History, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  ShoppingCart,
+  History,
+  AlertTriangle,
+  FileText,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/share/ui/badge";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
@@ -66,65 +72,95 @@ export default function Page() {
   };
 
   const handleSummaryList = () => {
-    router.push("/home/summarylist")
-  }
+    router.push("/home/summarylist");
+  };
 
   const handleOrderHistory = () => {
     router.push("/home/orderhistory");
   };
 
-
   const handleFinance = () => {
     router.push("/home/finance");
   };
 
+  const [showFullList, setShowFullList] = useState(false); // ย่อ/ขยายข้อมูล
+
+  const popupRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      popupRef.current &&
+      !popupRef.current.contains(event.target as Node)
+    ) {
+      setShowAll(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background p-4">
-      {/* 🔴 Card แจ้งเตือนวัตถุดิบใกล้หมด */}
+    <div className="min-h-screen pt-[140px] bg-gradient-to-br from-background via-secondary/10 to-background p-4">
+      {/* 🔴 แจ้งเตือนวัตถุดิบ (ปุ่ม + กล่อง toggle) */}
       {lowStockIngredients.length > 0 && (
-        <Card className="fixed left-1/2 -translate-x-1/2 z-40 w-[80%] p-4 border-red-200 bg-red-50 dark:bg-red-900/20 shadow-lg rounded-lg">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              <h3 className="font-semibold text-red-800 dark:text-red-200 text-sm sm:text-base">
-                แจ้งเตือน: วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)
-              </h3>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-              {(showAll
-                ? lowStockIngredients
-                : lowStockIngredients.slice(0, 4)
-              ).map((ingredient) => (
-                <Badge
-                  key={ingredient.ingredient_id}
-                  variant="destructive"
-                  className="whitespace-nowrap text-xs sm:text-sm"
-                >
-                  {ingredient.ingredient_name} ({ingredient.ingredient_total} /{" "}
-                  {ingredient.ingredient_total_alert})
-                </Badge>
-              ))}
-              {lowStockIngredients.length > 4 &&
-                (!showAll ? (
-                  <div className="px-2 text-sm py-0.5 w-fit text-white shadow bg-red-600 rounded-md hover:bg-gray-200 hover:text-black border">
-                  <button
-                    onClick={() => setShowAll(true)}
-                    >
-                    แสดงทั้งหมด
-                  </button>
-                    </div>
-                ) : (
-                  <div className="px-2 text-sm py-0.5 w-fit text-white shadow bg-red-600 rounded-md hover:bg-gray-200 hover:text-black border">
-                  <button
-                    onClick={() => setShowAll(false)}
-                    >
-                    ย่อ
-                  </button>
-                    </div>
-                ))}
-            </div>
+        <div className="fixed bottom-6 right-6 z-50">
+          {/* 🔴 ปุ่มแจ้งเตือน + Ping */}
+          <div className="relative">
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+            </span>
+
+            <Button
+              onClick={() => setShowAll((prev) => !prev)}
+              className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-xl transition"
+              title={`วัตถุดิบใกล้หมด (${lowStockIngredients.length} รายการ)`}
+            >
+              <AlertTriangle className="w-5 h-5" />
+            </Button>
           </div>
-        </Card>
+
+          {/* 📋 รายการวัตถุดิบ */}
+          {showAll && (
+  <div
+    ref={popupRef}
+    className="absolute bottom-[70px] right-0 w-[300px] sm:w-[360px] bg-red-50 border border-red-300 shadow-lg rounded-lg p-4 backdrop-blur-md"
+  >
+              <h3 className="text-sm font-semibold text-red-800 mb-2">
+                วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)
+              </h3>
+              <div className="flex flex-col gap-2 mb-2 max-h-[200px] overflow-y-auto">
+                {(showFullList
+                  ? lowStockIngredients
+                  : lowStockIngredients.slice(0, 4)
+                ).map((ingredient) => (
+                  <Badge
+                    key={ingredient.ingredient_id}
+                    variant="destructive"
+                    className="text-xs w-fit"
+                  >
+                    {ingredient.ingredient_name} ({ingredient.ingredient_total}{" "}
+                    / {ingredient.ingredient_total_alert})
+                  </Badge>
+                ))}
+              </div>
+
+              {/* 🔁 ปุ่ม แสดงทั้งหมด / ย่อ */}
+              {lowStockIngredients.length > 4 && (
+                <button
+                  onClick={() => setShowFullList((prev) => !prev)}
+                  className="text-sm font-medium text-red-600 hover:underline"
+                >
+                  {showFullList ? "ย่อ" : "แสดงทั้งหมด"}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* เมนูหลัก */}
@@ -191,8 +227,8 @@ export default function Page() {
               </Button>
             </CardContent>
           </Card>
-          
-        <Card className="group hover:shadow-xl transition-all ...">
+
+          <Card className="group hover:shadow-xl transition-all ...">
             <CardContent className="p-0">
               <Button
                 variant="ghost"
@@ -200,7 +236,7 @@ export default function Page() {
                 className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
               >
                 <div className="w-12 h-12 bg-purple-500/10 group-hover:bg-purple-500/20 rounded-xl flex items-center justify-center">
-                  <History className="w-6 h-6 text-purple-600" />
+                  <FileText className="w-6 h-6 text-purple-600" />
                 </div>
                 <span className="text-base">สรุปรายการ</span>
               </Button>
@@ -215,8 +251,8 @@ export default function Page() {
                 onClick={handleOrderHistory}
                 className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
               >
-                <div className="w-12 h-12 bg-purple-500/10 group-hover:bg-purple-500/20 rounded-xl flex items-center justify-center">
-                  <History className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 bg-gray-700/10 group-hover:bg-gray-500/20 rounded-xl flex items-center justify-center">
+                  <History className="w-6 h-6 text-gray-600" />
                 </div>
                 <span className="text-base">ประวัติการสั่งอาหาร</span>
               </Button>
@@ -224,24 +260,23 @@ export default function Page() {
           </Card>
 
           {/* Finance Card */}
-            <Card className="group hover:shadow-xl transition-all ...">
-
-              <CardContent className="relative p-0">
-                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md z-10">
-                  Demo
+          <Card className="group hover:shadow-xl transition-all ...">
+            <CardContent className="relative p-0">
+              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md z-10">
+                Demo
+              </div>
+              <Button
+                variant="ghost"
+                className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
+                onClick={handleFinance}
+              >
+                <div className="w-12 h-12 bg-amber-500/10 group-hover:bg-amber-500/20 rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-amber-600" />
                 </div>
-                <Button 
-                  variant="ghost" 
-                  className="w-full h-20 flex items-center justify-start space-x-4 px-6 text-foreground font-semibold hover:bg-transparent"
-                  onClick={handleFinance}
-                >
-                  <div className="w-12 h-12 bg-amber-500/10 group-hover:bg-amber-500/20 rounded-xl flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-amber-600" />
-                  </div>
-                  <span className="text-base">การเงิน</span>
-                </Button>
-              </CardContent>
-            </Card>
+                <span className="text-base">การเงิน</span>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
