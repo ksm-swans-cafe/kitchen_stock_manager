@@ -687,18 +687,17 @@ const OrderHistory: React.FC = () => {
   //   return filtered;
   // }, [carts, searchTerm, filterStatus, filterCreator, selectedDate]);
 
-  
   const filteredAndSortedOrders = useMemo(() => {
     let filtered = [...carts].filter(
       (cart) => cart.status === "cancelled" || cart.status === "success"
     );
     console.log("Carts before filtering:", filtered);
-  
+
     if (selectedDate) {
       const selectedDateISO = selectedDate.toISOString().split("T")[0];
       filtered = filtered.filter((order) => order.dateISO === selectedDateISO);
     }
-  
+
     if (searchTerm) {
       filtered = filtered.filter((order) =>
         [order.name, order.id, order.createdBy].some((field) =>
@@ -714,13 +713,13 @@ const OrderHistory: React.FC = () => {
     if (filterCreator !== "ทั้งหมด") {
       filtered = filtered.filter((order) => order.createdBy === filterCreator);
     }
-  
+
     filtered.sort((a, b) => {
       const dateA = new Date(a.dateISO + "T" + a.time + ":00").getTime();
       const dateB = new Date(b.dateISO + "T" + b.time + ":00").getTime();
       const orderNumA = parseInt(a.order_number || "0");
       const orderNumB = parseInt(b.order_number || "0");
-  
+
       if (sortOrder === "asc") {
         if (dateA !== dateB) {
           return dateA - dateB; // Sort by date ascending (oldest first)
@@ -734,10 +733,10 @@ const OrderHistory: React.FC = () => {
       }
     });
     console.log("Filtered and Sorted Orders:", filtered);
-  
+
     return filtered;
   }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
-  
+
   const handleSummaryClick = (cart: Cart) => {
     setSelectedCart(cart);
     setIsSummaryModalOpen(true);
@@ -906,16 +905,35 @@ const OrderHistory: React.FC = () => {
                 <FullCalendar
                   plugins={[dayGridPlugin, interactionPlugin]}
                   initialView="dayGridMonth"
-                  timeZone="Asia/Bangkok" // Explicitly set to UTC+7
+                  timeZone="Asia/Bangkok"
                   events={calendarEvents}
                   dateClick={handleDateClick}
-                  eventContent={(eventInfo) => (
-                    <div className="flex items-center justify-center w-full h-full">
-                      <span className="text-xl text-red-500">
-                        {eventInfo.event.title}
-                      </span>
-                    </div>
-                  )}
+                  // eventContent={(eventInfo) => {
+                  //   const { status } = eventInfo.event.extendedProps;
+                  //   const isSuccessOrCancelled = [
+                  //     "success",
+                  //     "cancelled",
+                  //   ].includes(status);
+                  //   const eventDate = eventInfo.event.start
+                  //     ? eventInfo.event.start.toISOString().split("T")[0]
+                  //     : "";
+                  //   return (
+                  //     <div
+                  //       className={`flex items-center justify-center w-full h-full ${
+                  //         isSuccessOrCancelled
+                  //           ? "border-2 border-red-500 rounded"
+                  //           : ""
+                  //       }`}
+                  //       title={`วันที่: ${eventDate}, สถานะ: ${getStatusText(
+                  //         status
+                  //       )}`} // ใช้ eventDate ใน tooltip
+                  //     >
+                  //       <span className="text-xl text-red-500">
+                  //         {eventInfo.event.title}
+                  //       </span>
+                  //     </div>
+                  //   );
+                  // }}
                   height="auto"
                   locale="th"
                   buttonText={{
