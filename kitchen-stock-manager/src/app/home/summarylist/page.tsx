@@ -8,6 +8,8 @@ import { formatDate, EventInput } from "@fullcalendar/core";
 import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
+import { BsCashStack } from "react-icons/bs";
+import { FaWallet } from "react-icons/fa";
 import {
   Clock,
   User,
@@ -58,7 +60,7 @@ interface Ingredient {
   calculatedTotal?: number;
   sourceMenu?: string;
   isChecked?: boolean; // ใช้ใน frontend เพื่อ map กับ ingredient_status
-  ingredient_status?: boolean; 
+  ingredient_status?: boolean;
 }
 
 interface MenuItem {
@@ -317,66 +319,89 @@ const OrderHistory: React.FC = () => {
     }
   };
 
-  // ในส่วนของ OrderHistory.tsx
-// เพิ่ม state สำหรับการแก้ไขเวลา
-const [editingTime, setEditingTime] = useState<{
-  cartId: string;
-  exportTime: string;
-  receiveTime: string;
-} | null>(null);
+  // State for editing time
+  const [editingTime, setEditingTime] = useState<{
+    cartId: string;
+    field: "exportTime" | "receiveTime" | null;
+    value: string;
+  } | null>(null);
 
-// ฟังก์ชันสำหรับเริ่มการแก้ไขเวลา
-const handleEditTime = (cartId: string, exportTime: string, receiveTime: string) => {
-  setEditingTime({ cartId, exportTime, receiveTime });
-};
+  const handleEditTime = (
+    cartId: string,
+    field: "exportTime" | "receiveTime",
+    value: string
+  ) => {
+    // Ensure time is in HH:mm format
+    const formattedValue = value ? value.slice(0, 5) : "";
+    setEditingTime({ cartId, field, value: formattedValue });
+  };
 
-// ฟังก์ชันสำหรับบันทึกเวลา
-const handleSaveTime = async (cartId: string) => {
-  if (!editingTime) return;
+  const handleSaveTime = async (cartId: string) => {
+    if (!editingTime) return;
 
-  setIsSaving(cartId);
-  try {
-    const response = await fetch(`/api/edit/cart_time/${cartId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cart_export_time: editingTime.exportTime,
-        cart_receive_time: editingTime.receiveTime,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to update times");
+    // Validate time format (HH:mm)
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (editingTime.value && !timeRegex.test(editingTime.value)) {
+      setError("รูปแบบเวลาไม่ถูกต้อง กรุณาใช้รูปแบบ HH:mm");
+      return;
     }
 
-    // อัปเดต state ด้วยข้อมูลใหม่
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              cart_export_time: editingTime.exportTime,
-              cart_receive_time: editingTime.receiveTime,
-            }
-          : cart
-      )
-    );
+    setIsSaving(cartId);
+    try {
+      const payload: {
+        cart_export_time?: string | null;
+        cart_receive_time?: string | null;
+      } = {};
+      if (editingTime.field === "exportTime") {
+        payload.cart_export_time = editingTime.value || null;
+      } else if (editingTime.field === "receiveTime") {
+        payload.cart_receive_time = editingTime.value || null;
+      }
 
-    alert("อัปเดตเวลาเรียบร้อย!");
-    setEditingTime(null);
-    await fetchOrders(); // รีเฟรชข้อมูลจาก backend
-  } catch (err) {
-    console.error("Error updating times:", err);
-    setError(
-      err instanceof Error
-        ? `ไม่สามารถอัปเดตเวลา: ${err.message}`
-        : "เกิดข้อผิดพลาดในการอัปเดตเวลา"
-    );
-  } finally {
-    setIsSaving(null);
-  }
-};
+      const response = await fetch(`/api/edit/cart_time/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update time");
+      }
+
+      const { cart } = await response.json();
+      setCarts((prevCarts) =>
+        prevCarts.map((c) =>
+          c.id === cartId
+            ? {
+                ...c,
+                cart_export_time:
+                  editingTime.field === "exportTime"
+                    ? cart[0]?.cart_export_time || editingTime.value || null
+                    : c.cart_export_time,
+                cart_receive_time:
+                  editingTime.field === "receiveTime"
+                    ? cart[0]?.cart_receive_time || editingTime.value || null
+                    : c.cart_receive_time,
+              }
+            : c
+        )
+      );
+
+      alert("อัปเดตเวลาเรียบร้อย!");
+      setEditingTime(null);
+      await fetchOrders();
+    } catch (err) {
+      console.error("Error updating time:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตเวลา: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตเวลา"
+      );
+    } finally {
+      setIsSaving(null);
+    }
+  };
 
   const handleToggleIngredientCheck = async (
     cartId: string,
@@ -585,7 +610,6 @@ const handleSaveTime = async (cartId: string) => {
       setIsSaving(null);
     }
   };
-  
 
   const convertThaiDateToISO = (
     thaiDate: string | undefined
@@ -636,9 +660,6 @@ const handleSaveTime = async (cartId: string) => {
       setError("ไม่สามารถโหลดข้อมูลปฏิทินได้");
     }
   };
-
-  
-
 
   useEffect(() => {
     fetchOrders();
@@ -797,7 +818,7 @@ const handleSaveTime = async (cartId: string) => {
     let filtered = [...carts].filter(
       (cart) => cart.status === "pending" || cart.status === "completed"
     );
-  
+
     if (selectedDate) {
       const selectedDateISO = selectedDate.toISOString().split("T")[0];
       filtered = filtered.filter(
@@ -805,7 +826,7 @@ const handleSaveTime = async (cartId: string) => {
           convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO
       );
     }
-  
+
     if (searchTerm) {
       filtered = filtered.filter((order) =>
         [order.name, order.id, order.createdBy].some((field) =>
@@ -821,17 +842,18 @@ const handleSaveTime = async (cartId: string) => {
     if (filterCreator !== "ทั้งหมด") {
       filtered = filtered.filter((order) => order.createdBy === filterCreator);
     }
-  
+
     // Group by delivery date and sort orders within each date by order_number
     const groupedByDate = filtered.reduce((acc, cart) => {
-      const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date) || "no-date";
+      const deliveryDateISO =
+        convertThaiDateToISO(cart.cart_delivery_date) || "no-date";
       if (!acc[deliveryDateISO]) {
         acc[deliveryDateISO] = [];
       }
       acc[deliveryDateISO].push(cart);
       return acc;
     }, {} as { [key: string]: Cart[] });
-  
+
     // Sort orders within each date by order_number (ascending)
     Object.values(groupedByDate).forEach((orders) => {
       orders.sort((a, b) => {
@@ -840,7 +862,7 @@ const handleSaveTime = async (cartId: string) => {
         return orderNumA - orderNumB;
       });
     });
-  
+
     // Sort dates based on sortOrder
     const currentDate = new Date();
     const sortedDates = Object.keys(groupedByDate).sort((dateA, dateB) => {
@@ -850,10 +872,10 @@ const handleSaveTime = async (cartId: string) => {
       const diffB = Math.abs(new Date(dateB).getTime() - currentDate.getTime());
       return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
     });
-  
+
     // Flatten the sorted groups back into a single array
     const sortedOrders = sortedDates.flatMap((date) => groupedByDate[date]);
-  
+
     console.log("Filtered and Sorted Orders:", sortedOrders);
     return sortedOrders;
   }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
@@ -874,7 +896,7 @@ const handleSaveTime = async (cartId: string) => {
       return acc;
     }, {} as { [key: string]: Cart[] });
 
-    const currentDate = new Date(); 
+    const currentDate = new Date();
     return Object.entries(grouped).sort((a, b) => {
       const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
       const dateB = convertThaiDateToISO(b[1][0].cart_delivery_date);
@@ -1255,9 +1277,7 @@ const handleSaveTime = async (cartId: string) => {
                                     ส่งถึงคุณ {cart.cart_customer_name}
                                   </span>
                                   <Smartphone className="w-4 h-4" />
-                                  <span>
-                                    เบอร์ {cart.cart_customer_tel}{" "}
-                                  </span>
+                                  <span>เบอร์ {cart.cart_customer_tel} </span>
                                 </div>
                               </div>
 
@@ -1271,74 +1291,137 @@ const handleSaveTime = async (cartId: string) => {
                                   <span>เวลา {cart.time} น.</span>
                                 </div>
                               </div>
-                              
-                              <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm font-normal text-black">
-  {editingTime?.cartId === cart.id ? (
-    <div className="flex items-center gap-2">
-      <Input
-        type="time"
-        value={editingTime.exportTime}
-        onChange={(e) =>
-          setEditingTime((prev) =>
-            prev ? { ...prev, exportTime: e.target.value } : prev
-          )
-        }
-        className="w-24 h-8 text-sm rounded-md border-gray-300"
-        aria-label="Edit export time"
-      />
-      <Input
-        type="time"
-        value={editingTime.receiveTime}
-        onChange={(e) =>
-          setEditingTime((prev) =>
-            prev ? { ...prev, receiveTime: e.target.value } : prev
-          )
-        }
-        className="w-24 h-8 text-sm rounded-md border-gray-300"
-        aria-label="Edit receive time"
-      />
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleSaveTime(cart.id)}
-        className="h-8 px-2 text-blue-600 hover:bg-blue-50"
-        disabled={isSaving === cart.id}
-      >
-        {isSaving === cart.id ? "Saving..." : "Save"}
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setEditingTime(null)}
-        className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-        disabled={isSaving === cart.id}
-      >
-        Cancel
-      </Button>
-    </div>
-  ) : (
-    <>
-      <div className="flex items-center gap-1">
-        <CalendarDays className="w-4 h-4" />
-        <span>เวลาส่งอาหาร {cart.cart_export_time}</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() =>
-            handleEditTime(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")
-          }
-          className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-        >
-          <Edit2 className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="flex items-center gap-1">
-        <Clock className="w-4 h-4" />
-        <span>เวลารับอาหาร {cart.cart_receive_time} น.</span>
-      </div>
-    </>
-  )}
-</div>
+
+                              <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm font-normal text-black ">
+                                <div className="flex items-center gap-1">
+                                  <BsCashStack className="w-6 h-6" />
+                                  {editingTime?.cartId === cart.id &&
+                                  editingTime?.field === "exportTime" ? (
+                                    <div className="flex items-center gap-2">
+                                      <span>เวลาส่งอาหาร</span>
+                                      <Input
+                                        type="time"
+                                        value={editingTime.value}
+                                        onChange={(e) =>
+                                          setEditingTime((prev) =>
+                                            prev
+                                              ? {
+                                                  ...prev,
+                                                  value: e.target.value,
+                                                }
+                                              : prev
+                                          )
+                                        }
+                                        className="w-24 h-8 text-sm rounded-md border-gray-300"
+                                        aria-label="Edit export time"
+                                      />
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleSaveTime(cart.id)}
+                                        className="h-8 px-2"
+                                        disabled={isSaving === cart.id}
+                                      >
+                                        {isSaving === cart.id
+                                          ? "Saving..."
+                                          : "Save"}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingTime(null)}
+                                        className="h-8 px-2 text-gray-600 hover:bg-gray-50"
+                                        disabled={isSaving === cart.id}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <span>
+                                        เวลาส่งอาหาร{" "}
+                                        {cart.cart_export_time || "ไม่ระบุ"} น.
+                                      </span>
+                                      <span
+                                        className="cursor-pointer ml-2"
+                                        onClick={() =>
+                                          handleEditTime(
+                                            cart.id,
+                                            "exportTime",
+                                            cart.cart_export_time || ""
+                                          )
+                                        }
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <FaWallet className="w-4 h-4" />
+                                  {editingTime?.cartId === cart.id &&
+                                  editingTime?.field === "receiveTime" ? (
+                                    <div className="flex items-center gap-2">
+                                      <span>เวลารับอาหาร</span>
+                                      <Input
+                                        type="time"
+                                        value={editingTime.value}
+                                        onChange={(e) =>
+                                          setEditingTime((prev) =>
+                                            prev
+                                              ? {
+                                                  ...prev,
+                                                  value: e.target.value,
+                                                }
+                                              : prev
+                                          )
+                                        }
+                                        className="w-24 h-8 text-sm rounded-md border-gray-300"
+                                        aria-label="Edit receive time"
+                                      />
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleSaveTime(cart.id)}
+                                        className="h-8 px-2"
+                                        disabled={isSaving === cart.id}
+                                      >
+                                        {isSaving === cart.id
+                                          ? "Saving..."
+                                          : "Save"}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingTime(null)}
+                                        className="h-8 px-2 text-gray-600 hover:bg-gray-50"
+                                        disabled={isSaving === cart.id}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <span>
+                                        เวลารับอาหาร{" "}
+                                        {cart.cart_receive_time || "ไม่ระบุ"} น.
+                                      </span>
+                                      <span
+                                        className="cursor-pointer ml-2"
+                                        onClick={() =>
+                                          handleEditTime(
+                                            cart.id,
+                                            "receiveTime",
+                                            cart.cart_receive_time || ""
+                                          )
+                                        }
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                               <div className="hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500">
                                 <ResponsiveOrderId
                                   id={cart.id}
@@ -1555,8 +1638,8 @@ const handleSaveTime = async (cartId: string) => {
                           convertThaiDateToISO(orders[0].cart_delivery_date)!
                         )
                       }
-                      className="h-9 px-4 bg-green-400 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4"
-                      style={{ color: "#000000" }}
+                      className="h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4"
+                      style={{ color: "#000000", background: "#fcf22d" }}
                     >
                       📦 สรุปวัตถุดิบทั้งหมด
                     </Button>
@@ -1601,7 +1684,7 @@ const handleSaveTime = async (cartId: string) => {
                           </div>
                         ))}
                       </div>
-                      <div style={{ color: "#000000" }}>
+                      <div style={{ color: "#000000", background: "#5cfa6c" }}>
                         <Button
                           onClick={() =>
                             handleCheckAllIngredientsForDate(
