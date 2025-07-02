@@ -1,24 +1,52 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useCartStore } from "@/stores/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useRouter } from "next/navigation";
 
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import { th } from "date-fns/locale/th";
+
+registerLocale("th", th);
+
 export default function CartList() {
-  const { items, addItem, removeItem, clearCart, setItemQuantity } = useCartStore();
+  const {
+    items,
+    addItem,
+    removeItem,
+    clearCart,
+    setItemQuantity,
+    cart_customer_name,
+    cart_customer_tel,
+    cart_location_send,
+    cart_delivery_date,
+    setCustomerInfo,
+  } = useCartStore();
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [success, setSuccess] = useState(false);
-
-  const [cart_customer_name, setName] = useState("");
-  const [cart_customer_tel, setTel] = useState("");
-  const [cart_location_send, setLocation] = useState("");
-  const [cart_delivery_date, setDate] = useState("");
-  const [rawDate, setRawDate] = useState("");
-
+  const [rawDate, setRawDate] = useState<string>("");
   const { userName } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (cart_delivery_date) {
+      const parts = cart_delivery_date.split("/");
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10) - 543;
+        const d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) setRawDate(d.toISOString());
+      }
+    } else {
+      setRawDate("");
+    }
+  }, [cart_delivery_date]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
@@ -29,7 +57,7 @@ export default function CartList() {
       value = `${value.slice(0, 3)}-${value.slice(3, 6)}-${value.slice(6, 10)}`;
     }
 
-    setTel(value);
+    setCustomerInfo({ tel: value });
   };
 
   const validateInputs = (): boolean => {
@@ -97,13 +125,13 @@ export default function CartList() {
         {items.length === -1 ? (
           <div className="text-center text-gray-500 space-y-4">
             <div className="border p-4 rounded">
-                <button
-                  onClick={() => router.push("/home/order/menu")}
-                  className="w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  ➕ เพิ่มเมนู
-                </button>
-              </div>
+              <button
+                onClick={() => router.push("/home/order/menu")}
+                className="w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                ➕ เพิ่มเมนู
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -113,7 +141,7 @@ export default function CartList() {
                 <input
                   type="text"
                   value={cart_customer_name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setCustomerInfo({ name: e.target.value })}
                   placeholder="ชื่อลูกค้า"
                   className="border rounded px-3 py-2"
                 />
@@ -135,7 +163,7 @@ export default function CartList() {
                 <input
                   type="text"
                   value={cart_location_send}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={(e) => setCustomerInfo({ location: e.target.value })}
                   placeholder="สถานที่จัดส่ง"
                   className="w-full border rounded px-3 py-2"
                 />
@@ -143,27 +171,78 @@ export default function CartList() {
 
               <div className="col-span-2 flex flex-col gap-1">
                 <label className="font-medium">วันที่จัดส่ง</label>
-                <input
-                  type="date"
-                  value={rawDate}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setRawDate(value);
-                    if (value) {
-                      const [year, month, day] = value.split("-");
-                      const buddhistYear = parseInt(year) + 543;
-                      setDate(`${day}/${month}/${buddhistYear}`);
+                <DatePicker
+                  selected={rawDate ? new Date(rawDate) : null}
+                  onChange={(date: Date | null) => {
+                    if (date) {
+                      setRawDate(date.toISOString());
+                      const buddhistYear = date.getFullYear() + 543;
+                      const month = String(date.getMonth() + 1).padStart(2, "0");
+                      const day = String(date.getDate()).padStart(2, "0");
+                      setCustomerInfo({ deliveryDate: `${day}/${month}/${buddhistYear}` });
                     } else {
-                      setDate("");
+                      setRawDate("");
+                      setCustomerInfo({ deliveryDate: "" });
                     }
                   }}
+                  dateFormat="dd/MM/yyyy"
+                  minDate={new Date()}
+                  locale="th"
+                  placeholderText="วัน/เดือน/ปี (พ.ศ.)"
                   className="w-full border rounded px-3 py-2"
+                  renderCustomHeader={({
+                    date,
+                    changeYear,
+                    changeMonth,
+                    decreaseMonth,
+                    increaseMonth,
+                    prevMonthButtonDisabled,
+                    nextMonthButtonDisabled,
+                  }) => {
+                    const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
+                    const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+
+                    return (
+                      <div className="flex justify-between items-center mb-2 px-2">
+                        <button onClick={decreaseMonth} disabled={prevMonthButtonDisabled}>
+                          {"<"}
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={date.getFullYear()}
+                            onChange={({ target: { value } }) => changeYear(Number(value))}
+                            className="border rounded px-1 py-0.5"
+                          >
+                            {years.map((year) => (
+                              <option key={year} value={year}>
+                                {year + 543}
+                              </option>
+                            ))}
+                          </select>
+
+                          <select
+                            value={date.getMonth()}
+                            onChange={({ target: { value } }) => changeMonth(Number(value))}
+                            className="border rounded px-1 py-0.5"
+                          >
+                            {months.map((month, index) => (
+                              <option key={index} value={index}>
+                                {month}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <button onClick={increaseMonth} disabled={nextMonthButtonDisabled}>
+                          {">"}
+                        </button>
+                      </div>
+                    );
+                  }}
                 />
                 {cart_delivery_date && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    วันที่จัดส่ง: {cart_delivery_date}
-                  </p>
+                  <p className="text-sm text-gray-500 mt-1">วันที่จัดส่ง: {cart_delivery_date}</p>
                 )}
               </div>
             </div>
@@ -213,7 +292,6 @@ export default function CartList() {
               </div>
             </ul>
 
-
             <button
               onClick={confirmOrder}
               disabled={loading}
@@ -244,14 +322,14 @@ export default function CartList() {
 
       {success && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-            <h2 className="text-xl font-bold mb-4">✅ สั่งซื้อสำเร็จ!</h2>
-            <p className="mb-4">ยืนยันคำสั่งซื้อเรียบร้อยแล้ว</p>
+          <div className="bg-white p-6 rounded max-w-sm text-center space-y-4">
+            <h2 className="text-xl font-bold">สั่งซื้อสำเร็จ</h2>
+            <p>คำสั่งซื้อของคุณถูกบันทึกเรียบร้อยแล้ว</p>
             <button
               onClick={handleDone}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              เสร็จสิ้น
+              ตกลง
             </button>
           </div>
         </div>
