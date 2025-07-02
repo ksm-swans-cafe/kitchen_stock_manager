@@ -317,6 +317,67 @@ const OrderHistory: React.FC = () => {
     }
   };
 
+  // ในส่วนของ OrderHistory.tsx
+// เพิ่ม state สำหรับการแก้ไขเวลา
+const [editingTime, setEditingTime] = useState<{
+  cartId: string;
+  exportTime: string;
+  receiveTime: string;
+} | null>(null);
+
+// ฟังก์ชันสำหรับเริ่มการแก้ไขเวลา
+const handleEditTime = (cartId: string, exportTime: string, receiveTime: string) => {
+  setEditingTime({ cartId, exportTime, receiveTime });
+};
+
+// ฟังก์ชันสำหรับบันทึกเวลา
+const handleSaveTime = async (cartId: string) => {
+  if (!editingTime) return;
+
+  setIsSaving(cartId);
+  try {
+    const response = await fetch(`/api/edit/cart_time/${cartId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cart_export_time: editingTime.exportTime,
+        cart_receive_time: editingTime.receiveTime,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to update times");
+    }
+
+    // อัปเดต state ด้วยข้อมูลใหม่
+    setCarts((prevCarts) =>
+      prevCarts.map((cart) =>
+        cart.id === cartId
+          ? {
+              ...cart,
+              cart_export_time: editingTime.exportTime,
+              cart_receive_time: editingTime.receiveTime,
+            }
+          : cart
+      )
+    );
+
+    alert("อัปเดตเวลาเรียบร้อย!");
+    setEditingTime(null);
+    await fetchOrders(); // รีเฟรชข้อมูลจาก backend
+  } catch (err) {
+    console.error("Error updating times:", err);
+    setError(
+      err instanceof Error
+        ? `ไม่สามารถอัปเดตเวลา: ${err.message}`
+        : "เกิดข้อผิดพลาดในการอัปเดตเวลา"
+    );
+  } finally {
+    setIsSaving(null);
+  }
+};
+
   const handleToggleIngredientCheck = async (
     cartId: string,
     menuName: string,
