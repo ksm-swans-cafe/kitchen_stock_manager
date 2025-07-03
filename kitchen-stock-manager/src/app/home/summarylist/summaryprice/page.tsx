@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -52,6 +51,7 @@ import {
 import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
+import { useRouter } from "next/navigation";
 
 interface Ingredient {
   ingredient_id?: number;
@@ -117,9 +117,9 @@ type RawCart = {
   cart_receive_time: string;
 };
 
-const SummaryList: React.FC = () => {
-  const router = useRouter();
+const SummaryPrice: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
   // setSortBy
   const [sortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -147,10 +147,6 @@ const SummaryList: React.FC = () => {
 
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [selectedCart, setSelectedCart] = useState<Cart | null>(null);
-
-  const handleSummaryprice = () => {
-    router.push("/home/summarylist/summaryprice");
-  };
   // calendar
   const handleOpenDatePicker = () => {
     setIsDatePickerOpen(true);
@@ -163,6 +159,10 @@ const SummaryList: React.FC = () => {
       console.error("Failed to parse JSON:", e);
       return [];
     }
+  };
+
+  const handleSummary = () => {
+    router.push("/home/summarylist");
   };
 
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
@@ -331,111 +331,107 @@ const SummaryList: React.FC = () => {
     receiveTime: string;
   } | null>(null);
 
-  const handleEditTimes = (
-    cartId: string,
-    exportTime: string,
-    receiveTime: string
-  ) => {
-    // แปลง HH:mm เป็น HH.mm หรือ HH.mm น. สำหรับการแสดงผล
-    const formatToThaiTime = (time: string) =>
-      time ? time.replace(":", ".") + " น." : "00.00 น.";
+const handleEditTimes = (
+  cartId: string,
+  exportTime: string,
+  receiveTime: string
+) => {
+  // แปลง HH:mm เป็น HH.mm หรือ HH.mm น. สำหรับการแสดงผล
+  const formatToThaiTime = (time: string) => 
+    time ? time.replace(':', '.') + ' น.' : '00.00 น.';
+  
+  setEditingTimes({
+    cartId,
+    exportTime: formatToThaiTime(exportTime),
+    receiveTime: formatToThaiTime(receiveTime),
+  });
+};
 
-    setEditingTimes({
-      cartId,
-      exportTime: formatToThaiTime(exportTime),
-      receiveTime: formatToThaiTime(receiveTime),
-    });
+const handleSaveTimes = async (cartId: string) => {
+  if (!editingTimes) {
+    setError("ไม่พบข้อมูลเวลาที่กำลังแก้ไข");
+    return;
+  }
+
+  // ฟังก์ชันแปลงเวลาจาก HH.mm หรือ HH.mm น. เป็น HH:mm
+  const parseThaiTime = (thaiTime: string): string | null => {
+    // รองรับทั้ง HH.mm และ HH.mm น.
+    const regex = /^([0-1]?[0-9]|2[0-3])\.[0-5][0-9](\s*น\.?)?$/;
+    if (!regex.test(thaiTime)) return null;
+    return thaiTime.replace(/\s*น\.?$/, '').replace('.', ':');
   };
 
-  const handleSaveTimes = async (cartId: string) => {
-    if (!editingTimes) {
-      setError("ไม่พบข้อมูลเวลาที่กำลังแก้ไข");
-      return;
-    }
+  const exportTime = parseThaiTime(editingTimes.exportTime);
+  const receiveTime = parseThaiTime(editingTimes.receiveTime);
 
-    // ฟังก์ชันแปลงเวลาจาก HH.mm หรือ HH.mm น. เป็น HH:mm
-    const parseThaiTime = (thaiTime: string): string | null => {
-      // รองรับทั้ง HH.mm และ HH.mm น.
-      const regex = /^([0-1]?[0-9]|2[0-3])\.[0-5][0-9](\s*น\.?)?$/;
-      if (!regex.test(thaiTime)) return null;
-      return thaiTime.replace(/\s*น\.?$/, "").replace(".", ":");
+  if (!exportTime) {
+    setError("เวลาส่งอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)");
+    return;
+  }
+  if (!receiveTime) {
+    setError("เวลารับอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)");
+    return;
+  }
+
+  setIsSaving(cartId);
+  try {
+    const payload = {
+      cart_export_time: exportTime,
+      cart_receive_time: receiveTime,
     };
 
-    const exportTime = parseThaiTime(editingTimes.exportTime);
-    const receiveTime = parseThaiTime(editingTimes.receiveTime);
+    const response = await fetch(`/api/edit/cart_time/${cartId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-    if (!exportTime) {
-      setError(
-        "เวลาส่งอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)"
-      );
-      return;
-    }
-    if (!receiveTime) {
-      setError(
-        "เวลารับอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)"
-      );
-      return;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to update times");
     }
 
-    setIsSaving(cartId);
-    try {
-      const payload = {
-        cart_export_time: exportTime,
-        cart_receive_time: receiveTime,
-      };
+    const { cart } = await response.json();
+    setCarts((prevCarts) =>
+      prevCarts.map((c) =>
+        c.id === cartId
+          ? {
+              ...c,
+              cart_export_time: cart[0]?.cart_export_time,
+              cart_receive_time: cart[0]?.cart_receive_time,
+            }
+          : c
+      )
+    );
 
-      const response = await fetch(`/api/edit/cart_time/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    alert("อัปเดตเวลาเรียบร้อย!");
+    setEditingTimes(null);
+    await fetchOrders();
+  } catch (err) {
+    console.error("Error updating times:", err);
+    setError(
+      err instanceof Error
+        ? `ไม่สามารถอัปเดตเวลา: ${err.message}`
+        : "เกิดข้อผิดพลาดในการอัปเดตเวลา"
+    );
+  } finally {
+    setIsSaving(null);
+  }
+};
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update times");
-      }
-
-      const { cart } = await response.json();
-      setCarts((prevCarts) =>
-        prevCarts.map((c) =>
-          c.id === cartId
-            ? {
-                ...c,
-                cart_export_time: cart[0]?.cart_export_time,
-                cart_receive_time: cart[0]?.cart_receive_time,
-              }
-            : c
-        )
-      );
-
-      alert("อัปเดตเวลาเรียบร้อย!");
-      setEditingTimes(null);
-      await fetchOrders();
-    } catch (err) {
-      console.error("Error updating times:", err);
-      setError(
-        err instanceof Error
-          ? `ไม่สามารถอัปเดตเวลา: ${err.message}`
-          : "เกิดข้อผิดพลาดในการอัปเดตเวลา"
-      );
-    } finally {
-      setIsSaving(null);
+// ฟังก์ชันจัดรูปแบบเวลาโดยอัตโนมัติ
+const formatInputTime = (value: string): string => {
+  // ลบตัวอักษรที่ไม่ใช่ตัวเลขหรือจุด
+  const cleaned = value.replace(/[^0-9.]/g, '');
+  if (cleaned.length >= 4) {
+    const hours = cleaned.slice(0, 2);
+    const minutes = cleaned.slice(2, 4);
+    if (parseInt(hours) <= 23 && parseInt(minutes) <= 59) {
+      return `${hours}.${minutes}`;
     }
-  };
-
-  // ฟังก์ชันจัดรูปแบบเวลาโดยอัตโนมัติ
-  const formatInputTime = (value: string): string => {
-    // ลบตัวอักษรที่ไม่ใช่ตัวเลขหรือจุด
-    const cleaned = value.replace(/[^0-9.]/g, "");
-    if (cleaned.length >= 4) {
-      const hours = cleaned.slice(0, 2);
-      const minutes = cleaned.slice(2, 4);
-      if (parseInt(hours) <= 23 && parseInt(minutes) <= 59) {
-        return `${hours}.${minutes}`;
-      }
-    }
-    return value;
-  };
+  }
+  return value;
+};
 
   const handleToggleIngredientCheck = async (
     cartId: string,
@@ -914,58 +910,58 @@ const SummaryList: React.FC = () => {
     return sortedOrders;
   }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
 
-  const groupedOrders = useMemo(() => {
-    // สร้าง grouped orders โดยจัดกลุ่มตามวันที่จัดส่ง
-    const grouped = filteredAndSortedOrders.reduce((acc, cart) => {
-      const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
-      const dateDisplay = deliveryDateISO
-        ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
-        : "ไม่มีวันที่จัดส่ง";
-      (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
-      return acc;
-    }, {} as { [key: string]: Cart[] });
+const groupedOrders = useMemo(() => {
+  // สร้าง grouped orders โดยจัดกลุ่มตามวันที่จัดส่ง
+  const grouped = filteredAndSortedOrders.reduce((acc, cart) => {
+    const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
+    const dateDisplay = deliveryDateISO
+      ? new Date(deliveryDateISO)
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ")
+      : "ไม่มีวันที่จัดส่ง";
+    (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
+    return acc;
+  }, {} as { [key: string]: Cart[] });
 
-    const currentDate = new Date();
-    const currentDateISO = currentDate.toISOString().split("T")[0]; // วันที่ปัจจุบันในรูปแบบ YYYY-MM-DD
-    const currentDateDisplay = currentDate
-      .toLocaleDateString("th-TH", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      .replace(/ /g, " "); // วันที่ปัจจุบันในรูปแบบ th-TH (เช่น "3 ก.ค. 2568")
+  const currentDate = new Date();
+  const currentDateISO = currentDate.toISOString().split("T")[0]; // วันที่ปัจจุบันในรูปแบบ YYYY-MM-DD
+  const currentDateDisplay = currentDate
+    .toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+    .replace(/ /g, " "); // วันที่ปัจจุบันในรูปแบบ th-TH (เช่น "3 ก.ค. 2568")
 
-    // แยกกลุ่มวันที่ปัจจุบันและวันที่อื่นๆ
-    const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay]
-      ? [[currentDateDisplay, grouped[currentDateDisplay]]]
-      : [];
-    const otherDateGroups = Object.entries(grouped).filter(
-      ([date]) => date !== currentDateDisplay
-    );
+  // แยกกลุ่มวันที่ปัจจุบันและวันที่อื่นๆ
+  const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay]
+    ? [[currentDateDisplay, grouped[currentDateDisplay]]]
+    : [];
+  const otherDateGroups = Object.entries(grouped).filter(
+    ([date]) => date !== currentDateDisplay
+  );
 
-    // เรียงลำดับวันที่อื่นๆ ตาม sortOrder
-    const sortedOtherDates = otherDateGroups.sort((a, b) => {
-      const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
-      const dateB = convertThaiDateToISO(b[1][0].cart_delivery_date);
+  // เรียงลำดับวันที่อื่นๆ ตาม sortOrder
+  const sortedOtherDates = otherDateGroups.sort((a, b) => {
+    const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
+    const dateB = convertThaiDateToISO(b[1][0].cart_delivery_date);
 
-      if (!dateA) return 1;
-      if (!dateB) return -1;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
 
-      const diffA = Math.abs(new Date(dateA).getTime() - currentDate.getTime());
-      const diffB = Math.abs(new Date(dateB).getTime() - currentDate.getTime());
+    const diffA = Math.abs(new Date(dateA).getTime() - currentDate.getTime());
+    const diffB = Math.abs(new Date(dateB).getTime() - currentDate.getTime());
 
-      return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
-    });
+    return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
+  });
 
-    // รวมวันที่ปัจจุบัน (ถ้ามี) เข้ากับวันที่อื่นๆ โดยให้วันที่ปัจจุบันอยู่อันดับแรก
-    return [...currentDateGroup, ...sortedOtherDates];
-  }, [filteredAndSortedOrders, sortOrder]);
+  // รวมวันที่ปัจจุบัน (ถ้ามี) เข้ากับวันที่อื่นๆ โดยให้วันที่ปัจจุบันอยู่อันดับแรก
+  return [...currentDateGroup, ...sortedOtherDates];
+}, [filteredAndSortedOrders, sortOrder]);
   const summarizeIngredients = (date: string) => {
     const ingredientSummary: {
       [key: string]: { checked: number; total: number };
@@ -1094,6 +1090,7 @@ const SummaryList: React.FC = () => {
     doc.save("order_history.pdf");
   };
 
+  
   const handleUpdate = () => router.refresh();
 
   return (
@@ -1229,10 +1226,10 @@ const SummaryList: React.FC = () => {
 
         <div className="flex justify-end gap-3 mb-6">
           <Button
-            onClick={handleSummaryprice}
+            onClick={handleSummary}
             className="h-10 rounded-lg border border-slate-300 shadow-sm"
           >
-            ไปหน้าสรุปรายการต่อหน่วย
+            ไปหน้าสรุปรายการ
           </Button>
           <Button
             onClick={() => {
@@ -1303,50 +1300,36 @@ const SummaryList: React.FC = () => {
                                   <div className="flex items-center gap-2">
                                     <BsCashStack className="w-6 h-6" />
                                     <span>เวลาส่งอาหาร</span>
-                                    <Input
-                                      type="text"
-                                      value={editingTimes?.exportTime || ""}
-                                      onChange={(e) => {
-                                        const formattedValue = formatInputTime(
-                                          e.target.value
-                                        );
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                exportTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
-                                      placeholder="14.00"
-                                      className="w-24 h-8 text-sm rounded-md border-gray-300"
-                                      aria-label="Edit export time"
-                                      required
-                                    />
+                                   <Input
+    type="text"
+    value={editingTimes?.exportTime || ""}
+    onChange={(e) => {
+      const formattedValue = formatInputTime(e.target.value);
+      setEditingTimes((prev) =>
+        prev ? { ...prev, exportTime: formattedValue } : prev
+      );
+    }}
+    placeholder="14.00"
+    className="w-24 h-8 text-sm rounded-md border-gray-300"
+    aria-label="Edit export time"
+    required
+  />
                                     <FaWallet className="w-4 h-4" />
                                     <span>เวลารับอาหาร</span>
-                                    <Input
-                                      type="text"
-                                      value={editingTimes?.receiveTime || ""}
-                                      onChange={(e) => {
-                                        const formattedValue = formatInputTime(
-                                          e.target.value
-                                        );
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                receiveTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
-                                      placeholder="19.00"
-                                      className="w-24 h-8 text-sm rounded-md border-gray-300"
-                                      aria-label="Edit receive time"
-                                      required
-                                    />
+                                   <Input
+    type="text"
+    value={editingTimes?.receiveTime || ""}
+    onChange={(e) => {
+      const formattedValue = formatInputTime(e.target.value);
+      setEditingTimes((prev) =>
+        prev ? { ...prev, receiveTime: formattedValue } : prev
+      );
+    }}
+    placeholder="19.00"
+    className="w-24 h-8 text-sm rounded-md border-gray-300"
+    aria-label="Edit receive time"
+    required
+  />
                                   </div>
                                   <div className="flex w-full items-center">
                                     <div className="ml-auto flex items-center gap-2">
@@ -1781,4 +1764,4 @@ const SummaryList: React.FC = () => {
   );
 };
 
-export default SummaryList;
+export default SummaryPrice;

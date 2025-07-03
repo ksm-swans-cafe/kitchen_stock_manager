@@ -366,54 +366,6 @@ const Finance: React.FC = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background">
-        {/* Enhanced Menu Bar */}
-        <div className="w-full bg-card/80 backdrop-blur-sm border-b border-border shadow-sm sticky top-0 z-50">
-          <div className="p-3 sm:p-4 flex justify-between items-center">
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              <span className="text-lg sm:text-xl md:text-2xl">SWANS</span>{" "}
-              <span className="text-xs sm:text-sm md:text-lg font-medium">
-                CAFE & BISTRO
-              </span>
-            </h1>
-            <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6">
-              <div className="hidden lg:flex items-center space-x-4 text-sm text-muted-foreground">
-                <DollarSign className="w-4 h-4" />
-                <span>Finance Management</span>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleSignOut}
-                className="flex items-center space-x-1 sm:space-x-2 shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
-              >
-                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Navigation Bar */}
-        <div className="w-full bg-secondary/20 border-b border-border/50">
-          <div className="p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackToDashboard}
-              className="flex items-center hover:bg-accent/50 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              <span className="text-sm">Back to Dashboard</span>
-            </Button>
-            <div className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground">
-              <Home className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>/</span>
-              <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Finance</span>
-            </div>
-          </div>
-        </div>
-
         {/* Main Content */}
         <div className="container mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
           {/* Enhanced Overview Cards */}
@@ -775,27 +727,29 @@ const Finance: React.FC = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-xs sm:text-sm">
-                            ชื่อวัตถุดิบ
-                          </TableHead>
-                          <TableHead className="text-xs sm:text-sm">
-                            ราคาต่อหน่วย
-                          </TableHead>
-                          <TableHead className="text-xs sm:text-sm">
-                            สต็อก
-                          </TableHead>
-                          <TableHead className="text-xs sm:text-sm">
-                            สถานะ
-                          </TableHead>
-                          <TableHead className="text-xs sm:text-sm">
-                            ผู้จำหน่าย
-                          </TableHead>
-                          <TableHead className="text-xs sm:text-sm">
-                            อัพเดทล่าสุด
-                          </TableHead>
-                          <TableHead className="text-right text-xs sm:text-sm">
-                            การจัดการ
-                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+  วันที่/เวลา
+</TableHead>
+<TableHead className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+  ประเภท
+</TableHead>
+<TableHead className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+  รายการ
+</TableHead>
+<TableHead className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+  หมวดหมู่
+</TableHead>
+<TableHead className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+  รายละเอียด
+</TableHead>
+<TableHead className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+  จำนวนเงิน
+</TableHead>
+<TableHead className="text-xs :text-sm font-semibold text-black dark:text-white">
+  จัดการ
+</TableHead>
+
+
                         </TableRow>
                       </TableHeader>
                       <TableBody>

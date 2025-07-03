@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       console.log('Uploaded blob:', blob);
       ingredient_image = blob.url;
     }
+    const ingredientPriceperUnit = (ingredient_price / ingredient_total).toFixed(2);
 
     const result = await sql`
       INSERT INTO ingredients (
@@ -59,14 +60,16 @@ export async function POST(request: NextRequest) {
         ingredient_unit,
         ingredient_image,
         ingredient_total_alert,
-        ingredient_price
+        ingredient_price,
+        ingredient_price_per_unit
       ) VALUES (
         ${ingredient_name},
         ${ingredient_total},
         ${ingredient_unit},
         ${ingredient_image},
         ${ingredient_total_alert},
-        ${ingredient_price}
+        ${ingredient_price},
+        ${ingredientPriceperUnit}
       ) RETURNING *
     `;
 
