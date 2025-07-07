@@ -41,17 +41,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/share/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/share/ui/pagination";
 import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
+import PaginationComponent from "@/components/ui/Totalpage";
 
 interface Ingredient {
   ingredient_id?: number;
@@ -217,10 +210,10 @@ const SummaryList: React.FC = () => {
           typeof cart.cart_menu_items === "string" && cart.cart_menu_items
             ? safeParseJSON(cart.cart_menu_items)
             : Array.isArray(cart.cart_menu_items)
-            ? cart.cart_menu_items.filter(
+              ? cart.cart_menu_items.filter(
                 (item) => item && typeof item.menu_total === "number"
               )
-            : [];
+              : [];
         console.log("Parsed menuItems:", menuItems);
 
         const totalSets = menuItems
@@ -235,10 +228,10 @@ const SummaryList: React.FC = () => {
         const menuDisplayName =
           menuItems.length > 0
             ? menuItems
-                .map(
-                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-                )
-                .join(" + ")
+              .map(
+                (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+              )
+              .join(" + ")
             : "ไม่มีชื่อเมนู";
 
         const allIngredients = menuItems.map((menu) => ({
@@ -259,9 +252,8 @@ const SummaryList: React.FC = () => {
 
         console.log("Mapped allIngredients:", allIngredients);
 
-        const orderNumber = `ORD${
-          cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-        }`;
+        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+          }`;
         return {
           id: cart.cart_id || "no-id",
           orderNumber,
@@ -400,10 +392,10 @@ const SummaryList: React.FC = () => {
         prevCarts.map((c) =>
           c.id === cartId
             ? {
-                ...c,
-                cart_export_time: cart[0]?.cart_export_time,
-                cart_receive_time: cart[0]?.cart_receive_time,
-              }
+              ...c,
+              cart_export_time: cart[0]?.cart_export_time,
+              cart_receive_time: cart[0]?.cart_receive_time,
+            }
             : c
         )
       );
@@ -454,29 +446,29 @@ const SummaryList: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? {
-                              ...ing,
-                              isChecked: newCheckedStatus,
-                              ingredient_status: newCheckedStatus,
-                            }
-                          : ing
-                      ),
-                      ingredient_status: group.ingredients.every((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? newCheckedStatus
-                          : ing.isChecked
-                      ),
-                    }
-                  : group
-              ),
-            }
+            ...cart,
+            allIngredients: cart.allIngredients.map((group) =>
+              group.menuName === menuName
+                ? {
+                  ...group,
+                  ingredients: group.ingredients.map((ing) =>
+                    ing.ingredient_name === ingredientName
+                      ? {
+                        ...ing,
+                        isChecked: newCheckedStatus,
+                        ingredient_status: newCheckedStatus,
+                      }
+                      : ing
+                  ),
+                  ingredient_status: group.ingredients.every((ing) =>
+                    ing.ingredient_name === ingredientName
+                      ? newCheckedStatus
+                      : ing.isChecked
+                  ),
+                }
+                : group
+            ),
+          }
           : cart
       )
     );
@@ -532,17 +524,17 @@ const SummaryList: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) => ({
-                ...group,
-                ingredients: group.ingredients.map((ing) => ({
-                  ...ing,
-                  isChecked: true,
-                  ingredient_status: true,
-                })),
+            ...cart,
+            allIngredients: cart.allIngredients.map((group) => ({
+              ...group,
+              ingredients: group.ingredients.map((ing) => ({
+                ...ing,
+                isChecked: true,
                 ingredient_status: true,
               })),
-            }
+              ingredient_status: true,
+            })),
+          }
           : cart
       )
     );
@@ -595,17 +587,17 @@ const SummaryList: React.FC = () => {
       prevCarts.map((cart) =>
         targetCarts.some((target) => target.id === cart.id)
           ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) => ({
-                ...group,
-                ingredients: group.ingredients.map((ing) => ({
-                  ...ing,
-                  isChecked: true,
-                  ingredient_status: true,
-                })),
+            ...cart,
+            allIngredients: cart.allIngredients.map((group) => ({
+              ...group,
+              ingredients: group.ingredients.map((ing) => ({
+                ...ing,
+                isChecked: true,
                 ingredient_status: true,
               })),
-            }
+              ingredient_status: true,
+            })),
+          }
           : cart
       )
     );
@@ -622,7 +614,7 @@ const SummaryList: React.FC = () => {
               const errorData = await response.json();
               throw new Error(
                 errorData.error ||
-                  `Failed to update all ingredients status for cart ${cart.id}`
+                `Failed to update all ingredients status for cart ${cart.id}`
               );
             }
           })
@@ -660,19 +652,21 @@ const SummaryList: React.FC = () => {
       const response = await fetch("/api/get/carts");
       if (!response.ok) throw new Error("Failed to fetch carts");
       const data = await response.json();
-
       const groupedByDate: { [date: string]: RawCart[] } = {};
+      const allowedStatuses = ["pending", "completed"];
 
       data.forEach((cart: RawCart) => {
+
+        if (!allowedStatuses.includes(cart.cart_status)) return;
         const deliveryDate = convertThaiDateToISO(cart.cart_delivery_date);
         if (!deliveryDate) return;
-
         if (!groupedByDate[deliveryDate]) {
           groupedByDate[deliveryDate] = [];
         }
 
         groupedByDate[deliveryDate].push(cart);
       });
+
 
       const events = Object.entries(groupedByDate).map(([date, carts]) => ({
         start: date,
@@ -768,32 +762,32 @@ const SummaryList: React.FC = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-                ...cart,
-                menuItems: cart.menuItems.map((item) =>
-                  item.menu_name === cleanedMenuName
-                    ? { ...item, menu_total: editTotalBox }
-                    : item
-                ),
-                allIngredients: cart.allIngredients.map((group) =>
-                  group.menuName === cleanedMenuName
-                    ? {
-                        ...group,
-                        ingredients: group.ingredients.map((ing) => ({
-                          ...ing,
-                          calculatedTotal: ing.useItem * editTotalBox,
-                        })),
-                      }
-                    : group
-                ),
-                sets: cart.menuItems.reduce(
-                  (sum, item) =>
-                    sum +
-                    (item.menu_name === cleanedMenuName
-                      ? editTotalBox
-                      : item.menu_total),
-                  0
-                ),
-              }
+              ...cart,
+              menuItems: cart.menuItems.map((item) =>
+                item.menu_name === cleanedMenuName
+                  ? { ...item, menu_total: editTotalBox }
+                  : item
+              ),
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === cleanedMenuName
+                  ? {
+                    ...group,
+                    ingredients: group.ingredients.map((ing) => ({
+                      ...ing,
+                      calculatedTotal: ing.useItem * editTotalBox,
+                    })),
+                  }
+                  : group
+              ),
+              sets: cart.menuItems.reduce(
+                (sum, item) =>
+                  sum +
+                  (item.menu_name === cleanedMenuName
+                    ? editTotalBox
+                    : item.menu_total),
+                0
+              ),
+            }
             : cart
         )
       );
@@ -920,12 +914,12 @@ const SummaryList: React.FC = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ")
         : "ไม่มีวันที่จัดส่ง";
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
@@ -1020,6 +1014,23 @@ const SummaryList: React.FC = () => {
     currentPage * itemsPerPage
   );
 
+  const handleUpdateWithCheck = (cart: { id: string; allIngredients: any[] }) => {
+    const allIngredientsChecked = cart.allIngredients.every((menuGroup) =>
+      menuGroup.ingredients.every((ing: any) => ing.isChecked)
+    );
+  
+    if (!allIngredientsChecked) {
+      alert("กรุณาเลือกวัตถุดิบทุกตัวก่อนอัปเดตสถานะเป็น 'ส่งแล้ว'");
+      return;
+    }
+  
+    handleUpdate();
+  };
+  
+  const handleUpdate = () => {
+    fetchOrders();
+  };
+ 
   const handleExportCSV = () => {
     const headers = [
       "เลขที่ออร์เดอร์",
@@ -1073,6 +1084,9 @@ const SummaryList: React.FC = () => {
       "Status",
       "Created By",
     ];
+
+    
+
     const tableRows = filteredAndSortedOrders.map((cart) => [
       cart.id,
       cart.name,
@@ -1094,7 +1108,7 @@ const SummaryList: React.FC = () => {
     doc.save("order_history.pdf");
   };
 
-  const handleUpdate = () => router.refresh();
+  // const handleUpdate = () => router.refresh();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
@@ -1130,12 +1144,12 @@ const SummaryList: React.FC = () => {
             >
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    locale: "th",
-                    timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
-                  })}`
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  locale: "th",
+                  timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
+                })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -1282,6 +1296,7 @@ const SummaryList: React.FC = () => {
                 <h3 className="text-lg font-bold text-blue-700 text-center px-4 py-3">
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
                 </h3>
+                
                 <div className="space-y-4">
                   {orders.map((cart) => (
                     <Accordion
@@ -1313,9 +1328,9 @@ const SummaryList: React.FC = () => {
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                                ...prev,
-                                                exportTime: formattedValue,
-                                              }
+                                              ...prev,
+                                              exportTime: formattedValue,
+                                            }
                                             : prev
                                         );
                                       }}
@@ -1336,9 +1351,9 @@ const SummaryList: React.FC = () => {
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                                ...prev,
-                                                receiveTime: formattedValue,
-                                              }
+                                              ...prev,
+                                              receiveTime: formattedValue,
+                                            }
                                             : prev
                                         );
                                       }}
@@ -1476,7 +1491,7 @@ const SummaryList: React.FC = () => {
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
-                              onUpdated={handleUpdate}
+                              onUpdated= {() => handleUpdateWithCheck(cart)}
                             />
                           </div>
                           <AccordionContent className="mt-4">
@@ -1500,7 +1515,7 @@ const SummaryList: React.FC = () => {
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
                                         editingMenu?.menuName ===
-                                          menuGroup.menuName;
+                                        menuGroup.menuName;
                                       const allIngredientsChecked =
                                         menuGroup.ingredients.every(
                                           (ing) => ing.isChecked
@@ -1510,11 +1525,10 @@ const SummaryList: React.FC = () => {
                                         <AccordionItem
                                           key={groupIdx}
                                           value={`menu-${groupIdx}`}
-                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
-                                            allIngredientsChecked
-                                              ? "bg-green-50 border-green-200"
-                                              : "bg-red-50 border-red-200"
-                                          }`}
+                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked
+                                            ? "bg-green-50 border-green-200"
+                                            : "bg-red-50 border-red-200"
+                                            }`}
                                         >
                                           <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
                                             <span className="truncate text-sm text-gray-700">
@@ -1595,11 +1609,10 @@ const SummaryList: React.FC = () => {
                                               (ing, idx) => (
                                                 <div
                                                   key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                                    ing.isChecked
-                                                      ? "bg-green-50 border-green-200"
-                                                      : "bg-red-50 border-red-200"
-                                                  } text-sm`}
+                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked
+                                                    ? "bg-green-50 border-green-200"
+                                                    : "bg-red-50 border-red-200"
+                                                    } text-sm`}
                                                 >
                                                   <span className="text-gray-700">
                                                     {ing.ingredient_name ||
@@ -1635,18 +1648,16 @@ const SummaryList: React.FC = () => {
                                                         className="hidden"
                                                       />
                                                       <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                                          ing.isChecked
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
-                                                        }`}
+                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked
+                                                          ? "bg-green-500"
+                                                          : "bg-red-500"
+                                                          }`}
                                                       >
                                                         <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                                            ing.isChecked
-                                                              ? "translate-x-5"
-                                                              : "translate-x-0.5"
-                                                          }`}
+                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked
+                                                            ? "translate-x-5"
+                                                            : "translate-x-0.5"
+                                                            }`}
                                                         />
                                                       </span>
                                                     </label>
@@ -1686,7 +1697,9 @@ const SummaryList: React.FC = () => {
                   </div>
                 </div>
               </div>
+              
             ))
+            
           )}
         </div>
 
@@ -1747,34 +1760,11 @@ const SummaryList: React.FC = () => {
         </Dialog>
 
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  />
-                </PaginationItem>
-                {[...Array(totalPages)].map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink
-                      isActive={currentPage === i + 1}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(Math.min(totalPages, currentPage + 1))
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          <PaginationComponent
+            totalPages={totalPages}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
         )}
       </div>
     </div>

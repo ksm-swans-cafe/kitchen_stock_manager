@@ -212,10 +212,10 @@ const OrderHistory: React.FC = () => {
           typeof cart.cart_menu_items === "string" && cart.cart_menu_items
             ? safeParseJSON(cart.cart_menu_items)
             : Array.isArray(cart.cart_menu_items)
-            ? cart.cart_menu_items.filter(
+              ? cart.cart_menu_items.filter(
                 (item) => item && typeof item.menu_total === "number"
               )
-            : [];
+              : [];
         console.log("Parsed menuItems:", menuItems);
 
         const totalSets = menuItems
@@ -230,10 +230,10 @@ const OrderHistory: React.FC = () => {
         const menuDisplayName =
           menuItems.length > 0
             ? menuItems
-                .map(
-                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-                )
-                .join(" + ")
+              .map(
+                (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+              )
+              .join(" + ")
             : "ไม่มีชื่อเมนู";
 
         const allIngredients = menuItems.map((menu) => ({
@@ -254,9 +254,8 @@ const OrderHistory: React.FC = () => {
 
         console.log("Mapped allIngredients:", allIngredients);
 
-        const orderNumber = `ORD${
-          cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-        }`;
+        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+          }`;
         return {
           id: cart.cart_id || "no-id",
           orderNumber,
@@ -351,7 +350,12 @@ const OrderHistory: React.FC = () => {
 
       const groupedByDate: { [date: string]: RawCart[] } = {};
 
+      const allowedStatuses = ["cancelled", "success"];
+
       data.forEach((cart: RawCart) => {
+       
+        if (!allowedStatuses.includes(cart.cart_status)) return;
+
         const deliveryDate = convertThaiDateToISO(cart.cart_delivery_date);
         if (!deliveryDate) return;
 
@@ -361,6 +365,7 @@ const OrderHistory: React.FC = () => {
 
         groupedByDate[deliveryDate].push(cart);
       });
+
 
       const events = Object.entries(groupedByDate).map(([date, carts]) => ({
         start: date,
@@ -523,12 +528,12 @@ const OrderHistory: React.FC = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ")
         : "ไม่มีวันที่จัดส่ง";
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
@@ -616,7 +621,7 @@ const OrderHistory: React.FC = () => {
     setSelectedDateForSummary(date);
     setIsSummaryModalOpen(true);
   };
-  
+
   const handleToggleIngredientCheck = async (
     cartId: string,
     menuName: string,
@@ -634,29 +639,29 @@ const OrderHistory: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? {
-                              ...ing,
-                              isChecked: newCheckedStatus,
-                              ingredient_status: newCheckedStatus,
-                            }
-                          : ing
-                      ),
-                      ingredient_status: group.ingredients.every((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? newCheckedStatus
-                          : ing.isChecked
-                      ),
-                    }
-                  : group
-              ),
-            }
+            ...cart,
+            allIngredients: cart.allIngredients.map((group) =>
+              group.menuName === menuName
+                ? {
+                  ...group,
+                  ingredients: group.ingredients.map((ing) =>
+                    ing.ingredient_name === ingredientName
+                      ? {
+                        ...ing,
+                        isChecked: newCheckedStatus,
+                        ingredient_status: newCheckedStatus,
+                      }
+                      : ing
+                  ),
+                  ingredient_status: group.ingredients.every((ing) =>
+                    ing.ingredient_name === ingredientName
+                      ? newCheckedStatus
+                      : ing.isChecked
+                  ),
+                }
+                : group
+            ),
+          }
           : cart
       )
     );
@@ -779,12 +784,12 @@ const OrderHistory: React.FC = () => {
             >
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    locale: "th",
-                    timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
-                  })}`
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  locale: "th",
+                  timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
+                })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -941,18 +946,18 @@ const OrderHistory: React.FC = () => {
                         >
                           <div className="flex w-full items-center">
                             <div className="ml-auto flex items-center gap-2">
-                                <div className="flex items-center gap-2">
-                                  <BsCashStack className="w-6 h-6" />
-                                  <span>
-                                    เวลาส่งอาหาร{" "}
-                                    {cart.cart_export_time || "ไม่ระบุ"} น.
-                                  </span>
-                                  <FaWallet className="w-4 h-4 ml-4" />
-                                  <span>
-                                    เวลารับอาหาร{" "}
-                                    {cart.cart_receive_time || "ไม่ระบุ"} น.
-                                  </span>
-                                </div>
+                              <div className="flex items-center gap-2">
+                                <BsCashStack className="w-6 h-6" />
+                                <span>
+                                  เวลาส่งอาหาร{" "}
+                                  {cart.cart_export_time || "ไม่ระบุ"} น.
+                                </span>
+                                <FaWallet className="w-4 h-4 ml-4" />
+                                <span>
+                                  เวลารับอาหาร{" "}
+                                  {cart.cart_receive_time || "ไม่ระบุ"} น.
+                                </span>
+                              </div>
                             </div>
                           </div>
                           <AccordionTrigger className="w-full hover:no-underline px-0">
@@ -1030,7 +1035,7 @@ const OrderHistory: React.FC = () => {
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
-                              // onUpdated={handleUpdate}
+                            // onUpdated={handleUpdate}
                             />
                           </div>
                           <AccordionContent className="mt-4">
@@ -1054,7 +1059,7 @@ const OrderHistory: React.FC = () => {
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
                                         editingMenu?.menuName ===
-                                          menuGroup.menuName;
+                                        menuGroup.menuName;
                                       const allIngredientsChecked =
                                         menuGroup.ingredients.every(
                                           (ing) => ing.isChecked
@@ -1064,11 +1069,10 @@ const OrderHistory: React.FC = () => {
                                         <AccordionItem
                                           key={groupIdx}
                                           value={`menu-${groupIdx}`}
-                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
-                                            allIngredientsChecked
+                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked
                                               ? "bg-green-50 border-green-200"
                                               : "bg-red-50 border-red-200"
-                                          }`}
+                                            }`}
                                         >
                                           <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
                                             <span className="truncate text-sm text-gray-700">
@@ -1149,11 +1153,10 @@ const OrderHistory: React.FC = () => {
                                               (ing, idx) => (
                                                 <div
                                                   key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                                    ing.isChecked
+                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked
                                                       ? "bg-green-50 border-green-200"
                                                       : "bg-red-50 border-red-200"
-                                                  } text-sm`}
+                                                    } text-sm`}
                                                 >
                                                   <span className="text-gray-700">
                                                     {ing.ingredient_name ||
@@ -1189,18 +1192,16 @@ const OrderHistory: React.FC = () => {
                                                         className="hidden"
                                                       />
                                                       <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                                          ing.isChecked
+                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked
                                                             ? "bg-green-500"
                                                             : "bg-red-500"
-                                                        }`}
+                                                          }`}
                                                       >
                                                         <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                                            ing.isChecked
+                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked
                                                               ? "translate-x-5"
                                                               : "translate-x-0.5"
-                                                          }`}
+                                                            }`}
                                                         />
                                                       </span>
                                                     </label>
