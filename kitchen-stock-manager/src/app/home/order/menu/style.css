@@ -1,0 +1,40 @@
+.container {
+  border: none;
+  padding: 0;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.columns {
+  margin: 0;
+  padding: 0;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.custom-input {
+    width: 100%;
+    border: none;
+    box-shadow: none;
+    font-size: 1rem;
+    background-color: transparent;
+    /* padding: 0.3rem 0.5rem; */
+    /* overflow: hidden; */
+    text-overflow: ellipsis;
+    /* white-space: nowrap; */
+    box-sizing: border-box;
+    text-align: center;
+    /* line-height: 1.5rem; */
+  }
+
+  /* ปรับขนาดตัวหนังสือสำหรับมือถือ */
+  @media (max-width: 600px) {
+    .custom-input {
+      font-size: 0.7rem; 
+      /* line-height: 1.2rem; */
+      /* padding: 0.2rem 0.4rem; */
+    }
+  }

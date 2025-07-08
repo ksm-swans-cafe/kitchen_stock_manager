@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useCartStore } from "@/stores/store";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
+import { useRouter } from "next/navigation";
 
 type Mode = "menu" | "ingredient";
 
@@ -28,6 +29,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   const [filteredMenuList, setFilteredMenuList] = useState<MenuListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const router = useRouter();
 
   let title: string | undefined;
   if (mode === "menu") {
@@ -80,6 +82,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
       }
     });
     setShowPopup(false);
+    router.push("/home/order");
   };
 
   const handleIncrease = (menu_id: string) => {

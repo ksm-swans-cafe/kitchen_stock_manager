@@ -40,17 +40,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/share/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/share/ui/pagination";
 import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
+import PaginationComponent from "@/components/ui/Totalpage";
 import { useRouter } from "next/navigation";
 
 interface Ingredient {
@@ -59,8 +52,10 @@ interface Ingredient {
   useItem: number;
   calculatedTotal?: number;
   sourceMenu?: string;
-  isChecked?: boolean; // ใช้ใน frontend เพื่อ map กับ ingredient_status
+  isChecked?: boolean;
   ingredient_status?: boolean;
+  ingredient_price_per_unit?: number;
+  totalCost?: number; // Added to store calculated cost (useItem * ingredient_price_per_unit)
 }
 
 interface MenuItem {
@@ -117,9 +112,9 @@ type RawCart = {
   cart_receive_time: string;
 };
 
-const OrderHistory: React.FC = () => {
+const SummaryPrice: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  // setSortBy
+  const router = useRouter();
   const [sortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
@@ -136,17 +131,15 @@ const OrderHistory: React.FC = () => {
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<Cart[]>([]);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedDateForSummary, setSelectedDateForSummary] = useState<
     string | null
   >(null);
-
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [selectedCart, setSelectedCart] = useState<Cart | null>(null);
-  // calendar
+
   const handleOpenDatePicker = () => {
     setIsDatePickerOpen(true);
   };
@@ -160,6 +153,10 @@ const OrderHistory: React.FC = () => {
     }
   };
 
+  const handleSummary = () => {
+    router.push("/home/summarylist");
+  };
+
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
 
@@ -170,7 +167,6 @@ const OrderHistory: React.FC = () => {
       const response = await fetch("/api/get/carts");
       if (!response.ok) throw new Error("Failed to fetch carts");
       const data = await response.json();
-      console.log("Fetched carts data:", data);
 
       const menuResponse = await fetch("/api/get/menu-list");
       if (!menuResponse.ok) throw new Error("Failed to fetch menu");
@@ -178,14 +174,9 @@ const OrderHistory: React.FC = () => {
       const ingredientResponse = await fetch("/api/get/ingredients");
       if (!ingredientResponse.ok)
         throw new Error("Failed to fetch ingredients");
+      const ingredientData = await ingredientResponse.json();
 
       const formattedOrders: Cart[] = data.map((cart: RawCart) => {
-        console.log(
-          "Processing cart ID:",
-          cart.cart_id,
-          "cart_menu_items:",
-          cart.cart_menu_items
-        );
         const [rawDate] = cart.cart_create_date.split("T");
         const [year, month, day] = rawDate.split("-");
         const dateObjectForLocale = new Date(
@@ -216,7 +207,6 @@ const OrderHistory: React.FC = () => {
                 (item) => item && typeof item.menu_total === "number"
               )
               : [];
-        console.log("Parsed menuItems:", menuItems);
 
         const totalSets = menuItems
           .filter(
@@ -238,21 +228,27 @@ const OrderHistory: React.FC = () => {
 
         const allIngredients = menuItems.map((menu) => ({
           menuName: menu.menu_name,
-          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
-            ...dbIng,
-            ingredient_id: dbIng.ingredient_id || undefined,
-            ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-            calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-            sourceMenu: menu.menu_name,
-            isChecked: dbIng.ingredient_status ?? false,
-            ingredient_status: dbIng.ingredient_status ?? false,
-          })),
+          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => {
+            const ingredientInfo = ingredientData.find(
+              (ing: any) => ing.ingredient_name === dbIng.ingredient_name
+            );
+            const pricePerUnit = ingredientInfo?.ingredient_price_per_unit || 0;
+            return {
+              ...dbIng,
+              ingredient_id: dbIng.ingredient_id || undefined,
+              ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+              calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+              totalCost: dbIng.useItem * (menu.menu_total || 0) * pricePerUnit, // Calculate total cost
+              sourceMenu: menu.menu_name,
+              isChecked: dbIng.ingredient_status ?? false,
+              ingredient_status: dbIng.ingredient_status ?? false,
+              ingredient_price_per_unit: pricePerUnit,
+            };
+          }),
           ingredient_status: menu.menu_ingredients.every(
             (ing: Ingredient) => ing.ingredient_status ?? false
           ),
         }));
-
-        console.log("Mapped allIngredients:", allIngredients);
 
         const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
           }`;
@@ -279,12 +275,11 @@ const OrderHistory: React.FC = () => {
         };
       });
 
-      const currentDate = new Date(); // วันที่และเวลาปัจจุบัน
+      const currentDate = new Date();
       formattedOrders.sort((a, b) => {
         const dateA = convertThaiDateToISO(a.cart_delivery_date);
         const dateB = convertThaiDateToISO(b.cart_delivery_date);
 
-        // หากไม่มีวันที่จัดส่ง ให้วางไว้ท้ายสุด
         if (!dateA) return 1;
         if (!dateB) return -1;
 
@@ -295,12 +290,10 @@ const OrderHistory: React.FC = () => {
           new Date(dateB).getTime() - currentDate.getTime()
         );
 
-        // เรียงจากวันที่ใกล้ปัจจุบันมากที่สุดไปน้อยที่สุด
         if (diffA !== diffB) {
           return diffA - diffB;
         }
 
-        // ถ้า cart_delivery_date เหมือนกัน ให้เรียงตาม cart_order_number จากมากไปน้อย
         const orderNumA = parseInt(a.order_number || "0");
         const orderNumB = parseInt(b.order_number || "0");
         return orderNumB - orderNumA;
@@ -318,9 +311,97 @@ const OrderHistory: React.FC = () => {
     }
   };
 
-  // ฟังก์ชันจัดรูปแบบเวลาโดยอัตโนมัติ
+  const [editingTimes, setEditingTimes] = useState<{
+    cartId: string;
+    exportTime: string;
+    receiveTime: string;
+  } | null>(null);
+
+  const handleEditTimes = (
+    cartId: string,
+    exportTime: string,
+    receiveTime: string
+  ) => {
+    const formatToThaiTime = (time: string) =>
+      time ? time.replace(":", ".") + " น." : "00.00 น.";
+    setEditingTimes({
+      cartId,
+      exportTime: formatToThaiTime(exportTime),
+      receiveTime: formatToThaiTime(receiveTime),
+    });
+  };
+
+  const handleSaveTimes = async (cartId: string) => {
+    if (!editingTimes) {
+      setError("ไม่พบข้อมูลเวลาที่กำลังแก้ไข");
+      return;
+    }
+
+    const parseThaiTime = (thaiTime: string): string | null => {
+      const regex = /^([0-1]?[0-9]|2[0-3])\.[0-5][0-9](\s*น\.?)?$/;
+      if (!regex.test(thaiTime)) return null;
+      return thaiTime.replace(/\s*น\.?$/, "").replace(".", ":");
+    };
+
+    const exportTime = parseThaiTime(editingTimes.exportTime);
+    const receiveTime = parseThaiTime(editingTimes.receiveTime);
+
+    if (!exportTime) {
+      setError("เวลาส่งอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)");
+      return;
+    }
+    if (!receiveTime) {
+      setError("เวลารับอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)");
+      return;
+    }
+
+    setIsSaving(cartId);
+    try {
+      const payload = {
+        cart_export_time: exportTime,
+        cart_receive_time: receiveTime,
+      };
+
+      const response = await fetch(`/api/edit/cart_time/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update times");
+      }
+
+      const { cart } = await response.json();
+      setCarts((prevCarts) =>
+        prevCarts.map((c) =>
+          c.id === cartId
+            ? {
+              ...c,
+              cart_export_time: cart[0]?.cart_export_time,
+              cart_receive_time: cart[0]?.cart_receive_time,
+            }
+            : c
+        )
+      );
+
+      alert("อัปเดตเวลาเรียบร้อย!");
+      setEditingTimes(null);
+      await fetchOrders();
+    } catch (err) {
+      console.error("Error updating times:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตเวลา: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตเวลา"
+      );
+    } finally {
+      setIsSaving(null);
+    }
+  };
+
   const formatInputTime = (value: string): string => {
-    // ลบตัวอักษรที่ไม่ใช่ตัวเลขหรือจุด
     const cleaned = value.replace(/[^0-9.]/g, "");
     if (cleaned.length >= 4) {
       const hours = cleaned.slice(0, 2);
@@ -330,296 +411,6 @@ const OrderHistory: React.FC = () => {
       }
     }
     return value;
-  };
-
-  const convertThaiDateToISO = (
-    thaiDate: string | undefined
-  ): string | null => {
-    if (!thaiDate) return null;
-    const [day, month, year] = thaiDate.split("/");
-    const buddhistYear = parseInt(year, 10);
-    const christianYear = buddhistYear - 543;
-    return `${christianYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  };
-
-  const fetchCalendars = async () => {
-    try {
-      const response = await fetch("/api/get/carts");
-      if (!response.ok) throw new Error("Failed to fetch carts");
-      const data = await response.json();
-
-      const groupedByDate: { [date: string]: RawCart[] } = {};
-
-      const allowedStatuses = ["cancelled", "success"];
-
-      data.forEach((cart: RawCart) => {
-       
-        if (!allowedStatuses.includes(cart.cart_status)) return;
-
-        const deliveryDate = convertThaiDateToISO(cart.cart_delivery_date);
-        if (!deliveryDate) return;
-
-        if (!groupedByDate[deliveryDate]) {
-          groupedByDate[deliveryDate] = [];
-        }
-
-        groupedByDate[deliveryDate].push(cart);
-      });
-
-
-      const events = Object.entries(groupedByDate).map(([date, carts]) => ({
-        start: date,
-        allDay: true,
-        display: "background",
-        backgroundColor: "#f70505",
-        // color: "#ef4444",
-        borderColor: "#ef4444",
-        // textColor: "#ffffff",
-        timeZone: "Asia/Bangkok",
-        extendedProps: {
-          carts,
-        },
-      }));
-
-      setCalendarEvents(events);
-    } catch (err) {
-      console.error("Error fetching calendar data:", err);
-      setError("ไม่สามารถโหลดข้อมูลปฏิทินได้");
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-    fetchCalendars();
-  }, []);
-
-  const handleDateClick = (info: { dateStr: string }) => {
-    const selectedDateStr = info.dateStr;
-    console.log("Selected Date:", selectedDateStr);
-    const filteredOrders = allCarts.filter(
-      (cart) =>
-        convertThaiDateToISO(cart.cart_delivery_date) === selectedDateStr
-    );
-    console.log("Filtered Orders:", filteredOrders);
-    setSelectedOrders(filteredOrders);
-    setIsOrderModalOpen(true);
-    setSelectedDate(new Date(selectedDateStr));
-    setIsDatePickerOpen(false);
-    setCarts(filteredOrders);
-    if (filteredOrders.length === 0) {
-      setError(
-        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          locale: "th",
-          timeZone: "Asia/Bangkok",
-        })}`
-      );
-    } else {
-      setError(null);
-    }
-  };
-
-  const handleEditTotalBox = (
-    cartId: string,
-    menuName: string,
-    currentTotal: number
-  ) => {
-    setEditingMenu({ cartId, menuName });
-    setEditTotalBox(currentTotal);
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "success":
-        return "เสร็จสิ้น";
-      case "cancelled":
-        return "ยกเลิก";
-      default:
-        return "ไม่ทราบสถานะ";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "success":
-        return "from-emerald-50 to-teal-50 border-emerald-200";
-      case "cancelled":
-        return "from-rose-50 to-red-50 border-rose-200";
-      default:
-        return "from-slate-50 to-gray-50 border-slate-200";
-    }
-  };
-
-  const uniqueCreators = useMemo(() => {
-    return [...new Set(carts.map((cart) => cart.createdBy))];
-  }, [carts]);
-
-  const filteredAndSortedOrders = useMemo(() => {
-    let filtered = [...carts].filter(
-      (cart) => cart.status === "success" || cart.status === "cancelled"
-    );
-
-    if (selectedDate) {
-      const selectedDateISO = selectedDate.toISOString().split("T")[0];
-      filtered = filtered.filter(
-        (order) =>
-          convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO
-      );
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter((order) =>
-        [order.name, order.id, order.createdBy].some((field) =>
-          (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }
-    if (filterStatus !== "ทั้งหมด") {
-      filtered = filtered.filter(
-        (order) => getStatusText(order.status) === filterStatus
-      );
-    }
-    if (filterCreator !== "ทั้งหมด") {
-      filtered = filtered.filter((order) => order.createdBy === filterCreator);
-    }
-
-    // Group by delivery date and sort orders within each date by order_number
-    const groupedByDate = filtered.reduce((acc, cart) => {
-      const deliveryDateISO =
-        convertThaiDateToISO(cart.cart_delivery_date) || "no-date";
-      if (!acc[deliveryDateISO]) {
-        acc[deliveryDateISO] = [];
-      }
-      acc[deliveryDateISO].push(cart);
-      return acc;
-    }, {} as { [key: string]: Cart[] });
-
-    // Sort orders within each date by order_number (ascending)
-    Object.values(groupedByDate).forEach((orders) => {
-      orders.sort((a, b) => {
-        const orderNumA = parseInt(a.order_number || "0");
-        const orderNumB = parseInt(b.order_number || "0");
-        return orderNumA - orderNumB;
-      });
-    });
-
-    // Sort dates based on sortOrder
-    const currentDate = new Date();
-    const sortedDates = Object.keys(groupedByDate).sort((dateA, dateB) => {
-      if (dateA === "no-date") return 1;
-      if (dateB === "no-date") return -1;
-      const diffA = Math.abs(new Date(dateA).getTime() - currentDate.getTime());
-      const diffB = Math.abs(new Date(dateB).getTime() - currentDate.getTime());
-      return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
-    });
-
-    // Flatten the sorted groups back into a single array
-    const sortedOrders = sortedDates.flatMap((date) => groupedByDate[date]);
-
-    console.log("Filtered and Sorted Orders:", sortedOrders);
-    return sortedOrders;
-  }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
-
-  const groupedOrders = useMemo(() => {
-    // สร้าง grouped orders โดยจัดกลุ่มตามวันที่จัดส่ง
-    const grouped = filteredAndSortedOrders.reduce((acc, cart) => {
-      const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
-      const dateDisplay = deliveryDateISO
-        ? new Date(deliveryDateISO)
-          .toLocaleDateString("th-TH", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })
-          .replace(/ /g, " ")
-        : "ไม่มีวันที่จัดส่ง";
-      (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
-      return acc;
-    }, {} as { [key: string]: Cart[] });
-
-    const currentDate = new Date();
-    const currentDateISO = currentDate.toISOString().split("T")[0]; // วันที่ปัจจุบันในรูปแบบ YYYY-MM-DD
-    const currentDateDisplay = currentDate
-      .toLocaleDateString("th-TH", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      .replace(/ /g, " "); // วันที่ปัจจุบันในรูปแบบ th-TH (เช่น "3 ก.ค. 2568")
-
-    // แยกกลุ่มวันที่ปัจจุบันและวันที่อื่นๆ
-    const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay]
-      ? [[currentDateDisplay, grouped[currentDateDisplay]]]
-      : [];
-    const otherDateGroups = Object.entries(grouped).filter(
-      ([date]) => date !== currentDateDisplay
-    );
-
-    // เรียงลำดับวันที่อื่นๆ ตาม sortOrder
-    const sortedOtherDates = otherDateGroups.sort((a, b) => {
-      const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
-      const dateB = convertThaiDateToISO(b[1][0].cart_delivery_date);
-
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-
-      const diffA = Math.abs(new Date(dateA).getTime() - currentDate.getTime());
-      const diffB = Math.abs(new Date(dateB).getTime() - currentDate.getTime());
-
-      return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
-    });
-
-    // รวมวันที่ปัจจุบัน (ถ้ามี) เข้ากับวันที่อื่นๆ โดยให้วันที่ปัจจุบันอยู่อันดับแรก
-    return [...currentDateGroup, ...sortedOtherDates];
-  }, [filteredAndSortedOrders, sortOrder]);
-  const summarizeIngredients = (date: string) => {
-    const ingredientSummary: {
-      [key: string]: { checked: number; total: number };
-    } = {};
-
-    const ordersOnDate = filteredAndSortedOrders.filter(
-      (cart) => convertThaiDateToISO(cart.cart_delivery_date) === date
-    );
-
-    ordersOnDate.forEach((cart) => {
-      cart.allIngredients.forEach((menuGroup) => {
-        menuGroup.ingredients.forEach((ing) => {
-          if (!ingredientSummary[ing.ingredient_name]) {
-            ingredientSummary[ing.ingredient_name] = { checked: 0, total: 0 };
-          }
-          const totalGrams = ing.calculatedTotal || 0;
-          ingredientSummary[ing.ingredient_name].total += totalGrams;
-          if (ing.isChecked) {
-            ingredientSummary[ing.ingredient_name].checked += totalGrams;
-          }
-        });
-      });
-    });
-
-    const allIngredientsChecked = ordersOnDate.every((cart) =>
-      cart.allIngredients.every((menuGroup) =>
-        menuGroup.ingredients.every((ing) => ing.isChecked)
-      )
-    );
-
-    return {
-      summary: Object.entries(ingredientSummary).map(
-        ([name, { checked, total }]) => ({
-          name,
-          checked,
-          total,
-        })
-      ),
-      allIngredientsChecked,
-    };
-  };
-
-  // Modified handleSummaryClick function
-  const handleSummaryClick = (date: string) => {
-    setSelectedDateForSummary(date);
-    setIsSummaryModalOpen(true);
   };
 
   const handleToggleIngredientCheck = async (
@@ -665,7 +456,519 @@ const OrderHistory: React.FC = () => {
           : cart
       )
     );
-  }
+
+    try {
+      const response = await fetch(
+        `/api/edit/cart_menu_ingredient_status/${cartId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            menuName,
+            ingredientName,
+            isChecked: newCheckedStatus,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("PATCH API error:", errorData);
+        throw new Error(
+          errorData.error || "Failed to update ingredient status"
+        );
+      }
+
+      await fetchOrders();
+    } catch (err) {
+      console.error("Error updating ingredient status:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตสถานะวัตถุดิบ: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบ"
+      );
+      setCarts(previousCarts);
+    }
+  };
+
+  const handleCheckAllIngredients = async (cartId: string) => {
+    const previousCarts = [...carts];
+    setIsSaving(cartId);
+
+    setCarts((prevCarts) =>
+      prevCarts.map((cart) =>
+        cart.id === cartId
+          ? {
+            ...cart,
+            allIngredients: cart.allIngredients.map((group) => ({
+              ...group,
+              ingredients: group.ingredients.map((ing) => ({
+                ...ing,
+                isChecked: true,
+                ingredient_status: true,
+              })),
+              ingredient_status: true,
+            })),
+          }
+          : cart
+      )
+    );
+
+    try {
+      const response = await fetch(
+        `/api/edit/cart_menu_all_ingredients_status/${cartId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isChecked: true }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("PATCH API error:", errorData);
+        throw new Error(
+          errorData.error || "Failed to update all ingredients status"
+        );
+      }
+
+      await fetchOrders();
+    } catch (err) {
+      console.error("Error updating all ingredients status:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด"
+      );
+      setCarts(previousCarts);
+    } finally {
+      setIsSaving(null);
+    }
+  };
+
+  const handleCheckAllIngredientsForDate = async (date: string) => {
+    const previousCarts = [...carts];
+    setIsSaving("all");
+
+    const targetCarts = carts.filter(
+      (cart) => convertThaiDateToISO(cart.cart_delivery_date) === date
+    );
+
+    setCarts((prevCarts) =>
+      prevCarts.map((cart) =>
+        targetCarts.some((target) => target.id === cart.id)
+          ? {
+            ...cart,
+            allIngredients: cart.allIngredients.map((group) => ({
+              ...group,
+              ingredients: group.ingredients.map((ing) => ({
+                ...ing,
+                isChecked: true,
+                ingredient_status: true,
+              })),
+              ingredient_status: true,
+            })),
+          }
+          : cart
+      )
+    );
+
+    try {
+      await Promise.all(
+        targetCarts.map((cart) =>
+          fetch(`/api/edit/cart_menu_all_ingredients_status/${cart.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isChecked: true }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                errorData.error ||
+                `Failed to update all ingredients status for cart ${cart.id}`
+              );
+            }
+          })
+        )
+      );
+
+      await fetchOrders();
+      setIsSummaryModalOpen(false);
+    } catch (err) {
+      console.error("Error updating all ingredients for date:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่"
+      );
+      setCarts(previousCarts);
+    } finally {
+      setIsSaving(null);
+    }
+  };
+
+  const convertThaiDateToISO = (
+    thaiDate: string | undefined
+  ): string | null => {
+    if (!thaiDate) return null;
+    const [day, month, year] = thaiDate.split("/");
+    const buddhistYear = parseInt(year, 10);
+    const christianYear = buddhistYear - 543;
+    return `${christianYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  };
+
+  const fetchCalendars = async () => {
+    try {
+      const response = await fetch("/api/get/carts");
+      if (!response.ok) throw new Error("Failed to fetch carts");
+      const data = await response.json();
+
+      const groupedByDate: { [date: string]: RawCart[] } = {};
+
+      const allowedStatuses = ["pending", "completed"];
+
+      data.forEach((cart: RawCart) => {
+
+        if (!allowedStatuses.includes(cart.cart_status)) return;
+
+        const deliveryDate = convertThaiDateToISO(cart.cart_delivery_date);
+        if (!deliveryDate) return;
+
+        if (!groupedByDate[deliveryDate]) {
+          groupedByDate[deliveryDate] = [];
+        }
+
+        groupedByDate[deliveryDate].push(cart);
+      });
+
+
+      const events = Object.entries(groupedByDate).map(([date, carts]) => ({
+        start: date,
+        allDay: true,
+        display: "background",
+        backgroundColor: "#f70505",
+        borderColor: "#ef4444",
+        timeZone: "Asia/Bangkok",
+        extendedProps: {
+          carts,
+        },
+      }));
+
+      setCalendarEvents(events);
+    } catch (err) {
+      console.error("Error fetching calendar data:", err);
+      setError("ไม่สามารถโหลดข้อมูลปฏิทินได้");
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    fetchCalendars();
+  }, []);
+
+  const handleDateClick = (info: { dateStr: string }) => {
+    const selectedDateStr = info.dateStr;
+    const filteredOrders = allCarts.filter(
+      (cart) =>
+        convertThaiDateToISO(cart.cart_delivery_date) === selectedDateStr
+    );
+    setSelectedOrders(filteredOrders);
+    setIsOrderModalOpen(true);
+    setSelectedDate(new Date(selectedDateStr));
+    setIsDatePickerOpen(false);
+    setCarts(filteredOrders);
+    if (filteredOrders.length === 0) {
+      setError(
+        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          locale: "th",
+          timeZone: "Asia/Bangkok",
+        })}`
+      );
+    } else {
+      setError(null);
+    }
+  };
+
+  const handleEditTotalBox = (
+    cartId: string,
+    menuName: string,
+    currentTotal: number
+  ) => {
+    setEditingMenu({ cartId, menuName });
+    setEditTotalBox(currentTotal);
+  };
+
+  const handleSaveTotalBox = async (cartId: string, menuName: string) => {
+    if (editTotalBox < 0) {
+      setError("จำนวนกล่องต้องไม่น้อยกว่า 0");
+      return;
+    }
+    if (!menuName) {
+      setError("ชื่อเมนูไม่ถูกต้อง");
+      return;
+    }
+
+    const cleanedMenuName = menuName.trim();
+
+    setIsSaving(cartId);
+    try {
+      const patchResponse = await fetch(`/api/edit/cart_menu/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuName: cleanedMenuName, menu_total: editTotalBox }),
+      });
+
+      if (!patchResponse.ok) {
+        const errorData = await patchResponse.json();
+        console.error("PATCH API error:", errorData);
+        throw new Error(errorData.error || "Failed to update total box");
+      }
+
+      setCarts((prevCarts) =>
+        prevCarts.map((cart) =>
+          cart.id === cartId
+            ? {
+              ...cart,
+              menuItems: cart.menuItems.map((item) =>
+                item.menu_name === cleanedMenuName
+                  ? { ...item, menu_total: editTotalBox }
+                  : item
+              ),
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === cleanedMenuName
+                  ? {
+                    ...group,
+                    ingredients: group.ingredients.map((ing) => ({
+                      ...ing,
+                      calculatedTotal: ing.useItem * editTotalBox,
+                      totalCost: ing.useItem * editTotalBox * (ing.ingredient_price_per_unit || 0),
+                    })),
+                  }
+                  : group
+              ),
+              sets: cart.menuItems.reduce(
+                (sum, item) =>
+                  sum +
+                  (item.menu_name === cleanedMenuName
+                    ? editTotalBox
+                    : item.menu_total),
+                0
+              ),
+            }
+            : cart
+        )
+      );
+
+      alert(`อัปเดตจำนวนกล่องสำหรับ "${cleanedMenuName}" สำเร็จ!`);
+      await fetchOrders();
+      setEditingMenu(null);
+    } catch (err) {
+      console.error("Error updating total box:", err);
+      setError(
+        err instanceof Error
+          ? `ไม่สามารถอัปเดตจำนวนกล่อง: ${err.message}`
+          : "เกิดข้อผิดพลาดในการอัปเดตจำนวนกล่อง"
+      );
+      await fetchOrders();
+    } finally {
+      setIsSaving(null);
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "รอมัดจำ";
+      case "completed":
+        return "ชำระเงินเเล้ว";
+      case "success":
+        return "เสร็จสิ้น";
+      case "cancelled":
+        return "ยกเลิก";
+      default:
+        return "ไม่ทราบสถานะ";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "from-amber-50 to-yellow-50 border-amber-200";
+      case "completed":
+        return "from-blue-50 to-indigo-50 border-blue-200";
+      case "success":
+        return "from-emerald-50 to-teal-50 border-emerald-200";
+      case "cancelled":
+        return "from-rose-50 to-red-50 border-rose-200";
+      default:
+        return "from-slate-50 to-gray-50 border-slate-200";
+    }
+  };
+
+  const uniqueCreators = useMemo(() => {
+    return [...new Set(carts.map((cart) => cart.createdBy))];
+  }, [carts]);
+
+  const filteredAndSortedOrders = useMemo(() => {
+    let filtered = [...carts].filter(
+      (cart) => cart.status === "pending" || cart.status === "completed"
+    );
+
+    if (selectedDate) {
+      const selectedDateISO = selectedDate.toISOString().split("T")[0];
+      filtered = filtered.filter(
+        (order) =>
+          convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO
+      );
+    }
+
+    if (searchTerm) {
+      filtered = filtered.filter((order) =>
+        [order.name, order.id, order.createdBy].some((field) =>
+          (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+    if (filterStatus !== "ทั้งหมด") {
+      filtered = filtered.filter(
+        (order) => getStatusText(order.status) === filterStatus
+      );
+    }
+    if (filterCreator !== "ทั้งหมด") {
+      filtered = filtered.filter((order) => order.createdBy === filterCreator);
+    }
+
+    const groupedByDate = filtered.reduce((acc, cart) => {
+      const deliveryDateISO =
+        convertThaiDateToISO(cart.cart_delivery_date) || "no-date";
+      if (!acc[deliveryDateISO]) {
+        acc[deliveryDateISO] = [];
+      }
+      acc[deliveryDateISO].push(cart);
+      return acc;
+    }, {} as { [key: string]: Cart[] });
+
+    Object.values(groupedByDate).forEach((orders) => {
+      orders.sort((a, b) => {
+        const orderNumA = parseInt(a.order_number || "0");
+        const orderNumB = parseInt(b.order_number || "0");
+        return orderNumA - orderNumB;
+      });
+    });
+
+    const currentDate = new Date();
+    const sortedDates = Object.keys(groupedByDate).sort((dateA, dateB) => {
+      if (dateA === "no-date") return 1;
+      if (dateB === "no-date") return -1;
+      const diffA = Math.abs(new Date(dateA).getTime() - currentDate.getTime());
+      const diffB = Math.abs(new Date(dateB).getTime() - currentDate.getTime());
+      return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
+    });
+
+    return sortedDates.flatMap((date) => groupedByDate[date]);
+  }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
+
+  const groupedOrders = useMemo(() => {
+    const grouped = filteredAndSortedOrders.reduce((acc, cart) => {
+      const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
+      const dateDisplay = deliveryDateISO
+        ? new Date(deliveryDateISO)
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ")
+        : "ไม่มีวันที่จัดส่ง";
+      (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
+      return acc;
+    }, {} as { [key: string]: Cart[] });
+
+    const currentDate = new Date();
+    const currentDateDisplay = currentDate
+      .toLocaleDateString("th-TH", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+      .replace(/ /g, " ");
+
+    const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay]
+      ? [[currentDateDisplay, grouped[currentDateDisplay]]]
+      : [];
+    const otherDateGroups = Object.entries(grouped).filter(
+      ([date]) => date !== currentDateDisplay
+    );
+
+    const sortedOtherDates = otherDateGroups.sort((a, b) => {
+      const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
+      const dateB = convertThaiDateToISO(b[1][0].cart_delivery_date);
+
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+
+      const diffA = Math.abs(new Date(dateA).getTime() - currentDate.getTime());
+      const diffB = Math.abs(new Date(dateB).getTime() - currentDate.getTime());
+
+      return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
+    });
+
+    return [...currentDateGroup, ...sortedOtherDates];
+  }, [filteredAndSortedOrders, sortOrder]);
+
+  const summarizeIngredients = (date: string) => {
+    const ingredientSummary: {
+      [key: string]: { checked: number; total: number; totalCost: number };
+    } = {};
+
+    const ordersOnDate = filteredAndSortedOrders.filter(
+      (cart) => convertThaiDateToISO(cart.cart_delivery_date) === date
+    );
+
+    ordersOnDate.forEach((cart) => {
+      cart.allIngredients.forEach((menuGroup) => {
+        menuGroup.ingredients.forEach((ing) => {
+          if (!ingredientSummary[ing.ingredient_name]) {
+            ingredientSummary[ing.ingredient_name] = { checked: 0, total: 0, totalCost: 0 };
+          }
+          const totalGrams = ing.calculatedTotal || 0;
+          const totalCost = ing.totalCost || 0;
+          ingredientSummary[ing.ingredient_name].total += totalGrams;
+          ingredientSummary[ing.ingredient_name].totalCost += totalCost;
+          if (ing.isChecked) {
+            ingredientSummary[ing.ingredient_name].checked += totalGrams;
+            ingredientSummary[ing.ingredient_name].totalCost += totalCost;
+          }
+        });
+      });
+    });
+
+    const allIngredientsChecked = ordersOnDate.every((cart) =>
+      cart.allIngredients.every((menuGroup) =>
+        menuGroup.ingredients.every((ing) => ing.isChecked)
+      )
+    );
+
+    return {
+      summary: Object.entries(ingredientSummary).map(
+        ([name, { checked, total, totalCost }]) => ({
+          name,
+          checked,
+          total,
+          totalCost,
+        })
+      ),
+      allIngredientsChecked,
+    };
+  };
+
+  const handleSummaryClick = (date: string) => {
+    setSelectedDateForSummary(date);
+    setIsSummaryModalOpen(true);
+  };
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
   const paginatedGroupedOrders = groupedOrders.slice(
@@ -747,7 +1050,6 @@ const OrderHistory: React.FC = () => {
     doc.save("order_history.pdf");
   };
 
-  const router = useRouter();
   const handleUpdate = () => router.refresh();
 
   return (
@@ -788,7 +1090,7 @@ const OrderHistory: React.FC = () => {
                   month: "short",
                   day: "numeric",
                   locale: "th",
-                  timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
+                  timeZone: "Asia/Bangkok",
                 })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
@@ -833,8 +1135,6 @@ const OrderHistory: React.FC = () => {
                 align="start"
                 avoidCollisions={false}
               >
-                {/* <SelectItem value="desc">เรียงจากใหม่ไปเก่า</SelectItem>
-                <SelectItem value="asc">เรียงจากเก่าไปใหม่</SelectItem> */}
                 <SelectItem value="asc">เรียงจากใหม่ไปเก่า</SelectItem>
                 <SelectItem value="desc">เรียงจากเก่าไปใหม่</SelectItem>
               </SelectContent>
@@ -882,6 +1182,12 @@ const OrderHistory: React.FC = () => {
         </div>
 
         <div className="flex justify-end gap-3 mb-6">
+          <Button
+            onClick={handleSummary}
+            className="h-10 rounded-lg border border-slate-300 shadow-sm"
+          >
+            ไปหน้าสรุปรายการ
+          </Button>
           <Button
             onClick={() => {
               setSelectedDate(null);
@@ -946,18 +1252,93 @@ const OrderHistory: React.FC = () => {
                         >
                           <div className="flex w-full items-center">
                             <div className="ml-auto flex items-center gap-2">
-                              <div className="flex items-center gap-2">
-                                <BsCashStack className="w-6 h-6" />
-                                <span>
-                                  เวลาส่งอาหาร{" "}
-                                  {cart.cart_export_time || "ไม่ระบุ"} น.
-                                </span>
-                                <FaWallet className="w-4 h-4 ml-4" />
-                                <span>
-                                  เวลารับอาหาร{" "}
-                                  {cart.cart_receive_time || "ไม่ระบุ"} น.
-                                </span>
-                              </div>
+                              {editingTimes?.cartId === cart.id ? (
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <BsCashStack className="w-6 h-6" />
+                                    <span>เวลาส่งอาหาร</span>
+                                    <Input
+                                      type="text"
+                                      value={editingTimes?.exportTime || ""}
+                                      onChange={(e) => {
+                                        const formattedValue = formatInputTime(e.target.value);
+                                        setEditingTimes((prev) =>
+                                          prev ? { ...prev, exportTime: formattedValue } : prev
+                                        );
+                                      }}
+                                      placeholder="14.00"
+                                      className="w-24 h-8 text-sm rounded-md border-gray-300"
+                                      aria-label="Edit export time"
+                                      required
+                                    />
+                                    <FaWallet className="w-4 h-4" />
+                                    <span>เวลารับอาหาร</span>
+                                    <Input
+                                      type="text"
+                                      value={editingTimes?.receiveTime || ""}
+                                      onChange={(e) => {
+                                        const formattedValue = formatInputTime(e.target.value);
+                                        setEditingTimes((prev) =>
+                                          prev ? { ...prev, receiveTime: formattedValue } : prev
+                                        );
+                                      }}
+                                      placeholder="19.00"
+                                      className="w-24 h-8 text-sm rounded-md border-gray-300"
+                                      aria-label="Edit receive time"
+                                      required
+                                    />
+                                  </div>
+                                  <div className="flex w-full items-center">
+                                    <div className="ml-auto flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleSaveTimes(cart.id)}
+                                        className="h-8 px-2"
+                                        disabled={isSaving === cart.id}
+                                      >
+                                        {isSaving === cart.id
+                                          ? "Saving..."
+                                          : "Save"}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingTimes(null)}
+                                        className="h-8 px-2 text-gray-600 hover:bg-gray-50"
+                                        disabled={isSaving === cart.id}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <BsCashStack className="w-6 h-6" />
+                                  <span>
+                                    เวลาส่งอาหาร{" "}
+                                    {cart.cart_export_time || "ไม่ระบุ"} น.
+                                  </span>
+                                  <FaWallet className="w-4 h-4 ml-4" />
+                                  <span>
+                                    เวลารับอาหาร{" "}
+                                    {cart.cart_receive_time || "ไม่ระบุ"} น.
+                                  </span>
+                                  <span
+                                    className="cursor-pointer ml-2"
+                                    onClick={() =>
+                                      handleEditTimes(
+                                        cart.id,
+                                        cart.cart_export_time || "",
+                                        cart.cart_receive_time || ""
+                                      )
+                                    }
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <AccordionTrigger className="w-full hover:no-underline px-0">
@@ -1035,7 +1416,7 @@ const OrderHistory: React.FC = () => {
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
-                            // onUpdated={handleUpdate}
+                              onUpdated={handleUpdate}
                             />
                           </div>
                           <AccordionContent className="mt-4">
@@ -1083,7 +1464,7 @@ const OrderHistory: React.FC = () => {
                                             </span>
                                           </AccordionTrigger>
                                           <AccordionContent className="pt-3 space-y-2">
-                                            {/* {isEditingThisMenu ? (
+                                            {isEditingThisMenu ? (
                                               <div className="flex items-center gap-2 mb-3">
                                                 <Input
                                                   type="number"
@@ -1148,7 +1529,7 @@ const OrderHistory: React.FC = () => {
                                                   <Edit2 className="w-4 h-4" />
                                                 </Button>
                                               </div>
-                                            )} */}
+                                            )}
                                             {menuGroup.ingredients.map(
                                               (ing, idx) => (
                                                 <div
@@ -1174,7 +1555,16 @@ const OrderHistory: React.FC = () => {
                                                       >
                                                         {ing.calculatedTotal}
                                                       </strong>{" "}
-                                                      กรัม
+                                                      กรัม (ราคา{" "}
+                                                      <strong
+                                                        className="text-black-600"
+                                                        style={{
+                                                          color: "#000000",
+                                                        }}
+                                                      >
+                                                        {ing.totalCost?.toLocaleString()}
+                                                      </strong>{" "}
+                                                      บาท)
                                                     </span>
                                                     <label className="cursor-pointer">
                                                       <input
@@ -1226,7 +1616,6 @@ const OrderHistory: React.FC = () => {
                 <div className="flex justify-center m-4">
                   <div>
                     <Button
-                      // variant="ghost"
                       size="sm"
                       onClick={() =>
                         handleSummaryClick(
@@ -1274,18 +1663,19 @@ const OrderHistory: React.FC = () => {
                           >
                             <span className="text-gray-700">{ing.name}</span>
                             <span className="text-gray-600">
-                              {ing.checked}/{ing.total} กรัม
+                              {ing.checked}/{ing.total} กรัม (ราคา{" "}
+                              {ing.totalCost.toLocaleString()} บาท)
                             </span>
                           </div>
                         ))}
                       </div>
                       <div style={{ color: "#000000", background: "#5cfa6c" }}>
                         <Button
-                          // onClick={() =>
-                          //   handleCheckAllIngredientsForDate(
-                          //     selectedDateForSummary
-                          //   )
-                          // }
+                          onClick={() =>
+                            handleCheckAllIngredientsForDate(
+                              selectedDateForSummary
+                            )
+                          }
                           className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
                           disabled={isSaving === "all"}
                         >
@@ -1302,38 +1692,43 @@ const OrderHistory: React.FC = () => {
         </Dialog>
 
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  />
-                </PaginationItem>
-                {[...Array(totalPages)].map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink
-                      isActive={currentPage === i + 1}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(Math.min(totalPages, currentPage + 1))
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          // <div className="mt-6 flex justify-center">
+          //   <Pagination>
+          //     <PaginationContent>
+          //       <PaginationItem>
+          //         <PaginationPrevious
+          //           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+          //         />
+          //       </PaginationItem>
+          //       {[...Array(totalPages)].map((_, i) => (
+          //         <PaginationItem key={i}>
+          //           <PaginationLink
+          //             isActive={currentPage === i + 1}
+          //             onClick={() => setCurrentPage(i + 1)}
+          //           >
+          //             {i + 1}
+          //           </PaginationLink>
+          //         </PaginationItem>
+          //       ))}
+          //       <PaginationItem>
+          //         <PaginationNext
+          //           onClick={() =>
+          //             setCurrentPage(Math.min(totalPages, currentPage + 1))
+          //           }
+          //         />
+          //       </PaginationItem>
+          //     </PaginationContent>
+          //   </Pagination>
+          // </div>
+          <PaginationComponent
+          totalPages={totalPages}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+        />
         )}
       </div>
     </div>
   );
 };
 
-export default OrderHistory;
+export default SummaryPrice;

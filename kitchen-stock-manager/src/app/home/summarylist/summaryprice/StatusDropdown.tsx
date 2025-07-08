@@ -17,8 +17,8 @@ type StatusOption = {
 };
 
 const statusOptions: StatusOption[] = [
-  { label: "รอดำเนินการ", value: "pending" },
-  { label: "ยืนยันแล้ว", value: "completed" },
+  { label: "รอมัดจำ", value: "pending" },
+  { label: "ชำระเงินเเล้ว", value: "completed" },
   { label: "ส่งแล้ว", value: "success" },
   { label: "ยกเลิก", value: "cancelled" },
 ];
@@ -30,6 +30,7 @@ type StatusDropdownProps = {
     ingredients: Ingredient[];
   }[];
   defaultStatus?: string;
+  onUpdated?: () => void;
 };
 
 const StatusDropdown: React.FC<StatusDropdownProps> = ({
@@ -125,6 +126,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       alert("เกิดข้อผิดพลาด: " + (error as Error).message);
     } finally {
       setIsSubmitting(false);
+      window.location.reload();
     }
   };
 
@@ -135,13 +137,20 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           onClick={handleSubmit}
           disabled={isSubmitting}
           className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: "#5cfa6c" ,boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",}}
         >
           {isSubmitting ? "กำลังอัปเดต..." : "บันทึก"}
         </button>
       )}
 
       <div className="relative px-4">
-        <button className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow">
+        <button
+          style={{
+            background: "#5bd9fc",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+          }}
+          className="inline-block hover:bg-blue-200 hover:shadow-md rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
+        >
           {statusOptions.find((o) => o.value === selectedStatus)?.label}
         </button>
         <select
@@ -149,6 +158,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           onChange={(e) => setSelectedStatus(e.target.value)}
           className="absolute inset-0 opacity-0 cursor-pointer"
           disabled={isLocked}
+          style={{ background: "#a2e1f2" }}
         >
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>

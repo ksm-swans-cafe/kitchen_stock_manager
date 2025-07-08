@@ -100,19 +100,27 @@ export default function IngredientManagement() {
     ingredient_price: 0,
   });
 
-  const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
-      return "1";
-    }
-    return "0.01";
-  };
+// ในฟังก์ชัน getStepValue
+const getStepValue = (unit: string): string => {
+  if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
+    return "1";
+  } 
+  // else if (["กิโลกรัม", "ลิตร"].includes(unit)) {
+  //   return "0.01";
+  // }
+  return "";
+};
 
-  const formatNumber = (value: number, unit: string): number => {
-    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
-      return Math.floor(value);
-    }
-    return value;
-  };
+// ในฟังก์ชัน formatNumber
+const formatNumber = (value: number, unit: string): number => {
+  if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
+    return Math.floor(value);
+  } 
+  // else if (["กิโลกรัม", "ลิตร", "ถุง"].includes(unit)) {
+  //   return Math.round(value * 100) / 100;
+  // }
+  return value;
+};
 
   const handleAddIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -484,11 +492,12 @@ export default function IngredientManagement() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="กรัม">กรัม</SelectItem>
+                            <SelectItem value="มิลลิลิตร">มิลลิลิตร</SelectItem>
                             {/* <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem> */}
                             <SelectItem value="ฟอง">ฟอง</SelectItem>
+                            <SelectItem value="ลูก">ลูก</SelectItem>
                             {/* <SelectItem value="ลิตร">ลิตร</SelectItem> */}
-                            <SelectItem value="มิลลิลิตร">มิลลิลิตร</SelectItem>
-                            <SelectItem value="ชิ้น">ชิ้น</SelectItem>
+                            {/* <SelectItem value="ถุง">ถุง</SelectItem> */}
                           </SelectContent>
                         </Select>
                       </div>

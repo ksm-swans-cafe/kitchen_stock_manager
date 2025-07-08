@@ -103,6 +103,8 @@ export async function PATCH(
       }
     }
 
+    const ingredientPriceperUnit = (ingredient_price / ingredient_total).toFixed(2);
+
     const result = await sql`
       UPDATE ingredients 
       SET 
@@ -112,6 +114,7 @@ export async function PATCH(
         ingredient_total_alert = COALESCE(${ingredient_total_alert ? Number(ingredient_total_alert) : null}, ingredient_total_alert),
         ingredient_price = COALESCE(${ingredient_price ? Number(ingredient_price) : null}, ingredient_price),
         ingredient_image = COALESCE(${ingredient_image_url}, ingredient_image),
+        ingredient_price_per_unit = COALESCE(${ingredientPriceperUnit}, ingredient_price_per_unit),
         ingredient_lastupdate = NOW()
       WHERE ingredient_id = ${id}
       RETURNING *
