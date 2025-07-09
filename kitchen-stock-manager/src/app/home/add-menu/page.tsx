@@ -30,13 +30,18 @@ export default function AddMenuPage() {
         const response = await fetch("/api/get/ingredients");
         if (!response.ok) throw new Error("Failed to fetch ingredients");
         const data = await response.json();
-        setIngredientOptions(data);
+
+        // เรียงลำดับ ก-ฮ
+        const sortedData = data.sort((a: any, b: any) => a.localeCompare(b, 'th'));
+
+        setIngredientOptions(sortedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load ingredient options");
       }
     }
     fetchIngredients();
   }, []);
+
 
   const getStepValue = (unit: string): string => {
     if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
