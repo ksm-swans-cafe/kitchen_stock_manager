@@ -23,18 +23,13 @@ export default function AddMenuPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch ingredient data
   useEffect(() => {
     async function fetchIngredients() {
       try {
         const response = await fetch("/api/get/ingredients");
         if (!response.ok) throw new Error("Failed to fetch ingredients");
         const data = await response.json();
-
-        // เรียงลำดับ ก-ฮ
-        const sortedData = data.sort((a: any, b: any) => a.localeCompare(b, 'th'));
-
-        setIngredientOptions(sortedData);
+        setIngredientOptions(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load ingredient options");
       }
@@ -42,29 +37,25 @@ export default function AddMenuPage() {
     fetchIngredients();
   }, []);
 
-
   const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
-      return "1";
-    }
-    //  else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
-    //   return "0.01";
-    // }
+    if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) return "1";
     return "0.01";
   };
 
   const formatNumber = (value: number, unit: string): number => {
     if (["กรัม", "ฟอง", "ชิ้น", "มิลลิลิตร"].includes(unit)) {
       return Math.floor(value);
-    } 
-    // else if (["กิโลกรัม", "ลิตร", "มิลลิลิตร"].includes(unit)) {
-    //   return Number(value.toFixed(2));
-    // }
+    }
     return value;
   };
 
+  const sortIngredients = (list: Ingredient[]) => {
+    return [...list].sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name));
+  };
+
   const handleAddIngredient = () => {
-    setIngredients([...ingredients, { useItem: 0, ingredient_name: "" }]);
+    const updated = [...ingredients, { useItem: 0, ingredient_name: "" }];
+    setIngredients(sortIngredients(updated));
   };
 
   const handleIngredientChange = (
@@ -89,11 +80,12 @@ export default function AddMenuPage() {
         [field]: value,
       };
     }
-    setIngredients(newIngredients);
+    setIngredients(sortIngredients(newIngredients));
   };
 
   const handleRemoveIngredient = (index: number) => {
-    setIngredients(ingredients.filter((_, i) => i !== index));
+    const updated = ingredients.filter((_, i) => i !== index);
+    setIngredients(sortIngredients(updated));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,11 +118,12 @@ export default function AddMenuPage() {
       return;
     }
 
-    // Prepare data for confirmation
+    const sortedIngredients = sortIngredients(ingredients);
+
     const confirmationMessage = `
       Please confirm the following details:
       - Menu Name: ${menuName}
-      - Ingredients: ${ingredients
+      - Ingredients: ${sortedIngredients
         .map((ing) => `${ing.useItem} x ${ing.ingredient_name}`)
         .join(", ")}
       - Sub Name: ${menuSubName}
@@ -145,7 +138,7 @@ export default function AddMenuPage() {
     try {
       const formData = new FormData();
       formData.append("menu_name", menuName);
-      formData.append("menu_ingredients", JSON.stringify(ingredients));
+      formData.append("menu_ingredients", JSON.stringify(sortedIngredients));
       formData.append("menu_subname", menuSubName);
 
       const response = await fetch("/api/post/menu", {
@@ -158,11 +151,10 @@ export default function AddMenuPage() {
         throw new Error(errorData.error || "Failed to create menu");
       }
 
-      // Reset form fields instead of navigating
       setMenuName("");
       setIngredients([{ useItem: 0, ingredient_name: "" }]);
       setMenuSubName("");
-      setError("Menu created successfully!"); // Optional success message
+      setError("Menu created successfully!");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -182,10 +174,7 @@ export default function AddMenuPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label
-            htmlFor="menuName"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="menuName" className="block text-sm font-medium text-gray-700">
             Menu Name
           </label>
           <input
@@ -200,39 +189,34 @@ export default function AddMenuPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Ingredients
-          </label>
-          {ingredients.map((ingredient, index) => {
+          <label className="block text-sm font-medium text-gray-700 mb-2">Ingredients</label>
+          {sortIngredients(ingredients).map((ingredient, index) => {
             const selectedOption = ingredientOptions.find(
               (opt) => opt.ingredient_name === ingredient.ingredient_name
             );
             const stepValue = selectedOption
               ? getStepValue(selectedOption.ingredient_unit)
               : "0.01";
+
             return (
               <div key={index} className="flex items-center space-x-4 mb-2">
-                  <select
+                <select
                   value={ingredient.ingredient_name}
                   onChange={(e) =>
-                    handleIngredientChange(
-                      index,
-                      "ingredient_name",
-                      e.target.value
-                    )
+                    handleIngredientChange(index, "ingredient_name", e.target.value)
                   }
                   className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                   required
                 >
                   <option value="">Select Ingredient</option>
-                  {ingredientOptions.map((option) => (
-                    <option
-                      key={option.ingredient_id}
-                      value={option.ingredient_name}
-                    >
-                      {option.ingredient_name}
-                    </option>
-                  ))}
+                  {ingredientOptions
+                    .slice()
+                    .sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name))
+                    .map((option) => (
+                      <option key={option.ingredient_id} value={option.ingredient_name}>
+                        {option.ingredient_name}
+                      </option>
+                    ))}
                 </select>
                 <input
                   type="number"
@@ -252,21 +236,13 @@ export default function AddMenuPage() {
                   className="w-32 rounded-md border-gray-300 shadow-sm bg-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 >
                   <option value="">Select Unit</option>
-                  {ingredientOptions
-                    .filter(
-                      (opt, i, arr) =>
-                        arr.findIndex(
-                          (o) => o.ingredient_unit === opt.ingredient_unit
-                        ) === i
-                    )
-                    .map((option) => (
-                      <option
-                        key={option.ingredient_id}
-                        value={option.ingredient_unit}
-                      >
-                        {option.ingredient_unit}
+                  {[...new Set(ingredientOptions.map((opt) => opt.ingredient_unit))].map(
+                    (unit, i) => (
+                      <option key={i} value={unit}>
+                        {unit}
                       </option>
-                    ))}
+                    )
+                  )}
                 </select>
                 {ingredients.length > 1 && (
                   <button
@@ -289,21 +265,21 @@ export default function AddMenuPage() {
             + Add Ingredient
           </button>
         </div>
-        
-<div>
+
+        <div>
           <label
-            htmlFor="menuName"
+            htmlFor="menuSubName"
             className="block text-sm font-medium text-gray-700"
           >
             Menu SubName
           </label>
           <input
             type="text"
-            id="menuName"
+            id="menuSubName"
             value={menuSubName}
             onChange={(e) => setMenuSubName(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            placeholder="Enter menu name"
+            placeholder="Enter menu sub name"
             required
           />
         </div>
