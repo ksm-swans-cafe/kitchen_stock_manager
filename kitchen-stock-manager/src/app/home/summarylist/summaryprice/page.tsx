@@ -10,6 +10,7 @@ import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
 import { BsCashStack } from "react-icons/bs";
 import { FaWallet } from "react-icons/fa";
+
 import {
   Clock,
   User,
@@ -45,72 +46,7 @@ import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 import PaginationComponent from "@/components/ui/Totalpage";
 import { useRouter } from "next/navigation";
-
-interface Ingredient {
-  ingredient_id?: number;
-  ingredient_name: string;
-  useItem: number;
-  calculatedTotal?: number;
-  sourceMenu?: string;
-  isChecked?: boolean;
-  ingredient_status?: boolean;
-  ingredient_price_per_unit?: number;
-  totalCost?: number; // Added to store calculated cost (useItem * ingredient_price_per_unit)
-}
-
-interface MenuItem {
-  menu_name: string;
-  menu_total: number;
-  menu_ingredients: Ingredient[];
-  status?: string;
-  order_number?: string;
-}
-
-interface Cart {
-  id: string;
-  orderNumber: string;
-  name: string;
-  date: string;
-  dateISO: string;
-  time: string;
-  sets: number;
-  price: number;
-  status: string;
-  createdBy: string;
-  menuItems: MenuItem[];
-  allIngredients: {
-    menuName: string;
-    ingredients: Ingredient[];
-    ingredient_status: boolean;
-  }[];
-  order_number: string;
-  cart_customer_name?: string;
-  cart_delivery_date?: string;
-  cart_receive_time?: string;
-  cart_export_time?: string;
-  cart_customer_tel?: string;
-  cart_location_send?: string;
-}
-
-interface CartItem extends MenuItem {
-  totalPrice?: number;
-}
-
-type RawCart = {
-  cart_id: string;
-  cart_menu_items: string | MenuItem[];
-  cart_create_date: string;
-  cart_total_price: number;
-  cart_status: string;
-  cart_order_number: string;
-  cart_username: string;
-  cart_customer_tel: string;
-  cart_customer_name: string;
-  cart_location_send: string;
-  cart_delivery_date: string;
-  cart_export_time: string;
-  cart_receive_time: string;
-};
+import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory"; // Assuming you have a types file
 
 const SummaryPrice: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,6 +103,7 @@ const SummaryPrice: React.FC = () => {
       const response = await fetch("/api/get/carts");
       if (!response.ok) throw new Error("Failed to fetch carts");
       const data = await response.json();
+      console.log("Fetched carts data:", data);
 
       const menuResponse = await fetch("/api/get/menu-list");
       if (!menuResponse.ok) throw new Error("Failed to fetch menu");
@@ -175,8 +112,20 @@ const SummaryPrice: React.FC = () => {
       if (!ingredientResponse.ok)
         throw new Error("Failed to fetch ingredients");
       const ingredientData = await ingredientResponse.json();
+    
+            // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
+            const ingredientUnitMap = new globalThis.Map<string, string>();
+            ingredientData.forEach((ing: any) => {
+                ingredientUnitMap.set(ing.ingredient_name.toString(), ing.ingredient_unit);
+            });
 
       const formattedOrders: Cart[] = data.map((cart: RawCart) => {
+        console.log(
+          "Processing cart ID:",
+          cart.cart_id,
+          "cart_menu_items:",
+          cart.cart_menu_items
+        );
         const [rawDate] = cart.cart_create_date.split("T");
         const [year, month, day] = rawDate.split("-");
         const dateObjectForLocale = new Date(
@@ -207,6 +156,7 @@ const SummaryPrice: React.FC = () => {
                 (item) => item && typeof item.menu_total === "number"
               )
               : [];
+        console.log("Parsed menuItems:", menuItems);
 
         const totalSets = menuItems
           .filter(
@@ -228,27 +178,22 @@ const SummaryPrice: React.FC = () => {
 
         const allIngredients = menuItems.map((menu) => ({
           menuName: menu.menu_name,
-          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => {
-            const ingredientInfo = ingredientData.find(
-              (ing: any) => ing.ingredient_name === dbIng.ingredient_name
-            );
-            const pricePerUnit = ingredientInfo?.ingredient_price_per_unit || 0;
-            return {
-              ...dbIng,
-              ingredient_id: dbIng.ingredient_id || undefined,
-              ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-              calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-              totalCost: dbIng.useItem * (menu.menu_total || 0) * pricePerUnit, // Calculate total cost
-              sourceMenu: menu.menu_name,
-              isChecked: dbIng.ingredient_status ?? false,
-              ingredient_status: dbIng.ingredient_status ?? false,
-              ingredient_price_per_unit: pricePerUnit,
-            };
-          }),
+          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
+            ...dbIng,
+            ingredient_id: dbIng.ingredient_id || undefined,
+            ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+            calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+            sourceMenu: menu.menu_name,
+            isChecked: dbIng.ingredient_status ?? false,
+            ingredient_status: dbIng.ingredient_status ?? false,
+            ingredient_unit: ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
+          })),
           ingredient_status: menu.menu_ingredients.every(
             (ing: Ingredient) => ing.ingredient_status ?? false
           ),
         }));
+
+        console.log("Mapped allIngredients:", allIngredients);
 
         const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
           }`;
@@ -275,11 +220,12 @@ const SummaryPrice: React.FC = () => {
         };
       });
 
-      const currentDate = new Date();
+      const currentDate = new Date(); // วันที่และเวลาปัจจุบัน
       formattedOrders.sort((a, b) => {
         const dateA = convertThaiDateToISO(a.cart_delivery_date);
         const dateB = convertThaiDateToISO(b.cart_delivery_date);
 
+        // หากไม่มีวันที่จัดส่ง ให้วางไว้ท้ายสุด
         if (!dateA) return 1;
         if (!dateB) return -1;
 
@@ -290,10 +236,12 @@ const SummaryPrice: React.FC = () => {
           new Date(dateB).getTime() - currentDate.getTime()
         );
 
+        // เรียงจากวันที่ใกล้ปัจจุบันมากที่สุดไปน้อยที่สุด
         if (diffA !== diffB) {
           return diffA - diffB;
         }
 
+        // ถ้า cart_delivery_date เหมือนกัน ให้เรียงตาม cart_order_number จากมากไปน้อย
         const orderNumA = parseInt(a.order_number || "0");
         const orderNumB = parseInt(b.order_number || "0");
         return orderNumB - orderNumA;
@@ -1325,7 +1273,7 @@ const SummaryPrice: React.FC = () => {
                                     เวลารับอาหาร{" "}
                                     {cart.cart_receive_time || "ไม่ระบุ"} น.
                                   </span>
-                                  <span
+                                  {/* <span
                                     className="cursor-pointer ml-2"
                                     onClick={() =>
                                       handleEditTimes(
@@ -1336,7 +1284,7 @@ const SummaryPrice: React.FC = () => {
                                     }
                                   >
                                     <Edit2 className="w-4 h-4" />
-                                  </span>
+                                  </span> */}
                                 </div>
                               )}
                             </div>
@@ -1514,20 +1462,6 @@ const SummaryPrice: React.FC = () => {
                                               </div>
                                             ) : (
                                               <div className="flex items-center gap-2 mb-3">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleEditTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName,
-                                                      totalBox
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-                                                >
-                                                  <Edit2 className="w-4 h-4" />
-                                                </Button>
                                               </div>
                                             )}
                                             {menuGroup.ingredients.map(
@@ -1545,7 +1479,7 @@ const SummaryPrice: React.FC = () => {
                                                   </span>
                                                   <div className="flex items-center gap-4">
                                                     <span className="text-gray-600">
-                                                      ใช้ {ing.useItem} กรัม ×{" "}
+                                                      ใช้ {ing.useItem} {ing.ingredient_unit} ×{" "}
                                                       {totalBox} กล่อง ={" "}
                                                       <strong
                                                         className="text-black-600"
@@ -1555,7 +1489,7 @@ const SummaryPrice: React.FC = () => {
                                                       >
                                                         {ing.calculatedTotal}
                                                       </strong>{" "}
-                                                      กรัม (ราคา{" "}
+                                                      {ing.ingredient_unit} (ราคา{" "}
                                                       <strong
                                                         className="text-black-600"
                                                         style={{
@@ -1566,35 +1500,6 @@ const SummaryPrice: React.FC = () => {
                                                       </strong>{" "}
                                                       บาท)
                                                     </span>
-                                                    <label className="cursor-pointer">
-                                                      <input
-                                                        type="checkbox"
-                                                        checked={
-                                                          ing.isChecked || false
-                                                        }
-                                                        onChange={() =>
-                                                          handleToggleIngredientCheck(
-                                                            cart.id,
-                                                            menuGroup.menuName,
-                                                            ing.ingredient_name
-                                                          )
-                                                        }
-                                                        className="hidden"
-                                                      />
-                                                      <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
-                                                          }`}
-                                                      >
-                                                        <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked
-                                                              ? "translate-x-5"
-                                                              : "translate-x-0.5"
-                                                            }`}
-                                                        />
-                                                      </span>
-                                                    </label>
                                                   </div>
                                                 </div>
                                               )

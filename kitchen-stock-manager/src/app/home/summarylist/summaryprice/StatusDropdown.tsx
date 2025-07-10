@@ -2,19 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
-
-type Ingredient = {
-  ingredient_id?: number;
-  ingredient_name: string;
-  useItem: number;
-  calculatedTotal?: number;
-  sourceMenu?: string;
-};
-
-type StatusOption = {
-  label: string;
-  value: string;
-};
+import { Ingredient, StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
 
 const statusOptions: StatusOption[] = [
   { label: "รอมัดจำ", value: "pending" },
@@ -22,16 +10,6 @@ const statusOptions: StatusOption[] = [
   { label: "ส่งแล้ว", value: "success" },
   { label: "ยกเลิก", value: "cancelled" },
 ];
-
-type StatusDropdownProps = {
-  cartId: string;
-  allIngredients: {
-    menuName: string;
-    ingredients: Ingredient[];
-  }[];
-  defaultStatus?: string;
-  onUpdated?: () => void;
-};
 
 const StatusDropdown: React.FC<StatusDropdownProps> = ({
   cartId,
@@ -132,7 +110,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   return (
     <div className="relative inline-flex items-center space-x-2">
-      {!isLocked && (
+      {/* {!isLocked && (
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
@@ -141,7 +119,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         >
           {isSubmitting ? "กำลังอัปเดต..." : "บันทึก"}
         </button>
-      )}
+      )} */}
 
       <div className="relative px-4">
         <button
@@ -149,23 +127,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             background: "#5bd9fc",
             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
           }}
-          className="inline-block hover:bg-blue-200 hover:shadow-md rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
+          className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
         >
           {statusOptions.find((o) => o.value === selectedStatus)?.label}
         </button>
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-          disabled={isLocked}
-          style={{ background: "#a2e1f2" }}
-        >
-          {statusOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
       </div>
     </div>
   );

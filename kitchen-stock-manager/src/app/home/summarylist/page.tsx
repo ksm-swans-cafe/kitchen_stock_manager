@@ -11,6 +11,7 @@ import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
 import { BsCashStack } from "react-icons/bs";
 import { FaWallet } from "react-icons/fa";
+import Swal from 'sweetalert2';
 import {
   Clock,
   User,
@@ -45,70 +46,7 @@ import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 import PaginationComponent from "@/components/ui/Totalpage";
-
-interface Ingredient {
-  ingredient_id?: number;
-  ingredient_name: string;
-  useItem: number;
-  calculatedTotal?: number;
-  sourceMenu?: string;
-  isChecked?: boolean; // ใช้ใน frontend เพื่อ map กับ ingredient_status
-  ingredient_status?: boolean;
-}
-
-interface MenuItem {
-  menu_name: string;
-  menu_total: number;
-  menu_ingredients: Ingredient[];
-  status?: string;
-  order_number?: string;
-}
-
-interface Cart {
-  id: string;
-  orderNumber: string;
-  name: string;
-  date: string;
-  dateISO: string;
-  time: string;
-  sets: number;
-  price: number;
-  status: string;
-  createdBy: string;
-  menuItems: MenuItem[];
-  allIngredients: {
-    menuName: string;
-    ingredients: Ingredient[];
-    ingredient_status: boolean;
-  }[];
-  order_number: string;
-  cart_customer_name?: string;
-  cart_delivery_date?: string;
-  cart_receive_time?: string;
-  cart_export_time?: string;
-  cart_customer_tel?: string;
-  cart_location_send?: string;
-}
-
-interface CartItem extends MenuItem {
-  totalPrice?: number;
-}
-
-type RawCart = {
-  cart_id: string;
-  cart_menu_items: string | MenuItem[];
-  cart_create_date: string;
-  cart_total_price: number;
-  cart_status: string;
-  cart_order_number: string;
-  cart_username: string;
-  cart_customer_tel: string;
-  cart_customer_name: string;
-  cart_location_send: string;
-  cart_delivery_date: string;
-  cart_export_time: string;
-  cart_receive_time: string;
-};
+import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory"; 
 
 const SummaryList: React.FC = () => {
   const router = useRouter();
@@ -176,6 +114,13 @@ const SummaryList: React.FC = () => {
       const ingredientResponse = await fetch("/api/get/ingredients");
       if (!ingredientResponse.ok)
         throw new Error("Failed to fetch ingredients");
+      const ingredientData = await ingredientResponse.json();
+    
+            // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
+            const ingredientUnitMap = new globalThis.Map<string, string>();
+            ingredientData.forEach((ing: any) => {
+                ingredientUnitMap.set(ing.ingredient_name.toString(), ing.ingredient_unit);
+            });
 
       const formattedOrders: Cart[] = data.map((cart: RawCart) => {
         console.log(
@@ -244,6 +189,7 @@ const SummaryList: React.FC = () => {
             sourceMenu: menu.menu_name,
             isChecked: dbIng.ingredient_status ?? false,
             ingredient_status: dbIng.ingredient_status ?? false,
+            ingredient_unit: ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
           })),
           ingredient_status: menu.menu_ingredients.every(
             (ing: Ingredient) => ing.ingredient_status ?? false
@@ -1019,10 +965,20 @@ const SummaryList: React.FC = () => {
       menuGroup.ingredients.every((ing: any) => ing.isChecked)
     );
   
+    // if (!allIngredientsChecked) {
+    //   alert("กรุณาเลือกวัตถุดิบทุกตัวก่อนอัปเดตสถานะเป็น 'ส่งแล้ว'");
+    //   return;
+    // }
+
     if (!allIngredientsChecked) {
-      alert("กรุณาเลือกวัตถุดิบทุกตัวก่อนอัปเดตสถานะเป็น 'ส่งแล้ว'");
-      return;
-    }
+    Swal.fire({
+      icon: 'success',
+      title: 'เปลี่ยนสถานะสำเร็จ',
+      text: 'ระบบได้เปลี่ยนสถานะเรียบร้อย',
+      confirmButtonText: 'ตกลง',
+    });
+    return;
+  }
   
     handleUpdate();
   };
@@ -1487,12 +1443,14 @@ const SummaryList: React.FC = () => {
                             </div>
                           </AccordionTrigger>
                           <div className="flex justify-center mt-2">
-                            <StatusDropdown
-                              cartId={cart.id}
-                              allIngredients={cart.allIngredients}
-                              defaultStatus={cart.status}
-                              onUpdated= {() => handleUpdateWithCheck(cart)}
-                            />
+                          <StatusDropdown
+  cartId={cart.id}
+  allIngredients={cart.allIngredients}
+  defaultStatus={cart.status}
+  cart_receive_time={cart.cart_receive_time} // เพิ่ม prop
+  cart_export_time={cart.cart_export_time} // เพิ่ม prop
+  onUpdated={() => handleUpdateWithCheck(cart)}
+/>
                           </div>
                           <AccordionContent className="mt-4">
                             <div className="grid md:grid-cols-2 gap-6">
@@ -1620,7 +1578,7 @@ const SummaryList: React.FC = () => {
                                                   </span>
                                                   <div className="flex items-center gap-4">
                                                     <span className="text-gray-600">
-                                                      ใช้ {ing.useItem} กรัม ×{" "}
+                                                      ใช้ {ing.useItem} {ing.ingredient_unit} ×{" "}
                                                       {totalBox} กล่อง ={" "}
                                                       <strong
                                                         className="text-black-600"
@@ -1630,7 +1588,7 @@ const SummaryList: React.FC = () => {
                                                       >
                                                         {ing.calculatedTotal}
                                                       </strong>{" "}
-                                                      กรัม
+                                                      {ing.ingredient_unit}
                                                     </span>
                                                     <label className="cursor-pointer">
                                                       <input

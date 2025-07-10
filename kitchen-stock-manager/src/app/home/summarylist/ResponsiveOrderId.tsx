@@ -1,11 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Hash } from "lucide-react";
-
-type ResponsiveOrderIdProps = {
-  id: string | number;
-  maxFontSize?: number;
-  minFontSize?: number;
-};
+import { ResponsiveOrderIdProps } from "@/types/interface_summary_orderhistory";
 
 export default function ResponsiveOrderId({
   id,

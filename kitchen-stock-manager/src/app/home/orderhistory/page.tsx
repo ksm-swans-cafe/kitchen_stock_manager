@@ -52,70 +52,7 @@ import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 import { useRouter } from "next/navigation";
-
-interface Ingredient {
-  ingredient_id?: number;
-  ingredient_name: string;
-  useItem: number;
-  calculatedTotal?: number;
-  sourceMenu?: string;
-  isChecked?: boolean; // ใช้ใน frontend เพื่อ map กับ ingredient_status
-  ingredient_status?: boolean;
-}
-
-interface MenuItem {
-  menu_name: string;
-  menu_total: number;
-  menu_ingredients: Ingredient[];
-  status?: string;
-  order_number?: string;
-}
-
-interface Cart {
-  id: string;
-  orderNumber: string;
-  name: string;
-  date: string;
-  dateISO: string;
-  time: string;
-  sets: number;
-  price: number;
-  status: string;
-  createdBy: string;
-  menuItems: MenuItem[];
-  allIngredients: {
-    menuName: string;
-    ingredients: Ingredient[];
-    ingredient_status: boolean;
-  }[];
-  order_number: string;
-  cart_customer_name?: string;
-  cart_delivery_date?: string;
-  cart_receive_time?: string;
-  cart_export_time?: string;
-  cart_customer_tel?: string;
-  cart_location_send?: string;
-}
-
-interface CartItem extends MenuItem {
-  totalPrice?: number;
-}
-
-type RawCart = {
-  cart_id: string;
-  cart_menu_items: string | MenuItem[];
-  cart_create_date: string;
-  cart_total_price: number;
-  cart_status: string;
-  cart_order_number: string;
-  cart_username: string;
-  cart_customer_tel: string;
-  cart_customer_name: string;
-  cart_location_send: string;
-  cart_delivery_date: string;
-  cart_export_time: string;
-  cart_receive_time: string;
-};
+import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory"; // Assuming you have a types file
 
 const OrderHistory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,156 +104,132 @@ const OrderHistory: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/get/carts");
-      if (!response.ok) throw new Error("Failed to fetch carts");
-      const data = await response.json();
-      console.log("Fetched carts data:", data);
+        // Fetch carts
+        const response = await fetch("/api/get/carts");
+        if (!response.ok) throw new Error("Failed to fetch carts");
+        const cartData = await response.json();
 
-      const menuResponse = await fetch("/api/get/menu-list");
-      if (!menuResponse.ok) throw new Error("Failed to fetch menu");
+        // Fetch menu list
+        const menuResponse = await fetch("/api/get/menu-list");
+        if (!menuResponse.ok) throw new Error("Failed to fetch menu");
+        const menuData = await menuResponse.json();
 
-      const ingredientResponse = await fetch("/api/get/ingredients");
-      if (!ingredientResponse.ok)
-        throw new Error("Failed to fetch ingredients");
+        // Fetch ingredients
+        const ingredientResponse = await fetch("/api/get/ingredients");
+        if (!ingredientResponse.ok) throw new Error("Failed to fetch ingredients");
+        const ingredientData = await ingredientResponse.json();
 
-      const formattedOrders: Cart[] = data.map((cart: RawCart) => {
-        console.log(
-          "Processing cart ID:",
-          cart.cart_id,
-          "cart_menu_items:",
-          cart.cart_menu_items
-        );
-        const [rawDate] = cart.cart_create_date.split("T");
-        const [year, month, day] = rawDate.split("-");
-        const dateObjectForLocale = new Date(
-          Number(year),
-          Number(month) - 1,
-          Number(day)
-        );
-        const formattedDate = dateObjectForLocale
-          .toLocaleDateString("th-TH", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })
-          .replace(/ /g, " ");
+        // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
+        const ingredientUnitMap = new globalThis.Map<string, string>();
+        ingredientData.forEach((ing: any) => {
+            ingredientUnitMap.set(ing.ingredient_name.toString(), ing.ingredient_unit);
+        });
 
-        const date = new Date(cart.cart_create_date);
-        const formattedDateISO = date.toISOString().split("T")[0];
-        const formattedTime = cart.cart_create_date
-          .split("T")[1]
-          .split(".")[0]
-          .slice(0, 5);
+        const formattedOrders: Cart[] = cartData.map((cart: RawCart) => {
+            const [rawDate] = cart.cart_create_date.split("T");
+            const [year, month, day] = rawDate.split("-");
+            const dateObjectForLocale = new Date(
+                Number(year),
+                Number(month) - 1,
+                Number(day)
+            );
+            const formattedDate = dateObjectForLocale
+                .toLocaleDateString("th-TH", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                })
+                .replace(/ /g, " ");
 
-        const menuItems: MenuItem[] =
-          typeof cart.cart_menu_items === "string" && cart.cart_menu_items
-            ? safeParseJSON(cart.cart_menu_items)
-            : Array.isArray(cart.cart_menu_items)
-              ? cart.cart_menu_items.filter(
-                (item) => item && typeof item.menu_total === "number"
-              )
-              : [];
-        console.log("Parsed menuItems:", menuItems);
+            const date = new Date(cart.cart_create_date);
+            const formattedDateISO = date.toISOString().split("T")[0];
+            const formattedTime = cart.cart_create_date
+                .split("T")[1]
+                .split(".")[0]
+                .slice(0, 5);
 
-        const totalSets = menuItems
-          .filter(
-            (item) =>
-              item &&
-              typeof item === "object" &&
-              typeof item.menu_total === "number"
-          )
-          .reduce((sum, item) => sum + (item.menu_total || 0), 0);
+            const menuItems: MenuItem[] =
+                typeof cart.cart_menu_items === "string" && cart.cart_menu_items
+                    ? safeParseJSON(cart.cart_menu_items)
+                    : Array.isArray(cart.cart_menu_items)
+                        ? cart.cart_menu_items.filter(
+                              (item) => item && typeof item.menu_total === "number"
+                          )
+                        : [];
 
-        const menuDisplayName =
-          menuItems.length > 0
-            ? menuItems
-              .map(
-                (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-              )
-              .join(" + ")
-            : "ไม่มีชื่อเมนู";
+            const totalSets = menuItems
+                .filter(
+                    (item) =>
+                        item &&
+                        typeof item === "object" &&
+                        typeof item.menu_total === "number"
+                )
+                .reduce((sum, item) => sum + (item.menu_total || 0), 0);
 
-        const allIngredients = menuItems.map((menu) => ({
-          menuName: menu.menu_name,
-          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
-            ...dbIng,
-            ingredient_id: dbIng.ingredient_id || undefined,
-            ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-            calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-            sourceMenu: menu.menu_name,
-            isChecked: dbIng.ingredient_status ?? false,
-            ingredient_status: dbIng.ingredient_status ?? false,
-          })),
-          ingredient_status: menu.menu_ingredients.every(
-            (ing: Ingredient) => ing.ingredient_status ?? false
-          ),
-        }));
+            const menuDisplayName =
+                menuItems.length > 0
+                    ? menuItems
+                          .map(
+                              (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+                          )
+                          .join(" + ")
+                    : "ไม่มีชื่อเมนู";
 
-        console.log("Mapped allIngredients:", allIngredients);
+            const allIngredients = menuItems.map((menu) => ({
+                menuName: menu.menu_name,
+                ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
+                    ...dbIng,
+                    ingredient_id: dbIng.ingredient_id || undefined,
+                    ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+                    calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+                    sourceMenu: menu.menu_name,
+                    isChecked: dbIng.ingredient_status ?? false,
+                    ingredient_status: dbIng.ingredient_status ?? false,
+                    ingredient_unit: ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
+                })),
+                ingredient_status: menu.menu_ingredients.every(
+                    (ing: Ingredient) => ing.ingredient_status ?? false
+                ),
+            }));
 
-        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-          }`;
-        return {
-          id: cart.cart_id || "no-id",
-          orderNumber,
-          name: menuDisplayName,
-          date: formattedDate,
-          dateISO: formattedDateISO,
-          time: formattedTime,
-          sets: totalSets,
-          price: cart.cart_total_price || 0,
-          status: cart.cart_status,
-          createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
-          menuItems: menuItems.map((item) => ({ ...item })),
-          allIngredients,
-          order_number: cart.cart_order_number,
-          cart_delivery_date: cart.cart_delivery_date,
-          cart_receive_time: cart.cart_receive_time,
-          cart_export_time: cart.cart_export_time,
-          cart_customer_tel: cart.cart_customer_tel,
-          cart_customer_name: cart.cart_customer_name,
-          cart_location_send: cart.cart_location_send,
-        };
-      });
+            const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
+            return {
+                id: cart.cart_id || "no-id",
+                orderNumber,
+                name: menuDisplayName,
+                date: formattedDate,
+                dateISO: formattedDateISO,
+                time: formattedTime,
+                sets: totalSets,
+                price: cart.cart_total_price || 0,
+                status: cart.cart_status,
+                createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
+                menuItems: menuItems.map((item) => ({ ...item })),
+                allIngredients,
+                order_number: cart.cart_order_number,
+                cart_delivery_date: cart.cart_delivery_date,
+                cart_receive_time: cart.cart_receive_time,
+                cart_export_time: cart.cart_export_time,
+                cart_customer_tel: cart.cart_customer_tel,
+                cart_customer_name: cart.cart_customer_name,
+                cart_location_send: cart.cart_location_send,
+            };
+        });
 
-      const currentDate = new Date(); // วันที่และเวลาปัจจุบัน
-      formattedOrders.sort((a, b) => {
-        const dateA = convertThaiDateToISO(a.cart_delivery_date);
-        const dateB = convertThaiDateToISO(b.cart_delivery_date);
-
-        // หากไม่มีวันที่จัดส่ง ให้วางไว้ท้ายสุด
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        const diffA = Math.abs(
-          new Date(dateA).getTime() - currentDate.getTime()
-        );
-        const diffB = Math.abs(
-          new Date(dateB).getTime() - currentDate.getTime()
-        );
-
-        // เรียงจากวันที่ใกล้ปัจจุบันมากที่สุดไปน้อยที่สุด
-        if (diffA !== diffB) {
-          return diffA - diffB;
+        setAllCarts(formattedOrders);
+        setCarts(formattedOrders);
+        // อัปเดต calendarEvents หรือ state อื่น ๆ ตามต้องการ
+    } catch (error) {
+        // setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+        if (error instanceof Error) {
+            setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+        } else {
+            setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + String(error));
         }
-
-        // ถ้า cart_delivery_date เหมือนกัน ให้เรียงตาม cart_order_number จากมากไปน้อย
-        const orderNumA = parseInt(a.order_number || "0");
-        const orderNumB = parseInt(b.order_number || "0");
-        return orderNumB - orderNumA;
-      });
-
-      setAllCarts(formattedOrders);
-      setCarts(formattedOrders);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-      setError(
-        err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล"
-      );
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   // ฟังก์ชันจัดรูปแบบเวลาโดยอัตโนมัติ
   const formatInputTime = (value: string): string => {
@@ -386,6 +299,10 @@ const OrderHistory: React.FC = () => {
       console.error("Error fetching calendar data:", err);
       setError("ไม่สามารถโหลดข้อมูลปฏิทินได้");
     }
+  };
+
+  const handleorderhistoryprice = () => {
+    router.push("/home/orderhistory/orderhistoryprice");
   };
 
   useEffect(() => {
@@ -883,6 +800,12 @@ const OrderHistory: React.FC = () => {
 
         <div className="flex justify-end gap-3 mb-6">
           <Button
+                      onClick={handleorderhistoryprice}
+                      className="h-10 rounded-lg border border-slate-300 shadow-sm"
+                    >
+                      ไปหน้าสรุปรายการต่อหน่วย
+                    </Button>
+          <Button
             onClick={() => {
               setSelectedDate(null);
               setCarts(allCarts);
@@ -1083,72 +1006,6 @@ const OrderHistory: React.FC = () => {
                                             </span>
                                           </AccordionTrigger>
                                           <AccordionContent className="pt-3 space-y-2">
-                                            {/* {isEditingThisMenu ? (
-                                              <div className="flex items-center gap-2 mb-3">
-                                                <Input
-                                                  type="number"
-                                                  value={editTotalBox}
-                                                  onChange={(e) =>
-                                                    setEditTotalBox(
-                                                      Number(e.target.value)
-                                                    )
-                                                  }
-                                                  className="w-20 h-8 text-sm rounded-md border-gray-300"
-                                                  min="0"
-                                                  aria-label="Edit box quantity"
-                                                />
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleSaveTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-50"
-                                                  aria-label="Save box quantity"
-                                                  disabled={
-                                                    isSaving === cart.id
-                                                  }
-                                                >
-                                                  {isSaving === cart.id
-                                                    ? "Saving..."
-                                                    : "Save"}
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    setEditingMenu(null)
-                                                  }
-                                                  className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-                                                  aria-label="Cancel edit"
-                                                  disabled={
-                                                    isSaving === cart.id
-                                                  }
-                                                >
-                                                  Cancel
-                                                </Button>
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center gap-2 mb-3">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleEditTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName,
-                                                      totalBox
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-                                                >
-                                                  <Edit2 className="w-4 h-4" />
-                                                </Button>
-                                              </div>
-                                            )} */}
                                             {menuGroup.ingredients.map(
                                               (ing, idx) => (
                                                 <div
@@ -1164,7 +1021,7 @@ const OrderHistory: React.FC = () => {
                                                   </span>
                                                   <div className="flex items-center gap-4">
                                                     <span className="text-gray-600">
-                                                      ใช้ {ing.useItem} กรัม ×{" "}
+                                                      ใช้ {ing.useItem} {ing.ingredient_unit} ×{" "}
                                                       {totalBox} กล่อง ={" "}
                                                       <strong
                                                         className="text-black-600"
@@ -1174,7 +1031,7 @@ const OrderHistory: React.FC = () => {
                                                       >
                                                         {ing.calculatedTotal}
                                                       </strong>{" "}
-                                                      กรัม
+                                                      {ing.ingredient_unit}
                                                     </span>
                                                     <label className="cursor-pointer">
                                                       <input
