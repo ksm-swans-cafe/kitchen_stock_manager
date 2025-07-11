@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { Ingredient, StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
-// import { ToastContainer, toast } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
-
-// <ToastContainer position="top-center" />
-import Swal from 'sweetalert2';
+import {
+  // Ingredient,
+  StatusOption,
+  StatusDropdownProps,
+} from "@/types/interface_summary_orderhistory";
+import Swal from "sweetalert2";
 
 const statusOptions: StatusOption[] = [
   { label: "รอมัดจำ", value: "pending" },
@@ -45,43 +45,43 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
       // ตรวจสอบเมื่อเปลี่ยนเป็นสถานะ "success"
       if (selectedStatus === "success") {
-  const allIngredientsChecked = allIngredients.every((menu) =>
-    menu.ingredients.every((ing) => ing.isChecked)
-  );
+        const allIngredientsChecked = allIngredients.every((menu) =>
+          menu.ingredients.every((ing) => ing.isChecked)
+        );
 
-  if (!allIngredientsChecked) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'วัตถุดิบยังไม่ครบ',
-      text: "กรุณาเลือกวัตถุดิบทุกตัวก่อนเปลี่ยนสถานะเป็น 'ส่งแล้ว'",
-      confirmButtonText: 'ตกลง',
-    });
-    setIsSubmitting(false);
-    return;
-  }
+        if (!allIngredientsChecked) {
+          Swal.fire({
+            icon: "warning",
+            title: "วัตถุดิบยังไม่ครบ",
+            text: "กรุณาเลือกวัตถุดิบทุกตัวก่อนเปลี่ยนสถานะเป็น 'ส่งแล้ว'",
+            confirmButtonText: "ตกลง",
+          });
+          setIsSubmitting(false);
+          return;
+        }
 
-  if (!cart_receive_time || !isValidTimeFormat(cart_receive_time)) {
-    Swal.fire({
-      icon: 'error',
-      title: 'เวลารับไม่ถูกต้อง',
-      text: 'กรุณากรอกเวลารับอาหารให้ถูกต้อง (รูปแบบ HH:mm)',
-      confirmButtonText: 'เข้าใจแล้ว',
-    });
-    setIsSubmitting(false);
-    return;
-  }
+        if (!cart_receive_time || !isValidTimeFormat(cart_receive_time)) {
+          Swal.fire({
+            icon: "error",
+            title: "เวลารับไม่ถูกต้อง",
+            text: "กรุณากรอกเวลารับอาหารให้ถูกต้อง (รูปแบบ HH:mm)",
+            confirmButtonText: "เข้าใจแล้ว",
+          });
+          setIsSubmitting(false);
+          return;
+        }
 
-  if (!cart_export_time || !isValidTimeFormat(cart_export_time)) {
-    Swal.fire({
-      icon: 'error',
-      title: 'เวลาส่งไม่ถูกต้อง',
-      text: 'กรุณากรอกเวลาส่งอาหารให้ถูกต้อง (รูปแบบ HH:mm)',
-      confirmButtonText: 'รับทราบ',
-    });
-    setIsSubmitting(false);
-    return;
-  }
-}
+        if (!cart_export_time || !isValidTimeFormat(cart_export_time)) {
+          Swal.fire({
+            icon: "error",
+            title: "เวลาส่งไม่ถูกต้อง",
+            text: "กรุณากรอกเวลาส่งอาหารให้ถูกต้อง (รูปแบบ HH:mm)",
+            confirmButtonText: "รับทราบ",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
 
       // ถ้าเลือก completed → จัดการ ingredients ก่อน
       if (selectedStatus === "completed") {
@@ -89,7 +89,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           for (const ingredient of menu.ingredients) {
             if (!ingredient.ingredient_id) continue;
 
-            // GET ปริมาณคงเหลือ
             const res = await fetch(
               `/api/get/ingredients/${ingredient.ingredient_id}`
             );
@@ -115,7 +114,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
               }
             }
 
-            // PATCH กลับไปเก็บคงเหลือใหม่
             const formData = new FormData();
             formData.append("ingredient_total", String(remaining));
             const updateRes = await fetch(
@@ -132,9 +130,17 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             }
           }
         }
+        Swal.fire({
+          icon: "success",
+          title: "อัปเดตสถานะสำเร็จ",
+          text: `สถานะถูกเปลี่ยนเป็น "${
+            statusOptions.find((o) => o.value === selectedStatus)?.label
+          }"`,
+          showConfirmButton: false,
+          timer: 4000,
+        });
       }
 
-      // PATCH cart status ทุกกรณี
       const formData = new FormData();
       formData.append("cart_status", selectedStatus);
       formData.append("cart_last_update", userName ?? "unknown");
@@ -149,10 +155,8 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         throw new Error(errorData.error || "Failed to update status");
       }
 
-      // เรียก onUpdated หลังอัปเดตสถานะสำเร็จ
       onUpdated?.();
 
-      // Lock ปุ่มถ้า success หรือ cancelled
       if (selectedStatus === "success" || selectedStatus === "cancelled") {
         setIsLocked(true);
       }
@@ -171,7 +175,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           onClick={handleSubmit}
           disabled={isSubmitting}
           className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: "#5cfa6c", boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)" }}
+          style={{
+            background: "#5cfa6c",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+          }}
         >
           {isSubmitting ? "กำลังอัปเดต..." : "บันทึก"}
         </button>

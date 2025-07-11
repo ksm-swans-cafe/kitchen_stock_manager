@@ -112,23 +112,23 @@ const OrderHistory: React.FC = () => {
             const response = await fetch("/api/get/carts");
             if (!response.ok) throw new Error("Failed to fetch carts");
             const cartData = await response.json();
-    
+
             // Fetch menu list
             const menuResponse = await fetch("/api/get/menu-list");
             if (!menuResponse.ok) throw new Error("Failed to fetch menu");
             const menuData = await menuResponse.json();
-    
+
             // Fetch ingredients
             const ingredientResponse = await fetch("/api/get/ingredients");
             if (!ingredientResponse.ok) throw new Error("Failed to fetch ingredients");
             const ingredientData = await ingredientResponse.json();
-    
+
             // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
             const ingredientUnitMap = new globalThis.Map<string, string>();
             ingredientData.forEach((ing: any) => {
                 ingredientUnitMap.set(ing.ingredient_name.toString(), ing.ingredient_unit);
             });
-    
+
             const formattedOrders: Cart[] = cartData.map((cart: RawCart) => {
                 const [rawDate] = cart.cart_create_date.split("T");
                 const [year, month, day] = rawDate.split("-");
@@ -144,23 +144,23 @@ const OrderHistory: React.FC = () => {
                         year: "numeric",
                     })
                     .replace(/ /g, " ");
-    
+
                 const date = new Date(cart.cart_create_date);
                 const formattedDateISO = date.toISOString().split("T")[0];
                 const formattedTime = cart.cart_create_date
                     .split("T")[1]
                     .split(".")[0]
                     .slice(0, 5);
-    
+
                 const menuItems: MenuItem[] =
                     typeof cart.cart_menu_items === "string" && cart.cart_menu_items
                         ? safeParseJSON(cart.cart_menu_items)
                         : Array.isArray(cart.cart_menu_items)
                             ? cart.cart_menu_items.filter(
-                                  (item) => item && typeof item.menu_total === "number"
-                              )
+                                (item) => item && typeof item.menu_total === "number"
+                            )
                             : [];
-    
+
                 const totalSets = menuItems
                     .filter(
                         (item) =>
@@ -169,16 +169,16 @@ const OrderHistory: React.FC = () => {
                             typeof item.menu_total === "number"
                     )
                     .reduce((sum, item) => sum + (item.menu_total || 0), 0);
-    
+
                 const menuDisplayName =
                     menuItems.length > 0
                         ? menuItems
-                              .map(
-                                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-                              )
-                              .join(" + ")
+                            .map(
+                                (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+                            )
+                            .join(" + ")
                         : "ไม่มีชื่อเมนู";
-    
+
                 const allIngredients = menuItems.map((menu) => ({
                     menuName: menu.menu_name,
                     ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
@@ -195,7 +195,7 @@ const OrderHistory: React.FC = () => {
                         (ing: Ingredient) => ing.ingredient_status ?? false
                     ),
                 }));
-    
+
                 const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
                 return {
                     id: cart.cart_id || "no-id",
@@ -219,7 +219,7 @@ const OrderHistory: React.FC = () => {
                     cart_location_send: cart.cart_location_send,
                 };
             });
-    
+
             setAllCarts(formattedOrders);
             setCarts(formattedOrders);
             // อัปเดต calendarEvents หรือ state อื่น ๆ ตามต้องการ
@@ -796,10 +796,10 @@ const OrderHistory: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5">
                     <Button
                         onClick={handleorderhistoryprice}
-                        className="h-10 rounded-lg border border-slate-300 shadow-sm"
+                        className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm break-words"
                     >
                         ไปหน้าประวัติการสั่งซื้อ
                     </Button>
@@ -808,23 +808,24 @@ const OrderHistory: React.FC = () => {
                             setSelectedDate(null);
                             setCarts(allCarts);
                         }}
-                        className="h-10 rounded-lg border border-slate-300 shadow-sm"
+                        className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm"
                     >
                         ล้างวันที่
                     </Button>
-                    <Button
-                        onClick={handleExportCSV}
-                        className="flex items-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2"
-                    >
-                        <Download className="w-4 h-4 mr-2" /> CSV
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={handleExportPDF}
-                        className="flex items-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2"
-                    >
-                        <Download className="w-4 h-4 mr-2" /> PDF
-                    </Button>
+                    <div className="flex flex-center">
+                        <Button
+                            onClick={handleExportCSV}
+                            className="h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" /> CSV
+                        </Button>
+                        <Button
+                            onClick={handleExportPDF}
+                            className="h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" /> PDF
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="space-y-6">
@@ -1046,7 +1047,7 @@ const OrderHistory: React.FC = () => {
                                                                                                                 }
                                                                                                                 className="hidden"
                                                                                                             />
-                                                                                                            
+
                                                                                                         </label>
                                                                                                     </div>
                                                                                                 </div>

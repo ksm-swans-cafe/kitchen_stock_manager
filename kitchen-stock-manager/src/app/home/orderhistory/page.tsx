@@ -52,7 +52,13 @@ import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 import { useRouter } from "next/navigation";
-import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory"; // Assuming you have a types file
+import {
+  Ingredient,
+  MenuItem,
+  Cart,
+  CartItem,
+  RawCart,
+} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file
 
 const OrderHistory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,132 +110,140 @@ const OrderHistory: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-        // Fetch carts
-        const response = await fetch("/api/get/carts");
-        if (!response.ok) throw new Error("Failed to fetch carts");
-        const cartData = await response.json();
+      // Fetch carts
+      const response = await fetch("/api/get/carts");
+      if (!response.ok) throw new Error("Failed to fetch carts");
+      const cartData = await response.json();
 
-        // Fetch menu list
-        const menuResponse = await fetch("/api/get/menu-list");
-        if (!menuResponse.ok) throw new Error("Failed to fetch menu");
-        const menuData = await menuResponse.json();
+      // Fetch menu list
+      const menuResponse = await fetch("/api/get/menu-list");
+      if (!menuResponse.ok) throw new Error("Failed to fetch menu");
+      const menuData = await menuResponse.json();
 
-        // Fetch ingredients
-        const ingredientResponse = await fetch("/api/get/ingredients");
-        if (!ingredientResponse.ok) throw new Error("Failed to fetch ingredients");
-        const ingredientData = await ingredientResponse.json();
+      // Fetch ingredients
+      const ingredientResponse = await fetch("/api/get/ingredients");
+      if (!ingredientResponse.ok)
+        throw new Error("Failed to fetch ingredients");
+      const ingredientData = await ingredientResponse.json();
 
-        // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
-        const ingredientUnitMap = new globalThis.Map<string, string>();
-        ingredientData.forEach((ing: any) => {
-            ingredientUnitMap.set(ing.ingredient_name.toString(), ing.ingredient_unit);
-        });
+      // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
+      const ingredientUnitMap = new globalThis.Map<string, string>();
+      ingredientData.forEach((ing: any) => {
+        ingredientUnitMap.set(
+          ing.ingredient_name.toString(),
+          ing.ingredient_unit
+        );
+      });
 
-        const formattedOrders: Cart[] = cartData.map((cart: RawCart) => {
-            const [rawDate] = cart.cart_create_date.split("T");
-            const [year, month, day] = rawDate.split("-");
-            const dateObjectForLocale = new Date(
-                Number(year),
-                Number(month) - 1,
-                Number(day)
-            );
-            const formattedDate = dateObjectForLocale
-                .toLocaleDateString("th-TH", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                })
-                .replace(/ /g, " ");
+      const formattedOrders: Cart[] = cartData.map((cart: RawCart) => {
+        const [rawDate] = cart.cart_create_date.split("T");
+        const [year, month, day] = rawDate.split("-");
+        const dateObjectForLocale = new Date(
+          Number(year),
+          Number(month) - 1,
+          Number(day)
+        );
+        const formattedDate = dateObjectForLocale
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ");
 
-            const date = new Date(cart.cart_create_date);
-            const formattedDateISO = date.toISOString().split("T")[0];
-            const formattedTime = cart.cart_create_date
-                .split("T")[1]
-                .split(".")[0]
-                .slice(0, 5);
+        const date = new Date(cart.cart_create_date);
+        const formattedDateISO = date.toISOString().split("T")[0];
+        const formattedTime = cart.cart_create_date
+          .split("T")[1]
+          .split(".")[0]
+          .slice(0, 5);
 
-            const menuItems: MenuItem[] =
-                typeof cart.cart_menu_items === "string" && cart.cart_menu_items
-                    ? safeParseJSON(cart.cart_menu_items)
-                    : Array.isArray(cart.cart_menu_items)
-                        ? cart.cart_menu_items.filter(
-                              (item) => item && typeof item.menu_total === "number"
-                          )
-                        : [];
+        const menuItems: MenuItem[] =
+          typeof cart.cart_menu_items === "string" && cart.cart_menu_items
+            ? safeParseJSON(cart.cart_menu_items)
+            : Array.isArray(cart.cart_menu_items)
+            ? cart.cart_menu_items.filter(
+                (item) => item && typeof item.menu_total === "number"
+              )
+            : [];
 
-            const totalSets = menuItems
-                .filter(
-                    (item) =>
-                        item &&
-                        typeof item === "object" &&
-                        typeof item.menu_total === "number"
+        const totalSets = menuItems
+          .filter(
+            (item) =>
+              item &&
+              typeof item === "object" &&
+              typeof item.menu_total === "number"
+          )
+          .reduce((sum, item) => sum + (item.menu_total || 0), 0);
+
+        const menuDisplayName =
+          menuItems.length > 0
+            ? menuItems
+                .map(
+                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
                 )
-                .reduce((sum, item) => sum + (item.menu_total || 0), 0);
+                .join(" + ")
+            : "ไม่มีชื่อเมนู";
 
-            const menuDisplayName =
-                menuItems.length > 0
-                    ? menuItems
-                          .map(
-                              (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-                          )
-                          .join(" + ")
-                    : "ไม่มีชื่อเมนู";
+        const allIngredients = menuItems.map((menu) => ({
+          menuName: menu.menu_name,
+          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
+            ...dbIng,
+            ingredient_id: dbIng.ingredient_id || undefined,
+            ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+            calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+            sourceMenu: menu.menu_name,
+            isChecked: dbIng.ingredient_status ?? false,
+            ingredient_status: dbIng.ingredient_status ?? false,
+            ingredient_unit:
+              ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") ||
+              "ไม่ระบุหน่วย",
+          })),
+          ingredient_status: menu.menu_ingredients.every(
+            (ing: Ingredient) => ing.ingredient_status ?? false
+          ),
+        }));
 
-            const allIngredients = menuItems.map((menu) => ({
-                menuName: menu.menu_name,
-                ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
-                    ...dbIng,
-                    ingredient_id: dbIng.ingredient_id || undefined,
-                    ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-                    calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-                    sourceMenu: menu.menu_name,
-                    isChecked: dbIng.ingredient_status ?? false,
-                    ingredient_status: dbIng.ingredient_status ?? false,
-                    ingredient_unit: ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
-                })),
-                ingredient_status: menu.menu_ingredients.every(
-                    (ing: Ingredient) => ing.ingredient_status ?? false
-                ),
-            }));
+        const orderNumber = `ORD${
+          cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+        }`;
+        return {
+          id: cart.cart_id || "no-id",
+          orderNumber,
+          name: menuDisplayName,
+          date: formattedDate,
+          dateISO: formattedDateISO,
+          time: formattedTime,
+          sets: totalSets,
+          price: cart.cart_total_price || 0,
+          status: cart.cart_status,
+          createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
+          menuItems: menuItems.map((item) => ({ ...item })),
+          allIngredients,
+          order_number: cart.cart_order_number,
+          cart_delivery_date: cart.cart_delivery_date,
+          cart_receive_time: cart.cart_receive_time,
+          cart_export_time: cart.cart_export_time,
+          cart_customer_tel: cart.cart_customer_tel,
+          cart_customer_name: cart.cart_customer_name,
+          cart_location_send: cart.cart_location_send,
+        };
+      });
 
-            const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
-            return {
-                id: cart.cart_id || "no-id",
-                orderNumber,
-                name: menuDisplayName,
-                date: formattedDate,
-                dateISO: formattedDateISO,
-                time: formattedTime,
-                sets: totalSets,
-                price: cart.cart_total_price || 0,
-                status: cart.cart_status,
-                createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
-                menuItems: menuItems.map((item) => ({ ...item })),
-                allIngredients,
-                order_number: cart.cart_order_number,
-                cart_delivery_date: cart.cart_delivery_date,
-                cart_receive_time: cart.cart_receive_time,
-                cart_export_time: cart.cart_export_time,
-                cart_customer_tel: cart.cart_customer_tel,
-                cart_customer_name: cart.cart_customer_name,
-                cart_location_send: cart.cart_location_send,
-            };
-        });
-
-        setAllCarts(formattedOrders);
-        setCarts(formattedOrders);
-        // อัปเดต calendarEvents หรือ state อื่น ๆ ตามต้องการ
+      setAllCarts(formattedOrders);
+      setCarts(formattedOrders);
+      // อัปเดต calendarEvents หรือ state อื่น ๆ ตามต้องการ
     } catch (error) {
-        // setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
-        if (error instanceof Error) {
-            setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
-        } else {
-            setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + String(error));
-        }
+      // setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+      if (error instanceof Error) {
+        setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+      } else {
+        setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + String(error));
+      }
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   // ฟังก์ชันจัดรูปแบบเวลาโดยอัตโนมัติ
   const formatInputTime = (value: string): string => {
@@ -266,7 +280,6 @@ const OrderHistory: React.FC = () => {
       const allowedStatuses = ["cancelled", "success"];
 
       data.forEach((cart: RawCart) => {
-       
         if (!allowedStatuses.includes(cart.cart_status)) return;
 
         const deliveryDate = convertThaiDateToISO(cart.cart_delivery_date);
@@ -278,7 +291,6 @@ const OrderHistory: React.FC = () => {
 
         groupedByDate[deliveryDate].push(cart);
       });
-
 
       const events = Object.entries(groupedByDate).map(([date, carts]) => ({
         start: date,
@@ -445,12 +457,12 @@ const OrderHistory: React.FC = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-          .toLocaleDateString("th-TH", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })
-          .replace(/ /g, " ")
+            .toLocaleDateString("th-TH", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+            .replace(/ /g, " ")
         : "ไม่มีวันที่จัดส่ง";
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
@@ -556,33 +568,33 @@ const OrderHistory: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) =>
-              group.menuName === menuName
-                ? {
-                  ...group,
-                  ingredients: group.ingredients.map((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? {
-                        ...ing,
-                        isChecked: newCheckedStatus,
-                        ingredient_status: newCheckedStatus,
-                      }
-                      : ing
-                  ),
-                  ingredient_status: group.ingredients.every((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? newCheckedStatus
-                      : ing.isChecked
-                  ),
-                }
-                : group
-            ),
-          }
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === menuName
+                  ? {
+                      ...group,
+                      ingredients: group.ingredients.map((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? {
+                              ...ing,
+                              isChecked: newCheckedStatus,
+                              ingredient_status: newCheckedStatus,
+                            }
+                          : ing
+                      ),
+                      ingredient_status: group.ingredients.every((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? newCheckedStatus
+                          : ing.isChecked
+                      ),
+                    }
+                  : group
+              ),
+            }
           : cart
       )
     );
-  }
+  };
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
   const paginatedGroupedOrders = groupedOrders.slice(
@@ -701,12 +713,12 @@ const OrderHistory: React.FC = () => {
             >
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  locale: "th",
-                  timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
-                })}`
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    locale: "th",
+                    timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
+                  })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -798,35 +810,36 @@ const OrderHistory: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5">
           <Button
-                      onClick={handleorderhistoryprice}
-                      className="h-10 rounded-lg border border-slate-300 shadow-sm"
-                    >
-                      ไปหน้าสรุปรายการต่อหน่วย
-                    </Button>
+            onClick={handleorderhistoryprice}
+            className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm break-words"
+          >
+            ไปหน้าสรุปรายการต่อหน่วย
+          </Button>
           <Button
             onClick={() => {
               setSelectedDate(null);
               setCarts(allCarts);
             }}
-            className="h-10 rounded-lg border border-slate-300 shadow-sm"
+            className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm"
           >
             ล้างวันที่
           </Button>
-          <Button
-            onClick={handleExportCSV}
-            className="flex items-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2"
-          >
-            <Download className="w-4 h-4 mr-2" /> CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportPDF}
-            className="flex items-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2"
-          >
-            <Download className="w-4 h-4 mr-2" /> PDF
-          </Button>
+          <div className="flex flex-center">
+            <Button
+              onClick={handleExportCSV}
+              className="h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm"
+            >
+              <Download className="w-4 h-4 mr-2" /> CSV
+            </Button>
+            <Button
+              onClick={handleExportPDF}
+              className="h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm"
+            >
+              <Download className="w-4 h-4 mr-2" /> PDF
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -958,7 +971,7 @@ const OrderHistory: React.FC = () => {
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
-                            // onUpdated={handleUpdate}
+                              // onUpdated={handleUpdate}
                             />
                           </div>
                           <AccordionContent className="mt-4">
@@ -982,7 +995,7 @@ const OrderHistory: React.FC = () => {
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
                                         editingMenu?.menuName ===
-                                        menuGroup.menuName;
+                                          menuGroup.menuName;
                                       const allIngredientsChecked =
                                         menuGroup.ingredients.every(
                                           (ing) => ing.isChecked
@@ -992,10 +1005,11 @@ const OrderHistory: React.FC = () => {
                                         <AccordionItem
                                           key={groupIdx}
                                           value={`menu-${groupIdx}`}
-                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked
+                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
+                                            allIngredientsChecked
                                               ? "bg-green-50 border-green-200"
                                               : "bg-red-50 border-red-200"
-                                            }`}
+                                          }`}
                                         >
                                           <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
                                             <span className="truncate text-sm text-gray-700">
@@ -1010,10 +1024,11 @@ const OrderHistory: React.FC = () => {
                                               (ing, idx) => (
                                                 <div
                                                   key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked
+                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
+                                                    ing.isChecked
                                                       ? "bg-green-50 border-green-200"
                                                       : "bg-red-50 border-red-200"
-                                                    } text-sm`}
+                                                  } text-sm`}
                                                 >
                                                   <span className="text-gray-700">
                                                     {ing.ingredient_name ||
@@ -1021,7 +1036,8 @@ const OrderHistory: React.FC = () => {
                                                   </span>
                                                   <div className="flex items-center gap-4">
                                                     <span className="text-gray-600">
-                                                      ใช้ {ing.useItem} {ing.ingredient_unit} ×{" "}
+                                                      ใช้ {ing.useItem}{" "}
+                                                      {ing.ingredient_unit} ×{" "}
                                                       {totalBox} กล่อง ={" "}
                                                       <strong
                                                         className="text-black-600"
@@ -1049,16 +1065,18 @@ const OrderHistory: React.FC = () => {
                                                         className="hidden"
                                                       />
                                                       <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked
+                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                                          ing.isChecked
                                                             ? "bg-green-500"
                                                             : "bg-red-500"
-                                                          }`}
+                                                        }`}
                                                       >
                                                         <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked
+                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                                            ing.isChecked
                                                               ? "translate-x-5"
                                                               : "translate-x-0.5"
-                                                            }`}
+                                                          }`}
                                                         />
                                                       </span>
                                                     </label>

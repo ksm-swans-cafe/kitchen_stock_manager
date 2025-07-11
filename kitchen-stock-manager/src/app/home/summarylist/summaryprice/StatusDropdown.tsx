@@ -24,89 +24,89 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   const { userName } = useAuth();
 
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
+  // const handleSubmit = async () => {
+  //   try {
+  //     setIsSubmitting(true);
 
-      // ถ้าเลือก completed → จัดการ ingredients ก่อน
-      if (selectedStatus === "completed") {
-        for (const menu of allIngredients) {
-          for (const ingredient of menu.ingredients) {
-            if (!ingredient.ingredient_id) continue;
+  //     // ถ้าเลือก completed → จัดการ ingredients ก่อน
+  //     if (selectedStatus === "completed") {
+  //       for (const menu of allIngredients) {
+  //         for (const ingredient of menu.ingredients) {
+  //           if (!ingredient.ingredient_id) continue;
 
-            // GET ปริมาณคงเหลือ
-            const res = await fetch(
-              `/api/get/ingredients/${ingredient.ingredient_id}`
-            );
-            if (!res.ok) {
-              throw new Error(
-                `Failed to get ingredient ${ingredient.ingredient_id}`
-              );
-            }
-            const data = await res.json();
-            const currentTotal = data.ingredient_total;
+  //           // GET ปริมาณคงเหลือ
+  //           const res = await fetch(
+  //             `/api/get/ingredients/${ingredient.ingredient_id}`
+  //           );
+  //           if (!res.ok) {
+  //             throw new Error(
+  //               `Failed to get ingredient ${ingredient.ingredient_id}`
+  //             );
+  //           }
+  //           const data = await res.json();
+  //           const currentTotal = data.ingredient_total;
 
-            // ลบออกตาม calculatedTotal
-            const remaining = currentTotal - (ingredient.calculatedTotal || 0);
+  //           // ลบออกตาม calculatedTotal
+  //           const remaining = currentTotal - (ingredient.calculatedTotal || 0);
 
-            // ถ้าติดลบหรือหมด → ยืนยัน
-            if (remaining <= 0) {
-              const confirmUpdate = window.confirm(
-                `วัตถุดิบ ${ingredient.ingredient_name} ไม่เพียงพอ (เหลือ ${remaining})\nคุณต้องการยืนยันหรือไม่?`
-              );
-              if (!confirmUpdate) {
-                setIsSubmitting(false);
-                return;
-              }
-            }
+  //           // ถ้าติดลบหรือหมด → ยืนยัน
+  //           if (remaining <= 0) {
+  //             const confirmUpdate = window.confirm(
+  //               `วัตถุดิบ ${ingredient.ingredient_name} ไม่เพียงพอ (เหลือ ${remaining})\nคุณต้องการยืนยันหรือไม่?`
+  //             );
+  //             if (!confirmUpdate) {
+  //               setIsSubmitting(false);
+  //               return;
+  //             }
+  //           }
 
-            // PATCH กลับไปเก็บคงเหลือใหม่
-            const formData = new FormData();
-            formData.append("ingredient_total", String(remaining));
-            const updateRes = await fetch(
-              `/api/edit/ingredients/${ingredient.ingredient_id}`,
-              {
-                method: "PATCH",
-                body: formData,
-              }
-            );
-            if (!updateRes.ok) {
-              throw new Error(
-                `Failed to update ingredient ${ingredient.ingredient_id}`
-              );
-            }
-          }
-        }
-      }
+  //           // PATCH กลับไปเก็บคงเหลือใหม่
+  //           const formData = new FormData();
+  //           formData.append("ingredient_total", String(remaining));
+  //           const updateRes = await fetch(
+  //             `/api/edit/ingredients/${ingredient.ingredient_id}`,
+  //             {
+  //               method: "PATCH",
+  //               body: formData,
+  //             }
+  //           );
+  //           if (!updateRes.ok) {
+  //             throw new Error(
+  //               `Failed to update ingredient ${ingredient.ingredient_id}`
+  //             );
+  //           }
+  //         }
+  //       }
+  //     }
 
-      // PATCH cart status ทุกกรณี
-      const formData = new FormData();
-      formData.append("cart_status", selectedStatus);
-      formData.append("cart_last_update", userName ?? "unknown");
+  //     // PATCH cart status ทุกกรณี
+  //     const formData = new FormData();
+  //     formData.append("cart_status", selectedStatus);
+  //     formData.append("cart_last_update", userName ?? "unknown");
 
-      const res = await fetch(`/api/edit/cart_status/${cartId}`, {
-        // แก้ไขตรงนี้
-        method: "PATCH",
-        body: formData,
-      });
+  //     const res = await fetch(`/api/edit/cart_status/${cartId}`, {
+  //       // แก้ไขตรงนี้
+  //       method: "PATCH",
+  //       body: formData,
+  //     });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to update status");
-      }
+  //     if (!res.ok) {
+  //       const errorData = await res.json();
+  //       throw new Error(errorData.error || "Failed to update status");
+  //     }
 
-      // Lock ปุ่มถ้า success หรือ cancelled
-      if (selectedStatus === "success" || selectedStatus === "cancelled") {
-        setIsLocked(true);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("เกิดข้อผิดพลาด: " + (error as Error).message);
-    } finally {
-      setIsSubmitting(false);
-      window.location.reload();
-    }
-  };
+  //     // Lock ปุ่มถ้า success หรือ cancelled
+  //     if (selectedStatus === "success" || selectedStatus === "cancelled") {
+  //       setIsLocked(true);
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     alert("เกิดข้อผิดพลาด: " + (error as Error).message);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //     window.location.reload();
+  //   }
+  // };
 
   return (
     <div className="relative inline-flex items-center space-x-2">
