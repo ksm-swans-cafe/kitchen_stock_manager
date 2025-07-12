@@ -52,70 +52,13 @@ import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 import { useRouter } from "next/navigation";
-
-interface Ingredient {
-  ingredient_id?: number;
-  ingredient_name: string;
-  useItem: number;
-  calculatedTotal?: number;
-  sourceMenu?: string;
-  isChecked?: boolean; // ใช้ใน frontend เพื่อ map กับ ingredient_status
-  ingredient_status?: boolean;
-}
-
-interface MenuItem {
-  menu_name: string;
-  menu_total: number;
-  menu_ingredients: Ingredient[];
-  status?: string;
-  order_number?: string;
-}
-
-interface Cart {
-  id: string;
-  orderNumber: string;
-  name: string;
-  date: string;
-  dateISO: string;
-  time: string;
-  sets: number;
-  price: number;
-  status: string;
-  createdBy: string;
-  menuItems: MenuItem[];
-  allIngredients: {
-    menuName: string;
-    ingredients: Ingredient[];
-    ingredient_status: boolean;
-  }[];
-  order_number: string;
-  cart_customer_name?: string;
-  cart_delivery_date?: string;
-  cart_receive_time?: string;
-  cart_export_time?: string;
-  cart_customer_tel?: string;
-  cart_location_send?: string;
-}
-
-interface CartItem extends MenuItem {
-  totalPrice?: number;
-}
-
-type RawCart = {
-  cart_id: string;
-  cart_menu_items: string | MenuItem[];
-  cart_create_date: string;
-  cart_total_price: number;
-  cart_status: string;
-  cart_order_number: string;
-  cart_username: string;
-  cart_customer_tel: string;
-  cart_customer_name: string;
-  cart_location_send: string;
-  cart_delivery_date: string;
-  cart_export_time: string;
-  cart_receive_time: string;
-};
+import {
+  Ingredient,
+  MenuItem,
+  Cart,
+  CartItem,
+  RawCart,
+} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file
 
 const OrderHistory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,25 +110,32 @@ const OrderHistory: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
+      // Fetch carts
       const response = await fetch("/api/get/carts");
       if (!response.ok) throw new Error("Failed to fetch carts");
-      const data = await response.json();
-      console.log("Fetched carts data:", data);
+      const cartData = await response.json();
 
+      // Fetch menu list
       const menuResponse = await fetch("/api/get/menu-list");
       if (!menuResponse.ok) throw new Error("Failed to fetch menu");
+      const menuData = await menuResponse.json();
 
+      // Fetch ingredients
       const ingredientResponse = await fetch("/api/get/ingredients");
       if (!ingredientResponse.ok)
         throw new Error("Failed to fetch ingredients");
+      const ingredientData = await ingredientResponse.json();
 
-      const formattedOrders: Cart[] = data.map((cart: RawCart) => {
-        console.log(
-          "Processing cart ID:",
-          cart.cart_id,
-          "cart_menu_items:",
-          cart.cart_menu_items
+      // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
+      const ingredientUnitMap = new globalThis.Map<string, string>();
+      ingredientData.forEach((ing: any) => {
+        ingredientUnitMap.set(
+          ing.ingredient_name.toString(),
+          ing.ingredient_unit
         );
+      });
+
+      const formattedOrders: Cart[] = cartData.map((cart: RawCart) => {
         const [rawDate] = cart.cart_create_date.split("T");
         const [year, month, day] = rawDate.split("-");
         const dateObjectForLocale = new Date(
@@ -212,11 +162,10 @@ const OrderHistory: React.FC = () => {
           typeof cart.cart_menu_items === "string" && cart.cart_menu_items
             ? safeParseJSON(cart.cart_menu_items)
             : Array.isArray(cart.cart_menu_items)
-              ? cart.cart_menu_items.filter(
+            ? cart.cart_menu_items.filter(
                 (item) => item && typeof item.menu_total === "number"
               )
-              : [];
-        console.log("Parsed menuItems:", menuItems);
+            : [];
 
         const totalSets = menuItems
           .filter(
@@ -230,10 +179,10 @@ const OrderHistory: React.FC = () => {
         const menuDisplayName =
           menuItems.length > 0
             ? menuItems
-              .map(
-                (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-              )
-              .join(" + ")
+                .map(
+                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+                )
+                .join(" + ")
             : "ไม่มีชื่อเมนู";
 
         const allIngredients = menuItems.map((menu) => ({
@@ -246,16 +195,18 @@ const OrderHistory: React.FC = () => {
             sourceMenu: menu.menu_name,
             isChecked: dbIng.ingredient_status ?? false,
             ingredient_status: dbIng.ingredient_status ?? false,
+            ingredient_unit:
+              ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") ||
+              "ไม่ระบุหน่วย",
           })),
           ingredient_status: menu.menu_ingredients.every(
             (ing: Ingredient) => ing.ingredient_status ?? false
           ),
         }));
 
-        console.log("Mapped allIngredients:", allIngredients);
-
-        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-          }`;
+        const orderNumber = `ORD${
+          cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+        }`;
         return {
           id: cart.cart_id || "no-id",
           orderNumber,
@@ -279,40 +230,16 @@ const OrderHistory: React.FC = () => {
         };
       });
 
-      const currentDate = new Date(); // วันที่และเวลาปัจจุบัน
-      formattedOrders.sort((a, b) => {
-        const dateA = convertThaiDateToISO(a.cart_delivery_date);
-        const dateB = convertThaiDateToISO(b.cart_delivery_date);
-
-        // หากไม่มีวันที่จัดส่ง ให้วางไว้ท้ายสุด
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        const diffA = Math.abs(
-          new Date(dateA).getTime() - currentDate.getTime()
-        );
-        const diffB = Math.abs(
-          new Date(dateB).getTime() - currentDate.getTime()
-        );
-
-        // เรียงจากวันที่ใกล้ปัจจุบันมากที่สุดไปน้อยที่สุด
-        if (diffA !== diffB) {
-          return diffA - diffB;
-        }
-
-        // ถ้า cart_delivery_date เหมือนกัน ให้เรียงตาม cart_order_number จากมากไปน้อย
-        const orderNumA = parseInt(a.order_number || "0");
-        const orderNumB = parseInt(b.order_number || "0");
-        return orderNumB - orderNumA;
-      });
-
       setAllCarts(formattedOrders);
       setCarts(formattedOrders);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-      setError(
-        err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล"
-      );
+      // อัปเดต calendarEvents หรือ state อื่น ๆ ตามต้องการ
+    } catch (error) {
+      // setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+      if (error instanceof Error) {
+        setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+      } else {
+        setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + String(error));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -353,7 +280,6 @@ const OrderHistory: React.FC = () => {
       const allowedStatuses = ["cancelled", "success"];
 
       data.forEach((cart: RawCart) => {
-       
         if (!allowedStatuses.includes(cart.cart_status)) return;
 
         const deliveryDate = convertThaiDateToISO(cart.cart_delivery_date);
@@ -365,7 +291,6 @@ const OrderHistory: React.FC = () => {
 
         groupedByDate[deliveryDate].push(cart);
       });
-
 
       const events = Object.entries(groupedByDate).map(([date, carts]) => ({
         start: date,
@@ -386,6 +311,10 @@ const OrderHistory: React.FC = () => {
       console.error("Error fetching calendar data:", err);
       setError("ไม่สามารถโหลดข้อมูลปฏิทินได้");
     }
+  };
+
+  const handleorderhistoryprice = () => {
+    router.push("/home/orderhistory/orderhistoryprice");
   };
 
   useEffect(() => {
@@ -528,12 +457,12 @@ const OrderHistory: React.FC = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-          .toLocaleDateString("th-TH", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })
-          .replace(/ /g, " ")
+            .toLocaleDateString("th-TH", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+            .replace(/ /g, " ")
         : "ไม่มีวันที่จัดส่ง";
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
@@ -639,33 +568,33 @@ const OrderHistory: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) =>
-              group.menuName === menuName
-                ? {
-                  ...group,
-                  ingredients: group.ingredients.map((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? {
-                        ...ing,
-                        isChecked: newCheckedStatus,
-                        ingredient_status: newCheckedStatus,
-                      }
-                      : ing
-                  ),
-                  ingredient_status: group.ingredients.every((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? newCheckedStatus
-                      : ing.isChecked
-                  ),
-                }
-                : group
-            ),
-          }
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === menuName
+                  ? {
+                      ...group,
+                      ingredients: group.ingredients.map((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? {
+                              ...ing,
+                              isChecked: newCheckedStatus,
+                              ingredient_status: newCheckedStatus,
+                            }
+                          : ing
+                      ),
+                      ingredient_status: group.ingredients.every((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? newCheckedStatus
+                          : ing.isChecked
+                      ),
+                    }
+                  : group
+              ),
+            }
           : cart
       )
     );
-  }
+  };
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
   const paginatedGroupedOrders = groupedOrders.slice(
@@ -784,12 +713,12 @@ const OrderHistory: React.FC = () => {
             >
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  locale: "th",
-                  timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
-                })}`
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    locale: "th",
+                    timeZone: "Asia/Bangkok", // Explicitly set to UTC+7
+                  })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -881,29 +810,36 @@ const OrderHistory: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5">
+          <Button
+            onClick={handleorderhistoryprice}
+            className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm break-words"
+          >
+            ไปหน้าสรุปรายการต่อหน่วย
+          </Button>
           <Button
             onClick={() => {
               setSelectedDate(null);
               setCarts(allCarts);
             }}
-            className="h-10 rounded-lg border border-slate-300 shadow-sm"
+            className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm"
           >
             ล้างวันที่
           </Button>
-          <Button
-            onClick={handleExportCSV}
-            className="flex items-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2"
-          >
-            <Download className="w-4 h-4 mr-2" /> CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportPDF}
-            className="flex items-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2"
-          >
-            <Download className="w-4 h-4 mr-2" /> PDF
-          </Button>
+          <div className="flex flex-center">
+            <Button
+              onClick={handleExportCSV}
+              className="h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm"
+            >
+              <Download className="w-4 h-4 mr-2" /> CSV
+            </Button>
+            <Button
+              onClick={handleExportPDF}
+              className="h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm"
+            >
+              <Download className="w-4 h-4 mr-2" /> PDF
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -1035,7 +971,7 @@ const OrderHistory: React.FC = () => {
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
-                            // onUpdated={handleUpdate}
+                              // onUpdated={handleUpdate}
                             />
                           </div>
                           <AccordionContent className="mt-4">
@@ -1059,7 +995,7 @@ const OrderHistory: React.FC = () => {
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
                                         editingMenu?.menuName ===
-                                        menuGroup.menuName;
+                                          menuGroup.menuName;
                                       const allIngredientsChecked =
                                         menuGroup.ingredients.every(
                                           (ing) => ing.isChecked
@@ -1069,10 +1005,11 @@ const OrderHistory: React.FC = () => {
                                         <AccordionItem
                                           key={groupIdx}
                                           value={`menu-${groupIdx}`}
-                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked
+                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
+                                            allIngredientsChecked
                                               ? "bg-green-50 border-green-200"
                                               : "bg-red-50 border-red-200"
-                                            }`}
+                                          }`}
                                         >
                                           <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
                                             <span className="truncate text-sm text-gray-700">
@@ -1083,80 +1020,15 @@ const OrderHistory: React.FC = () => {
                                             </span>
                                           </AccordionTrigger>
                                           <AccordionContent className="pt-3 space-y-2">
-                                            {/* {isEditingThisMenu ? (
-                                              <div className="flex items-center gap-2 mb-3">
-                                                <Input
-                                                  type="number"
-                                                  value={editTotalBox}
-                                                  onChange={(e) =>
-                                                    setEditTotalBox(
-                                                      Number(e.target.value)
-                                                    )
-                                                  }
-                                                  className="w-20 h-8 text-sm rounded-md border-gray-300"
-                                                  min="0"
-                                                  aria-label="Edit box quantity"
-                                                />
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleSaveTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-50"
-                                                  aria-label="Save box quantity"
-                                                  disabled={
-                                                    isSaving === cart.id
-                                                  }
-                                                >
-                                                  {isSaving === cart.id
-                                                    ? "Saving..."
-                                                    : "Save"}
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    setEditingMenu(null)
-                                                  }
-                                                  className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-                                                  aria-label="Cancel edit"
-                                                  disabled={
-                                                    isSaving === cart.id
-                                                  }
-                                                >
-                                                  Cancel
-                                                </Button>
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center gap-2 mb-3">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleEditTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName,
-                                                      totalBox
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-                                                >
-                                                  <Edit2 className="w-4 h-4" />
-                                                </Button>
-                                              </div>
-                                            )} */}
                                             {menuGroup.ingredients.map(
                                               (ing, idx) => (
                                                 <div
                                                   key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked
+                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
+                                                    ing.isChecked
                                                       ? "bg-green-50 border-green-200"
                                                       : "bg-red-50 border-red-200"
-                                                    } text-sm`}
+                                                  } text-sm`}
                                                 >
                                                   <span className="text-gray-700">
                                                     {ing.ingredient_name ||
@@ -1164,7 +1036,8 @@ const OrderHistory: React.FC = () => {
                                                   </span>
                                                   <div className="flex items-center gap-4">
                                                     <span className="text-gray-600">
-                                                      ใช้ {ing.useItem} กรัม ×{" "}
+                                                      ใช้ {ing.useItem}{" "}
+                                                      {ing.ingredient_unit} ×{" "}
                                                       {totalBox} กล่อง ={" "}
                                                       <strong
                                                         className="text-black-600"
@@ -1174,7 +1047,7 @@ const OrderHistory: React.FC = () => {
                                                       >
                                                         {ing.calculatedTotal}
                                                       </strong>{" "}
-                                                      กรัม
+                                                      {ing.ingredient_unit}
                                                     </span>
                                                     <label className="cursor-pointer">
                                                       <input
@@ -1192,16 +1065,18 @@ const OrderHistory: React.FC = () => {
                                                         className="hidden"
                                                       />
                                                       <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked
+                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                                          ing.isChecked
                                                             ? "bg-green-500"
                                                             : "bg-red-500"
-                                                          }`}
+                                                        }`}
                                                       >
                                                         <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked
+                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                                            ing.isChecked
                                                               ? "translate-x-5"
                                                               : "translate-x-0.5"
-                                                            }`}
+                                                          }`}
                                                         />
                                                       </span>
                                                     </label>

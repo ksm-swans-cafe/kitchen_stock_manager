@@ -18,8 +18,10 @@ export default function AddMenuPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { useItem: 0, ingredient_name: "" },
   ]);
-  const [menuSubName, setMenuSubName] = useState("");
-  const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([]);
+  const [menuSubName, setMenuSubName] = useState("เมนู");
+  const [ingredientOptions, setIngredientOptions] = useState<
+    IngredientOption[]
+  >([]);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,7 +33,11 @@ export default function AddMenuPage() {
         const data = await response.json();
         setIngredientOptions(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load ingredient options");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load ingredient options"
+        );
       }
     }
     fetchIngredients();
@@ -50,7 +56,9 @@ export default function AddMenuPage() {
   };
 
   const sortIngredients = (list: Ingredient[]) => {
-    return [...list].sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name));
+    return [...list].sort((a, b) =>
+      a.ingredient_name.localeCompare(b.ingredient_name)
+    );
   };
 
   const handleAddIngredient = () => {
@@ -82,7 +90,7 @@ export default function AddMenuPage() {
     }
     setIngredients(sortIngredients(newIngredients));
   };
-
+  // pull
   const handleRemoveIngredient = (index: number) => {
     const updated = ingredients.filter((_, i) => i !== index);
     setIngredients(sortIngredients(updated));
@@ -104,7 +112,9 @@ export default function AddMenuPage() {
         (ing) =>
           !ing.ingredient_name.trim() ||
           ing.useItem <= 0 ||
-          !ingredientOptions.some((opt) => opt.ingredient_name === ing.ingredient_name)
+          !ingredientOptions.some(
+            (opt) => opt.ingredient_name === ing.ingredient_name
+          )
       )
     ) {
       setError("All ingredients must have a valid name and quantity");
@@ -174,7 +184,10 @@ export default function AddMenuPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="menuName" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="menuName"
+            className="block text-sm font-medium text-gray-700"
+          >
             Menu Name
           </label>
           <input
@@ -189,7 +202,9 @@ export default function AddMenuPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Ingredients</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Ingredients
+          </label>
           {sortIngredients(ingredients).map((ingredient, index) => {
             const selectedOption = ingredientOptions.find(
               (opt) => opt.ingredient_name === ingredient.ingredient_name
@@ -203,7 +218,11 @@ export default function AddMenuPage() {
                 <select
                   value={ingredient.ingredient_name}
                   onChange={(e) =>
-                    handleIngredientChange(index, "ingredient_name", e.target.value)
+                    handleIngredientChange(
+                      index,
+                      "ingredient_name",
+                      e.target.value
+                    )
                   }
                   className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                   required
@@ -211,9 +230,14 @@ export default function AddMenuPage() {
                   <option value="">Select Ingredient</option>
                   {ingredientOptions
                     .slice()
-                    .sort((a, b) => a.ingredient_name.localeCompare(b.ingredient_name))
+                    .sort((a, b) =>
+                      a.ingredient_name.localeCompare(b.ingredient_name)
+                    )
                     .map((option) => (
-                      <option key={option.ingredient_id} value={option.ingredient_name}>
+                      <option
+                        key={option.ingredient_id}
+                        value={option.ingredient_name}
+                      >
                         {option.ingredient_name}
                       </option>
                     ))}
@@ -236,13 +260,15 @@ export default function AddMenuPage() {
                   className="w-32 rounded-md border-gray-300 shadow-sm bg-gray-100 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 >
                   <option value="">Select Unit</option>
-                  {[...new Set(ingredientOptions.map((opt) => opt.ingredient_unit))].map(
-                    (unit, i) => (
-                      <option key={i} value={unit}>
-                        {unit}
-                      </option>
-                    )
-                  )}
+                  {[
+                    ...new Set(
+                      ingredientOptions.map((opt) => opt.ingredient_unit)
+                    ),
+                  ].map((unit, i) => (
+                    <option key={i} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
                 </select>
                 {ingredients.length > 1 && (
                   <button
@@ -277,9 +303,16 @@ export default function AddMenuPage() {
             type="text"
             id="menuSubName"
             value={menuSubName}
-            onChange={(e) => setMenuSubName(e.target.value)}
+            onChange={(e) => {
+              const input = e.target.value;
+              if (input.startsWith("เมนู")) {
+                setMenuSubName(input);
+              } else {
+                setMenuSubName("เมนู" + input);
+              }
+            }}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            placeholder="Enter menu sub name"
+            placeholder="เช่น แกง, ข้าว"
             required
           />
         </div>

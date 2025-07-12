@@ -10,6 +10,7 @@ import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
 import { BsCashStack } from "react-icons/bs";
 import { FaWallet } from "react-icons/fa";
+
 import {
   Clock,
   User,
@@ -45,72 +46,13 @@ import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 import PaginationComponent from "@/components/ui/Totalpage";
 import { useRouter } from "next/navigation";
-
-interface Ingredient {
-  ingredient_id?: number;
-  ingredient_name: string;
-  useItem: number;
-  calculatedTotal?: number;
-  sourceMenu?: string;
-  isChecked?: boolean;
-  ingredient_status?: boolean;
-  ingredient_price_per_unit?: number;
-  totalCost?: number; // Added to store calculated cost (useItem * ingredient_price_per_unit)
-}
-
-interface MenuItem {
-  menu_name: string;
-  menu_total: number;
-  menu_ingredients: Ingredient[];
-  status?: string;
-  order_number?: string;
-}
-
-interface Cart {
-  id: string;
-  orderNumber: string;
-  name: string;
-  date: string;
-  dateISO: string;
-  time: string;
-  sets: number;
-  price: number;
-  status: string;
-  createdBy: string;
-  menuItems: MenuItem[];
-  allIngredients: {
-    menuName: string;
-    ingredients: Ingredient[];
-    ingredient_status: boolean;
-  }[];
-  order_number: string;
-  cart_customer_name?: string;
-  cart_delivery_date?: string;
-  cart_receive_time?: string;
-  cart_export_time?: string;
-  cart_customer_tel?: string;
-  cart_location_send?: string;
-}
-
-interface CartItem extends MenuItem {
-  totalPrice?: number;
-}
-
-type RawCart = {
-  cart_id: string;
-  cart_menu_items: string | MenuItem[];
-  cart_create_date: string;
-  cart_total_price: number;
-  cart_status: string;
-  cart_order_number: string;
-  cart_username: string;
-  cart_customer_tel: string;
-  cart_customer_name: string;
-  cart_location_send: string;
-  cart_delivery_date: string;
-  cart_export_time: string;
-  cart_receive_time: string;
-};
+import {
+  Ingredient,
+  MenuItem,
+  Cart,
+  CartItem,
+  RawCart,
+} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file
 
 const SummaryPrice: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,6 +109,7 @@ const SummaryPrice: React.FC = () => {
       const response = await fetch("/api/get/carts");
       if (!response.ok) throw new Error("Failed to fetch carts");
       const data = await response.json();
+      console.log("Fetched carts data:", data);
 
       const menuResponse = await fetch("/api/get/menu-list");
       if (!menuResponse.ok) throw new Error("Failed to fetch menu");
@@ -176,7 +119,22 @@ const SummaryPrice: React.FC = () => {
         throw new Error("Failed to fetch ingredients");
       const ingredientData = await ingredientResponse.json();
 
+      // สร้าง Map สำหรับ ingredient_unit เพื่อให้ง่ายต่อการค้นหา
+      const ingredientUnitMap = new globalThis.Map<string, string>();
+      ingredientData.forEach((ing: any) => {
+        ingredientUnitMap.set(
+          ing.ingredient_name.toString(),
+          ing.ingredient_unit
+        );
+      });
+
       const formattedOrders: Cart[] = data.map((cart: RawCart) => {
+        console.log(
+          "Processing cart ID:",
+          cart.cart_id,
+          "cart_menu_items:",
+          cart.cart_menu_items
+        );
         const [rawDate] = cart.cart_create_date.split("T");
         const [year, month, day] = rawDate.split("-");
         const dateObjectForLocale = new Date(
@@ -203,10 +161,11 @@ const SummaryPrice: React.FC = () => {
           typeof cart.cart_menu_items === "string" && cart.cart_menu_items
             ? safeParseJSON(cart.cart_menu_items)
             : Array.isArray(cart.cart_menu_items)
-              ? cart.cart_menu_items.filter(
+            ? cart.cart_menu_items.filter(
                 (item) => item && typeof item.menu_total === "number"
               )
-              : [];
+            : [];
+        console.log("Parsed menuItems:", menuItems);
 
         const totalSets = menuItems
           .filter(
@@ -220,38 +179,36 @@ const SummaryPrice: React.FC = () => {
         const menuDisplayName =
           menuItems.length > 0
             ? menuItems
-              .map(
-                (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-              )
-              .join(" + ")
+                .map(
+                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+                )
+                .join(" + ")
             : "ไม่มีชื่อเมนู";
 
         const allIngredients = menuItems.map((menu) => ({
           menuName: menu.menu_name,
-          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => {
-            const ingredientInfo = ingredientData.find(
-              (ing: any) => ing.ingredient_name === dbIng.ingredient_name
-            );
-            const pricePerUnit = ingredientInfo?.ingredient_price_per_unit || 0;
-            return {
-              ...dbIng,
-              ingredient_id: dbIng.ingredient_id || undefined,
-              ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-              calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-              totalCost: dbIng.useItem * (menu.menu_total || 0) * pricePerUnit, // Calculate total cost
-              sourceMenu: menu.menu_name,
-              isChecked: dbIng.ingredient_status ?? false,
-              ingredient_status: dbIng.ingredient_status ?? false,
-              ingredient_price_per_unit: pricePerUnit,
-            };
-          }),
+          ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
+            ...dbIng,
+            ingredient_id: dbIng.ingredient_id || undefined,
+            ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+            calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+            sourceMenu: menu.menu_name,
+            isChecked: dbIng.ingredient_status ?? false,
+            ingredient_status: dbIng.ingredient_status ?? false,
+            ingredient_unit:
+              ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") ||
+              "ไม่ระบุหน่วย",
+          })),
           ingredient_status: menu.menu_ingredients.every(
             (ing: Ingredient) => ing.ingredient_status ?? false
           ),
         }));
 
-        const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-          }`;
+        console.log("Mapped allIngredients:", allIngredients);
+
+        const orderNumber = `ORD${
+          cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+        }`;
         return {
           id: cart.cart_id || "no-id",
           orderNumber,
@@ -275,11 +232,12 @@ const SummaryPrice: React.FC = () => {
         };
       });
 
-      const currentDate = new Date();
+      const currentDate = new Date(); // วันที่และเวลาปัจจุบัน
       formattedOrders.sort((a, b) => {
         const dateA = convertThaiDateToISO(a.cart_delivery_date);
         const dateB = convertThaiDateToISO(b.cart_delivery_date);
 
+        // หากไม่มีวันที่จัดส่ง ให้วางไว้ท้ายสุด
         if (!dateA) return 1;
         if (!dateB) return -1;
 
@@ -290,10 +248,12 @@ const SummaryPrice: React.FC = () => {
           new Date(dateB).getTime() - currentDate.getTime()
         );
 
+        // เรียงจากวันที่ใกล้ปัจจุบันมากที่สุดไปน้อยที่สุด
         if (diffA !== diffB) {
           return diffA - diffB;
         }
 
+        // ถ้า cart_delivery_date เหมือนกัน ให้เรียงตาม cart_order_number จากมากไปน้อย
         const orderNumA = parseInt(a.order_number || "0");
         const orderNumB = parseInt(b.order_number || "0");
         return orderNumB - orderNumA;
@@ -347,11 +307,15 @@ const SummaryPrice: React.FC = () => {
     const receiveTime = parseThaiTime(editingTimes.receiveTime);
 
     if (!exportTime) {
-      setError("เวลาส่งอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)");
+      setError(
+        "เวลาส่งอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)"
+      );
       return;
     }
     if (!receiveTime) {
-      setError("เวลารับอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)");
+      setError(
+        "เวลารับอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)"
+      );
       return;
     }
 
@@ -378,10 +342,10 @@ const SummaryPrice: React.FC = () => {
         prevCarts.map((c) =>
           c.id === cartId
             ? {
-              ...c,
-              cart_export_time: cart[0]?.cart_export_time,
-              cart_receive_time: cart[0]?.cart_receive_time,
-            }
+                ...c,
+                cart_export_time: cart[0]?.cart_export_time,
+                cart_receive_time: cart[0]?.cart_receive_time,
+              }
             : c
         )
       );
@@ -430,29 +394,29 @@ const SummaryPrice: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) =>
-              group.menuName === menuName
-                ? {
-                  ...group,
-                  ingredients: group.ingredients.map((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? {
-                        ...ing,
-                        isChecked: newCheckedStatus,
-                        ingredient_status: newCheckedStatus,
-                      }
-                      : ing
-                  ),
-                  ingredient_status: group.ingredients.every((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? newCheckedStatus
-                      : ing.isChecked
-                  ),
-                }
-                : group
-            ),
-          }
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === menuName
+                  ? {
+                      ...group,
+                      ingredients: group.ingredients.map((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? {
+                              ...ing,
+                              isChecked: newCheckedStatus,
+                              ingredient_status: newCheckedStatus,
+                            }
+                          : ing
+                      ),
+                      ingredient_status: group.ingredients.every((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? newCheckedStatus
+                          : ing.isChecked
+                      ),
+                    }
+                  : group
+              ),
+            }
           : cart
       )
     );
@@ -499,17 +463,17 @@ const SummaryPrice: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) => ({
-              ...group,
-              ingredients: group.ingredients.map((ing) => ({
-                ...ing,
-                isChecked: true,
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
+                  ingredient_status: true,
+                })),
                 ingredient_status: true,
               })),
-              ingredient_status: true,
-            })),
-          }
+            }
           : cart
       )
     );
@@ -558,17 +522,17 @@ const SummaryPrice: React.FC = () => {
       prevCarts.map((cart) =>
         targetCarts.some((target) => target.id === cart.id)
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) => ({
-              ...group,
-              ingredients: group.ingredients.map((ing) => ({
-                ...ing,
-                isChecked: true,
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
+                  ingredient_status: true,
+                })),
                 ingredient_status: true,
               })),
-              ingredient_status: true,
-            })),
-          }
+            }
           : cart
       )
     );
@@ -585,7 +549,7 @@ const SummaryPrice: React.FC = () => {
               const errorData = await response.json();
               throw new Error(
                 errorData.error ||
-                `Failed to update all ingredients status for cart ${cart.id}`
+                  `Failed to update all ingredients status for cart ${cart.id}`
               );
             }
           })
@@ -628,7 +592,6 @@ const SummaryPrice: React.FC = () => {
       const allowedStatuses = ["pending", "completed"];
 
       data.forEach((cart: RawCart) => {
-
         if (!allowedStatuses.includes(cart.cart_status)) return;
 
         const deliveryDate = convertThaiDateToISO(cart.cart_delivery_date);
@@ -640,7 +603,6 @@ const SummaryPrice: React.FC = () => {
 
         groupedByDate[deliveryDate].push(cart);
       });
-
 
       const events = Object.entries(groupedByDate).map(([date, carts]) => ({
         start: date,
@@ -718,7 +680,10 @@ const SummaryPrice: React.FC = () => {
       const patchResponse = await fetch(`/api/edit/cart_menu/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ menuName: cleanedMenuName, menu_total: editTotalBox }),
+        body: JSON.stringify({
+          menuName: cleanedMenuName,
+          menu_total: editTotalBox,
+        }),
       });
 
       if (!patchResponse.ok) {
@@ -731,33 +696,36 @@ const SummaryPrice: React.FC = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-              ...cart,
-              menuItems: cart.menuItems.map((item) =>
-                item.menu_name === cleanedMenuName
-                  ? { ...item, menu_total: editTotalBox }
-                  : item
-              ),
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === cleanedMenuName
-                  ? {
-                    ...group,
-                    ingredients: group.ingredients.map((ing) => ({
-                      ...ing,
-                      calculatedTotal: ing.useItem * editTotalBox,
-                      totalCost: ing.useItem * editTotalBox * (ing.ingredient_price_per_unit || 0),
-                    })),
-                  }
-                  : group
-              ),
-              sets: cart.menuItems.reduce(
-                (sum, item) =>
-                  sum +
-                  (item.menu_name === cleanedMenuName
-                    ? editTotalBox
-                    : item.menu_total),
-                0
-              ),
-            }
+                ...cart,
+                menuItems: cart.menuItems.map((item) =>
+                  item.menu_name === cleanedMenuName
+                    ? { ...item, menu_total: editTotalBox }
+                    : item
+                ),
+                allIngredients: cart.allIngredients.map((group) =>
+                  group.menuName === cleanedMenuName
+                    ? {
+                        ...group,
+                        ingredients: group.ingredients.map((ing) => ({
+                          ...ing,
+                          calculatedTotal: ing.useItem * editTotalBox,
+                          totalCost:
+                            ing.useItem *
+                            editTotalBox *
+                            (ing.ingredient_price_per_unit || 0),
+                        })),
+                      }
+                    : group
+                ),
+                sets: cart.menuItems.reduce(
+                  (sum, item) =>
+                    sum +
+                    (item.menu_name === cleanedMenuName
+                      ? editTotalBox
+                      : item.menu_total),
+                  0
+                ),
+              }
             : cart
         )
       );
@@ -876,12 +844,12 @@ const SummaryPrice: React.FC = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-          .toLocaleDateString("th-TH", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })
-          .replace(/ /g, " ")
+            .toLocaleDateString("th-TH", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+            .replace(/ /g, " ")
         : "ไม่มีวันที่จัดส่ง";
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
@@ -932,7 +900,11 @@ const SummaryPrice: React.FC = () => {
       cart.allIngredients.forEach((menuGroup) => {
         menuGroup.ingredients.forEach((ing) => {
           if (!ingredientSummary[ing.ingredient_name]) {
-            ingredientSummary[ing.ingredient_name] = { checked: 0, total: 0, totalCost: 0 };
+            ingredientSummary[ing.ingredient_name] = {
+              checked: 0,
+              total: 0,
+              totalCost: 0,
+            };
           }
           const totalGrams = ing.calculatedTotal || 0;
           const totalCost = ing.totalCost || 0;
@@ -1086,12 +1058,12 @@ const SummaryPrice: React.FC = () => {
             >
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  locale: "th",
-                  timeZone: "Asia/Bangkok",
-                })}`
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    locale: "th",
+                    timeZone: "Asia/Bangkok",
+                  })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -1181,10 +1153,10 @@ const SummaryPrice: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5">
           <Button
             onClick={handleSummary}
-            className="h-10 rounded-lg border border-slate-300 shadow-sm"
+            className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm break-words"
           >
             ไปหน้าสรุปรายการ
           </Button>
@@ -1193,23 +1165,24 @@ const SummaryPrice: React.FC = () => {
               setSelectedDate(null);
               setCarts(allCarts);
             }}
-            className="h-10 rounded-lg border border-slate-300 shadow-sm"
+            className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm"
           >
             ล้างวันที่
           </Button>
-          <Button
-            onClick={handleExportCSV}
-            className="flex items-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2"
-          >
-            <Download className="w-4 h-4 mr-2" /> CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportPDF}
-            className="flex items-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2"
-          >
-            <Download className="w-4 h-4 mr-2" /> PDF
-          </Button>
+          <div className="flex flex-center">
+            <Button
+              onClick={handleExportCSV}
+              className="h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm"
+            >
+              <Download className="w-4 h-4 mr-2" /> CSV
+            </Button>
+            <Button
+              onClick={handleExportPDF}
+              className="h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm"
+            >
+              <Download className="w-4 h-4 mr-2" /> PDF
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -1261,9 +1234,16 @@ const SummaryPrice: React.FC = () => {
                                       type="text"
                                       value={editingTimes?.exportTime || ""}
                                       onChange={(e) => {
-                                        const formattedValue = formatInputTime(e.target.value);
+                                        const formattedValue = formatInputTime(
+                                          e.target.value
+                                        );
                                         setEditingTimes((prev) =>
-                                          prev ? { ...prev, exportTime: formattedValue } : prev
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                exportTime: formattedValue,
+                                              }
+                                            : prev
                                         );
                                       }}
                                       placeholder="14.00"
@@ -1277,9 +1257,16 @@ const SummaryPrice: React.FC = () => {
                                       type="text"
                                       value={editingTimes?.receiveTime || ""}
                                       onChange={(e) => {
-                                        const formattedValue = formatInputTime(e.target.value);
+                                        const formattedValue = formatInputTime(
+                                          e.target.value
+                                        );
                                         setEditingTimes((prev) =>
-                                          prev ? { ...prev, receiveTime: formattedValue } : prev
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                receiveTime: formattedValue,
+                                              }
+                                            : prev
                                         );
                                       }}
                                       placeholder="19.00"
@@ -1325,7 +1312,7 @@ const SummaryPrice: React.FC = () => {
                                     เวลารับอาหาร{" "}
                                     {cart.cart_receive_time || "ไม่ระบุ"} น.
                                   </span>
-                                  <span
+                                  {/* <span
                                     className="cursor-pointer ml-2"
                                     onClick={() =>
                                       handleEditTimes(
@@ -1336,7 +1323,7 @@ const SummaryPrice: React.FC = () => {
                                     }
                                   >
                                     <Edit2 className="w-4 h-4" />
-                                  </span>
+                                  </span> */}
                                 </div>
                               )}
                             </div>
@@ -1440,7 +1427,7 @@ const SummaryPrice: React.FC = () => {
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
                                         editingMenu?.menuName ===
-                                        menuGroup.menuName;
+                                          menuGroup.menuName;
                                       const allIngredientsChecked =
                                         menuGroup.ingredients.every(
                                           (ing) => ing.isChecked
@@ -1450,10 +1437,11 @@ const SummaryPrice: React.FC = () => {
                                         <AccordionItem
                                           key={groupIdx}
                                           value={`menu-${groupIdx}`}
-                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked
+                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
+                                            allIngredientsChecked
                                               ? "bg-green-50 border-green-200"
                                               : "bg-red-50 border-red-200"
-                                            }`}
+                                          }`}
                                         >
                                           <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
                                             <span className="truncate text-sm text-gray-700">
@@ -1513,31 +1501,17 @@ const SummaryPrice: React.FC = () => {
                                                 </Button>
                                               </div>
                                             ) : (
-                                              <div className="flex items-center gap-2 mb-3">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleEditTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName,
-                                                      totalBox
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-                                                >
-                                                  <Edit2 className="w-4 h-4" />
-                                                </Button>
-                                              </div>
+                                              <div className="flex items-center gap-2 mb-3"></div>
                                             )}
                                             {menuGroup.ingredients.map(
                                               (ing, idx) => (
                                                 <div
                                                   key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked
+                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
+                                                    ing.isChecked
                                                       ? "bg-green-50 border-green-200"
                                                       : "bg-red-50 border-red-200"
-                                                    } text-sm`}
+                                                  } text-sm`}
                                                 >
                                                   <span className="text-gray-700">
                                                     {ing.ingredient_name ||
@@ -1545,7 +1519,8 @@ const SummaryPrice: React.FC = () => {
                                                   </span>
                                                   <div className="flex items-center gap-4">
                                                     <span className="text-gray-600">
-                                                      ใช้ {ing.useItem} กรัม ×{" "}
+                                                      ใช้ {ing.useItem}{" "}
+                                                      {ing.ingredient_unit} ×{" "}
                                                       {totalBox} กล่อง ={" "}
                                                       <strong
                                                         className="text-black-600"
@@ -1555,7 +1530,8 @@ const SummaryPrice: React.FC = () => {
                                                       >
                                                         {ing.calculatedTotal}
                                                       </strong>{" "}
-                                                      กรัม (ราคา{" "}
+                                                      {ing.ingredient_unit}{" "}
+                                                      (ราคา{" "}
                                                       <strong
                                                         className="text-black-600"
                                                         style={{
@@ -1566,35 +1542,6 @@ const SummaryPrice: React.FC = () => {
                                                       </strong>{" "}
                                                       บาท)
                                                     </span>
-                                                    <label className="cursor-pointer">
-                                                      <input
-                                                        type="checkbox"
-                                                        checked={
-                                                          ing.isChecked || false
-                                                        }
-                                                        onChange={() =>
-                                                          handleToggleIngredientCheck(
-                                                            cart.id,
-                                                            menuGroup.menuName,
-                                                            ing.ingredient_name
-                                                          )
-                                                        }
-                                                        className="hidden"
-                                                      />
-                                                      <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
-                                                          }`}
-                                                      >
-                                                        <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked
-                                                              ? "translate-x-5"
-                                                              : "translate-x-0.5"
-                                                            }`}
-                                                        />
-                                                      </span>
-                                                    </label>
                                                   </div>
                                                 </div>
                                               )
@@ -1721,10 +1668,10 @@ const SummaryPrice: React.FC = () => {
           //   </Pagination>
           // </div>
           <PaginationComponent
-          totalPages={totalPages}
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-        />
+            totalPages={totalPages}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
         )}
       </div>
     </div>

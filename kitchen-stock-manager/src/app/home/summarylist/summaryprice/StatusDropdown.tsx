@@ -2,19 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
-
-type Ingredient = {
-  ingredient_id?: number;
-  ingredient_name: string;
-  useItem: number;
-  calculatedTotal?: number;
-  sourceMenu?: string;
-};
-
-type StatusOption = {
-  label: string;
-  value: string;
-};
+import { Ingredient, StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
 
 const statusOptions: StatusOption[] = [
   { label: "รอมัดจำ", value: "pending" },
@@ -22,16 +10,6 @@ const statusOptions: StatusOption[] = [
   { label: "ส่งแล้ว", value: "success" },
   { label: "ยกเลิก", value: "cancelled" },
 ];
-
-type StatusDropdownProps = {
-  cartId: string;
-  allIngredients: {
-    menuName: string;
-    ingredients: Ingredient[];
-  }[];
-  defaultStatus?: string;
-  onUpdated?: () => void;
-};
 
 const StatusDropdown: React.FC<StatusDropdownProps> = ({
   cartId,
@@ -46,93 +24,93 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   const { userName } = useAuth();
 
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
+  // const handleSubmit = async () => {
+  //   try {
+  //     setIsSubmitting(true);
 
-      // ถ้าเลือก completed → จัดการ ingredients ก่อน
-      if (selectedStatus === "completed") {
-        for (const menu of allIngredients) {
-          for (const ingredient of menu.ingredients) {
-            if (!ingredient.ingredient_id) continue;
+  //     // ถ้าเลือก completed → จัดการ ingredients ก่อน
+  //     if (selectedStatus === "completed") {
+  //       for (const menu of allIngredients) {
+  //         for (const ingredient of menu.ingredients) {
+  //           if (!ingredient.ingredient_id) continue;
 
-            // GET ปริมาณคงเหลือ
-            const res = await fetch(
-              `/api/get/ingredients/${ingredient.ingredient_id}`
-            );
-            if (!res.ok) {
-              throw new Error(
-                `Failed to get ingredient ${ingredient.ingredient_id}`
-              );
-            }
-            const data = await res.json();
-            const currentTotal = data.ingredient_total;
+  //           // GET ปริมาณคงเหลือ
+  //           const res = await fetch(
+  //             `/api/get/ingredients/${ingredient.ingredient_id}`
+  //           );
+  //           if (!res.ok) {
+  //             throw new Error(
+  //               `Failed to get ingredient ${ingredient.ingredient_id}`
+  //             );
+  //           }
+  //           const data = await res.json();
+  //           const currentTotal = data.ingredient_total;
 
-            // ลบออกตาม calculatedTotal
-            const remaining = currentTotal - (ingredient.calculatedTotal || 0);
+  //           // ลบออกตาม calculatedTotal
+  //           const remaining = currentTotal - (ingredient.calculatedTotal || 0);
 
-            // ถ้าติดลบหรือหมด → ยืนยัน
-            if (remaining <= 0) {
-              const confirmUpdate = window.confirm(
-                `วัตถุดิบ ${ingredient.ingredient_name} ไม่เพียงพอ (เหลือ ${remaining})\nคุณต้องการยืนยันหรือไม่?`
-              );
-              if (!confirmUpdate) {
-                setIsSubmitting(false);
-                return;
-              }
-            }
+  //           // ถ้าติดลบหรือหมด → ยืนยัน
+  //           if (remaining <= 0) {
+  //             const confirmUpdate = window.confirm(
+  //               `วัตถุดิบ ${ingredient.ingredient_name} ไม่เพียงพอ (เหลือ ${remaining})\nคุณต้องการยืนยันหรือไม่?`
+  //             );
+  //             if (!confirmUpdate) {
+  //               setIsSubmitting(false);
+  //               return;
+  //             }
+  //           }
 
-            // PATCH กลับไปเก็บคงเหลือใหม่
-            const formData = new FormData();
-            formData.append("ingredient_total", String(remaining));
-            const updateRes = await fetch(
-              `/api/edit/ingredients/${ingredient.ingredient_id}`,
-              {
-                method: "PATCH",
-                body: formData,
-              }
-            );
-            if (!updateRes.ok) {
-              throw new Error(
-                `Failed to update ingredient ${ingredient.ingredient_id}`
-              );
-            }
-          }
-        }
-      }
+  //           // PATCH กลับไปเก็บคงเหลือใหม่
+  //           const formData = new FormData();
+  //           formData.append("ingredient_total", String(remaining));
+  //           const updateRes = await fetch(
+  //             `/api/edit/ingredients/${ingredient.ingredient_id}`,
+  //             {
+  //               method: "PATCH",
+  //               body: formData,
+  //             }
+  //           );
+  //           if (!updateRes.ok) {
+  //             throw new Error(
+  //               `Failed to update ingredient ${ingredient.ingredient_id}`
+  //             );
+  //           }
+  //         }
+  //       }
+  //     }
 
-      // PATCH cart status ทุกกรณี
-      const formData = new FormData();
-      formData.append("cart_status", selectedStatus);
-      formData.append("cart_last_update", userName ?? "unknown");
+  //     // PATCH cart status ทุกกรณี
+  //     const formData = new FormData();
+  //     formData.append("cart_status", selectedStatus);
+  //     formData.append("cart_last_update", userName ?? "unknown");
 
-      const res = await fetch(`/api/edit/cart_status/${cartId}`, {
-        // แก้ไขตรงนี้
-        method: "PATCH",
-        body: formData,
-      });
+  //     const res = await fetch(`/api/edit/cart_status/${cartId}`, {
+  //       // แก้ไขตรงนี้
+  //       method: "PATCH",
+  //       body: formData,
+  //     });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to update status");
-      }
+  //     if (!res.ok) {
+  //       const errorData = await res.json();
+  //       throw new Error(errorData.error || "Failed to update status");
+  //     }
 
-      // Lock ปุ่มถ้า success หรือ cancelled
-      if (selectedStatus === "success" || selectedStatus === "cancelled") {
-        setIsLocked(true);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("เกิดข้อผิดพลาด: " + (error as Error).message);
-    } finally {
-      setIsSubmitting(false);
-      window.location.reload();
-    }
-  };
+  //     // Lock ปุ่มถ้า success หรือ cancelled
+  //     if (selectedStatus === "success" || selectedStatus === "cancelled") {
+  //       setIsLocked(true);
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     alert("เกิดข้อผิดพลาด: " + (error as Error).message);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //     window.location.reload();
+  //   }
+  // };
 
   return (
     <div className="relative inline-flex items-center space-x-2">
-      {!isLocked && (
+      {/* {!isLocked && (
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
@@ -141,7 +119,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         >
           {isSubmitting ? "กำลังอัปเดต..." : "บันทึก"}
         </button>
-      )}
+      )} */}
 
       <div className="relative px-4">
         <button
@@ -149,23 +127,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             background: "#5bd9fc",
             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
           }}
-          className="inline-block hover:bg-blue-200 hover:shadow-md rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
+          className="inline-block rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
         >
           {statusOptions.find((o) => o.value === selectedStatus)?.label}
         </button>
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-          disabled={isLocked}
-          style={{ background: "#a2e1f2" }}
-        >
-          {statusOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
       </div>
     </div>
   );
