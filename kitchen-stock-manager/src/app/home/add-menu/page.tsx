@@ -90,7 +90,7 @@ export default function AddMenuPage() {
     }
     setIngredients(sortIngredients(newIngredients));
   };
-
+  // pull
   const handleRemoveIngredient = (index: number) => {
     const updated = ingredients.filter((_, i) => i !== index);
     setIngredients(sortIngredients(updated));
