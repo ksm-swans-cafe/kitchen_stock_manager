@@ -511,7 +511,7 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
 
           {mode === "ingredient" && (
             <div  className="mx-2 my-2">
-              <div style={{ color: "#ffffff" }} className="subtitle is-5">{title}</div>
+              <div className="subtitle is-5">{title}</div>
               <div className="subtitle is-7">
                 คงเหลือ {formatTotal(total as number)} {unit}
               </div>
