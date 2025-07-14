@@ -811,12 +811,12 @@ const OrderHistory: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5">
-          <Button
+          {/* <Button
             onClick={handleorderhistoryprice}
             className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm break-words"
           >
             ไปหน้าสรุปรายการต่อหน่วย
-          </Button>
+          </Button> */}
           <Button
             onClick={() => {
               setSelectedDate(null);
@@ -1019,72 +1019,7 @@ const OrderHistory: React.FC = () => {
                                               (จำนวน {totalBox} กล่อง)
                                             </span>
                                           </AccordionTrigger>
-                                          <AccordionContent className="pt-3 space-y-2">
-                                            {menuGroup.ingredients.map(
-                                              (ing, idx) => (
-                                                <div
-                                                  key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                                    ing.isChecked
-                                                      ? "bg-green-50 border-green-200"
-                                                      : "bg-red-50 border-red-200"
-                                                  } text-sm`}
-                                                >
-                                                  <span className="text-gray-700">
-                                                    {ing.ingredient_name ||
-                                                      `Unknown ingredient`}
-                                                  </span>
-                                                  <div className="flex items-center gap-4">
-                                                    <span className="text-gray-600">
-                                                      ใช้ {ing.useItem}{" "}
-                                                      {ing.ingredient_unit} ×{" "}
-                                                      {totalBox} กล่อง ={" "}
-                                                      <strong
-                                                        className="text-black-600"
-                                                        style={{
-                                                          color: "#000000",
-                                                        }}
-                                                      >
-                                                        {ing.calculatedTotal}
-                                                      </strong>{" "}
-                                                      {ing.ingredient_unit}
-                                                    </span>
-                                                    <label className="cursor-pointer">
-                                                      <input
-                                                        type="checkbox"
-                                                        checked={
-                                                          ing.isChecked || false
-                                                        }
-                                                        onChange={() =>
-                                                          handleToggleIngredientCheck(
-                                                            cart.id,
-                                                            menuGroup.menuName,
-                                                            ing.ingredient_name
-                                                          )
-                                                        }
-                                                        className="hidden"
-                                                      />
-                                                      <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                                          ing.isChecked
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
-                                                        }`}
-                                                      >
-                                                        <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                                            ing.isChecked
-                                                              ? "translate-x-5"
-                                                              : "translate-x-0.5"
-                                                          }`}
-                                                        />
-                                                      </span>
-                                                    </label>
-                                                  </div>
-                                                </div>
-                                              )
-                                            )}
-                                          </AccordionContent>
+                                          
                                         </AccordionItem>
                                       );
                                     }

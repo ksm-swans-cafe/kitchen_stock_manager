@@ -1216,12 +1216,12 @@ const SummaryList: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5">
-          <Button
+          {/* <Button
             onClick={handleSummaryprice}
             className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm break-words"
           >
             ไปหน้าสรุปรายการต่อหน่วย
-          </Button>
+          </Button> */}
           <Button
             onClick={() => {
               setSelectedDate(null);
@@ -1660,6 +1660,13 @@ const SummaryList: React.FC = () => {
                       </AccordionItem>
                     </Accordion>
                   ))}
+                  <Button
+                  size="sm"
+                  onClick={() =>}
+                  className="h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4"
+                  style={{ color: "#000000", background: "#fcf22d" }}>
+                    สรุปวัตถุดิบทั้งหมดของออเดอร์นั้น
+                  </Button>
                 </div>
                 <div className="flex justify-center m-4">
                   <div>
