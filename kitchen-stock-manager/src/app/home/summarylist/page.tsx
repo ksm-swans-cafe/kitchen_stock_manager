@@ -78,6 +78,9 @@ const SummaryList: React.FC = () => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<Cart[]>([]);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
+  const [selectedCartForSummary, setSelectedCartForSummary] =
+    useState<Cart | null>(null);
   const [selectedDateForSummary, setSelectedDateForSummary] = useState<
     string | null
   >(null);
@@ -971,10 +974,54 @@ const SummaryList: React.FC = () => {
     };
   };
 
+  const summarizeOrderIngredients = (cart: Cart) => {
+    const ingredientSummary: {
+      [key: string]: { checked: number; total: number; unit: string };
+    } = {};
+
+    cart.allIngredients.forEach((menuGroup) => {
+      menuGroup.ingredients.forEach((ing) => {
+        if (!ingredientSummary[ing.ingredient_name]) {
+          ingredientSummary[ing.ingredient_name] = {
+            checked: 0,
+            total: 0,
+            unit: ing.ingredient_unit || "ไม่ระบุหน่วย",
+          };
+        }
+        const totalGrams = ing.calculatedTotal || 0;
+        ingredientSummary[ing.ingredient_name].total += totalGrams;
+        if (ing.isChecked) {
+          ingredientSummary[ing.ingredient_name].checked += totalGrams;
+        }
+      });
+    });
+
+    const allIngredientsChecked = cart.allIngredients.every((menuGroup) =>
+      menuGroup.ingredients.every((ing) => ing.isChecked)
+    );
+
+    return {
+      summary: Object.entries(ingredientSummary).map(
+        ([name, { checked, total, unit }]) => ({
+          name,
+          checked,
+          total,
+          unit,
+        })
+      ),
+      allIngredientsChecked,
+    };
+  };
+
   // Modified handleSummaryClick function
   const handleSummaryClick = (date: string) => {
     setSelectedDateForSummary(date);
     setIsSummaryModalOpen(true);
+  };
+
+  const handleOrderSummaryClick = (cart: Cart) => {
+    setSelectedCartForSummary(cart);
+    setIsOrderSummaryModalOpen(true);
   };
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
@@ -1268,7 +1315,7 @@ const SummaryList: React.FC = () => {
                 key={`date-${index}`}
                 className="space-y-4 bg-blue-50 rounded-xl shadow-sm"
               >
-                <h3 className="text-lg font-bold text-blue-700 text-center px-4 py-3">
+                <h3 style={{ fontSize: "28px" }} className="text-6xl font-bold text-blue-700 text-center px-4 py-3">
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
                 </h3>
 
@@ -1485,8 +1532,7 @@ const SummaryList: React.FC = () => {
                                     (menuGroup, groupIdx) => {
                                       const totalBox =
                                         cart.menuItems.find(
-                                          (item) =>
-                                            item.menu_name ===
+                                          me ===
                                             menuGroup.menuName
                                         )?.menu_total || 0;
                                       const isEditingThisMenu =
@@ -1655,18 +1701,31 @@ const SummaryList: React.FC = () => {
                                 </Accordion>
                               </div>
                             </div>
+                            <div className="flex justify-end mt-4">
+                              <Button
+                                size="sm"
+                                onClick={() => handleOrderSummaryClick(cart)}
+                                className="h-9 px-4 rounded-xl border border-blue-500 text-blue-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                                style={{
+                                  color: "#000000",
+                                  background: "#a3e635",
+                                }}
+                              >
+                                📋 สรุปวัตถุดิบของออเดอร์นี้
+                              </Button>
+                            </div>
                           </AccordionContent>
                         </Card>
                       </AccordionItem>
                     </Accordion>
                   ))}
-                  <Button
+                  {/* <Button
                   size="sm"
                   onClick={() =>}
                   className="h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4"
                   style={{ color: "#000000", background: "#fcf22d" }}>
                     สรุปวัตถุดิบทั้งหมดของออเดอร์นั้น
-                  </Button>
+                  </Button> */}
                 </div>
                 <div className="flex justify-center m-4">
                   <div>
@@ -1689,6 +1748,62 @@ const SummaryList: React.FC = () => {
             ))
           )}
         </div>
+
+        <Dialog
+          open={isOrderSummaryModalOpen}
+          onOpenChange={setIsOrderSummaryModalOpen}
+        >
+          <DialogContent className="max-w-md max-h-[70vh] overflow-y-auto">
+            <DialogTitle className="text-lg font-bold">
+              <div style={{ color: "#000000" }} className="mb-4">
+                สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary?.orderNumber}{" "}
+                <br />
+                (วันที่ส่ง: {selectedCartForSummary?.cart_delivery_date})
+              </div>
+              {selectedCartForSummary &&
+                (() => {
+                  const { summary, allIngredientsChecked } =
+                    summarizeOrderIngredients(selectedCartForSummary);
+                  return (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-semibold text-gray-700">
+                          สรุปวัตถุดิบของออเดอร์
+                        </h5>
+                        {summary.map((ing, idx) => (
+                          <div
+                            key={idx}
+                            className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
+                          >
+                            <span className="text-gray-700">{ing.name}</span>
+                            <span className="text-gray-600">
+                              {ing.checked}/{ing.total} {ing.unit}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ color: "#000000", background: "#5cfa6c" }}>
+                        <Button
+                          onClick={() =>
+                            handleCheckAllIngredients(selectedCartForSummary.id)
+                          }
+                          className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
+                          disabled={
+                            isSaving === selectedCartForSummary.id ||
+                            allIngredientsChecked
+                          }
+                        >
+                          {isSaving === selectedCartForSummary.id
+                            ? "กำลังบันทึก..."
+                            : "เลือกวัตถุดิบทั้งหมด"}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+            </DialogTitle>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen}>
           <DialogContent className="max-w-md">
