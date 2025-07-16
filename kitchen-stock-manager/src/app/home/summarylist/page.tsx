@@ -1315,7 +1315,7 @@ const SummaryList: React.FC = () => {
                 key={`date-${index}`}
                 className="space-y-4 bg-blue-50 rounded-xl shadow-sm"
               >
-                <h3 style={{ fontSize: "28px" }} className=" font-bold text-blue-700 text-center px-4 py-3">
+                <h3 style={{ fontSize: "28px" }} className="text-6xl font-bold text-blue-700 text-center px-4 py-3">
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
                 </h3>
 
@@ -1530,10 +1530,11 @@ const SummaryList: React.FC = () => {
                                 >
                                   {cart.allIngredients.map(
                                     (menuGroup, groupIdx) => {
-                                      // const totalBox =
-                                      //   cart.menuItems.find(
-                                      //     me === menuGroup.menuName
-                                      //   )?.menu_total || 0;
+                                      const totalBox =
+                                        cart.menuItems.find(
+                                          me ===
+                                            menuGroup.menuName
+                                        )?.menu_total || 0;
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
                                         editingMenu?.menuName ===
@@ -1558,7 +1559,7 @@ const SummaryList: React.FC = () => {
                                               {menuGroup.menuName}
                                             </span>
                                             <span className="text-sm font-mono text-blue-600">
-                                              {/* (จำนวน {totalBox} กล่อง) */}
+                                              (จำนวน {totalBox} กล่อง)
                                             </span>
                                           </AccordionTrigger>
                                           <AccordionContent className="pt-3 space-y-2">
@@ -1615,13 +1616,13 @@ const SummaryList: React.FC = () => {
                                                 <Button
                                                   variant="ghost"
                                                   size="sm"
-                                                  // onClick={() =>
-                                                  //   handleEditTotalBox(
-                                                  //     cart.id,
-                                                  //     menuGroup.menuName,
-                                                  //     totalBox
-                                                  //   )
-                                                  // }
+                                                  onClick={() =>
+                                                    handleEditTotalBox(
+                                                      cart.id,
+                                                      menuGroup.menuName,
+                                                      totalBox
+                                                    )
+                                                  }
                                                   className="h-8 px-2 text-blue-600 hover:bg-blue-100"
                                                 >
                                                   <Edit2 className="w-4 h-4" />
@@ -1646,7 +1647,7 @@ const SummaryList: React.FC = () => {
                                                     <span className="text-gray-600">
                                                       ใช้ {ing.useItem}{" "}
                                                       {ing.ingredient_unit} ×{" "}
-                                                      {/* {totalBox} กล่อง ={" "} */}
+                                                      {totalBox} กล่อง ={" "}
                                                       <strong
                                                         className="text-black-600"
                                                         style={{

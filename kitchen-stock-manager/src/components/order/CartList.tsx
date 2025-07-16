@@ -245,6 +245,10 @@ export default function CartList() {
                   <p className="text-sm text-gray-500 mt-1">วันที่จัดส่ง: {cart_delivery_date}</p>
                 )}
               </div>
+
+              <div className="col-span-2 flex flex-col gap-1">
+                <label className="font-medium"></label>
+              </div>
             </div>
 
             <ul className="space-y-4 mb-4">
