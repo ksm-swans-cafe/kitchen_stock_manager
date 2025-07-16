@@ -9,10 +9,27 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import { th } from "date-fns/locale/th";
+import Flatpickr from 'react-flatpickr';
+import 'flatpickr/dist/themes/material_blue.css';
 
 registerLocale("th", th);
 
 export default function CartList() {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const [deliveryTime, setDeliveryTime] = useState<Date | undefined>(midnight);
+  const [pickupTime, setPickupTime] = useState<Date | undefined>(midnight);
+  const formatTime = (date?: Date) => {
+    return date
+      ? date.toLocaleTimeString('th-TH', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        })
+      : '';
+  };
+
+
   const {
     items,
     addItem,
@@ -247,8 +264,43 @@ export default function CartList() {
               </div>
 
               <div className="col-span-2 flex flex-col gap-1">
-                <label className="font-medium"></label>
+                <label htmlFor="food-delivery-time" className="font-medium">
+                  เวลาส่งอาหาร
+                </label>
+                <Flatpickr
+                  id="food-delivery-time"
+                  options={{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i',
+                    time_24hr: true,
+                  }}
+                  value={deliveryTime}
+                  onChange={([time]) => setDeliveryTime(time)}
+                  className="border border-gray-300 rounded px-3 py-2"
+                />
+                <p className="text-sm text-gray-500">เวลาที่เลือก: {formatTime(deliveryTime)}</p>
               </div>
+
+              <div className="col-span-2 flex flex-col gap-1">
+                <label htmlFor="food-pickup-time" className="font-medium">
+                  เวลารับอาหาร
+                </label>
+                <Flatpickr
+                  id="food-pickup-time"
+                  options={{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i',
+                    time_24hr: true,
+                  }}
+                  value={pickupTime}
+                  onChange={([time]) => setPickupTime(time)}
+                  className="border border-gray-300 rounded px-3 py-2"
+                />
+                <p className="text-sm text-gray-500">เวลาที่เลือก: {formatTime(pickupTime)}</p>
+              </div>
+
             </div>
 
             <ul className="space-y-4 mb-4">
