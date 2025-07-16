@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 type MenuItem = {
   menu_id: string;
   menu_name: string;
-  menu_ingredients: string;
+  menu_ingredients: string | Ingredient[];
   menu_subname: string;
 };
 
@@ -21,7 +21,9 @@ type IngredientUnit = {
 
 export default function Page() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [ingredientUnits, setIngredientUnits] = useState<Record<string, string>>({});
+  const [ingredientUnits, setIngredientUnits] = useState<
+    Record<string, string>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -35,15 +37,53 @@ export default function Page() {
           throw new Error("ไม่สามารถดึงข้อมูลเมนูได้");
         }
         const menuData: MenuItem[] = await menuResponse.json();
+        console.log("Menu data from API:", menuData); // Debug log
 
         // Collect unique ingredient names
         const uniqueIngredients = new Set<string>();
         menuData.forEach((item) => {
           try {
-            const ingredients: Ingredient[] = JSON.parse(item.menu_ingredients);
-            ingredients.forEach((ing) => uniqueIngredients.add(ing.ingredient_name));
+            let ingredients: Ingredient[];
+            if (Array.isArray(item.menu_ingredients)) {
+              ingredients = item.menu_ingredients;
+            } else if (typeof item.menu_ingredients === "string") {
+              ingredients = JSON.parse(item.menu_ingredients);
+            } else {
+              console.error(
+                `menu_ingredients มีรูปแบบไม่ถูกต้องสำหรับ ${item.menu_name}:`,
+                item.menu_ingredients
+              );
+              return;
+            }
+
+            if (!Array.isArray(ingredients)) {
+              console.error(
+                `menu_ingredients ไม่ใช่ array สำหรับ ${item.menu_name}:`,
+                ingredients
+              );
+              return;
+            }
+
+            ingredients.forEach((ing) => {
+              if (
+                typeof ing.ingredient_name === "string" &&
+                typeof ing.useItem === "number" &&
+                ing.useItem >= 0
+              ) {
+                uniqueIngredients.add(ing.ingredient_name.trim()); // Trim to avoid whitespace issues
+              } else {
+                console.error(
+                  `ingredient ไม่ถูกต้องสำหรับ ${item.menu_name}:`,
+                  ing
+                );
+              }
+            });
           } catch (e) {
-            console.error(`ไม่สามารถแปลงส่วนผสมสำหรับ ${item.menu_name}:`, e);
+            console.error(
+              `ไม่สามารถแปลงส่วนผสมสำหรับ ${item.menu_name}:`,
+              e,
+              item.menu_ingredients
+            );
           }
         });
 
@@ -51,20 +91,33 @@ export default function Page() {
         const units: Record<string, string> = {};
         if (uniqueIngredients.size > 0) {
           const response = await fetch(
-            `/api/get/ingredients-name?names=${encodeURIComponent([...uniqueIngredients].join(','))}`
+            `/api/get/ingredients-name?names=${encodeURIComponent(
+              [...uniqueIngredients].join(",")
+            )}`
           );
           if (response.ok) {
-            const data: IngredientUnit[] = await response.json();
-            data.forEach((unit) => {
-              units[unit.ingredient_name] = unit.ingredient_unit || "หน่วย";
+            const data: IngredientUnit[] | { error: string } =
+              await response.json();
+            if ("error" in data) {
+              throw new Error(data.error);
+            }
+            console.log("Ingredient units from API:", data); // Debug log
+            (data as IngredientUnit[]).forEach((unit) => {
+              if (unit.ingredient_name && unit.ingredient_unit) {
+                units[unit.ingredient_name.trim()] = unit.ingredient_unit;
+              } else {
+                console.warn(
+                  `Invalid unit data for ${unit.ingredient_name}:`,
+                  unit.ingredient_unit
+                );
+              }
             });
+          } else {
+            throw new Error("ไม่สามารถดึงข้อมูลหน่วยวัตถุดิบได้");
           }
-          // Set default unit for ingredients not found
-          [...uniqueIngredients].forEach((name) => {
-            if (!units[name]) units[name] = "หน่วย";
-          });
         }
 
+        console.log("Final ingredientUnits:", units); // Debug log
         setIngredientUnits(units);
         setMenuItems(menuData);
       } catch (err) {
@@ -77,23 +130,62 @@ export default function Page() {
   }, []);
 
   // Format ingredients for display
-  const formatIngredients = (ingredientsString: string): string => {
+  const formatIngredients = (ingredientsInput: unknown) => {
     try {
-      const ingredients: Ingredient[] = JSON.parse(ingredientsString);
-      if (!Array.isArray(ingredients) || ingredients.length === 0) {
-        return "ไม่มีวัตถุดิบ";
+      let ingredients: Ingredient[];
+      if (Array.isArray(ingredientsInput)) {
+        ingredients = ingredientsInput;
+      } else if (typeof ingredientsInput === "string") {
+        ingredients = JSON.parse(ingredientsInput);
+      } else {
+        console.error("ingredientsInput มีรูปแบบไม่ถูกต้อง:", ingredientsInput);
+        return <span className="text-red-500">ข้อมูลส่วนผสมไม่ถูกต้อง</span>;
       }
-      return ingredients
-        .map(
-          (ing) =>
-            `${ing.ingredient_name} ใช้ ${ing.useItem} ${
-              ingredientUnits[ing.ingredient_name] || "หน่วย"
-            }`
-        )
-        .join(", ");
+
+      if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        return <span>ไม่มีวัตถุดิบ</span>;
+      }
+
+      // ตรวจสอบว่าแต่ละ ingredient มีโครงสร้างถูกต้อง
+      const validIngredients = ingredients.filter(
+        (ing) =>
+          typeof ing.ingredient_name === "string" &&
+          typeof ing.useItem === "number" &&
+          ing.useItem >= 0
+      );
+
+      if (validIngredients.length === 0) {
+        return <span className="text-red-500">ข้อมูลส่วนผสมไม่ถูกต้อง</span>;
+      }
+
+      return (
+        <span>
+          {validIngredients.map((ing, index) => {
+            const unit = ingredientUnits[ing.ingredient_name.trim()] || "หน่วย"; // Use default only if not found
+            if (!ingredientUnits[ing.ingredient_name.trim()]) {
+              console.warn(
+                `No unit found for ingredient: ${ing.ingredient_name}`
+              ); // Debug log
+            }
+            return (
+              <span
+                key={index}
+                className={
+                  !ingredientUnits[ing.ingredient_name.trim()]
+                    ? "text-gray-500"
+                    : ""
+                }
+              >
+                {ing.ingredient_name} {ing.useItem} {unit}
+                {index < validIngredients.length - 1 ? ", " : ""}
+              </span>
+            );
+          })}
+        </span>
+      );
     } catch (e) {
-      console.error("ไม่สามารถแปลงส่วนผสม:", e);
-      return "ไม่มีวัตถุดิบ";
+      console.error("ไม่สามารถแปลงส่วนผสม:", e, ingredientsInput);
+      return <span className="text-red-500">ข้อมูลส่วนผสมไม่ถูกต้อง</span>;
     }
   };
 
