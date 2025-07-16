@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import Menubar from "@/components/ui/Menubar";
 import Navigatebar from "@/components/ui/Navigatebar";
+import Footer from "@/components/ui/Footer";
 
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -38,6 +39,7 @@ export default function RootLayout({
           <Menubar />
           <Navigatebar />
           {children}
+          <Footer/>
           <Analytics />
           <SpeedInsights />
         </AuthProvider>
