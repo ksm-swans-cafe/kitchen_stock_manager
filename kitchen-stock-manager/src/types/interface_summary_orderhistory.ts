@@ -76,14 +76,29 @@ export type StatusOption = {
       value: string;
     };
 
-export type StatusDropdownProps = {
-    cartId: string;
+// export type StatusDropdownProps = {
+//     cartId: string;
+//     allIngredients: {
+//       menuName: string;
+//       ingredients: Ingredient[];
+//     }[];
+//     defaultStatus?: string;
+//     onUpdated?: () => void;
+//     cart_receive_time?: string; 
+//     cart_export_time?: string; 
+//     cart?: Cart;
+//   };
+export interface StatusDropdownProps {
+  cartId: string;
+  // allIngredients: MenuItem[];
     allIngredients: {
       menuName: string;
       ingredients: Ingredient[];
     }[];
-    defaultStatus?: string;
-    onUpdated?: () => void;
-    cart_receive_time?: string; 
-    cart_export_time?: string; 
-  };
+  defaultStatus?: string;
+  onUpdated?: () => void;
+  cart_receive_time?: string;
+  cart_export_time?: string;
+  cart: Cart; // เพิ่ม prop นี้
+  onOrderSummaryClick?: (cart: Cart) => void; // เพิ่ม prop สำหรับ callback
+}
