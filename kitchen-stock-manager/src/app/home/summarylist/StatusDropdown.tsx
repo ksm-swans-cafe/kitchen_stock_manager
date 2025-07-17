@@ -8,6 +8,7 @@ import {
   StatusDropdownProps,
 } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
+import { Button } from "@/share/ui/button";
 
 const statusOptions: StatusOption[] = [
   { label: "รอมัดจำ", value: "pending" },
@@ -133,9 +134,8 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         Swal.fire({
           icon: "success",
           title: "อัปเดตสถานะสำเร็จ",
-          text: `สถานะถูกเปลี่ยนเป็น "${
-            statusOptions.find((o) => o.value === selectedStatus)?.label
-          }"`,
+          text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === selectedStatus)?.label
+            }"`,
           showConfirmButton: false,
           timer: 4000,
         });
@@ -167,6 +167,35 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  function onOrderSummaryClick(): void {
+    Swal.fire({
+      title: "สรุปวัตถุดิบของออเดอร์นี้",
+      html: `
+        <div style="text-align:left;">
+          ${allIngredients
+          .map(
+            (menu) => `
+                <div>
+                  <strong>${menu.menuName}</strong>
+                  <ul>
+                    ${menu.ingredients
+                .map(
+                  (ing) =>
+                    `<li>${ing.ingredient_name} : ${ing.calculatedTotal ?? "-"} ${ing.ingredient_unit ?? ""}</li>`
+                )
+                .join("")}
+                  </ul>
+                </div>
+              `
+          )
+          .join("")}
+        </div>
+      `,
+      confirmButtonText: "ปิด",
+      width: 600,
+    });
+  }
 
   return (
     <div className="relative inline-flex items-center space-x-2">
@@ -208,6 +237,21 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           ))}
         </select>
       </div>
+      {/* <div className="flex justify-end mt-4"> */}
+        <button
+          // size="sm"
+          onClick={() => onOrderSummaryClick?.()} // ใช้ prop แทนการเรียกตรง
+          // className="h-9 px-4 rounded-xl border border-blue-500 text-blue-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+          className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            color: "#000000",
+            background: "#a3e635",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+          }}
+        >
+          {/* 📋 สรุปวัตถุดิบของออเดอร์นี้ */}
+          สรุปวัตถุดิบของออเดอร์นี้
+        </button>
     </div>
   );
 };
