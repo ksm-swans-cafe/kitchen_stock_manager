@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 
 type MenuItem = {
@@ -70,7 +69,7 @@ export default function Page() {
                 typeof ing.useItem === "number" &&
                 ing.useItem >= 0
               ) {
-                uniqueIngredients.add(ing.ingredient_name.trim()); // Trim to avoid whitespace issues
+                uniqueIngredients.add(ing.ingredient_name.trim().toLowerCase()); // Normalize ingredient_name
               } else {
                 console.error(
                   `ingredient ไม่ถูกต้องสำหรับ ${item.menu_name}:`,
@@ -104,7 +103,8 @@ export default function Page() {
             console.log("Ingredient units from API:", data); // Debug log
             (data as IngredientUnit[]).forEach((unit) => {
               if (unit.ingredient_name && unit.ingredient_unit) {
-                units[unit.ingredient_name.trim()] = unit.ingredient_unit;
+                units[unit.ingredient_name.trim().toLowerCase()] =
+                  unit.ingredient_unit; // Normalize ingredient_name
               } else {
                 console.warn(
                   `Invalid unit data for ${unit.ingredient_name}:`,
@@ -161,22 +161,25 @@ export default function Page() {
       return (
         <span>
           {validIngredients.map((ing, index) => {
-            const unit = ingredientUnits[ing.ingredient_name.trim()] || "หน่วย"; // Use default only if not found
-            if (!ingredientUnits[ing.ingredient_name.trim()]) {
+            // Normalize ingredient_name to avoid mismatch
+            const normalizedName = ing.ingredient_name.trim().toLowerCase();
+            const unit = ingredientUnits[normalizedName] || "หน่วย";
+
+            if (!ingredientUnits[normalizedName]) {
               console.warn(
                 `No unit found for ingredient: ${ing.ingredient_name}`
-              ); // Debug log
+              );
             }
+
             return (
               <span
                 key={index}
                 className={
-                  !ingredientUnits[ing.ingredient_name.trim()]
-                    ? "text-gray-500"
-                    : ""
+                  !ingredientUnits[normalizedName] ? "text-gray-500" : ""
                 }
+                title={!ingredientUnits[normalizedName] ? "หน่วยไม่ระบุ" : ""}
               >
-                {ing.ingredient_name} {ing.useItem} {unit}
+                {ing.ingredient_name} ใช้ {ing.useItem} {unit}
                 {index < validIngredients.length - 1 ? ", " : ""}
               </span>
             );
