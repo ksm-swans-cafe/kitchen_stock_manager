@@ -78,9 +78,9 @@ const SummaryList: React.FC = () => {
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<Cart[]>([]);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
-  const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
-  const [selectedCartForSummary, setSelectedCartForSummary] =
-    useState<Cart | null>(null);
+  // const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
+  // const [selectedCartForSummary, setSelectedCartForSummary] =
+  //   useState<Cart | null>(null);
   const [selectedDateForSummary, setSelectedDateForSummary] = useState<
     string | null
   >(null);
@@ -296,6 +296,13 @@ const SummaryList: React.FC = () => {
       receiveTime: formatToThaiTime(receiveTime),
     });
   };
+
+  const formatToHHMM = (time: string | undefined): string | undefined => {
+  if (!time) return undefined;
+  const cleaned = time.replace(/\s*น\.?$/, "").replace(".", ":");
+  const regex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  return regex.test(cleaned) ? cleaned : undefined;
+};
 
   const handleSaveTimes = async (cartId: string) => {
     if (!editingTimes) {
@@ -1015,11 +1022,13 @@ const SummaryList: React.FC = () => {
     setSelectedDateForSummary(date);
     setIsSummaryModalOpen(true);
   };
+  const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
+const [selectedCartForSummary, setSelectedCartForSummary] = useState<Cart | null>(null);
 
-  const handleOrderSummaryClick = (cart: Cart) => {
-    setSelectedCartForSummary(cart);
-    setIsOrderSummaryModalOpen(true);
-  };
+const handleOrderSummaryClick = (cart: Cart) => {
+  setSelectedCartForSummary(cart);
+  setIsOrderSummaryModalOpen(true);
+};
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
   const paginatedGroupedOrders = groupedOrders.slice(
@@ -1506,14 +1515,24 @@ const SummaryList: React.FC = () => {
                             </div>
                           </AccordionTrigger>
                           <div className="flex justify-center mt-2">
-                            <StatusDropdown
+                            {/* <StatusDropdown
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
                               cart_receive_time={cart.cart_receive_time} // เพิ่ม prop
                               cart_export_time={cart.cart_export_time} // เพิ่ม prop
                               onUpdated={() => handleUpdateWithCheck(cart)}
-                            />
+                            /> */}
+                            <StatusDropdown
+  cartId={cart.id}
+  allIngredients={cart.allIngredients}
+  defaultStatus={cart.status}
+  cart_receive_time={formatToHHMM(cart.cart_receive_time)}
+  cart_export_time={formatToHHMM(cart.cart_export_time)}
+  cart={cart}
+  onUpdated={() => handleUpdateWithCheck(cart)}
+  onOrderSummaryClick={handleOrderSummaryClick}
+/>
                           </div>
                           <AccordionContent className="mt-4">
                             <div className="grid md:grid-cols-2 gap-6">
@@ -1529,8 +1548,8 @@ const SummaryList: React.FC = () => {
                                     (menuGroup, groupIdx) => {
                                       const totalBox =
                                         cart.menuItems.find(
-                                          me === 
-                                          menuGroup.menuName
+                                          me ===
+                                            menuGroup.menuName
                                         )?.menu_total || 0;
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
@@ -1698,7 +1717,7 @@ const SummaryList: React.FC = () => {
                                 </Accordion>
                               </div>
                             </div>
-                            <div className="flex justify-end mt-4">
+                            {/* <div className="flex justify-end mt-4">
                               <Button
                                 size="sm"
                                 onClick={() => handleOrderSummaryClick(cart)}
@@ -1710,7 +1729,7 @@ const SummaryList: React.FC = () => {
                               >
                                 📋 สรุปวัตถุดิบของออเดอร์นี้
                               </Button>
-                            </div>
+                            </div> */}
                           </AccordionContent>
                         </Card>
                       </AccordionItem>
