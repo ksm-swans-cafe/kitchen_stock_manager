@@ -247,14 +247,17 @@ const SummaryList: React.FC = () => {
         if (!dateA) return 1;
         if (!dateB) return -1;
 
-        const timeA = new Date(dateA).getTime();
-        const timeB = new Date(dateB).getTime();
+        const diffA = Math.abs(
+          new Date(dateA).getTime() - currentDate.getTime()
+        );
+        const diffB = Math.abs(
+          new Date(dateB).getTime() - currentDate.getTime()
+        );
 
-        //เรียงลำดับเวลาส่งใกล้สุดขึ้นก่อน
-        if (timeA !== timeB) {
-          return timeA - timeB;
+        // เรียงจากวันที่ใกล้ปัจจุบันมากที่สุดไปน้อยที่สุด
+        if (diffA !== diffB) {
+          return diffA - diffB;
         }
-
 
         // ถ้า cart_delivery_date เหมือนกัน ให้เรียงตาม cart_order_number จากมากไปน้อย
         const orderNumA = parseInt(a.order_number || "0");
@@ -1529,8 +1532,8 @@ const SummaryList: React.FC = () => {
                                     (menuGroup, groupIdx) => {
                                       const totalBox =
                                         cart.menuItems.find(
-                                          me === 
-                                          menuGroup.menuName
+                                          me ===
+                                            menuGroup.menuName
                                         )?.menu_total || 0;
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
