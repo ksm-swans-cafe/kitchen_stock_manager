@@ -30,11 +30,9 @@ export async function GET(request: { url: string | URL }) {
   }
 
   try {
-    console.log("Raw names from query:", names);
-    const nameArray = names
-      .split(",")
-      .map((name) => decodeURIComponent(name).trim().toLowerCase());
-    console.log("Processed nameArray:", nameArray);
+    console.log("Raw names from query:", names); // Debug query string
+    const nameArray = names.split(",").map((name) => decodeURIComponent(name).trim().toLowerCase());
+    console.log("Processed nameArray:", nameArray); // Debug processed names
 
     if (nameArray.length === 0) {
       return NextResponse.json([], { status: 200 });
@@ -60,10 +58,6 @@ export async function GET(request: { url: string | URL }) {
 
     if (result.length === 0) {
       console.warn("No units found in database for any ingredients");
-      return NextResponse.json(
-        { warning: "No units found for the provided ingredients", units },
-        { status: 200 }
-      );
     }
 
     console.log("Final units response:", units);
