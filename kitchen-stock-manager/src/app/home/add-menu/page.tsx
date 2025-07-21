@@ -23,7 +23,14 @@ export default function AddMenuPage() {
     IngredientOption[]
   >([]);
   const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [menuName, setMenuName] = useState("");
+  const [ingredients, setIngredients] = useState<Ingredient[]>([
+    { useItem: 0, ingredient_name: "" },
+  ]);
+  const [menuSubName, setMenuSubName] = useState("เมนู");
+  const [ingredientOptions, setIngredientOptions] = useState<
+    IngredientOption[]
+  >([]);
 
   useEffect(() => {
     async function fetchIngredients() {
