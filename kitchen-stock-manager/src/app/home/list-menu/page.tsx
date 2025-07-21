@@ -1,124 +1,91 @@
 "use client";
+
 import { useState, useEffect } from "react";
 
-type MenuItem = {
+interface Ingredient {
+  useItem: number;
+  ingredient_name: string;
+}
+
+interface IngredientOption {
+  ingredient_id: number;
+  ingredient_name: string;
+  ingredient_unit: string;
+}
+
+interface MenuItem {
   menu_id: string;
   menu_name: string;
   menu_ingredients: string | Ingredient[];
   menu_subname: string;
-};
+}
 
-type Ingredient = {
-  useItem: number;
-  ingredient_name: string;
-};
-
-type IngredientUnit = {
+interface IngredientUnit {
   ingredient_name: string;
   ingredient_unit: string;
-};
+}
 
 export default function Page() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [ingredientUnits, setIngredientUnits] = useState<
     Record<string, string>
   >({});
+  const [ingredientOptions, setIngredientOptions] = useState<
+    IngredientOption[]
+  >([]);
+  const [menuName, setMenuName] = useState("");
+  const [ingredients, setIngredients] = useState<Ingredient[]>([
+    { useItem: 0, ingredient_name: "" },
+  ]);
+  const [menuSubName, setMenuSubName] = useState("เมนู");
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dialog, setDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editMenuId, setEditMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       try {
-        // Fetch menu items
-        const menuResponse = await fetch("/api/get/menu-list");
-        if (!menuResponse.ok) {
-          throw new Error("ไม่สามารถดึงข้อมูลเมนูได้");
-        }
-        const menuData: MenuItem[] = await menuResponse.json();
-        console.log("Menu data from API:", menuData); // Debug log
+        const [menuRes, ingOptRes] = await Promise.all([
+          fetch("/api/get/menu-list"),
+          fetch("/api/get/ingredients"),
+        ]);
 
-        // Collect unique ingredient names
+        if (!menuRes.ok || !ingOptRes.ok) throw new Error("โหลดข้อมูลล้มเหลว");
+
+        const menuData: MenuItem[] = await menuRes.json();
+        const ingredientOptions: IngredientOption[] = await ingOptRes.json();
+        setIngredientOptions(ingredientOptions);
+
         const uniqueIngredients = new Set<string>();
         menuData.forEach((item) => {
           try {
-            let ingredients: Ingredient[];
-            if (Array.isArray(item.menu_ingredients)) {
-              ingredients = item.menu_ingredients;
-            } else if (typeof item.menu_ingredients === "string") {
-              ingredients = JSON.parse(item.menu_ingredients);
-            } else {
-              console.error(
-                `menu_ingredients มีรูปแบบไม่ถูกต้องสำหรับ ${item.menu_name}:`,
-                item.menu_ingredients
-              );
-              return;
-            }
+            const ingredients =
+              typeof item.menu_ingredients === "string"
+                ? JSON.parse(item.menu_ingredients)
+                : item.menu_ingredients;
 
-            if (!Array.isArray(ingredients)) {
-              console.error(
-                `menu_ingredients ไม่ใช่ array สำหรับ ${item.menu_name}:`,
-                ingredients
-              );
-              return;
-            }
-
-            ingredients.forEach((ing) => {
-              if (
-                typeof ing.ingredient_name === "string" &&
-                typeof ing.useItem === "number" &&
-                ing.useItem >= 0
-              ) {
-                uniqueIngredients.add(ing.ingredient_name.trim().toLowerCase()); // Normalize ingredient_name
-              } else {
-                console.error(
-                  `ingredient ไม่ถูกต้องสำหรับ ${item.menu_name}:`,
-                  ing
-                );
-              }
+            ingredients.forEach((ing: Ingredient) => {
+              uniqueIngredients.add(ing.ingredient_name.trim().toLowerCase());
             });
-          } catch (e) {
-            console.error(
-              `ไม่สามารถแปลงส่วนผสมสำหรับ ${item.menu_name}:`,
-              e,
-              item.menu_ingredients
-            );
-          }
+          } catch {}
         });
 
-        // Fetch ingredient units in bulk
-        const units: Record<string, string> = {};
-        if (uniqueIngredients.size > 0) {
-          const response = await fetch(
-            `/api/get/ingredients-name?names=${encodeURIComponent(
-              [...uniqueIngredients].join(",")
-            )}`
-          );
-          if (response.ok) {
-            const data: IngredientUnit[] | { error: string } =
-              await response.json();
-            if ("error" in data) {
-              throw new Error(data.error);
-            }
-            console.log("Ingredient units from API:", data); // Debug log
-            (data as IngredientUnit[]).forEach((unit) => {
-              if (unit.ingredient_name && unit.ingredient_unit) {
-                units[unit.ingredient_name.trim().toLowerCase()] =
-                  unit.ingredient_unit; // Normalize ingredient_name
-              } else {
-                console.warn(
-                  `Invalid unit data for ${unit.ingredient_name}:`,
-                  unit.ingredient_unit
-                );
-              }
-            });
-          } else {
-            throw new Error("ไม่สามารถดึงข้อมูลหน่วยวัตถุดิบได้");
-          }
-        }
+        const res = await fetch(
+          `/api/get/ingredients-name?names=${encodeURIComponent(
+            [...uniqueIngredients].join(",")
+          )}`
+        );
+        const units: IngredientUnit[] = await res.json();
 
-        console.log("Final ingredientUnits:", units); // Debug log
-        setIngredientUnits(units);
+        const unitMap: Record<string, string> = {};
+        units.forEach((unit) => {
+          unitMap[unit.ingredient_name.trim().toLowerCase()] =
+            unit.ingredient_unit;
+        });
+
+        setIngredientUnits(unitMap);
         setMenuItems(menuData);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
@@ -129,78 +96,210 @@ export default function Page() {
     fetchData();
   }, []);
 
-  // Format ingredients for display
-  const formatIngredients = (ingredientsInput: unknown) => {
+  const formatIngredients = (data: string | Ingredient[]) => {
     try {
-      let ingredients: Ingredient[];
-      if (Array.isArray(ingredientsInput)) {
-        ingredients = ingredientsInput;
-      } else if (typeof ingredientsInput === "string") {
-        ingredients = JSON.parse(ingredientsInput);
-      } else {
-        console.error("ingredientsInput มีรูปแบบไม่ถูกต้อง:", ingredientsInput);
-        return <span className="text-red-500">ข้อมูลส่วนผสมไม่ถูกต้อง</span>;
-      }
-
-      if (!Array.isArray(ingredients) || ingredients.length === 0) {
-        return <span>ไม่มีวัตถุดิบ</span>;
-      }
-
-      // ตรวจสอบว่าแต่ละ ingredient มีโครงสร้างถูกต้อง
-      const validIngredients = ingredients.filter(
-        (ing) =>
-          typeof ing.ingredient_name === "string" &&
-          typeof ing.useItem === "number" &&
-          ing.useItem >= 0
-      );
-
-      if (validIngredients.length === 0) {
-        return <span className="text-red-500">ข้อมูลส่วนผสมไม่ถูกต้อง</span>;
-      }
-
+      const ingredients = typeof data === "string" ? JSON.parse(data) : data;
       return (
         <span>
-          {validIngredients.map((ing, index) => {
-            // Normalize ingredient_name to avoid mismatch
-            const normalizedName = ing.ingredient_name.trim().toLowerCase();
-            const unit = ingredientUnits[normalizedName] || "หน่วย";
-
-            if (!ingredientUnits[normalizedName]) {
-              console.warn(
-                `No unit found for ingredient: ${ing.ingredient_name}`
-              );
-            }
-
+          {ingredients.map((ing: Ingredient, idx: number) => {
+            const unit =
+              ingredientUnits[ing.ingredient_name.trim().toLowerCase()] ||
+              "หน่วย";
             return (
-              <span
-                key={index}
-                className={
-                  !ingredientUnits[normalizedName] ? "text-gray-500" : ""
-                }
-                title={!ingredientUnits[normalizedName] ? "หน่วยไม่ระบุ" : ""}
-              >
+              <span key={idx}>
                 {ing.ingredient_name} ใช้ {ing.useItem} {unit}
-                {index < validIngredients.length - 1 ? ", " : ""}
+                {idx < ingredients.length - 1 ? ", " : ""}
               </span>
             );
           })}
         </span>
       );
-    } catch (e) {
-      console.error("ไม่สามารถแปลงส่วนผสม:", e, ingredientsInput);
-      return <span className="text-red-500">ข้อมูลส่วนผสมไม่ถูกต้อง</span>;
+    } catch {
+      return <span className="text-red-500">ข้อมูลไม่ถูกต้อง</span>;
     }
   };
 
-  if (error) {
-    return (
-      <div className="text-red-500 text-center mt-4">ข้อผิดพลาด: {error}</div>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("menu_name", menuName);
+      formData.append("menu_ingredients", JSON.stringify(ingredients));
+      formData.append("menu_subname", menuSubName);
+
+      const res = await fetch(
+        editMenuId ? `/api/edit/menu/${editMenuId}` : "/api/post/menu",
+        {
+          method: editMenuId ? "PATCH" : "POST",
+          body: formData,
+        }
+      );
+
+      if (!res.ok)
+        throw new Error(
+          editMenuId ? "ไม่สามารถแก้ไขเมนูได้" : "ไม่สามารถเพิ่มเมนูได้"
+        );
+
+      setMenuName("");
+      setIngredients([{ useItem: 0, ingredient_name: "" }]);
+      setMenuSubName("เมนู");
+      setDialog(false);
+      setEditMenuId(null);
+      location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditDialog = (item: MenuItem) => {
+    setMenuName(item.menu_name);
+    setMenuSubName(item.menu_subname);
+    setIngredients(
+      typeof item.menu_ingredients === "string"
+        ? JSON.parse(item.menu_ingredients)
+        : item.menu_ingredients
     );
-  }
+    setEditMenuId(item.menu_id);
+    setDialog(true);
+  };
+
+  const removeIngredient = (index: number) => {
+    const updated = ingredients.filter((_, i) => i !== index);
+    setIngredients(updated);
+  };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">รายการเมนู</h1>
+      <div className="mb-4 flex justify-between items-center">
+        <div className="flex-1">
+          <button
+            onClick={() => {
+              setDialog(true);
+              setEditMenuId(null);
+              setMenuName("");
+              setMenuSubName("เมนู");
+              setIngredients([{ useItem: 0, ingredient_name: "" }]);
+            }}
+            className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            เพิ่มเมนู
+          </button>
+        </div>
+      </div>
+
+      {dialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white w-full max-w-xl p-6 rounded shadow-lg relative">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-black"
+              onClick={() => setDialog(false)}
+            >
+              ✕
+            </button>
+            <h2 className="text-xl font-bold mb-4">
+              {editMenuId ? "แก้ไขเมนู" : "เพิ่มเมนูใหม่"}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                value={menuName}
+                onChange={(e) => setMenuName(e.target.value)}
+                placeholder="ชื่อเมนู"
+                className="w-full border p-2"
+                required
+              />
+              <input
+                type="text"
+                value={menuSubName}
+                onChange={(e) => setMenuSubName(e.target.value)}
+                placeholder="ชื่อรอง"
+                className="w-full border p-2"
+                required
+              />
+              {ingredients.map((ing, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <select
+                    value={ing.ingredient_name}
+                    onChange={(e) => {
+                      const updated = [...ingredients];
+                      updated[idx].ingredient_name = e.target.value;
+                      setIngredients(updated);
+                    }}
+                    className="flex-1 border p-2"
+                  >
+                    <option value="">เลือกวัตถุดิบ</option>
+                    {ingredientOptions.map((opt) => (
+                      <option
+                        key={opt.ingredient_id}
+                        value={opt.ingredient_name}
+                      >
+                        {opt.ingredient_name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    className="w-24 border p-2"
+                    value={ing.useItem}
+                    onChange={(e) => {
+                      const updated = [...ingredients];
+                      updated[idx].useItem = Number(e.target.value);
+                      setIngredients(updated);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(idx)}
+                    className="text-red-500 hover:underline"
+                  >
+                    ลบ
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setIngredients([
+                    ...ingredients,
+                    { useItem: 0, ingredient_name: "" },
+                  ])
+                }
+                className="text-blue-600"
+              >
+                + เพิ่มวัตถุดิบ
+              </button>
+              <div className="flex justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setDialog(false)}
+                  className="px-4 py-2 bg-gray-300 rounded"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "กำลังบันทึก..."
+                    : editMenuId
+                    ? "อัปเดตเมนู"
+                    : "บันทึกเมนู"}
+                </button>
+              </div>
+              {error && <div className="text-red-600">{error}</div>}
+            </form>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="text-center">กำลังโหลด...</div>
       ) : (
@@ -210,12 +309,13 @@ export default function Page() {
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูอาหาร</th>
               <th className="py-2 px-4 border-b text-left">วัตถุดิบในอาหาร</th>
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูรอง</th>
+              <th className="py-2 px-4 border-b text-left">การจัดการ</th>
             </tr>
           </thead>
           <tbody>
             {menuItems.length === 0 ? (
               <tr>
-                <td colSpan={3} className="py-2 px-4 text-center">
+                <td colSpan={4} className="py-2 px-4 text-center">
                   ไม่มีข้อมูล
                 </td>
               </tr>
@@ -227,6 +327,14 @@ export default function Page() {
                     {formatIngredients(item.menu_ingredients)}
                   </td>
                   <td className="py-2 px-4 border-b">{item.menu_subname}</td>
+                  <td className="py-2 px-4 border-b">
+                    <button
+                      onClick={() => openEditDialog(item)}
+                      className="px-3 py-1 bg-yellow-400 text-white rounded"
+                    >
+                      แก้ไข
+                    </button>
+                  </td>
                 </tr>
               ))
             )}

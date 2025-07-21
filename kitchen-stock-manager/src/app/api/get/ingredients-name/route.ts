@@ -30,21 +30,23 @@ export async function GET(request: { url: string | URL }) {
   }
 
   try {
-    console.log("Raw names from query:", names); // Debug query string
-    const nameArray = names.split(",").map((name) => decodeURIComponent(name).trim().toLowerCase());
-    console.log("Processed nameArray:", nameArray); // Debug processed names
+    // console.log("Raw names from query:", names); // Debug query string
+    const nameArray = names
+      .split(",")
+      .map((name) => decodeURIComponent(name).trim().toLowerCase());
+    // console.log("Processed nameArray:", nameArray); // Debug processed names
 
     if (nameArray.length === 0) {
       return NextResponse.json([], { status: 200 });
     }
 
     const result = await sql`
-      SELECT ingredient_name, COALESCE(ingredient_unit, 'หน่วย') AS ingredient_unit 
-      FROM ingredients 
-      WHERE TRIM(LOWER(ingredient_name)) IN (${nameArray})
-    `;
+    SELECT ingredient_name, COALESCE(ingredient_unit, 'หน่วย') AS ingredient_unit 
+    FROM ingredients 
+    WHERE LOWER(ingredient_name) = ANY(${nameArray})
+  `;
 
-    console.log("Database query result:", result);
+    // console.log("Database query result:", result);
 
     const units = nameArray.map((name) => {
       const found = result.find(
@@ -60,7 +62,7 @@ export async function GET(request: { url: string | URL }) {
       console.warn("No units found in database for any ingredients");
     }
 
-    console.log("Final units response:", units);
+    // console.log("Final units response:", units);
     return NextResponse.json(units, { status: 200 });
   } catch (error) {
     console.error("Error fetching ingredient units:", error);

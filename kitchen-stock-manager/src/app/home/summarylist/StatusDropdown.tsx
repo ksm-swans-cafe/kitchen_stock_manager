@@ -2,13 +2,19 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import useSWR from "swr";
 import {
-  // Ingredient,
   StatusOption,
   StatusDropdownProps,
 } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
-import { Button } from "@/share/ui/button";
+
+// Fetcher function สำหรับ SWR
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
+  return res.json();
+};
 
 const statusOptions: StatusOption[] = [
   { label: "รอมัดจำ", value: "pending" },
@@ -24,16 +30,19 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   onUpdated,
   cart_receive_time,
   cart_export_time,
+  onOrderSummaryClick,
+  cart,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState(defaultStatus);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocked, setIsLocked] = useState(
     defaultStatus === "success" || defaultStatus === "cancelled"
   );
-
   const { userName } = useAuth();
 
-  // ฟังก์ชันตรวจสอบรูปแบบเวลา (HH:mm)
+  const { mutate: mutateCarts } = useSWR("/api/get/carts", fetcher);
+  const { mutate: mutateIngredients } = useSWR("/api/get/ingredients", fetcher);
+
   const isValidTimeFormat = (time: string | undefined): boolean => {
     if (!time) return false;
     const regex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -44,7 +53,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     try {
       setIsSubmitting(true);
 
-      // ตรวจสอบเมื่อเปลี่ยนเป็นสถานะ "success"
       if (selectedStatus === "success") {
         const allIngredientsChecked = allIngredients.every((menu) =>
           menu.ingredients.every((ing) => ing.isChecked)
@@ -84,7 +92,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         }
       }
 
-      // ถ้าเลือก completed → จัดการ ingredients ก่อน
       if (selectedStatus === "completed") {
         for (const menu of allIngredients) {
           for (const ingredient of menu.ingredients) {
@@ -101,10 +108,8 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             const data = await res.json();
             const currentTotal = data.ingredient_total;
 
-            // ลบออกตาม calculatedTotal
             const remaining = currentTotal - (ingredient.calculatedTotal || 0);
 
-            // ถ้าติดลบหรือหมด → ยืนยัน
             if (remaining <= 0) {
               const confirmUpdate = window.confirm(
                 `วัตถุดิบ ${ingredient.ingredient_name} ไม่เพียงพอ (เหลือ ${remaining})\nคุณต้องการยืนยันหรือไม่?`
@@ -134,8 +139,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         Swal.fire({
           icon: "success",
           title: "อัปเดตสถานะสำเร็จ",
-          text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === selectedStatus)?.label
-            }"`,
+          text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === selectedStatus)?.label}"`,
           showConfirmButton: false,
           timer: 4000,
         });
@@ -155,6 +159,8 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         throw new Error(errorData.error || "Failed to update status");
       }
 
+      mutateCarts();
+      mutateIngredients();
       onUpdated?.();
 
       if (selectedStatus === "success" || selectedStatus === "cancelled") {
@@ -162,40 +168,16 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("เกิดข้อผิดพลาด: " + (error as Error).message);
+      Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: (error as Error).message,
+        confirmButtonText: "ตกลง",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  function onOrderSummaryClick(): void {
-    Swal.fire({
-      title: "สรุปวัตถุดิบของออเดอร์นี้",
-      html: `
-        <div style="text-align:left;">
-          ${allIngredients
-          .map(
-            (menu) => `
-                <div>
-                  <strong>${menu.menuName}</strong>
-                  <ul>
-                    ${menu.ingredients
-                .map(
-                  (ing) =>
-                    `<li>${ing.ingredient_name} : ${ing.calculatedTotal ?? "-"} ${ing.ingredient_unit ?? ""}</li>`
-                )
-                .join("")}
-                  </ul>
-                </div>
-              `
-          )
-          .join("")}
-        </div>
-      `,
-      confirmButtonText: "ปิด",
-      width: 600,
-    });
-  }
 
   return (
     <div className="relative inline-flex items-center space-x-2">
@@ -212,7 +194,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           {isSubmitting ? "กำลังอัปเดต..." : "บันทึก"}
         </button>
       )}
-
       <div className="relative px-4">
         <button
           style={{
@@ -237,21 +218,17 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           ))}
         </select>
       </div>
-      {/* <div className="flex justify-end mt-4"> */}
-        <button
-          // size="sm"
-          onClick={() => onOrderSummaryClick?.()} // ใช้ prop แทนการเรียกตรง
-          // className="h-9 px-4 rounded-xl border border-blue-500 text-blue-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
-          className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            color: "#000000",
-            background: "#a3e635",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-          }}
-        >
-          {/* 📋 สรุปวัตถุดิบของออเดอร์นี้ */}
-          สรุปวัตถุดิบของออเดอร์นี้
-        </button>
+      <button
+        onClick={() => onOrderSummaryClick?.(cart)}
+        className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{
+          color: "#000000",
+          background: "#a3e635",
+          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+        }}
+      >
+        สรุปวัตถุดิบของออเดอร์นี้
+      </button>
     </div>
   );
 };

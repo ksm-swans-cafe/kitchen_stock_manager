@@ -23,6 +23,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kitchen Stock Manager",
   description: "Use for manage stock in kitchen",
+  charset: "utf-8",
 };
 
 export default function RootLayout({
