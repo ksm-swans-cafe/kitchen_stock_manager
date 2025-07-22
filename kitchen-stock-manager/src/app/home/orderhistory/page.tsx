@@ -127,14 +127,14 @@ const OrderHistory: React.FC = () => {
     data: cartsData,
     error: cartsError,
     mutate: mutateCarts,
-  } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
+  } = useSWR("/api/get/carts", fetcher);
   const { data: menuData, error: menuError } = useSWR(
     "/api/get/menu-list",
     fetcher
   );
   const { data: ingredientData, error: ingredientError } = useSWR(
     "/api/get/ingredients",
-    fetcher, { refreshInterval: 30000 }
+    fetcher
   );
 
   // รวมข้อผิดพลาดจากทุก API
