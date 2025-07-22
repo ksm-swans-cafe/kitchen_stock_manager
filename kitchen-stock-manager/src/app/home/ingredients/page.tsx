@@ -26,13 +26,6 @@ import {
 import { Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import useSWR from "swr";
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch ingredients list");
-  return res.json();
-};
 
 const normalizeThaiVowel = (text: string): string => {
   if (!text) return "";
@@ -41,11 +34,11 @@ const normalizeThaiVowel = (text: string): string => {
 
 export default function IngredientManagement() {
   const chunkSize = 1000;
-  // const [allIngredient, setIngredient] = useState<ingredient[]>([]);
+  const [allIngredient, setIngredient] = useState<ingredient[]>([]);
   // const [allEmployee, setEmployee] = useState<Employee[]>([]);
   const [visibleCount, setVisibleCount] = useState(chunkSize);
   const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ทั้งหมด");
   const [searchQuery, setSearchQuery] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -74,16 +67,26 @@ export default function IngredientManagement() {
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
 
-  const {
-    data: allIngredient,
-    error,
-    isLoading,
-    mutate,
-  } = useSWR<ingredient[]>("/api/get/ingredients", fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 60000,
-    refreshInterval: 30000,
-  });
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/get/ingredients");
+        if (!res.ok) throw new Error("Failed to fetch ingredients list");
+        const data = await res.json();
+        setIngredient(data);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchIngredients();
+  }, []);
 
   const [ingredient, setingredient] = useState<ingredient>({
     ingredient_name: "",
@@ -97,31 +100,32 @@ export default function IngredientManagement() {
     ingredient_price: 0,
   });
 
-  // ในฟังก์ชัน getStepValue
-  const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
-      return "1";
-    }
-    // else if (["กิโลกรัม", "ลิตร"].includes(unit)) {
-    //   return "0.01";
-    // }
-    return "";
-  };
+// ในฟังก์ชัน getStepValue
+const getStepValue = (unit: string): string => {
+  if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
+    return "1";
+  } 
+  // else if (["กิโลกรัม", "ลิตร"].includes(unit)) {
+  //   return "0.01";
+  // }
+  return "";
+};
 
-  // ในฟังก์ชัน formatNumber
-  const formatNumber = (value: number, unit: string): number => {
-    if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
-      return Math.floor(value);
-    }
-    // else if (["กิโลกรัม", "ลิตร", "ถุง"].includes(unit)) {
-    //   return Math.round(value * 100) / 100;
-    // }
-    return value;
-  };
+// ในฟังก์ชัน formatNumber
+const formatNumber = (value: number, unit: string): number => {
+  if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
+    return Math.floor(value);
+  } 
+  // else if (["กิโลกรัม", "ลิตร", "ถุง"].includes(unit)) {
+  //   return Math.round(value * 100) / 100;
+  // }
+  return value;
+};
 
   const handleAddIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsAddDialogOpen(true); // ป้องกัน dialog ปิดก่อน
+    setLoading(true);
+    setError(null);
 
     try {
       const trimmedName = normalizeThaiVowel(
@@ -136,6 +140,8 @@ export default function IngredientManagement() {
       if (
         !trimmedName ||
         !ingredient.ingredient_unit?.trim() ||
+        // !ingredient.ingredient_category?.trim() ||
+        // !ingredient.ingredient_sub_category?.trim() ||
         isNaN(total) ||
         total <= 0 ||
         isNaN(alert) ||
@@ -152,6 +158,14 @@ export default function IngredientManagement() {
         ingredient.ingredient_unit.trim()
       );
       formDataIngredient.append("ingredient_total_alert", String(alert));
+      // formDataIngredient.append(
+      //   "ingredient_category",
+      //   ingredient.ingredient_category.trim()
+      // );
+      // formDataIngredient.append(
+      //   "ingredient_sub_category",
+      //   ingredient.ingredient_sub_category.trim()
+      // );
       formDataIngredient.append(
         "ingredient_price",
         String(ingredient.ingredient_price ?? 0).trim()
@@ -216,18 +230,15 @@ export default function IngredientManagement() {
         throw new Error("Invalid transaction response format");
       }
 
-      // อัปเดตข้อมูลในแคชด้วย mutate
-      mutate(
-        allIngredient ? [...allIngredient, addedIngredient] : [addedIngredient],
-        false
-      );
-
+      setIngredient((prev) => [...prev, addedIngredient]);
       setingredient({
         ingredient_name: "",
         ingredient_total: 0,
         ingredient_unit: "",
         ingredient_image: "",
         ingredient_total_alert: 0,
+        // ingredient_category: "",
+        // ingredient_sub_category: "",
         ingredient_status: "",
         ingredient_price: 0,
       });
@@ -239,9 +250,13 @@ export default function IngredientManagement() {
         error instanceof Error
           ? error.message
           : "เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบหรือธุรกรรม";
+      setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
+
   const getStockStatus = (
     ingredient: ingredient
   ): { label: string; color: string } => {
@@ -259,7 +274,7 @@ export default function IngredientManagement() {
 
   const filteredIngredient = useMemo(
     () =>
-      (allIngredient || []).filter((ingredient) => {
+      allIngredient.filter((ingredient) => {
         const normalizedIngredientName = normalizeThaiVowel(
           ingredient.ingredient_name || ""
         );
@@ -296,7 +311,7 @@ export default function IngredientManagement() {
     [filteredIngredient, visibleCount]
   );
 
-  const ingredients = (allIngredient || [])
+  const ingredients = allIngredient
     .map((ingredient) => normalizeThaiVowel(ingredient.ingredient_name || ""))
     .filter(
       (ingredient_name): ingredient_name is string =>
@@ -305,7 +320,7 @@ export default function IngredientManagement() {
 
   const lowStockIngredients = useMemo(
     () =>
-      (allIngredient || []).filter((ingredient) => {
+      allIngredient.filter((ingredient) => {
         const total = Number(ingredient.ingredient_total) || 0;
         const alert = Number(ingredient.ingredient_total_alert) || 0;
         return total <= alert;
@@ -350,10 +365,7 @@ export default function IngredientManagement() {
   return (
     <div className="flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto">
       <div className="container">
-        {isLoading && <p>Loading...</p>}
-        {error && <p className="text-red-500">{error.message}</p>}
-
-        {allIngredient && lowStockIngredients.length > 0 && (
+        {lowStockIngredients.length > 0 && (
           <Card className="p-4 border-red-200 bg-red-50 dark:bg-red-900/20 mt-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex items-center gap-2">
@@ -670,27 +682,27 @@ export default function IngredientManagement() {
           </div>
         </div>
 
-        {allIngredient && (
-          <div className="justify-center columns grid is-multiline">
-            {visibleIngredients.map((ingredient) => (
-              <MenuCard
-                mode="ingredient"
-                key={ingredient.ingredient_id}
-                item={ingredient}
-                onImageClick={() =>
-                  ingredient.ingredient_image &&
-                  handleImageClick(ingredient.ingredient_image)
-                }
-              />
-            ))}
-          </div>
-        )}
+        {loading && <p>Loading...</p>}
 
-        {allIngredient && visibleCount < filteredIngredient.length && (
+        <div className="justify-center columns grid is-multiline">
+          {visibleIngredients.map((ingredient) => (
+            <MenuCard
+              mode="ingredient"
+              key={ingredient.ingredient_id}
+              item={ingredient}
+              onImageClick={() =>
+                ingredient.ingredient_image &&
+                handleImageClick(ingredient.ingredient_image)
+              }
+            />
+          ))}
+        </div>
+
+        {visibleCount < filteredIngredient.length && (
           <div ref={loadMoreRef} style={{ height: "20px" }} />
         )}
 
-        {allIngredient && filteredIngredient.length === 0 && (
+        {filteredIngredient.length === 0 && (
           <Card className="p-8 text-center">
             <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
