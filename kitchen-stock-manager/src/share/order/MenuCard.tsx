@@ -23,7 +23,7 @@ import { Label } from "@/share/ui/label";
 import { useCartStore } from "@/stores/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { toast } from "sonner";
-
+import useSWR from "swr";
 type Mode = "menu" | "ingredient";
 
 interface MenuCardProps {
@@ -31,6 +31,12 @@ interface MenuCardProps {
   item: MenuItem | ingredient;
   onImageClick?: () => void;
 }
+
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
+  return res.json();
+};
 
 const normalizeThaiVowel = (text: string): string => {
   if (!text) return "";
