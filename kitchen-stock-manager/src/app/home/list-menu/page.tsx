@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import PaginationComponent from "@/components/ui/Totalpage";
 
 interface Ingredient {
   useItem: number;
@@ -37,6 +38,8 @@ export default function Page() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { useItem: 0, ingredient_name: "" },
   ]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1); // เพิ่ม state สำหรับ totalPages
   const [menuSubName, setMenuSubName] = useState("เมนู");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,22 +47,27 @@ export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editMenuId, setEditMenuId] = useState<string | null>(null);
 
+  const itemsPerPage = 30;
+
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const [menuRes, ingOptRes] = await Promise.all([
-          fetch("/api/get/menu-list"),
+          fetch(`/api/get/menu-page?page=${currentPage}&limit=${itemsPerPage}`),
           fetch("/api/get/ingredients"),
         ]);
 
         if (!menuRes.ok || !ingOptRes.ok) throw new Error("โหลดข้อมูลล้มเหลว");
 
-        const menuData: MenuItem[] = await menuRes.json();
+        const { data: menuData, pagination } = await menuRes.json();
+        console.log("Data: ", menuData);
         const ingredientOptions: IngredientOption[] = await ingOptRes.json();
         setIngredientOptions(ingredientOptions);
+        setTotalPages(pagination.totalPages);
 
         const uniqueIngredients = new Set<string>();
-        menuData.forEach((item) => {
+        menuData.forEach((item: MenuItem) => {
           try {
             const ingredients =
               typeof item.menu_ingredients === "string"
@@ -94,7 +102,7 @@ export default function Page() {
       }
     };
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   const formatIngredients = (data: string | Ingredient[]) => {
     try {
@@ -301,7 +309,16 @@ export default function Page() {
       )}
 
       {isLoading ? (
-        <div className="text-center">กำลังโหลด...</div>
+        <div className="space-y-2">
+          {[...Array(5)].map((_, idx) => (
+            <div key={idx} className="animate-pulse flex space-x-4">
+              <div className="h-6 bg-gray-300 rounded w-1/4"></div>
+              <div className="h-6 bg-gray-300 rounded w-2/4"></div>
+              <div className="h-6 bg-gray-300 rounded w-1/4"></div>
+              <div className="h-6 bg-gray-300 rounded w-1/6"></div>
+            </div>
+          ))}
+        </div>
       ) : (
         <table className="min-w-full bg-white border border-gray-300">
           <thead>
@@ -309,7 +326,7 @@ export default function Page() {
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูอาหาร</th>
               <th className="py-2 px-4 border-b text-left">วัตถุดิบในอาหาร</th>
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูรอง</th>
-              <th className="py-2 px-4 border-b text-left">การจัดการ</th>
+              <th className="py-2 px-4 border-b text-left">การ restraining</th>
             </tr>
           </thead>
           <tbody>
@@ -340,6 +357,17 @@ export default function Page() {
             )}
           </tbody>
         </table>
+      )}
+
+      {totalPages > 1 && (
+        <PaginationComponent
+          totalPages={totalPages}
+          currentPage={currentPage}
+          setCurrentPage={(page) => {
+            setMenuItems([]); // ล้างข้อมูลเดิมก่อนเพื่อให้ไม่โชว์เก่า
+            setCurrentPage(page); // จากนั้น set หน้าใหม่
+          }}
+        />
       )}
     </div>
   );
