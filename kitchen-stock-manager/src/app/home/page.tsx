@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState,useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import useSWR, { mutate } from "swr";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
 import {
@@ -10,111 +11,108 @@ import {
   History,
   AlertTriangle,
   FileText,
+  DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/share/ui/badge";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
-import { DollarSign } from "lucide-react";
+
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch ingredients");
+  return res.json();
+};
 
 export default function Page() {
   const router = useRouter();
-  const [allIngredient, setAllIngredient] = useState<ingredient[]>([]);
+  const [showAll, setShowAll] = useState(false);
+  const [showFullList, setShowFullList] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  const {
+    data: allIngredient = [],
+    error,
+    isLoading,
+  } = useSWR("/api/get/ingredients", fetcher, {
+    revalidateOnFocus: false,
+    refreshInterval: 30000,
+    onSuccess: (data) => {
+      const lowStock = data.filter(
+        (item: ingredient) =>
+          Number(item.ingredient_total) <= Number(item.ingredient_total_alert)
+      );
+      if (lowStock.length > 0) {
+        toast.warning(
+          `🔔 แจ้งเตือน: วัตถุดิบใกล้หมด ${lowStock.length} รายการ`
+        );
+      }
+    },
+  });
 
   useEffect(() => {
     const navEntry = performance.getEntriesByType(
       "navigation"
     )[0] as PerformanceNavigationTiming;
     if (navEntry.type !== "reload") {
-      location.reload();
+      mutate("/api/get/ingredients", undefined, { revalidate: false }); // 🧹 Clear cache
+      location.reload(); // 🔄 Reload page
     }
   }, []);
 
-  // 🔥 คำนวณวัตถุดิบใกล้หมดแบบ real-time
-  const lowStockIngredients = allIngredient.filter((ingredient) => {
-    const total = Number(ingredient.ingredient_total) || 0;
-    const alert = Number(ingredient.ingredient_total_alert) || 0;
+  const lowStockIngredients = allIngredient.filter((item: ingredient) => {
+    const total = Number(item.ingredient_total) || 0;
+    const alert = Number(item.ingredient_total_alert) || 0;
     return total <= alert;
   });
-  const [showAll, setShowAll] = useState(false); // state ควบคุม
+
   useEffect(() => {
-    const fetchIngredients = async () => {
-      try {
-        const res = await fetch("/api/get/ingredients");
-        if (!res.ok) throw new Error("Failed to fetch ingredients");
-        const data = await res.json();
-
-        setAllIngredient(data);
-
-        // แจ้งเตือนแบบ toast เมื่อมีวัตถุดิบใกล้หมด
-        const lowStock = data.filter(
-          (item: ingredient) =>
-            Number(item.ingredient_total) > Number(item.ingredient_total_alert)
-        );
-        if (lowStock.length > 0) {
-          toast.warning(
-            `🔔 แจ้งเตือน: วัตถุดิบใกล้หมด ${lowStock.length} รายการ`
-          );
-        }
-      } catch (error) {
-        console.error("Error loading ingredients:", error);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node)
+      ) {
+        setShowAll(false);
       }
     };
-
-    fetchIngredients();
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  const handleAddIngredients = () => {
-    router.push("/home/ingredients");
-  };
+  const handleAddIngredients = () => router.push("/home/ingredients");
+  const handleOrder = () => router.push("/home/order");
+  const handleSummaryList = () => router.push("/home/summarylist");
+  const handleOrderHistory = () => router.push("/home/orderhistory");
+  const handleFinance = () => router.push("/home/finance");
 
-  const handleOrder = () => {
-    router.push("/home/order");
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
 
-  const handleSummaryList = () => {
-    router.push("/home/summarylist");
-  };
-
-  const handleOrderHistory = () => {
-    router.push("/home/orderhistory");
-  };
-
-  const handleFinance = () => {
-    router.push("/home/finance");
-  };
-
-  const [showFullList, setShowFullList] = useState(false); // ย่อ/ขยายข้อมูล
-
-  const popupRef = useRef<HTMLDivElement>(null);
-
-useEffect(() => {
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      popupRef.current &&
-      !popupRef.current.contains(event.target as Node)
-    ) {
-      setShowAll(false);
-    }
-  };
-
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, []);
+  if (error) {
+    console.error("Error loading ingredients:", error);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Failed to load ingredients. Please try again.
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-[140px] bg-gradient-to-br from-background via-secondary/10 to-background p-4">
       {/* 🔴 แจ้งเตือนวัตถุดิบ (ปุ่ม + กล่อง toggle) */}
       {lowStockIngredients.length > 0 && (
         <div className="fixed bottom-6 right-6 z-50">
-          {/* 🔴 ปุ่มแจ้งเตือน + Ping */}
           <div className="relative">
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
             </span>
-
             <Button
               onClick={() => setShowAll((prev) => !prev)}
               className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-xl transition"
@@ -123,13 +121,11 @@ useEffect(() => {
               <AlertTriangle className="w-5 h-5" />
             </Button>
           </div>
-
-          {/* 📋 รายการวัตถุดิบ */}
           {showAll && (
-  <div
-    ref={popupRef}
-    className="absolute bottom-[70px] right-0 w-[300px] sm:w-[360px] bg-red-50 border border-red-300 shadow-lg rounded-lg p-4 backdrop-blur-md"
-  >
+            <div
+              ref={popupRef}
+              className="absolute bottom-[70px] right-0 w-[300px] sm:w-[360px] bg-red-50 border border-red-300 shadow-lg rounded-lg p-4 backdrop-blur-md"
+            >
               <h3 className="text-sm font-semibold text-red-800 mb-2">
                 วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)
               </h3>
@@ -137,19 +133,25 @@ useEffect(() => {
                 {(showFullList
                   ? lowStockIngredients
                   : lowStockIngredients.slice(0, 4)
-                ).map((ingredient) => (
-                  <Badge
-                    key={ingredient.ingredient_id}
-                    variant="destructive"
-                    className="text-xs w-fit"
-                  >
-                    {ingredient.ingredient_name} ({ingredient.ingredient_total}{" "}
-                    / {ingredient.ingredient_total_alert})
-                  </Badge>
-                ))}
+                ).map(
+                  (ingredient: {
+                    ingredient_id: string;
+                    ingredient_name: string;
+                    ingredient_total: number;
+                    ingredient_total_alert: number;
+                  }) => (
+                    <Badge
+                      key={ingredient.ingredient_id}
+                      variant="destructive"
+                      className="text-xs w-fit"
+                    >
+                      {ingredient.ingredient_name} (
+                      {ingredient.ingredient_total} /{" "}
+                      {ingredient.ingredient_total_alert})
+                    </Badge>
+                  )
+                )}
               </div>
-
-              {/* 🔁 ปุ่ม แสดงทั้งหมด / ย่อ */}
               {lowStockIngredients.length > 4 && (
                 <button
                   onClick={() => setShowFullList((prev) => !prev)}
@@ -166,38 +168,8 @@ useEffect(() => {
       {/* เมนูหลัก */}
       <div className="flex-1 flex items-center justify-center min-h-[calc(100vh-140px)]">
         <div className="w-full max-w-md flex flex-col gap-6">
-          {/* {lowStockIngredients.length > 0 && (
-            <Card className="p-4 border-red-200 bg-red-50 dark:bg-red-900/20">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <h3 className="font-semibold text-red-800 dark:text-red-200">
-                    แจ้งเตือน: วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)
-                  </h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {lowStockIngredients.slice(0, 4).map((ingredient) => (
-                      <Badge
-                        key={ingredient.ingredient_id}
-                        variant="destructive"
-                        className="whitespace-nowrap"
-                      >
-                        {ingredient.ingredient_name} ({ingredient.ingredient_total}{" "}
-                        / {ingredient.ingredient_total_alert})
-                      </Badge>
-                    ))}
-                    {lowStockIngredients.length > 4 && (
-                      <Badge variant="destructive" className="whitespace-nowrap">
-                        ...
-                      </Badge>
-                    )}
-                </div>
-              </div>
-            </Card>
-          )} */}
-
           {/* Add Ingredients */}
-          <Card className="group hover:shadow-xl transition-all ...">
+          <Card className="group hover:shadow-xl transition-all">
             <CardContent className="p-0">
               <Button
                 variant="ghost"
@@ -213,7 +185,7 @@ useEffect(() => {
           </Card>
 
           {/* Order */}
-          <Card className="group hover:shadow-xl transition-all ...">
+          <Card className="group hover:shadow-xl transition-all">
             <CardContent className="p-0">
               <Button
                 variant="ghost"
@@ -228,7 +200,7 @@ useEffect(() => {
             </CardContent>
           </Card>
 
-          <Card className="group hover:shadow-xl transition-all ...">
+          <Card className="group hover:shadow-xl transition-all">
             <CardContent className="p-0">
               <Button
                 variant="ghost"
@@ -244,7 +216,7 @@ useEffect(() => {
           </Card>
 
           {/* Order History */}
-          <Card className="group hover:shadow-xl transition-all ...">
+          <Card className="group hover:shadow-xl transition-all">
             <CardContent className="p-0">
               <Button
                 variant="ghost"
@@ -260,7 +232,7 @@ useEffect(() => {
           </Card>
 
           {/* Finance Card */}
-          <Card className="group hover:shadow-xl transition-all ...">
+          <Card className="group hover:shadow-xl transition-all">
             <CardContent className="relative p-0">
               <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md z-10">
                 Demo

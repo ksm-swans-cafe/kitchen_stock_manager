@@ -94,14 +94,14 @@ const SummaryList: React.FC = () => {
     data: cartsData,
     error: cartsError,
     mutate: mutateCarts,
-  } = useSWR("/api/get/carts", fetcher);
+  } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR(
     "/api/get/menu-list",
-    fetcher
+    fetcher, { refreshInterval: 30000 }
   );
   const { data: ingredientData, error: ingredientError } = useSWR(
     "/api/get/ingredients",
-    fetcher
+    fetcher, { refreshInterval: 30000 }
   );
 
   // รวมข้อผิดพลาดจากทุก API
