@@ -97,11 +97,13 @@ const SummaryList: React.FC = () => {
   } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR(
     "/api/get/menu-list",
-    fetcher, { refreshInterval: 30000 }
+    fetcher,
+    { refreshInterval: 30000 }
   );
   const { data: ingredientData, error: ingredientError } = useSWR(
     "/api/get/ingredients",
-    fetcher, { refreshInterval: 30000 }
+    fetcher,
+    { refreshInterval: 30000 }
   );
 
   // รวมข้อผิดพลาดจากทุก API
@@ -519,6 +521,7 @@ const SummaryList: React.FC = () => {
       }
 
       mutateCarts();
+      setIsOrderSummaryModalOpen(false); // <-- เพิ่มบรรทัดนี้
     } catch (err) {
       console.error("Error updating all ingredients status:", err);
       console.error(
@@ -960,21 +963,6 @@ const SummaryList: React.FC = () => {
     id: string;
     allIngredients: any[];
   }) => {
-    const allIngredientsChecked = cart.allIngredients.every((menuGroup) =>
-      menuGroup.ingredients.every((ing: any) => ing.isChecked)
-    );
-
-    if (!allIngredientsChecked) {
-      Swal.fire({
-        icon: "success",
-        title: "เปลี่ยนสถานะสำเร็จ",
-        text: "ระบบได้เปลี่ยนสถานะเรียบร้อย",
-        showConfirmButton: false,
-        timer: 3000,
-      });
-      return;
-    }
-
     mutateCarts();
   };
 
@@ -1265,50 +1253,68 @@ const SummaryList: React.FC = () => {
                                   <div className="flex items-center gap-2">
                                     <BsCashStack className="w-6 h-6" />
                                     <span>เวลาส่งอาหาร</span>
-                                    <Input
-                                      type="text"
-                                      value={editingTimes?.exportTime || ""}
-                                      onChange={(e) => {
-                                        const formattedValue = formatInputTime(
-                                          e.target.value
-                                        );
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                exportTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
-                                      placeholder="14.00"
-                                      className="w-24 h-8 text-sm rounded-md border-gray-300"
-                                      aria-label="Edit export time"
-                                      required
-                                    />
+                                    <select
+                                      value={editingTimes?.exportTime.split(".")[0]}
+                                      onChange={e => setEditingTimes((prev) =>
+                                        prev ? {
+                                          ...prev,
+                                          exportTime: `${e.target.value}:${editingTimes?.exportTime.split(".")[1]}`
+                                        } : prev
+                                      )}
+                                      className="border rounded px-1"
+                                    >
+                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map(h => (
+                                        <option key={h} value={h}>{h}</option>
+                                      ))}
+                                    </select>
+                                    :
+                                    <select
+                                      value={editingTimes?.exportTime.split(".")[1]}
+                                      onChange={e => setEditingTimes((prev) =>
+                                        prev ? {
+                                          ...prev,
+                                          exportTime: `${editingTimes?.exportTime.split(".")[0]}:${e.target.value}`
+                                        } : prev
+                                      )}
+                                      className="border rounded px-1"
+                                    >
+                                      {Array.from({ length: 60 }, (_, i) => (i + 1).toString().padStart(2, "0")).map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="flex items-center gap-2">
                                     <FaWallet className="w-4 h-4" />
                                     <span>เวลารับอาหาร</span>
-                                    <Input
-                                      type="text"
-                                      value={editingTimes?.receiveTime || ""}
-                                      onChange={(e) => {
-                                        const formattedValue = formatInputTime(
-                                          e.target.value
-                                        );
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                receiveTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
-                                      placeholder="19.00"
-                                      className="w-24 h-8 text-sm rounded-md border-gray-300"
-                                      aria-label="Edit receive time"
-                                      required
-                                    />
+                                    <select
+                                      value={editingTimes?.receiveTime.split(".")[0]}
+                                      onChange={e => setEditingTimes((prev) =>
+                                        prev ? {
+                                          ...prev,
+                                          receiveTime: `${e.target.value}:${editingTimes?.receiveTime.split(".")[1]}`
+                                        } : prev
+                                      )}
+                                      className="border rounded px-1"
+                                    >
+                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map(h => (
+                                        <option key={h} value={h}>{h}</option>
+                                      ))}
+                                    </select>
+                                    :
+                                    <select
+                                      value={editingTimes?.receiveTime.split(".")[1]}
+                                      onChange={e => setEditingTimes((prev) =>
+                                        prev ? {
+                                          ...prev,
+                                          receiveTime: `${editingTimes?.receiveTime.split(".")[0]}:${e.target.value}`
+                                        } : prev
+                                      )}
+                                      className="border rounded px-1"
+                                    >
+                                      {Array.from({ length: 60 }, (_, i) => (i + 1).toString().padStart(2, "0")).map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                      ))}
+                                    </select>
                                   </div>
                                   <div className="flex w-full items-center">
                                     <div className="ml-auto flex items-center gap-2">
