@@ -134,7 +134,8 @@ const OrderHistory: React.FC = () => {
   );
   const { data: ingredientData, error: ingredientError } = useSWR(
     "/api/get/ingredients",
-    fetcher, { refreshInterval: 30000 }
+    fetcher,
+    { refreshInterval: 30000 }
   );
 
   // รวมข้อผิดพลาดจากทุก API
@@ -1332,7 +1333,7 @@ const OrderHistory: React.FC = () => {
                                       )
                                     }
                                   >
-                                    <Edit2 className="w-4 h-4" />
+                                    {/* <Edit2 className="w-4 h-4" /> */}
                                   </span>
                                 </div>
                               )}
@@ -1522,7 +1523,7 @@ const OrderHistory: React.FC = () => {
                                                   }
                                                   className="h-8 px-2 text-blue-600 hover:bg-blue-100"
                                                 >
-                                                  <Edit2 className="w-4 h-4" />
+                                                  {/* <Edit2 className="w-4 h-4" /> */}
                                                 </Button>
                                               </div>
                                             )}
