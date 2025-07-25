@@ -77,7 +77,7 @@ export default function Page() {
             ingredients.forEach((ing: Ingredient) => {
               uniqueIngredients.add(ing.ingredient_name.trim().toLowerCase());
             });
-          } catch {}
+          } catch { }
         });
 
         const res = await fetch(
@@ -163,6 +163,11 @@ export default function Page() {
       setIsSubmitting(false);
     }
   };
+
+  const deleteMenu = async (menuId: string) => {
+    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?")) return;
+    setIsSubmitting(true); 
+  }
 
   const openEditDialog = (item: MenuItem) => {
     setMenuName(item.menu_name);
@@ -298,8 +303,8 @@ export default function Page() {
                   {isSubmitting
                     ? "กำลังบันทึก..."
                     : editMenuId
-                    ? "อัปเดตเมนู"
-                    : "บันทึกเมนู"}
+                      ? "อัปเดตเมนู"
+                      : "บันทึกเมนู"}
                 </button>
               </div>
               {error && <div className="text-red-600">{error}</div>}
@@ -320,16 +325,16 @@ export default function Page() {
           ))}
         </div>
       ) : (
-        <table className="min-w-full bg-white border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
+        <table className="min-w-full bg-white border border-gray-300 text-black">
+          <thead className="text-black">
+            <tr>
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูอาหาร</th>
               <th className="py-2 px-4 border-b text-left">วัตถุดิบในอาหาร</th>
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูรอง</th>
               <th className="py-2 px-4 border-b text-left">การ restraining</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-black">
             {menuItems.length === 0 ? (
               <tr>
                 <td colSpan={4} className="py-2 px-4 text-center">
@@ -350,6 +355,12 @@ export default function Page() {
                       className="px-3 py-1 bg-yellow-400 text-white rounded"
                     >
                       แก้ไข
+                    </button>
+                    <button
+                      onClick={() => deleteMenu}
+                      className="px-3 py-1 bg-yellow-400 text-white rounded"
+                    >
+                      ลบ
                     </button>
                   </td>
                 </tr>
