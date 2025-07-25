@@ -58,7 +58,7 @@ import {
   Cart,
   CartItem,
   RawCart,
-} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file
+} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file 
 
 const OrderHistory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -602,23 +602,28 @@ const OrderHistory: React.FC = () => {
     currentPage * itemsPerPage
   );
 
-  const handleExportCSV = () => {
-    const headers = [
-      "เลขที่ออร์เดอร์",
-      "ชื่อเมนู",
-      "วันที่",
-      "เวลา",
-      "จำนวน Set",
-      "ราคา",
-      "สถานะ",
-      "ผู้สร้าง",
-    ];
-    const csvContent = [
+  // ...existing code...
+const handleExportCSV = () => {
+  const headers = [
+    "เลขที่ออร์เดอร์",
+    "ชื่อเมนู",
+    "วันที่",
+    "เวลา",
+    "จำนวน Set",
+    "ราคา",
+    "สถานะ",
+    "ผู้สร้าง",
+  ];
+  // เพิ่ม BOM สำหรับ UTF-8
+  const BOM = "\uFEFF";
+  const csvContent =
+    BOM +
+    [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) =>
         [
           cart.id,
-          cart.name,
+          `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
           cart.date,
           cart.time,
           cart.sets,
@@ -629,15 +634,18 @@ const OrderHistory: React.FC = () => {
       ),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "order_history.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "order_history.csv";
+  link.target = "_blank";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+// ...existing code...
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
