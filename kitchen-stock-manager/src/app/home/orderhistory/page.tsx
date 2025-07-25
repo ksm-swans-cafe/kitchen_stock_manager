@@ -52,6 +52,7 @@ import {
   Cart,
   CartItem,
   RawCart,
+<<<<<<< HEAD
 } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
 // import { thSarabunFont } from "../../th-sarabun-font"; // import font base64
@@ -89,6 +90,9 @@ const fetcher = async (url: string) => {
   if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
   return res.json();
 };
+=======
+} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file 
+>>>>>>> 79da963 (25/7/68)
 
 const OrderHistory: React.FC = () => {
   const router = useRouter();
@@ -934,6 +938,7 @@ const OrderHistory: React.FC = () => {
     };
   };
 
+<<<<<<< HEAD
   const handleExportCSV = () => {
     const headers = [
       "เลขที่ออร์เดอร์",
@@ -946,11 +951,87 @@ const OrderHistory: React.FC = () => {
       "ผู้สร้าง",
     ];
     const csvContent = [
+=======
+  // Modified handleSummaryClick function
+  const handleSummaryClick = (date: string) => {
+    setSelectedDateForSummary(date);
+    setIsSummaryModalOpen(true);
+  };
+
+  const handleToggleIngredientCheck = async (
+    cartId: string,
+    menuName: string,
+    ingredientName: string
+  ) => {
+    const previousCarts = [...carts];
+    const currentCart = carts.find((cart) => cart.id === cartId);
+    const currentIngredient = currentCart?.allIngredients
+      .find((group) => group.menuName === menuName)
+      ?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
+
+    const newCheckedStatus = !currentIngredient?.isChecked;
+
+    setCarts((prevCarts) =>
+      prevCarts.map((cart) =>
+        cart.id === cartId
+          ? {
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === menuName
+                  ? {
+                      ...group,
+                      ingredients: group.ingredients.map((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? {
+                              ...ing,
+                              isChecked: newCheckedStatus,
+                              ingredient_status: newCheckedStatus,
+                            }
+                          : ing
+                      ),
+                      ingredient_status: group.ingredients.every((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? newCheckedStatus
+                          : ing.isChecked
+                      ),
+                    }
+                  : group
+              ),
+            }
+          : cart
+      )
+    );
+  };
+
+  const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
+  const paginatedGroupedOrders = groupedOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // ...existing code...
+const handleExportCSV = () => {
+  const headers = [
+    "เลขที่ออร์เดอร์",
+    "ชื่อเมนู",
+    "วันที่",
+    "เวลา",
+    "จำนวน Set",
+    "ราคา",
+    "สถานะ",
+    "ผู้สร้าง",
+  ];
+  // เพิ่ม BOM สำหรับ UTF-8
+  const BOM = "\uFEFF";
+  const csvContent =
+    BOM +
+    [
+>>>>>>> 79da963 (25/7/68)
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) =>
         [
           cart.id,
-          cart.name,
+          `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
           cart.date,
           cart.time,
           cart.sets,
@@ -961,15 +1042,18 @@ const OrderHistory: React.FC = () => {
       ),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "order_history.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "order_history.csv";
+  link.target = "_blank";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+// ...existing code...
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
