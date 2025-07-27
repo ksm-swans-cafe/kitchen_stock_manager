@@ -80,16 +80,40 @@ const SummaryList: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<Cart[]>([]);
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedDateForSummary, setSelectedDateForSummary] = useState<
     string | null
   >(null);
-  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-  const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
+  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [summaryDialogType, setSummaryDialogType] = useState<
+    "order" | "date" | null
+  >(null);
   const [selectedCartForSummary, setSelectedCartForSummary] =
     useState<Cart | null>(null);
-
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
+  const [shouldFetchMenu, setShouldFetchMenu] = useState(false);
+  const [editMenuDialog, setEditMenuDialog] = useState<{
+    cartId: string;
+    menuItems: {
+      menu_name: string;
+      menu_total: number;
+      menu_ingredients: {
+        useItem: number;
+        ingredient_name: string;
+        ingredient_status: boolean;
+      }[];
+    }[];
+    newMenu: { menu_name: string; menu_total: number };
+  } | null>(null);
   // ใช้ SWR เพื่อดึงข้อมูล
+  const { data: menuListData, error: menuListError } = useSWR(
+    shouldFetchMenu ? "/api/get/menu-name" : null,
+    fetcher,
+    {
+      refreshInterval: 30000,
+    }
+  );
   const {
     data: cartsData,
     error: cartsError,
@@ -105,14 +129,29 @@ const SummaryList: React.FC = () => {
     fetcher,
     { refreshInterval: 30000 }
   );
-
-  // รวมข้อผิดพลาดจากทุก API
   const error = cartsError || menuError || ingredientError;
   const isLoading = !cartsData || !menuData || !ingredientData;
-
-  // State สำหรับ carts และ allCarts
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
+  const [editIngredientsMenu, setEditIngredientsMenu] = useState<{
+    cartId: string;
+    menuName: string;
+    ingredients: Ingredient[];
+  } | null>(null);
+
+  const [newIngredient, setNewIngredient] = useState<{
+    name: string;
+    useItem: number;
+    unit: string;
+  }>({ name: "", useItem: 1, unit: "" });
+
+  const [addMenuDialog, setAddMenuDialog] = useState<{ cartId: string } | null>(
+    null
+  );
+  const [newMenu, setNewMenu] = useState<{ name: string; total: number }>({
+    name: "",
+    total: 1,
+  });
 
   const handleSummaryprice = () => {
     router.push("/home/summarylist/summaryprice");
@@ -196,20 +235,22 @@ const SummaryList: React.FC = () => {
 
           const allIngredients = menuItems.map((menu) => ({
             menuName: menu.menu_name,
-            ingredients: menu.menu_ingredients.map((dbIng: Ingredient) => ({
-              ...dbIng,
-              ingredient_id: dbIng.ingredient_id || undefined,
-              ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-              calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-              sourceMenu: menu.menu_name,
-              isChecked: dbIng.ingredient_status ?? false,
-              ingredient_status: dbIng.ingredient_status ?? false,
-              ingredient_unit:
-                ingredientUnitMap.get(
-                  dbIng.ingredient_name?.toString() || ""
-                ) || "ไม่ระบุหน่วย",
-            })),
-            ingredient_status: menu.menu_ingredients.every(
+            ingredients: (menu.menu_ingredients ?? []).map(
+              (dbIng: Ingredient) => ({
+                ...dbIng,
+                ingredient_id: dbIng.ingredient_id || undefined,
+                ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+                calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+                sourceMenu: menu.menu_name,
+                isChecked: dbIng.ingredient_status ?? false,
+                ingredient_status: dbIng.ingredient_status ?? false,
+                ingredient_unit:
+                  ingredientUnitMap.get(
+                    dbIng.ingredient_name?.toString() || ""
+                  ) || "ไม่ระบุหน่วย",
+              })
+            ),
+            ingredient_status: (menu.menu_ingredients ?? []).every(
               (ing: Ingredient) => ing.ingredient_status ?? false
             ),
           }));
@@ -228,7 +269,10 @@ const SummaryList: React.FC = () => {
             price: cart.cart_total_price || 0,
             status: cart.cart_status,
             createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
-            menuItems: menuItems.map((item) => ({ ...item })),
+            menuItems: menuItems.map((item) => ({
+              ...item,
+              menu_ingredients: item.menu_ingredients || [],
+            })),
             allIngredients,
             order_number: cart.cart_order_number,
             cart_delivery_date: cart.cart_delivery_date,
@@ -272,7 +316,6 @@ const SummaryList: React.FC = () => {
 
     formatOrders();
   }, [cartsData, ingredientData]);
-
   // แปลงข้อมูลสำหรับปฏิทิน
   useEffect(() => {
     if (!cartsData) return;
@@ -943,14 +986,25 @@ const SummaryList: React.FC = () => {
     };
   };
 
+  // const handleSummaryClick = (date: string) => {
+  //   setSelectedDateForSummary(date);
+  //   setIsSummaryModalOpen(true);
+  // };
+
+  // const handleOrderSummaryClick = (cart: Cart) => {
+  //   setSelectedCartForSummary(cart);
+  //   setIsOrderSummaryModalOpen(true);
+  // };
   const handleSummaryClick = (date: string) => {
     setSelectedDateForSummary(date);
-    setIsSummaryModalOpen(true);
+    setSummaryDialogType("date");
+    setIsSummaryDialogOpen(true);
   };
 
   const handleOrderSummaryClick = (cart: Cart) => {
     setSelectedCartForSummary(cart);
-    setIsOrderSummaryModalOpen(true);
+    setSummaryDialogType("order");
+    setIsSummaryDialogOpen(true);
   };
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
@@ -961,7 +1015,7 @@ const SummaryList: React.FC = () => {
 
   const handleUpdateWithCheck = (cart: {
     id: string;
-    allIngredients: any[];
+    allIngredients: unknown[];
   }) => {
     mutateCarts();
   };
@@ -1039,6 +1093,188 @@ const SummaryList: React.FC = () => {
     });
 
     doc.save("order_history.pdf");
+  };
+
+  const handleEditMenu = async (cartId: string, menuItems: MenuItem[]) => {
+    if (
+      !cartId ||
+      !menuItems ||
+      !Array.isArray(menuItems) ||
+      menuItems.some(
+        (m) =>
+          !m.menu_name ||
+          m.menu_total < 0 ||
+          !Array.isArray(m.menu_ingredients) ||
+          m.menu_ingredients.some(
+            (ing) => !ing.ingredient_name || ing.useItem < 0
+          )
+      )
+    ) {
+      Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: "กรุณาระบุเมนูและจำนวนกล่องที่ถูกต้อง",
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    }
+
+    console.log(
+      "Sending menuItems to API:",
+      JSON.stringify(menuItems, null, 2)
+    );
+
+    setIsSaving(cartId);
+    try {
+      const currentCart = carts.find((cart) => cart.id === cartId);
+      if (!currentCart) {
+        throw new Error("ไม่พบข้อมูล cart");
+      }
+
+      const ingredientsResponse = await fetch("/api/get/ingredients");
+      if (!ingredientsResponse.ok) {
+        throw new Error("Failed to fetch ingredients");
+      }
+      const ingredientsData = await ingredientsResponse.json();
+
+      const ingredientUnitMap = new globalThis.Map<string, string>();
+      ingredientsData.forEach(
+        (ing: { ingredient_name: string; ingredient_unit: string }) => {
+          ingredientUnitMap.set(ing.ingredient_name, ing.ingredient_unit);
+        }
+      );
+
+      const updatedMenuItems = menuItems.map((item) => {
+        const existingMenu = currentCart.menuItems.find(
+          (m) => m.menu_name === item.menu_name
+        );
+        const menuData = menuListData?.find(
+          (m: { menu_name: string }) => m.menu_name === item.menu_name
+        );
+
+        const menuIngredients = (
+          existingMenu?.menu_ingredients ||
+          menuData?.menu_ingredients ||
+          []
+        ).map(
+          (ing: {
+            useItem?: number;
+            quantity?: number;
+            ingredient_name?: string;
+            name?: string;
+            ingredient_status?: boolean;
+          }) => {
+            const ingredientName =
+              ing.ingredient_name ?? ing.name ?? "ไม่ระบุวัตถุดิบ";
+            return {
+              useItem: ing.useItem ?? ing.quantity ?? 0,
+              ingredient_name: ingredientName,
+              ingredient_status: ing.ingredient_status ?? false,
+              ingredient_unit:
+                ingredientUnitMap.get(ingredientName) ?? "ไม่ระบุหน่วย",
+            };
+          }
+        );
+
+        if (
+          !menuIngredients.every(
+            (ing: { ingredient_name: string; useItem: number }) =>
+              ing.ingredient_name && ing.useItem >= 0
+          )
+        ) {
+          throw new Error(`Invalid ingredients for menu: ${item.menu_name}`);
+        }
+
+        return {
+          menu_name: item.menu_name,
+          menu_total: item.menu_total,
+          menu_ingredients: menuIngredients,
+        };
+      });
+
+      console.log(
+        "Updated menuItems to send:",
+        JSON.stringify(updatedMenuItems, null, 2)
+      );
+
+      const response = await fetch(
+        `/api/edit/cart_menu_summaryList/${cartId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ menuItems: updatedMenuItems }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update menu");
+      }
+
+      setCarts((prevCarts) =>
+        prevCarts.map((cart) =>
+          cart.id === cartId
+            ? {
+                ...cart,
+                menuItems: updatedMenuItems,
+                allIngredients: updatedMenuItems.map((item) => ({
+                  menuName: item.menu_name,
+                  ingredients: item.menu_ingredients.map(
+                    (ing: {
+                      useItem: number;
+                      ingredient_name: string;
+                      ingredient_status: boolean;
+                    }) => ({
+                      ...ing,
+                      calculatedTotal: ing.useItem * item.menu_total,
+                      isChecked: ing.ingredient_status,
+                      ingredient_status: ing.ingredient_status,
+                      ingredient_unit:
+                        ingredientUnitMap.get(ing.ingredient_name) ??
+                        "ไม่ระบุหน่วย",
+                    })
+                  ),
+                  ingredient_status: item.menu_ingredients.every(
+                    (ing: { ingredient_status: boolean }) =>
+                      ing.ingredient_status
+                  ),
+                })),
+                sets: updatedMenuItems.reduce(
+                  (sum, item) => sum + item.menu_total,
+                  0
+                ),
+              }
+            : cart
+        )
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "อัปเดตเมนูเรียบร้อย!",
+        text: `จำนวนเมนู: ${updatedMenuItems.length} รายการ`,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+
+      mutateCarts();
+      setEditMenuDialog(null);
+      setShouldFetchMenu(false);
+    } catch (err) {
+      console.error("Error updating menu:", err);
+      Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text:
+          err instanceof Error
+            ? `ไม่สามารถอัปเดตเมนู: ${err.message}`
+            : "เกิดข้อผิดพลาดในการอัปเดตเมนู",
+        showConfirmButton: false,
+        timer: 3000,
+      });
+    } finally {
+      setIsSaving(null);
+    }
   };
 
   return (
@@ -1254,32 +1490,62 @@ const SummaryList: React.FC = () => {
                                     <BsCashStack className="w-6 h-6" />
                                     <span>เวลาส่งอาหาร</span>
                                     <select
-                                      value={editingTimes?.exportTime.split(".")[0]}
-                                      onChange={e => setEditingTimes((prev) =>
-                                        prev ? {
-                                          ...prev,
-                                          exportTime: `${e.target.value}:${editingTimes?.exportTime.split(".")[1]}`
-                                        } : prev
-                                      )}
+                                      value={
+                                        editingTimes?.exportTime.split(".")[0]
+                                      }
+                                      onChange={(e) =>
+                                        setEditingTimes((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                exportTime: `${
+                                                  e.target.value
+                                                }:${
+                                                  editingTimes?.exportTime.split(
+                                                    "."
+                                                  )[1]
+                                                }`,
+                                              }
+                                            : prev
+                                        )
+                                      }
                                       className="border rounded px-1"
                                     >
-                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map(h => (
-                                        <option key={h} value={h}>{h}</option>
+                                      {Array.from({ length: 24 }, (_, i) =>
+                                        i.toString().padStart(2, "0")
+                                      ).map((h) => (
+                                        <option key={h} value={h}>
+                                          {h}
+                                        </option>
                                       ))}
                                     </select>
                                     :
                                     <select
-                                      value={editingTimes?.exportTime.split(".")[1]}
-                                      onChange={e => setEditingTimes((prev) =>
-                                        prev ? {
-                                          ...prev,
-                                          exportTime: `${editingTimes?.exportTime.split(".")[0]}:${e.target.value}`
-                                        } : prev
-                                      )}
+                                      value={
+                                        editingTimes?.exportTime.split(".")[1]
+                                      }
+                                      onChange={(e) =>
+                                        setEditingTimes((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                exportTime: `${
+                                                  editingTimes?.exportTime.split(
+                                                    "."
+                                                  )[0]
+                                                }:${e.target.value}`,
+                                              }
+                                            : prev
+                                        )
+                                      }
                                       className="border rounded px-1"
                                     >
-                                      {Array.from({ length: 60 }, (_, i) => (i + 1).toString().padStart(2, "0")).map(m => (
-                                        <option key={m} value={m}>{m}</option>
+                                      {Array.from({ length: 60 }, (_, i) =>
+                                        (i + 1).toString().padStart(2, "0")
+                                      ).map((m) => (
+                                        <option key={m} value={m}>
+                                          {m}
+                                        </option>
                                       ))}
                                     </select>
                                   </div>
@@ -1287,32 +1553,62 @@ const SummaryList: React.FC = () => {
                                     <FaWallet className="w-4 h-4" />
                                     <span>เวลารับอาหาร</span>
                                     <select
-                                      value={editingTimes?.receiveTime.split(".")[0]}
-                                      onChange={e => setEditingTimes((prev) =>
-                                        prev ? {
-                                          ...prev,
-                                          receiveTime: `${e.target.value}:${editingTimes?.receiveTime.split(".")[1]}`
-                                        } : prev
-                                      )}
+                                      value={
+                                        editingTimes?.receiveTime.split(".")[0]
+                                      }
+                                      onChange={(e) =>
+                                        setEditingTimes((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                receiveTime: `${
+                                                  e.target.value
+                                                }:${
+                                                  editingTimes?.receiveTime.split(
+                                                    "."
+                                                  )[1]
+                                                }`,
+                                              }
+                                            : prev
+                                        )
+                                      }
                                       className="border rounded px-1"
                                     >
-                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map(h => (
-                                        <option key={h} value={h}>{h}</option>
+                                      {Array.from({ length: 24 }, (_, i) =>
+                                        i.toString().padStart(2, "0")
+                                      ).map((h) => (
+                                        <option key={h} value={h}>
+                                          {h}
+                                        </option>
                                       ))}
                                     </select>
                                     :
                                     <select
-                                      value={editingTimes?.receiveTime.split(".")[1]}
-                                      onChange={e => setEditingTimes((prev) =>
-                                        prev ? {
-                                          ...prev,
-                                          receiveTime: `${editingTimes?.receiveTime.split(".")[0]}:${e.target.value}`
-                                        } : prev
-                                      )}
+                                      value={
+                                        editingTimes?.receiveTime.split(".")[1]
+                                      }
+                                      onChange={(e) =>
+                                        setEditingTimes((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                receiveTime: `${
+                                                  editingTimes?.receiveTime.split(
+                                                    "."
+                                                  )[0]
+                                                }:${e.target.value}`,
+                                              }
+                                            : prev
+                                        )
+                                      }
                                       className="border rounded px-1"
                                     >
-                                      {Array.from({ length: 60 }, (_, i) => (i + 1).toString().padStart(2, "0")).map(m => (
-                                        <option key={m} value={m}>{m}</option>
+                                      {Array.from({ length: 60 }, (_, i) =>
+                                        (i + 1).toString().padStart(2, "0")
+                                      ).map((m) => (
+                                        <option key={m} value={m}>
+                                          {m}
+                                        </option>
                                       ))}
                                     </select>
                                   </div>
@@ -1449,9 +1745,415 @@ const SummaryList: React.FC = () => {
                           <AccordionContent className="mt-4">
                             <div className="grid md:grid-cols-2 gap-6">
                               <div>
-                                <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
-                                  <User className="w-4 h-4" /> เมนูที่สั่ง
-                                </h4>
+                                <div className="flex justify-between items-center mb-2">
+                                  <div>
+                                    <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
+                                      <User className="w-4 h-4" /> เมนูที่สั่ง
+                                    </h4>
+                                  </div>
+                                  <div>
+                                    <Button
+                                      onClick={() => {
+                                        setShouldFetchMenu(true);
+                                        const currentCart = carts.find(
+                                          (c) => c.id === cart.id
+                                        );
+                                        if (
+                                          !currentCart ||
+                                          !currentCart.menuItems
+                                        ) {
+                                          Swal.fire({
+                                            icon: "error",
+                                            title: "เกิดข้อผิดพลาด",
+                                            text: "ไม่พบข้อมูลออร์เดอร์หรือเมนู",
+                                            showConfirmButton: false,
+                                            timer: 3000,
+                                          });
+                                          return;
+                                        }
+                                        setEditMenuDialog({
+                                          cartId: cart.id,
+                                          menuItems: currentCart.menuItems.map(
+                                            (item) => ({
+                                              menu_name:
+                                                item.menu_name || "เมนูไม่ระบุ",
+                                              menu_total: item.menu_total || 0,
+                                              menu_ingredients: Array.isArray(
+                                                item.menu_ingredients
+                                              )
+                                                ? item.menu_ingredients.map(
+                                                    (ing) => ({
+                                                      useItem: ing.useItem ?? 0,
+                                                      ingredient_name:
+                                                        ing.ingredient_name ??
+                                                        "ไม่ระบุวัตถุดิบ",
+                                                      ingredient_status:
+                                                        ing.ingredient_status ??
+                                                        false,
+                                                    })
+                                                  )
+                                                : [],
+                                            })
+                                          ),
+                                          newMenu: {
+                                            menu_name: "",
+                                            menu_total: 1,
+                                          },
+                                        });
+                                      }}
+                                      className="flex items-center gap-2"
+                                    >
+                                      แก้ไขเมนูที่สั่ง
+                                      <Edit2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <Dialog
+                                  open={editMenuDialog !== null}
+                                  onOpenChange={() => {
+                                    setEditMenuDialog(null);
+                                    setShouldFetchMenu(false);
+                                  }}
+                                >
+                                  <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
+                                    <DialogTitle>
+                                      แก้ไขเมนูสำหรับ Order
+                                    </DialogTitle>
+                                    <div className="space-y-4">
+                                      {menuListError ? (
+                                        <div className="text-red-600 text-sm">
+                                          เกิดข้อผิดพลาดในการดึงข้อมูลเมนู:{" "}
+                                          {menuListError.message}
+                                        </div>
+                                      ) : !menuListData ? (
+                                        <div className="text-gray-500 text-sm">
+                                          กำลังโหลดข้อมูลเมนู...
+                                        </div>
+                                      ) : (
+                                        <>
+                                          {/* แสดงเมนูปัจจุบัน */}
+                                          <div className="space-y-2">
+                                            <h5 className="text-sm font-semibold text-gray-700">
+                                              เมนูปัจจุบัน
+                                            </h5>
+                                            {editMenuDialog?.menuItems
+                                              .length === 0 ? (
+                                              <div className="text-gray-500 text-sm">
+                                                ไม่มีเมนูใน order นี้
+                                              </div>
+                                            ) : (
+                                              editMenuDialog?.menuItems.map(
+                                                (item, idx) => (
+                                                  <div
+                                                    key={idx}
+                                                    className="flex flex-col gap-2 border-b border-gray-200 py-2"
+                                                  >
+                                                    <div className="flex items-center gap-2">
+                                                      <span className="flex-1 text-sm text-gray-700">
+                                                        {item.menu_name}
+                                                      </span>
+                                                      <Input
+                                                        type="number"
+                                                        value={item.menu_total}
+                                                        onChange={(e) =>
+                                                          setEditMenuDialog(
+                                                            (prev) =>
+                                                              prev
+                                                                ? {
+                                                                    ...prev,
+                                                                    menuItems:
+                                                                      prev.menuItems.map(
+                                                                        (
+                                                                          m,
+                                                                          i
+                                                                        ) =>
+                                                                          i ===
+                                                                          idx
+                                                                            ? {
+                                                                                ...m,
+                                                                                menu_total:
+                                                                                  Number(
+                                                                                    e
+                                                                                      .target
+                                                                                      .value
+                                                                                  ),
+                                                                              }
+                                                                            : m
+                                                                      ),
+                                                                  }
+                                                                : prev
+                                                          )
+                                                        }
+                                                        placeholder="จำนวนกล่อง"
+                                                        min="0"
+                                                        className="w-20 h-8 text-sm"
+                                                      />
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                          setEditMenuDialog(
+                                                            (prev) =>
+                                                              prev
+                                                                ? {
+                                                                    ...prev,
+                                                                    menuItems:
+                                                                      prev.menuItems.filter(
+                                                                        (
+                                                                          _,
+                                                                          i
+                                                                        ) =>
+                                                                          i !==
+                                                                          idx
+                                                                      ),
+                                                                  }
+                                                                : prev
+                                                          )
+                                                        }
+                                                        className="text-red-600 hover:text-red-800"
+                                                      >
+                                                        ลบ
+                                                      </Button>
+                                                    </div>
+                                                    {/* แสดงวัตถุดิบของเมนูนี้ */}
+                                                    {/* <div className="ml-4 text-sm text-gray-600">
+                                                      <strong>วัตถุดิบ:</strong>
+                                                      {Array.isArray(
+                                                        item.menu_ingredients
+                                                      ) &&
+                                                      item.menu_ingredients
+                                                        .length > 0 ? (
+                                                        <ul className="list-disc ml-4">
+                                                          {item.menu_ingredients.map(
+                                                            (ing, ingIdx) => {
+                                                              const ingredientUnit =
+                                                                ingredientData?.find(
+                                                                  (i: {
+                                                                    ingredient_name: string;
+                                                                  }) =>
+                                                                    i.ingredient_name ===
+                                                                    ing.ingredient_name
+                                                                )
+                                                                  ?.ingredient_unit ||
+                                                                "หน่วย";
+                                                              return (
+                                                                <li
+                                                                  key={ingIdx}
+                                                                >
+                                                                  {ing.ingredient_name ||
+                                                                    "ไม่ระบุวัตถุดิบ"}{" "}
+                                                                  (
+                                                                  {ing.useItem ??
+                                                                    0}{" "}
+                                                                  {
+                                                                    ingredientUnit
+                                                                  }
+                                                                  )
+                                                                </li>
+                                                              );
+                                                            }
+                                                          )}
+                                                        </ul>
+                                                      ) : (
+                                                        <span>
+                                                          ไม่มีวัตถุดิบ
+                                                        </span>
+                                                      )}
+                                                    </div> */}
+                                                  </div>
+                                                )
+                                              )
+                                            )}
+                                          </div>
+
+                                          {/* เพิ่มเมนูใหม่ */}
+                                          <div className="space-y-2">
+                                            <h5 className="text-sm font-semibold text-gray-700">
+                                              เพิ่มเมนูใหม่
+                                            </h5>
+                                            <div className="flex items-center gap-2">
+                                              <Select
+                                                value={
+                                                  editMenuDialog?.newMenu
+                                                    .menu_name || ""
+                                                }
+                                                onValueChange={(value) =>
+                                                  setEditMenuDialog((prev) =>
+                                                    prev
+                                                      ? {
+                                                          ...prev,
+                                                          newMenu: {
+                                                            ...prev.newMenu,
+                                                            menu_name: value,
+                                                          },
+                                                        }
+                                                      : prev
+                                                  )
+                                                }
+                                              >
+                                                <SelectTrigger className="flex-1 h-8 text-sm">
+                                                  <SelectValue placeholder="เลือกเมนู" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {menuListData?.map(
+                                                    (menu: {
+                                                      menu_name: string;
+                                                    }) => (
+                                                      <SelectItem
+                                                        key={menu.menu_name}
+                                                        value={menu.menu_name}
+                                                      >
+                                                        {menu.menu_name}
+                                                      </SelectItem>
+                                                    )
+                                                  )}
+                                                </SelectContent>
+                                              </Select>
+                                              <Input
+                                                type="number"
+                                                value={
+                                                  editMenuDialog?.newMenu
+                                                    .menu_total || 1
+                                                }
+                                                onChange={(e) =>
+                                                  setEditMenuDialog((prev) =>
+                                                    prev
+                                                      ? {
+                                                          ...prev,
+                                                          newMenu: {
+                                                            ...prev.newMenu,
+                                                            menu_total: Number(
+                                                              e.target.value
+                                                            ),
+                                                          },
+                                                        }
+                                                      : prev
+                                                  )
+                                                }
+                                                placeholder="จำนวน"
+                                                min="0"
+                                                className="w-20 h-8 text-sm"
+                                              />
+                                              <Button
+                                                size="sm"
+                                                onClick={() =>
+                                                  editMenuDialog?.newMenu
+                                                    .menu_name &&
+                                                  editMenuDialog?.newMenu
+                                                    .menu_total >= 0 &&
+                                                  setEditMenuDialog((prev) => {
+                                                    if (!menuListData) {
+                                                      Swal.fire({
+                                                        icon: "error",
+                                                        title: "เกิดข้อผิดพลาด",
+                                                        text: "ข้อมูลเมนูยังไม่พร้อม กรุณาลองอีกครั้ง",
+                                                        showConfirmButton:
+                                                          false,
+                                                        timer: 3000,
+                                                      });
+                                                      return prev;
+                                                    }
+                                                    const menuData =
+                                                      menuListData.find(
+                                                        (m: {
+                                                          menu_name: string;
+                                                        }) =>
+                                                          m.menu_name ===
+                                                          prev?.newMenu
+                                                            .menu_name
+                                                      );
+                                                    return prev
+                                                      ? {
+                                                          ...prev,
+                                                          menuItems: [
+                                                            ...prev.menuItems,
+                                                            {
+                                                              menu_name:
+                                                                prev.newMenu
+                                                                  .menu_name,
+                                                              menu_total:
+                                                                prev.newMenu
+                                                                  .menu_total,
+                                                              menu_ingredients:
+                                                                menuData?.menu_ingredients?.map(
+                                                                  (ing: {
+                                                                    useItem?: number;
+                                                                    quantity?: number;
+                                                                    ingredient_name?: string;
+                                                                    name?: string;
+                                                                  }) => ({
+                                                                    useItem:
+                                                                      ing.useItem ||
+                                                                      ing.quantity ||
+                                                                      0,
+                                                                    ingredient_name:
+                                                                      ing.ingredient_name ||
+                                                                      ing.name ||
+                                                                      "",
+                                                                    ingredient_status:
+                                                                      false,
+                                                                  })
+                                                                ) || [],
+                                                            },
+                                                          ],
+                                                          newMenu: {
+                                                            menu_name: "",
+                                                            menu_total: 1,
+                                                          },
+                                                        }
+                                                      : prev;
+                                                  })
+                                                }
+                                                disabled={
+                                                  !editMenuDialog?.newMenu
+                                                    .menu_name ||
+                                                  editMenuDialog?.newMenu
+                                                    .menu_total < 0 ||
+                                                  !menuListData
+                                                }
+                                                className="h-8"
+                                              >
+                                                เพิ่ม
+                                              </Button>
+                                            </div>
+                                          </div>
+
+                                          {/* ปุ่มบันทึกและยกเลิก */}
+                                          <div className="flex justify-end gap-2">
+                                            <Button
+                                              onClick={() =>
+                                                editMenuDialog &&
+                                                handleEditMenu(
+                                                  editMenuDialog.cartId,
+                                                  editMenuDialog.menuItems
+                                                )
+                                              }
+                                              disabled={
+                                                isSaving !== null ||
+                                                editMenuDialog?.menuItems.some(
+                                                  (m) => m.menu_total < 0
+                                                )
+                                              }
+                                            >
+                                              {isSaving
+                                                ? "กำลังบันทึก..."
+                                                : "บันทึก"}
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              onClick={() => {
+                                                setEditMenuDialog(null);
+                                                setShouldFetchMenu(false);
+                                              }}
+                                            >
+                                              ยกเลิก
+                                            </Button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
                                 <Accordion
                                   type="multiple"
                                   className="space-y-3"
@@ -1486,77 +2188,84 @@ const SummaryList: React.FC = () => {
                                             <span className="truncate text-sm text-gray-700">
                                               {menuGroup.menuName}
                                             </span>
-                                            <span className="text-sm font-mono text-blue-600">
-                                              (จำนวน {totalBox} กล่อง)
+                                            <span className="flex items-center gap-2">
+                                              {isEditingThisMenu ? (
+                                                <>
+                                                  <input
+                                                    type="number"
+                                                    value={editTotalBox}
+                                                    onChange={(e) =>
+                                                      setEditTotalBox(
+                                                        Number(e.target.value)
+                                                      )
+                                                    }
+                                                    className="w-20 h-8 text-sm rounded-md border-gray-300 px-2"
+                                                    min="0"
+                                                    aria-label="Edit box quantity"
+                                                    style={{
+                                                      outline: "1px solid #ccc",
+                                                    }}
+                                                  />
+                                                  <span
+                                                    className="cursor-pointer text-green-600 hover:text-green-800 px-1"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleSaveTotalBox(
+                                                        cart.id,
+                                                        menuGroup.menuName
+                                                      );
+                                                    }}
+                                                    tabIndex={0}
+                                                    role="button"
+                                                    aria-label="บันทึกจำนวนกล่อง"
+                                                  >
+                                                    ✔
+                                                  </span>
+                                                  <span
+                                                    className="cursor-pointer text-gray-600 hover:text-gray-800 px-1"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setEditingMenu(null);
+                                                    }}
+                                                    tabIndex={0}
+                                                    role="button"
+                                                    aria-label="ยกเลิก"
+                                                  >
+                                                    ✖
+                                                  </span>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <span className="text-sm font-mono text-blue-600">
+                                                    (จำนวน {totalBox} กล่อง)
+                                                  </span>
+                                                  <span
+                                                    className="cursor-pointer text-blue-600 hover:text-blue-800"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleEditTotalBox(
+                                                        cart.id,
+                                                        menuGroup.menuName,
+                                                        totalBox
+                                                      );
+                                                    }}
+                                                    tabIndex={0}
+                                                    role="button"
+                                                    aria-label="แก้ไขจำนวนกล่อง"
+                                                  >
+                                                    <Edit2 className="w-4 h-4" />
+                                                  </span>
+                                                </>
+                                              )}
                                             </span>
                                           </AccordionTrigger>
                                           <AccordionContent className="pt-3 space-y-2">
-                                            {isEditingThisMenu ? (
-                                              <div className="flex items-center gap-2 mb-3">
-                                                <Input
-                                                  type="number"
-                                                  value={editTotalBox}
-                                                  onChange={(e) =>
-                                                    setEditTotalBox(
-                                                      Number(e.target.value)
-                                                    )
-                                                  }
-                                                  className="w-20 h-8 text-sm rounded-md border-gray-300"
-                                                  min="0"
-                                                  aria-label="Edit box quantity"
-                                                />
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleSaveTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-50"
-                                                  aria-label="Save box quantity"
-                                                  disabled={
-                                                    isSaving === cart.id
-                                                  }
-                                                >
-                                                  {isSaving === cart.id
-                                                    ? "Saving..."
-                                                    : "Save"}
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    setEditingMenu(null)
-                                                  }
-                                                  className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-                                                  aria-label="Cancel edit"
-                                                  disabled={
-                                                    isSaving === cart.id
-                                                  }
-                                                >
-                                                  Cancel
-                                                </Button>
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center gap-2 mb-3">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleEditTotalBox(
-                                                      cart.id,
-                                                      menuGroup.menuName,
-                                                      totalBox
-                                                    )
-                                                  }
-                                                  className="h-8 px-2 text-blue-600 hover:bg-blue-100"
-                                                >
-                                                  <Edit2 className="w-4 h-4" />
-                                                </Button>
-                                              </div>
-                                            )}
+                                            <div className="flex justify-end mb-2">
+                                              <Button onClick="">
+                                                เเก้ไขวัตถุดิบ
+                                                <Edit2 className="w-4 h-4" />
+                                              </Button>
+                                            </div>
                                             {menuGroup.ingredients.map(
                                               (ing, idx) => (
                                                 <div
@@ -1655,22 +2364,40 @@ const SummaryList: React.FC = () => {
         </div>
 
         <Dialog
-          open={isOrderSummaryModalOpen}
-          onOpenChange={setIsOrderSummaryModalOpen}
+          open={isSummaryDialogOpen}
+          onOpenChange={setIsSummaryDialogOpen}
         >
           <DialogContent className="max-w-md max-h-[70vh] overflow-y-auto">
             <DialogTitle className="text-lg font-bold">
-              <div style={{ color: "#000000" }} className="mb-4">
-                สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary?.orderNumber}{" "}
-                <br />
-                (วันที่ส่ง: {selectedCartForSummary?.cart_delivery_date})
-              </div>
-              {selectedCartForSummary &&
+              {summaryDialogType === "order" && selectedCartForSummary && (
+                <div style={{ color: "#000000" }} className="mb-4">
+                  สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary.orderNumber}{" "}
+                  <br />
+                  (วันที่ส่ง: {selectedCartForSummary.cart_delivery_date})
+                </div>
+              )}
+              {summaryDialogType === "date" && selectedDateForSummary && (
+                <div style={{ color: "#000000" }} className="mb-4">
+                  สรุปวัตถุดิบทั้งหมดของวันที่{" "}
+                  {new Date(selectedDateForSummary).toLocaleDateString(
+                    "th-TH",
+                    {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    }
+                  )}
+                </div>
+              )}
+            </DialogTitle>
+            <div className="space-y-4">
+              {summaryDialogType === "order" &&
+                selectedCartForSummary &&
                 (() => {
                   const { summary, allIngredientsChecked } =
                     summarizeOrderIngredients(selectedCartForSummary);
                   return (
-                    <div className="space-y-4">
+                    <>
                       <div className="space-y-2">
                         <h5 className="text-sm font-semibold text-gray-700">
                           สรุปวัตถุดิบของออเดอร์
@@ -1703,31 +2430,16 @@ const SummaryList: React.FC = () => {
                             : "เลือกวัตถุดิบทั้งหมด"}
                         </Button>
                       </div>
-                    </div>
+                    </>
                   );
                 })()}
-            </DialogTitle>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen}>
-          <DialogContent className="max-w-md">
-            <DialogTitle className="text-lg font-bold">
-              <div style={{ color: "#000000" }} className="mb-4">
-                สรุปวัตถุดิบทั้งหมดของวันที่{" "}
-                {selectedDateForSummary &&
-                  new Date(selectedDateForSummary).toLocaleDateString("th-TH", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-              </div>
-              {selectedDateForSummary &&
+              {summaryDialogType === "date" &&
+                selectedDateForSummary &&
                 (() => {
                   const { summary, allIngredientsChecked } =
                     summarizeIngredients(selectedDateForSummary);
                   return (
-                    <div className="space-y-4">
+                    <>
                       <div className="space-y-2">
                         <h5 className="text-sm font-semibold text-gray-700">
                           สรุปวัตถุดิบรวม
@@ -1759,10 +2471,10 @@ const SummaryList: React.FC = () => {
                             : "เลือกวัตถุดิบทั้งหมด"}
                         </Button>
                       </div>
-                    </div>
+                    </>
                   );
                 })()}
-            </DialogTitle>
+            </div>
           </DialogContent>
         </Dialog>
 
