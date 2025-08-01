@@ -9,8 +9,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import { th } from "date-fns/locale/th";
-import Flatpickr from 'react-flatpickr';
-import 'flatpickr/dist/themes/material_blue.css';
+import Flatpickr from "react-flatpickr";
+import "flatpickr/dist/themes/material_blue.css";
 
 registerLocale("th", th);
 
@@ -21,14 +21,13 @@ export default function CartList() {
   const [pickupTime, setPickupTime] = useState<Date | undefined>(midnight);
   const formatTime = (date?: Date) => {
     return date
-      ? date.toLocaleTimeString('th-TH', {
-          hour: '2-digit',
-          minute: '2-digit',
+      ? date.toLocaleTimeString("th-TH", {
+          hour: "2-digit",
+          minute: "2-digit",
           hour12: false,
         })
-      : '';
+      : "";
   };
-
 
   const {
     items,
@@ -40,6 +39,8 @@ export default function CartList() {
     cart_customer_tel,
     cart_location_send,
     cart_delivery_date,
+    cart_export_time,
+    cart_receive_time,
     setCustomerInfo,
   } = useCartStore();
 
@@ -65,6 +66,22 @@ export default function CartList() {
     }
   }, [cart_delivery_date]);
 
+  useEffect(() => {
+    if (cart_export_time) {
+      const [hour, minute] = cart_export_time.split(":").map(Number);
+      const d = new Date();
+      d.setHours(hour, minute, 0, 0);
+      setDeliveryTime(d);
+    }
+
+    if (cart_receive_time) {
+      const [hour, minute] = cart_receive_time.split(":").map(Number);
+      const d = new Date();
+      d.setHours(hour, minute, 0, 0);
+      setPickupTime(d);
+    }
+  }, []);
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
 
@@ -88,7 +105,8 @@ export default function CartList() {
     }
     if (!cart_location_send.trim()) newErrors.push("กรุณากรอกสถานที่จัดส่ง");
     if (!cart_delivery_date.trim()) newErrors.push("กรุณาเลือกวันที่จัดส่ง");
-
+    if (!cart_export_time.trim()) newErrors.push("กรุณาเลือกเวลาส่งอาหาร");
+    if (!cart_receive_time.trim()) newErrors.push("กรุณาเลือกเวลารับอาหาร");
     setErrors(newErrors);
     return newErrors.length === 0;
   };
@@ -108,18 +126,24 @@ export default function CartList() {
           cart_customer_tel,
           cart_location_send,
           cart_delivery_date,
-          cart_menu_items: items.map(({ menu_name, menu_total, menu_ingredients }) => ({
-            menu_name,
-            menu_total,
-            menu_ingredients,
-          })),
+          cart_export_time,
+          cart_receive_time,
+          cart_menu_items: items.map(
+            ({ menu_name, menu_total, menu_ingredients }) => ({
+              menu_name,
+              menu_total,
+              menu_ingredients,
+            })
+          ),
         }),
       });
 
       if (!response.ok) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
       setSuccess(true);
-    } catch (err: any) {
-      setErrors([err.message || "เกิดข้อผิดพลาดไม่ทราบสาเหตุ"]);
+    } catch (err: unknown) {
+      setErrors([
+        err instanceof Error ? err.message : "เกิดข้อผิดพลาดไม่ทราบสาเหตุ",
+      ]);
     } finally {
       setLoading(false);
     }
@@ -180,7 +204,9 @@ export default function CartList() {
                 <input
                   type="text"
                   value={cart_location_send}
-                  onChange={(e) => setCustomerInfo({ location: e.target.value })}
+                  onChange={(e) =>
+                    setCustomerInfo({ location: e.target.value })
+                  }
                   placeholder="สถานที่จัดส่ง"
                   className="w-full border rounded px-3 py-2"
                 />
@@ -194,9 +220,14 @@ export default function CartList() {
                     if (date) {
                       setRawDate(date.toISOString());
                       const buddhistYear = date.getFullYear() + 543;
-                      const month = String(date.getMonth() + 1).padStart(2, "0");
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0"
+                      );
                       const day = String(date.getDate()).padStart(2, "0");
-                      setCustomerInfo({ deliveryDate: `${day}/${month}/${buddhistYear}` });
+                      setCustomerInfo({
+                        deliveryDate: `${day}/${month}/${buddhistYear}`,
+                      });
                     } else {
                       setRawDate("");
                       setCustomerInfo({ deliveryDate: "" });
@@ -216,19 +247,40 @@ export default function CartList() {
                     prevMonthButtonDisabled,
                     nextMonthButtonDisabled,
                   }) => {
-                    const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
-                    const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+                    const years = Array.from(
+                      { length: 10 },
+                      (_, i) => new Date().getFullYear() - 5 + i
+                    );
+                    const months = [
+                      "ม.ค.",
+                      "ก.พ.",
+                      "มี.ค.",
+                      "เม.ย.",
+                      "พ.ค.",
+                      "มิ.ย.",
+                      "ก.ค.",
+                      "ส.ค.",
+                      "ก.ย.",
+                      "ต.ค.",
+                      "พ.ย.",
+                      "ธ.ค.",
+                    ];
 
                     return (
                       <div className="flex justify-between items-center mb-2 px-2">
-                        <button onClick={decreaseMonth} disabled={prevMonthButtonDisabled}>
+                        <button
+                          onClick={decreaseMonth}
+                          disabled={prevMonthButtonDisabled}
+                        >
                           {"<"}
                         </button>
 
                         <div className="flex items-center gap-2">
                           <select
                             value={date.getFullYear()}
-                            onChange={({ target: { value } }) => changeYear(Number(value))}
+                            onChange={({ target: { value } }) =>
+                              changeYear(Number(value))
+                            }
                             className="border rounded px-1 py-0.5"
                           >
                             {years.map((year) => (
@@ -240,7 +292,9 @@ export default function CartList() {
 
                           <select
                             value={date.getMonth()}
-                            onChange={({ target: { value } }) => changeMonth(Number(value))}
+                            onChange={({ target: { value } }) =>
+                              changeMonth(Number(value))
+                            }
                             className="border rounded px-1 py-0.5"
                           >
                             {months.map((month, index) => (
@@ -251,7 +305,10 @@ export default function CartList() {
                           </select>
                         </div>
 
-                        <button onClick={increaseMonth} disabled={nextMonthButtonDisabled}>
+                        <button
+                          onClick={increaseMonth}
+                          disabled={nextMonthButtonDisabled}
+                        >
                           {">"}
                         </button>
                       </div>
@@ -259,7 +316,9 @@ export default function CartList() {
                   }}
                 />
                 {cart_delivery_date && (
-                  <p className="text-sm text-gray-500 mt-1">วันที่จัดส่ง: {cart_delivery_date}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    วันที่จัดส่ง: {cart_delivery_date}
+                  </p>
                 )}
               </div>
 
@@ -272,14 +331,19 @@ export default function CartList() {
                   options={{
                     enableTime: true,
                     noCalendar: true,
-                    dateFormat: 'H:i',
+                    dateFormat: "H:i",
                     time_24hr: true,
                   }}
                   value={deliveryTime}
-                  onChange={([time]) => setDeliveryTime(time)}
+                  onChange={([time]) => {
+                    setDeliveryTime(time);
+                    setCustomerInfo({ exportTime: formatTime(time) });
+                  }}
                   className="border border-gray-300 rounded px-3 py-2"
                 />
-                <p className="text-sm text-gray-500">เวลาที่เลือก: {formatTime(deliveryTime)}</p>
+                <p className="text-sm text-gray-500">
+                  เวลาที่เลือก: {formatTime(deliveryTime)}
+                </p>
               </div>
 
               <div className="col-span-2 flex flex-col gap-1">
@@ -291,21 +355,25 @@ export default function CartList() {
                   options={{
                     enableTime: true,
                     noCalendar: true,
-                    dateFormat: 'H:i',
+                    dateFormat: "H:i",
                     time_24hr: true,
                   }}
                   value={pickupTime}
-                  onChange={([time]) => setPickupTime(time)}
+                  onChange={([time]) => {
+                    setPickupTime(time);
+                    setCustomerInfo({ receiveTime: formatTime(time) });
+                  }}
                   className="border border-gray-300 rounded px-3 py-2"
                 />
-                <p className="text-sm text-gray-500">เวลาที่เลือก: {formatTime(pickupTime)}</p>
+                <p className="text-sm text-gray-500">
+                  เวลาที่เลือก: {formatTime(pickupTime)}
+                </p>
               </div>
-
             </div>
 
             <ul className="space-y-4 mb-4">
               {items.map((item) =>
-                item.menu_id ? (
+                item.menu_id != null ? (
                   <li
                     key={item.menu_id}
                     className="border p-4 rounded flex justify-between items-center"
@@ -324,7 +392,12 @@ export default function CartList() {
                       <input
                         type="number"
                         value={item.menu_total}
-                        onChange={(e) => handleChangeQuantity(item.menu_id!, Number(e.target.value))}
+                        onChange={(e) =>
+                          handleChangeQuantity(
+                            item.menu_id!,
+                            Number(e.target.value)
+                          )
+                        }
                         className="w-16 text-center border rounded"
                       />
                       <button
