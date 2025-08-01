@@ -659,6 +659,13 @@ const SummaryList: React.FC = () => {
     return `${christianYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   };
 
+  // ฟังก์ชันช่วยแปลงเวลาเป็นนาทีสำหรับการเปรียบเทียบ
+  const getTimeInMinutes = (timeStr: string | undefined): number => {
+    if (!timeStr) return 9999; // ให้เวลาที่ไม่ระบุอยู่ท้ายสุด
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
   const handleDateClick = (info: { dateStr: string }) => {
     const selectedDateStr = info.dateStr;
     const filteredOrders = allCarts.filter(
@@ -847,8 +854,32 @@ const SummaryList: React.FC = () => {
       return acc;
     }, {} as { [key: string]: Cart[] });
 
+    // เรียงลำดับภายในแต่ละวันที่ตามเวลาส่งและเวลารับ
     Object.values(groupedByDate).forEach((orders) => {
       orders.sort((a, b) => {
+        // แปลงเวลาส่งเป็นนาทีสำหรับการเปรียบเทียบ
+        const getTimeInMinutes = (timeStr: string | undefined): number => {
+          if (!timeStr) return 9999; // ให้เวลาที่ไม่ระบุอยู่ท้ายสุด
+          const [hours, minutes] = timeStr.split(':').map(Number);
+          return hours * 60 + minutes;
+        };
+
+        const exportTimeA = getTimeInMinutes(a.cart_export_time);
+        const exportTimeB = getTimeInMinutes(b.cart_export_time);
+        const receiveTimeA = getTimeInMinutes(a.cart_receive_time);
+        const receiveTimeB = getTimeInMinutes(b.cart_receive_time);
+
+        // เรียงตามเวลาส่งก่อน (จากน้อยไปมาก)
+        if (exportTimeA !== exportTimeB) {
+          return exportTimeA - exportTimeB;
+        }
+        
+        // ถ้าเวลาส่งเท่ากัน ให้เรียงตามเวลารับ (จากน้อยไปมาก)
+        if (receiveTimeA !== receiveTimeB) {
+          return receiveTimeA - receiveTimeB;
+        }
+
+        // ถ้าเวลาส่งและเวลารับเท่ากัน ให้เรียงตามเลขที่ออร์เดอร์
         const orderNumA = parseInt(a.order_number || "0");
         const orderNumB = parseInt(b.order_number || "0");
         return orderNumA - orderNumB;
@@ -882,6 +913,31 @@ const SummaryList: React.FC = () => {
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
     }, {} as { [key: string]: Cart[] });
+
+    // เรียงลำดับภายในแต่ละวันที่ตามเวลาส่งและเวลารับ
+    Object.values(grouped).forEach((orders) => {
+      orders.sort((a, b) => {
+        const exportTimeA = getTimeInMinutes(a.cart_export_time);
+        const exportTimeB = getTimeInMinutes(b.cart_export_time);
+        const receiveTimeA = getTimeInMinutes(a.cart_receive_time);
+        const receiveTimeB = getTimeInMinutes(b.cart_receive_time);
+
+        // เรียงตามเวลาส่งก่อน (จากน้อยไปมาก)
+        if (exportTimeA !== exportTimeB) {
+          return exportTimeA - exportTimeB;
+        }
+        
+        // ถ้าเวลาส่งเท่ากัน ให้เรียงตามเวลารับ (จากน้อยไปมาก)
+        if (receiveTimeA !== receiveTimeB) {
+          return receiveTimeA - receiveTimeB;
+        }
+
+        // ถ้าเวลาส่งและเวลารับเท่ากัน ให้เรียงตามเลขที่ออร์เดอร์
+        const orderNumA = parseInt(a.order_number || "0");
+        const orderNumB = parseInt(b.order_number || "0");
+        return orderNumA - orderNumB;
+      });
+    });
 
     const currentDate = new Date();
     const currentDateDisplay = currentDate
@@ -1595,6 +1651,9 @@ const SummaryList: React.FC = () => {
                 >
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
                 </h3>
+                {/* <div className="text-center text-sm text-blue-600 mb-4">
+                  <span className="font-semibold">เรียงลำดับตาม:</span> เวลาส่งอาหาร (จากน้อยไปมาก) → เวลารับอาหาร (จากน้อยไปมาก) → เลขที่ออร์เดอร์
+                </div> */}
 
                 <div className="space-y-4">
                   {orders.map((cart) => (
@@ -1837,6 +1896,14 @@ const SummaryList: React.FC = () => {
                                 <div className="flex items-center gap-1">
                                   <Clock className="w-4 h-4" />
                                   <span>เวลา {cart.time} น.</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <BsCashStack className="w-4 h-4" />
+                                  <span>ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <FaWallet className="w-4 h-4" />
+                                  <span>รับ: {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                 </div>
                               </div>
                               <div className="hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500">
