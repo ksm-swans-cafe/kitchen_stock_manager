@@ -91,7 +91,7 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 =======
-} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file 
+} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file  
 >>>>>>> 79da963 (25/7/68)
 
 const OrderHistory: React.FC = () => {
@@ -1009,24 +1009,18 @@ const OrderHistory: React.FC = () => {
     currentPage * itemsPerPage
   );
 
-  // ...existing code...
-const handleExportCSV = () => {
-  const headers = [
-    "เลขที่ออร์เดอร์",
-    "ชื่อเมนู",
-    "วันที่",
-    "เวลา",
-    "จำนวน Set",
-    "ราคา",
-    "สถานะ",
-    "ผู้สร้าง",
-  ];
-  // เพิ่ม BOM สำหรับ UTF-8
-  const BOM = "\uFEFF";
-  const csvContent =
-    BOM +
-    [
->>>>>>> 79da963 (25/7/68)
+  const handleExportCSV = () => {
+    const headers = [
+      "เลขที่ออร์เดอร์",
+      "ชื่อเมนู",
+      "วันที่",
+      "เวลา",
+      "จำนวน Set",
+      "ราคา",
+      "สถานะ",
+      "ผู้สร้าง",
+    ];
+    const csvContent = [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) =>
         [

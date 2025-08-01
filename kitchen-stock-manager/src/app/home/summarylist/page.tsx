@@ -869,29 +869,43 @@ const SummaryList: React.FC = () => {
 
   const groupedOrders = useMemo(() => {
     const grouped = filteredAndSortedOrders.reduce((acc, cart) => {
-      const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
-      const dateDisplay = deliveryDateISO
-        ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
-        : "ไม่มีวันที่จัดส่ง";
-      (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
-      return acc;
-    }, {} as { [key: string]: Cart[] });
+    const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
+    const dateDisplay = deliveryDateISO
+      ? new Date(deliveryDateISO)
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ")
+      : "ไม่มีวันที่จัดส่ง";
+    (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
+    return acc;
+  }, {} as { [key: string]: Cart[] });
+
+    // เรียงออเดอร์ในแต่ละวันตามเวลาส่งอาหาร (cart_export_time) จากน้อยไปมาก
+  Object.values(grouped).forEach((orders) => {
+    orders.sort((a, b) => {
+      // ถ้าไม่มีเวลาส่งอาหาร ให้ถือว่าเป็น 99:99
+      const timeA = a.cart_export_time
+        ? parseInt(a.cart_export_time.replace(":", "").replace(".", ""))
+        : 9999;
+      const timeB = b.cart_export_time
+        ? parseInt(b.cart_export_time.replace(":", "").replace(".", ""))
+        : 9999;
+      return timeA - timeB;
+    });
+  });
 
     const currentDate = new Date();
-    const currentDateISO = currentDate.toISOString().split("T")[0]; // วันที่ปัจจุบันในรูปแบบ YYYY-MM-DD
-    const currentDateDisplay = currentDate
-      .toLocaleDateString("th-TH", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      .replace(/ /g, " "); // วันที่ปัจจุบันในรูปแบบ th-TH (เช่น "3 ก.ค. 2568")
+  const currentDateISO = currentDate.toISOString().split("T")[0];
+  const currentDateDisplay = currentDate
+    .toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+    .replace(/ /g, " "); // วันที่ปัจจุบันในรูปแบบ th-TH (เช่น "3 ก.ค. 2568")
 
     const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay]
     ? [[currentDateDisplay, grouped[currentDateDisplay]]]
@@ -900,10 +914,10 @@ const SummaryList: React.FC = () => {
     ([date]) => date !== currentDateDisplay
   );
 
-    // เรียงลำดับวันที่อื่นๆ ตาม sortOrder
-    const sortedOtherDates = otherDateGroups.sort((a, b) => {
-      const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
-      const dateB = convertThaiDateToISO(b[1][0].cart_delivery_date);
+  // เรียงลำดับวันที่อื่นๆ ตาม sortOrder
+  const sortedOtherDates = otherDateGroups.sort((a, b) => {
+    const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
+    const dateB = convertThaiDateToISO(b[1][0].cart_delivery_date);
 
     if (!dateA) return 1;
     if (!dateB) return -1;
@@ -914,9 +928,9 @@ const SummaryList: React.FC = () => {
     return sortOrder === "asc" ? diffA - diffB : diffB - diffA;
   });
 
-    // รวมวันที่ปัจจุบัน (ถ้ามี) เข้ากับวันที่อื่นๆ โดยให้วันที่ปัจจุบันอยู่อันดับแรก
-    return [...currentDateGroup, ...sortedOtherDates];
-  }, [filteredAndSortedOrders, sortOrder]);
+  // รวมวันที่ปัจจุบัน (ถ้ามี) เข้ากับวันที่อื่นๆ โดยให้วันที่ปัจจุบันอยู่อันดับแรก
+  return [...currentDateGroup, ...sortedOtherDates];
+}, [filteredAndSortedOrders, sortOrder]);
   const summarizeIngredients = (date: string) => {
     const ingredientSummary: {
       [key: string]: { checked: number; total: number };
