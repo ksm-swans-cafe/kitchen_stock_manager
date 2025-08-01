@@ -2664,7 +2664,8 @@ const SummaryList: React.FC = () => {
                                 editIngredientsMenu.newIngredient
                                   .ingredient_name
                             )?.ingredient_unit || "ไม่ระบุหน่วย"
-                            : "เลือกวัตถุดิบ"}
+                            : ""} 
+                            {/* ^^^^ คือไร */}
                         </span>
                         <Button
                           size="sm"
