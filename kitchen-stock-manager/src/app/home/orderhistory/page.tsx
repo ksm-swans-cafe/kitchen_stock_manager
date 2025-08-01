@@ -52,7 +52,6 @@ import {
   Cart,
   CartItem,
   RawCart,
-<<<<<<< HEAD
 } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
 // import { thSarabunFont } from "../../th-sarabun-font"; // import font base64
@@ -90,11 +89,8 @@ const fetcher = async (url: string) => {
   if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
   return res.json();
 };
-=======
-} from "@/types/interface_summary_orderhistory"; // Assuming you have a types file  
->>>>>>> 79da963 (25/7/68)
 
-const OrderHistory: React.FC = () => {
+const OrderHistory = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -157,7 +153,7 @@ const OrderHistory: React.FC = () => {
       console.error("Failed to parse JSON:", e);
       return [];
     }
-  };
+};
 
   // แปลงข้อมูลเมื่อข้อมูลจาก SWR พร้อม
   useEffect(() => {
@@ -938,7 +934,6 @@ const OrderHistory: React.FC = () => {
     };
   };
 
-<<<<<<< HEAD
   const handleExportCSV = () => {
     const headers = [
       "เลขที่ออร์เดอร์",
@@ -950,91 +945,21 @@ const OrderHistory: React.FC = () => {
       "สถานะ",
       "ผู้สร้าง",
     ];
-    const csvContent = [
-=======
-  // Modified handleSummaryClick function
-  const handleSummaryClick = (date: string) => {
-    setSelectedDateForSummary(date);
-    setIsSummaryModalOpen(true);
-  };
-
-  const handleToggleIngredientCheck = async (
-    cartId: string,
-    menuName: string,
-    ingredientName: string
-  ) => {
-    const previousCarts = [...carts];
-    const currentCart = carts.find((cart) => cart.id === cartId);
-    const currentIngredient = currentCart?.allIngredients
-      .find((group) => group.menuName === menuName)
-      ?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
-
-    const newCheckedStatus = !currentIngredient?.isChecked;
-
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? {
-                              ...ing,
-                              isChecked: newCheckedStatus,
-                              ingredient_status: newCheckedStatus,
-                            }
-                          : ing
-                      ),
-                      ingredient_status: group.ingredients.every((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? newCheckedStatus
-                          : ing.isChecked
-                      ),
-                    }
-                  : group
-              ),
-            }
-          : cart
-      )
-    );
-  };
-
-  const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
-  const paginatedGroupedOrders = groupedOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const handleExportCSV = () => {
-    const headers = [
-      "เลขที่ออร์เดอร์",
-      "ชื่อเมนู",
-      "วันที่",
-      "เวลา",
-      "จำนวน Set",
-      "ราคา",
-      "สถานะ",
-      "ผู้สร้าง",
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...filteredAndSortedOrders.map((cart) =>
-        [
-          cart.id,
-          `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
-          cart.date,
-          cart.time,
-          cart.sets,
-          cart.price,
-          getStatusText(cart.status),
-          cart.createdBy,
-        ].join(",")
-      ),
-    ].join("\n");
+  const csvContent = [
+    headers.join(","),
+    ...filteredAndSortedOrders.map((cart) =>
+      [
+        cart.id,
+        `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
+        cart.date,
+        cart.time,
+        cart.sets,
+        cart.price,
+        getStatusText(cart.status),
+        cart.createdBy,
+      ].join(",")
+    ),
+  ].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -1046,7 +971,7 @@ const OrderHistory: React.FC = () => {
   link.click();
   document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
+}
 // ...existing code...
 
   const handleExportPDF = () => {
