@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import sql from "@/app/database/connect";
-
+import { Server } from "socket.io";
 export async function GET() {
   try {
     const result =

@@ -11,8 +11,9 @@ export async function POST(request: NextRequest) {
       cart_customer_tel,
       cart_delivery_date,
       cart_location_send,
+      cart_export_time,
+      cart_receive_time,
     } = body;
-
     if (!cart_username || !cart_menu_items) {
       return NextResponse.json(
         { error: "Username and menu items are required" },
@@ -42,11 +43,13 @@ export async function POST(request: NextRequest) {
       INSERT INTO cart (cart_username, cart_menu_items, 
       cart_create_date, cart_order_number,  
       cart_customer_name, cart_customer_tel, 
-      cart_delivery_date, cart_location_send)
+      cart_delivery_date, cart_location_send,
+      cart_export_time, cart_receive_time)
       VALUES (${cart_username}, ${menuItemsJson}::jsonb, 
       ${cartCreateDate}, ${orderNumber},  
       ${cart_customer_name}, ${cart_customer_tel}, 
-      ${cart_delivery_date}, ${cart_location_send})
+      ${cart_delivery_date}, ${cart_location_send},
+      ${cart_export_time}, ${cart_receive_time})
       RETURNING *`;
 
     return NextResponse.json(

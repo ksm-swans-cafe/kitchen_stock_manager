@@ -12,6 +12,8 @@ interface CartState {
   cart_customer_tel: string;
   cart_location_send: string;
   cart_delivery_date: string;
+  cart_export_time: string;
+  cart_receive_time: string;
 
   addItem: (item: MenuItem) => void;
   removeItem: (itemId: string | number) => void;
@@ -22,6 +24,8 @@ interface CartState {
     tel?: string;
     location?: string;
     deliveryDate?: string;
+    exportTime?: string;
+    receiveTime?: string;
   }) => void;
 }
 
@@ -33,6 +37,8 @@ export const useCartStore = create<CartState>()(
       cart_customer_tel: "",
       cart_location_send: "",
       cart_delivery_date: "",
+      cart_export_time: "",
+      cart_receive_time: "",
 
       addItem: (item) => {
         const { items } = get();
@@ -58,9 +64,7 @@ export const useCartStore = create<CartState>()(
         if (existing && existing.menu_total > 1) {
           set({
             items: items.map((i) =>
-              i.menu_id === itemId
-                ? { ...i, menu_total: i.menu_total - 1 }
-                : i
+              i.menu_id === itemId ? { ...i, menu_total: i.menu_total - 1 } : i
             ),
           });
         } else {
@@ -86,16 +90,27 @@ export const useCartStore = create<CartState>()(
           cart_customer_tel: "",
           cart_location_send: "",
           cart_delivery_date: "",
+          cart_export_time: "",
+          cart_receive_time: "",
         });
         localStorage.removeItem("cart-storage");
       },
 
-      setCustomerInfo: ({ name, tel, location, deliveryDate }) => {
+      setCustomerInfo: ({
+        name,
+        tel,
+        location,
+        deliveryDate,
+        exportTime,
+        receiveTime,
+      }) => {
         set((state) => ({
           cart_customer_name: name ?? state.cart_customer_name,
           cart_customer_tel: tel ?? state.cart_customer_tel,
           cart_location_send: location ?? state.cart_location_send,
           cart_delivery_date: deliveryDate ?? state.cart_delivery_date,
+          cart_export_time: exportTime ?? state.cart_export_time,
+          cart_receive_time: receiveTime ?? state.cart_receive_time,
         }));
       },
     }),

@@ -25,16 +25,12 @@ export default function Menu() {
         if (!res.ok) throw new Error("Failed to fetch menu list");
         let data: MenuItem[] = await res.json();
 
-        // ✅ ใช้ menu_subname ถ้ามี, ลบซ้ำ, ข้าม null, แก้ "เเ" เป็น "แ"
         const seen = new Set<string>();
         data = data.filter((menu) => {
           let name = menu.menu_subname ?? null;
           if (!name) return false;
-
-          // แก้ "เเ" เป็น "แ"
+          
           name = name.replace(/เเ/g, "แ").normalize("NFC")
-
-          // เก็บชื่อใหม่ไว้ใน object
           menu.menu_subname = name;
 
           if (seen.has(name)) return false;
@@ -56,7 +52,6 @@ export default function Menu() {
     fetchMenus();
   }, []);
 
-  // ✅ ใช้ menu_subname แทน menu_name
   const filteredMenus = allMenus
     .filter(menu =>
       menu.menu_subname?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -97,7 +92,6 @@ export default function Menu() {
     };
   }, [visibleCount, filteredMenus]);
 
-  // ✅ SearchBox ใช้ชื่อ menu_subname แทน
   const menus = allMenus
     .map((menu) => menu.menu_subname)
     .filter((name): name is string => typeof name === 'string');
