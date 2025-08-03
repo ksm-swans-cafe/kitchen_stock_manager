@@ -221,10 +221,10 @@ const SummaryList: React.FC = () => {
             typeof cart.cart_menu_items === "string" && cart.cart_menu_items
               ? safeParseJSON(cart.cart_menu_items)
               : Array.isArray(cart.cart_menu_items)
-                ? cart.cart_menu_items.filter(
+              ? cart.cart_menu_items.filter(
                   (item) => item && typeof item.menu_total === "number"
                 )
-                : [];
+              : [];
 
           const totalSets = menuItems
             .filter(
@@ -238,10 +238,10 @@ const SummaryList: React.FC = () => {
           const menuDisplayName =
             menuItems.length > 0
               ? menuItems
-                .map(
-                  (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-                )
-                .join(" + ")
+                  .map(
+                    (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
+                  )
+                  .join(" + ")
               : "ไม่มีชื่อเมนู";
 
           const allIngredients = menuItems.map((menu) => ({
@@ -266,8 +266,9 @@ const SummaryList: React.FC = () => {
             ),
           }));
 
-          const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-            }`;
+          const orderNumber = `ORD${
+            cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
+          }`;
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -359,8 +360,10 @@ const SummaryList: React.FC = () => {
   // State และฟังก์ชันสำหรับการแก้ไขเวลา
   const [editingTimes, setEditingTimes] = useState<{
     cartId: string;
-    exportTime: string;
-    receiveTime: string;
+    exportHour: string;
+    exportMinute: string;
+    receiveHour: string;
+    receiveMinute: string;
   } | null>(null);
 
   const handleEditTimes = (
@@ -368,12 +371,21 @@ const SummaryList: React.FC = () => {
     exportTime: string,
     receiveTime: string
   ) => {
-    const formatToThaiTime = (time: string) =>
-      time ? time.replace(":", ".") + " น." : "00.00 น.";
+    const parseTime = (time: string) => {
+      if (!time) return { hour: "00", minute: "00" };
+      const [hour, minute] = time.split(":").map((h) => h.padStart(2, "0"));
+      return { hour: hour || "00", minute: minute || "00" };
+    };
+
+    const exportParsed = parseTime(exportTime);
+    const receiveParsed = parseTime(receiveTime);
+
     setEditingTimes({
       cartId,
-      exportTime: formatToThaiTime(exportTime),
-      receiveTime: formatToThaiTime(receiveTime),
+      exportHour: exportParsed.hour,
+      exportMinute: exportParsed.minute,
+      receiveHour: receiveParsed.hour,
+      receiveMinute: receiveParsed.minute,
     });
   };
 
@@ -390,21 +402,8 @@ const SummaryList: React.FC = () => {
       return;
     }
 
-    const parseThaiTime = (thaiTime: string): string | null => {
-      const regex = /^([0-1]?[0-9]|2[0-3])\.[0-5][0-9](\s*น\.?)?$/;
-      if (!regex.test(thaiTime)) return null;
-      return thaiTime.replace(/\s*น\.?$/, "").replace(".", ":");
-    };
-
-    const exportTime = parseThaiTime(editingTimes.exportTime);
-    const receiveTime = parseThaiTime(editingTimes.receiveTime);
-
-    if (!exportTime || !receiveTime) {
-      console.error(
-        "เวลาส่งหรือรับอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)"
-      );
-      return;
-    }
+    const exportTime = `${editingTimes.exportHour}:${editingTimes.exportMinute}`;
+    const receiveTime = `${editingTimes.receiveHour}:${editingTimes.receiveMinute}`;
 
     setIsSaving(cartId);
     try {
@@ -473,29 +472,29 @@ const SummaryList: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) =>
-              group.menuName === menuName
-                ? {
-                  ...group,
-                  ingredients: group.ingredients.map((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? {
-                        ...ing,
-                        isChecked: newCheckedStatus,
-                        ingredient_status: newCheckedStatus,
-                      }
-                      : ing
-                  ),
-                  ingredient_status: group.ingredients.every((ing) =>
-                    ing.ingredient_name === ingredientName
-                      ? newCheckedStatus
-                      : ing.isChecked
-                  ),
-                }
-                : group
-            ),
-          }
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === menuName
+                  ? {
+                      ...group,
+                      ingredients: group.ingredients.map((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? {
+                              ...ing,
+                              isChecked: newCheckedStatus,
+                              ingredient_status: newCheckedStatus,
+                            }
+                          : ing
+                      ),
+                      ingredient_status: group.ingredients.every((ing) =>
+                        ing.ingredient_name === ingredientName
+                          ? newCheckedStatus
+                          : ing.isChecked
+                      ),
+                    }
+                  : group
+              ),
+            }
           : cart
       )
     );
@@ -537,24 +536,45 @@ const SummaryList: React.FC = () => {
     const previousCarts = [...carts];
     setIsSaving(cartId);
 
+    // อัปเดต state ทันทีเพื่อให้ dialog แสดงผลเปลี่ยนแปลง
     setCarts((prevCarts) =>
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) => ({
-              ...group,
-              ingredients: group.ingredients.map((ing) => ({
-                ...ing,
-                isChecked: true,
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
+                  ingredient_status: true,
+                })),
                 ingredient_status: true,
               })),
-              ingredient_status: true,
-            })),
-          }
+            }
           : cart
       )
     );
+
+    // อัปเดต selectedCartForSummary ด้วยเพื่อให้ dialog แสดงข้อมูลใหม่
+    if (selectedCartForSummary && selectedCartForSummary.id === cartId) {
+      setSelectedCartForSummary((prev) =>
+        prev
+          ? {
+              ...prev,
+              allIngredients: prev.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
+                  ingredient_status: true,
+                })),
+                ingredient_status: true,
+              })),
+            }
+          : prev
+      );
+    }
 
     try {
       const response = await fetch(
@@ -574,7 +594,8 @@ const SummaryList: React.FC = () => {
       }
 
       mutateCarts();
-      setIsOrderSummaryModalOpen(false); // <-- เพิ่มบรรทัดนี้
+      // ไม่ปิด dialog ทันที เพื่อให้ผู้ใช้เห็นการเปลี่ยนแปลง
+      // setIsSummaryDialogOpen(false);
     } catch (err) {
       console.error("Error updating all ingredients status:", err);
       console.error(
@@ -582,7 +603,13 @@ const SummaryList: React.FC = () => {
           ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}`
           : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด"
       );
+      // คืนค่า state เดิมเมื่อเกิดข้อผิดพลาด
       setCarts(previousCarts);
+      if (selectedCartForSummary && selectedCartForSummary.id === cartId) {
+        setSelectedCartForSummary(
+          previousCarts.find((cart) => cart.id === cartId) || null
+        );
+      }
     } finally {
       setIsSaving(null);
     }
@@ -596,21 +623,22 @@ const SummaryList: React.FC = () => {
       (cart) => convertThaiDateToISO(cart.cart_delivery_date) === date
     );
 
+    // อัปเดต state ทันทีเพื่อให้ dialog แสดงผลเปลี่ยนแปลง
     setCarts((prevCarts) =>
       prevCarts.map((cart) =>
         targetCarts.some((target) => target.id === cart.id)
           ? {
-            ...cart,
-            allIngredients: cart.allIngredients.map((group) => ({
-              ...group,
-              ingredients: group.ingredients.map((ing) => ({
-                ...ing,
-                isChecked: true,
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
+                  ingredient_status: true,
+                })),
                 ingredient_status: true,
               })),
-              ingredient_status: true,
-            })),
-          }
+            }
           : cart
       )
     );
@@ -627,7 +655,7 @@ const SummaryList: React.FC = () => {
               const errorData = await response.json();
               throw new Error(
                 errorData.error ||
-                `Failed to update all ingredients status for cart ${cart.id}`
+                  `Failed to update all ingredients status for cart ${cart.id}`
               );
             }
           })
@@ -635,7 +663,8 @@ const SummaryList: React.FC = () => {
       );
 
       mutateCarts();
-      setIsSummaryModalOpen(false);
+      // ไม่ปิด dialog ทันที เพื่อให้ผู้ใช้เห็นการเปลี่ยนแปลง
+      // setIsSummaryModalOpen(false);
     } catch (err) {
       console.error("Error updating all ingredients for date:", err);
       console.error(
@@ -643,6 +672,7 @@ const SummaryList: React.FC = () => {
           ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่: ${err.message}`
           : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่"
       );
+      // คืนค่า state เดิมเมื่อเกิดข้อผิดพลาด
       setCarts(previousCarts);
     } finally {
       setIsSaving(null);
@@ -662,7 +692,7 @@ const SummaryList: React.FC = () => {
   // ฟังก์ชันช่วยแปลงเวลาเป็นนาทีสำหรับการเปรียบเทียบ
   const getTimeInMinutes = (timeStr: string | undefined): number => {
     if (!timeStr) return 9999; // ให้เวลาที่ไม่ระบุอยู่ท้ายสุด
-    const [hours, minutes] = timeStr.split(':').map(Number);
+    const [hours, minutes] = timeStr.split(":").map(Number);
     return hours * 60 + minutes;
   };
 
@@ -729,32 +759,32 @@ const SummaryList: React.FC = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-              ...cart,
-              menuItems: cart.menuItems.map((item) =>
-                item.menu_name === cleanedMenuName
-                  ? { ...item, menu_total: editTotalBox }
-                  : item
-              ),
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === cleanedMenuName
-                  ? {
-                    ...group,
-                    ingredients: group.ingredients.map((ing) => ({
-                      ...ing,
-                      calculatedTotal: ing.useItem * editTotalBox,
-                    })),
-                  }
-                  : group
-              ),
-              sets: cart.menuItems.reduce(
-                (sum, item) =>
-                  sum +
-                  (item.menu_name === cleanedMenuName
-                    ? editTotalBox
-                    : item.menu_total),
-                0
-              ),
-            }
+                ...cart,
+                menuItems: cart.menuItems.map((item) =>
+                  item.menu_name === cleanedMenuName
+                    ? { ...item, menu_total: editTotalBox }
+                    : item
+                ),
+                allIngredients: cart.allIngredients.map((group) =>
+                  group.menuName === cleanedMenuName
+                    ? {
+                        ...group,
+                        ingredients: group.ingredients.map((ing) => ({
+                          ...ing,
+                          calculatedTotal: ing.useItem * editTotalBox,
+                        })),
+                      }
+                    : group
+                ),
+                sets: cart.menuItems.reduce(
+                  (sum, item) =>
+                    sum +
+                    (item.menu_name === cleanedMenuName
+                      ? editTotalBox
+                      : item.menu_total),
+                  0
+                ),
+              }
             : cart
         )
       );
@@ -860,7 +890,7 @@ const SummaryList: React.FC = () => {
         // แปลงเวลาส่งเป็นนาทีสำหรับการเปรียบเทียบ
         const getTimeInMinutes = (timeStr: string | undefined): number => {
           if (!timeStr) return 9999; // ให้เวลาที่ไม่ระบุอยู่ท้ายสุด
-          const [hours, minutes] = timeStr.split(':').map(Number);
+          const [hours, minutes] = timeStr.split(":").map(Number);
           return hours * 60 + minutes;
         };
 
@@ -873,7 +903,7 @@ const SummaryList: React.FC = () => {
         if (exportTimeA !== exportTimeB) {
           return exportTimeA - exportTimeB;
         }
-        
+
         // ถ้าเวลาส่งเท่ากัน ให้เรียงตามเวลารับ (จากน้อยไปมาก)
         if (receiveTimeA !== receiveTimeB) {
           return receiveTimeA - receiveTimeB;
@@ -903,12 +933,12 @@ const SummaryList: React.FC = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-          .toLocaleDateString("th-TH", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })
-          .replace(/ /g, " ")
+            .toLocaleDateString("th-TH", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+            .replace(/ /g, " ")
         : "ไม่มีวันที่จัดส่ง";
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
@@ -926,7 +956,7 @@ const SummaryList: React.FC = () => {
         if (exportTimeA !== exportTimeB) {
           return exportTimeA - exportTimeB;
         }
-        
+
         // ถ้าเวลาส่งเท่ากัน ให้เรียงตามเวลารับ (จากน้อยไปมาก)
         if (receiveTimeA !== receiveTimeB) {
           return receiveTimeA - receiveTimeB;
@@ -1282,35 +1312,35 @@ const SummaryList: React.FC = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-              ...cart,
-              menuItems: updatedMenuItems,
-              allIngredients: updatedMenuItems.map((item) => ({
-                menuName: item.menu_name,
-                ingredients: item.menu_ingredients.map(
-                  (ing: {
-                    useItem: number;
-                    ingredient_name: string;
-                    ingredient_status: boolean;
-                  }) => ({
-                    ...ing,
-                    calculatedTotal: ing.useItem * item.menu_total,
-                    isChecked: ing.ingredient_status,
-                    ingredient_status: ing.ingredient_status,
-                    ingredient_unit:
-                      ingredientUnitMap.get(ing.ingredient_name) ??
-                      "ไม่ระบุหน่วย",
-                  })
+                ...cart,
+                menuItems: updatedMenuItems,
+                allIngredients: updatedMenuItems.map((item) => ({
+                  menuName: item.menu_name,
+                  ingredients: item.menu_ingredients.map(
+                    (ing: {
+                      useItem: number;
+                      ingredient_name: string;
+                      ingredient_status: boolean;
+                    }) => ({
+                      ...ing,
+                      calculatedTotal: ing.useItem * item.menu_total,
+                      isChecked: ing.ingredient_status,
+                      ingredient_status: ing.ingredient_status,
+                      ingredient_unit:
+                        ingredientUnitMap.get(ing.ingredient_name) ??
+                        "ไม่ระบุหน่วย",
+                    })
+                  ),
+                  ingredient_status: item.menu_ingredients.every(
+                    (ing: { ingredient_status: boolean }) =>
+                      ing.ingredient_status
+                  ),
+                })),
+                sets: updatedMenuItems.reduce(
+                  (sum, item) => sum + item.menu_total,
+                  0
                 ),
-                ingredient_status: item.menu_ingredients.every(
-                  (ing: { ingredient_status: boolean }) =>
-                    ing.ingredient_status
-                ),
-              })),
-              sets: updatedMenuItems.reduce(
-                (sum, item) => sum + item.menu_total,
-                0
-              ),
-            }
+              }
             : cart
         )
       );
@@ -1398,38 +1428,38 @@ const SummaryList: React.FC = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-              ...cart,
-              menuItems: cart.menuItems.map((item) =>
-                item.menu_name === menuName
-                  ? {
-                    ...item,
-                    menu_ingredients: editIngredientsMenu.ingredients,
-                  }
-                  : item
-              ),
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                    ...group,
-                    ingredients: editIngredientsMenu.ingredients.map(
-                      (ing) => ({
-                        ...ing,
-                        calculatedTotal:
-                          ing.useItem *
-                          (cart.menuItems.find(
-                            (m) => m.menu_name === menuName
-                          )?.menu_total || 0),
-                        isChecked: ing.ingredient_status,
-                      })
-                    ),
-                    ingredient_status:
-                      editIngredientsMenu.ingredients.every(
-                        (ing) => ing.ingredient_status
-                      ),
-                  }
-                  : group
-              ),
-            }
+                ...cart,
+                menuItems: cart.menuItems.map((item) =>
+                  item.menu_name === menuName
+                    ? {
+                        ...item,
+                        menu_ingredients: editIngredientsMenu.ingredients,
+                      }
+                    : item
+                ),
+                allIngredients: cart.allIngredients.map((group) =>
+                  group.menuName === menuName
+                    ? {
+                        ...group,
+                        ingredients: editIngredientsMenu.ingredients.map(
+                          (ing) => ({
+                            ...ing,
+                            calculatedTotal:
+                              ing.useItem *
+                              (cart.menuItems.find(
+                                (m) => m.menu_name === menuName
+                              )?.menu_total || 0),
+                            isChecked: ing.ingredient_status,
+                          })
+                        ),
+                        ingredient_status:
+                          editIngredientsMenu.ingredients.every(
+                            (ing) => ing.ingredient_status
+                          ),
+                      }
+                    : group
+                ),
+              }
             : cart
         )
       );
@@ -1495,12 +1525,12 @@ const SummaryList: React.FC = () => {
             >
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  locale: "th",
-                  timeZone: "Asia/Bangkok",
-                })}`
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    locale: "th",
+                    timeZone: "Asia/Bangkok",
+                  })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -1671,26 +1701,21 @@ const SummaryList: React.FC = () => {
                         >
                           <div className="flex w-full items-center">
                             <div className="ml-auto flex items-center gap-2">
+                              {/* <div className="flex items-center gap-2"> */}
                               {editingTimes?.cartId === cart.id ? (
                                 <div className="flex flex-col gap-2">
                                   <div className="flex items-center gap-2">
                                     <BsCashStack className="w-6 h-6" />
                                     <span>เวลาส่งอาหาร</span>
                                     <select
-                                      value={
-                                        editingTimes?.exportTime.split(".")[0]
-                                      }
+                                      value={editingTimes.exportHour}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                              ...prev,
-                                              exportTime: `${e.target.value
-                                                }:${editingTimes?.exportTime.split(
-                                                  "."
-                                                )[1]
-                                                }`,
-                                            }
+                                                ...prev,
+                                                exportHour: e.target.value,
+                                              }
                                             : prev
                                         )
                                       }
@@ -1706,26 +1731,21 @@ const SummaryList: React.FC = () => {
                                     </select>
                                     :
                                     <select
-                                      value={
-                                        editingTimes?.exportTime.split(".")[1]
-                                      }
+                                      value={editingTimes.exportMinute}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                              ...prev,
-                                              exportTime: `${editingTimes?.exportTime.split(
-                                                "."
-                                              )[0]
-                                                }:${e.target.value}`,
-                                            }
+                                                ...prev,
+                                                exportMinute: e.target.value,
+                                              }
                                             : prev
                                         )
                                       }
                                       className="border rounded px-1"
                                     >
                                       {Array.from({ length: 60 }, (_, i) =>
-                                        (i + 1).toString().padStart(2, "0")
+                                        i.toString().padStart(2, "0")
                                       ).map((m) => (
                                         <option key={m} value={m}>
                                           {m}
@@ -1737,20 +1757,14 @@ const SummaryList: React.FC = () => {
                                     <FaWallet className="w-4 h-4" />
                                     <span>เวลารับอาหาร</span>
                                     <select
-                                      value={
-                                        editingTimes?.receiveTime.split(".")[0]
-                                      }
+                                      value={editingTimes.receiveHour}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                              ...prev,
-                                              receiveTime: `${e.target.value
-                                                }:${editingTimes?.receiveTime.split(
-                                                  "."
-                                                )[1]
-                                                }`,
-                                            }
+                                                ...prev,
+                                                receiveHour: e.target.value,
+                                              }
                                             : prev
                                         )
                                       }
@@ -1766,26 +1780,21 @@ const SummaryList: React.FC = () => {
                                     </select>
                                     :
                                     <select
-                                      value={
-                                        editingTimes?.receiveTime.split(".")[1]
-                                      }
+                                      value={editingTimes.receiveMinute}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                              ...prev,
-                                              receiveTime: `${editingTimes?.receiveTime.split(
-                                                "."
-                                              )[0]
-                                                }:${e.target.value}`,
-                                            }
+                                                ...prev,
+                                                receiveMinute: e.target.value,
+                                              }
                                             : prev
                                         )
                                       }
                                       className="border rounded px-1"
                                     >
                                       {Array.from({ length: 60 }, (_, i) =>
-                                        (i + 1).toString().padStart(2, "0")
+                                        i.toString().padStart(2, "0")
                                       ).map((m) => (
                                         <option key={m} value={m}>
                                           {m}
@@ -1899,11 +1908,16 @@ const SummaryList: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <BsCashStack className="w-4 h-4" />
-                                  <span>ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.</span>
+                                  <span>
+                                    ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <FaWallet className="w-4 h-4" />
-                                  <span>รับ: {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
+                                  <span>
+                                    รับ: {cart.cart_receive_time || "ไม่ระบุ"}{" "}
+                                    น.
+                                  </span>
                                 </div>
                               </div>
                               <div className="hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500">
@@ -1971,16 +1985,16 @@ const SummaryList: React.FC = () => {
                                                 item.menu_ingredients
                                               )
                                                 ? item.menu_ingredients.map(
-                                                  (ing) => ({
-                                                    useItem: ing.useItem ?? 0,
-                                                    ingredient_name:
-                                                      ing.ingredient_name ??
-                                                      "ไม่ระบุวัตถุดิบ",
-                                                    ingredient_status:
-                                                      ing.ingredient_status ??
-                                                      false,
-                                                  })
-                                                )
+                                                    (ing) => ({
+                                                      useItem: ing.useItem ?? 0,
+                                                      ingredient_name:
+                                                        ing.ingredient_name ??
+                                                        "ไม่ระบุวัตถุดิบ",
+                                                      ingredient_status:
+                                                        ing.ingredient_status ??
+                                                        false,
+                                                    })
+                                                  )
                                                 : [],
                                             })
                                           ),
@@ -2046,33 +2060,35 @@ const SummaryList: React.FC = () => {
                                                         </span>
                                                         <Input
                                                           type="number"
-                                                          value={item.menu_total}
+                                                          value={
+                                                            item.menu_total
+                                                          }
                                                           onChange={(e) =>
                                                             setEditMenuDialog(
                                                               (prev) =>
                                                                 prev
                                                                   ? {
-                                                                    ...prev,
-                                                                    menuItems:
-                                                                      prev.menuItems.map(
-                                                                        (
-                                                                          m,
-                                                                          i
-                                                                        ) =>
-                                                                          i ===
+                                                                      ...prev,
+                                                                      menuItems:
+                                                                        prev.menuItems.map(
+                                                                          (
+                                                                            m,
+                                                                            i
+                                                                          ) =>
+                                                                            i ===
                                                                             idx
-                                                                            ? {
-                                                                              ...m,
-                                                                              menu_total:
-                                                                                Number(
-                                                                                  e
-                                                                                    .target
-                                                                                    .value
-                                                                                ),
-                                                                            }
-                                                                            : m
-                                                                      ),
-                                                                  }
+                                                                              ? {
+                                                                                  ...m,
+                                                                                  menu_total:
+                                                                                    Number(
+                                                                                      e
+                                                                                        .target
+                                                                                        .value
+                                                                                    ),
+                                                                                }
+                                                                              : m
+                                                                        ),
+                                                                    }
                                                                   : prev
                                                             )
                                                           }
@@ -2088,17 +2104,17 @@ const SummaryList: React.FC = () => {
                                                               (prev) =>
                                                                 prev
                                                                   ? {
-                                                                    ...prev,
-                                                                    menuItems:
-                                                                      prev.menuItems.filter(
-                                                                        (
-                                                                          _,
-                                                                          i
-                                                                        ) =>
-                                                                          i !==
-                                                                          idx
-                                                                      ),
-                                                                  }
+                                                                      ...prev,
+                                                                      menuItems:
+                                                                        prev.menuItems.filter(
+                                                                          (
+                                                                            _,
+                                                                            i
+                                                                          ) =>
+                                                                            i !==
+                                                                            idx
+                                                                        ),
+                                                                    }
                                                                   : prev
                                                             )
                                                           }
@@ -2173,12 +2189,12 @@ const SummaryList: React.FC = () => {
                                                     setEditMenuDialog((prev) =>
                                                       prev
                                                         ? {
-                                                          ...prev,
-                                                          newMenu: {
-                                                            ...prev.newMenu,
-                                                            menu_name: value,
-                                                          },
-                                                        }
+                                                            ...prev,
+                                                            newMenu: {
+                                                              ...prev.newMenu,
+                                                              menu_name: value,
+                                                            },
+                                                          }
                                                         : prev
                                                     )
                                                   }
@@ -2211,14 +2227,15 @@ const SummaryList: React.FC = () => {
                                                     setEditMenuDialog((prev) =>
                                                       prev
                                                         ? {
-                                                          ...prev,
-                                                          newMenu: {
-                                                            ...prev.newMenu,
-                                                            menu_total: Number(
-                                                              e.target.value
-                                                            ),
-                                                          },
-                                                        }
+                                                            ...prev,
+                                                            newMenu: {
+                                                              ...prev.newMenu,
+                                                              menu_total:
+                                                                Number(
+                                                                  e.target.value
+                                                                ),
+                                                            },
+                                                          }
                                                         : prev
                                                     )
                                                   }
@@ -2233,68 +2250,71 @@ const SummaryList: React.FC = () => {
                                                       .menu_name &&
                                                     editMenuDialog?.newMenu
                                                       .menu_total >= 0 &&
-                                                    setEditMenuDialog((prev) => {
-                                                      if (!menuListData) {
-                                                        Swal.fire({
-                                                          icon: "error",
-                                                          title: "เกิดข้อผิดพลาด",
-                                                          text: "ข้อมูลเมนูยังไม่พร้อม กรุณาลองอีกครั้ง",
-                                                          showConfirmButton:
-                                                            false,
-                                                          timer: 3000,
-                                                        });
-                                                        return prev;
-                                                      }
-                                                      const menuData =
-                                                        menuListData.find(
-                                                          (m: {
-                                                            menu_name: string;
-                                                          }) =>
-                                                            m.menu_name ===
-                                                            prev?.newMenu
-                                                              .menu_name
-                                                        );
-                                                      return prev
-                                                        ? {
-                                                          ...prev,
-                                                          menuItems: [
-                                                            ...prev.menuItems,
-                                                            {
-                                                              menu_name:
-                                                                prev.newMenu
-                                                                  .menu_name,
-                                                              menu_total:
-                                                                prev.newMenu
-                                                                  .menu_total,
-                                                              menu_ingredients:
-                                                                menuData?.menu_ingredients?.map(
-                                                                  (ing: {
-                                                                    useItem?: number;
-                                                                    quantity?: number;
-                                                                    ingredient_name?: string;
-                                                                    name?: string;
-                                                                  }) => ({
-                                                                    useItem:
-                                                                      ing.useItem ||
-                                                                      ing.quantity ||
-                                                                      0,
-                                                                    ingredient_name:
-                                                                      ing.ingredient_name ||
-                                                                      ing.name ||
-                                                                      "",
-                                                                    ingredient_status:
-                                                                      false,
-                                                                  })
-                                                                ) || [],
-                                                            },
-                                                          ],
-                                                          newMenu: {
-                                                            menu_name: "",
-                                                            menu_total: 1,
-                                                          },
+                                                    setEditMenuDialog(
+                                                      (prev) => {
+                                                        if (!menuListData) {
+                                                          Swal.fire({
+                                                            icon: "error",
+                                                            title:
+                                                              "เกิดข้อผิดพลาด",
+                                                            text: "ข้อมูลเมนูยังไม่พร้อม กรุณาลองอีกครั้ง",
+                                                            showConfirmButton:
+                                                              false,
+                                                            timer: 3000,
+                                                          });
+                                                          return prev;
                                                         }
-                                                        : prev;
-                                                    })
+                                                        const menuData =
+                                                          menuListData.find(
+                                                            (m: {
+                                                              menu_name: string;
+                                                            }) =>
+                                                              m.menu_name ===
+                                                              prev?.newMenu
+                                                                .menu_name
+                                                          );
+                                                        return prev
+                                                          ? {
+                                                              ...prev,
+                                                              menuItems: [
+                                                                ...prev.menuItems,
+                                                                {
+                                                                  menu_name:
+                                                                    prev.newMenu
+                                                                      .menu_name,
+                                                                  menu_total:
+                                                                    prev.newMenu
+                                                                      .menu_total,
+                                                                  menu_ingredients:
+                                                                    menuData?.menu_ingredients?.map(
+                                                                      (ing: {
+                                                                        useItem?: number;
+                                                                        quantity?: number;
+                                                                        ingredient_name?: string;
+                                                                        name?: string;
+                                                                      }) => ({
+                                                                        useItem:
+                                                                          ing.useItem ||
+                                                                          ing.quantity ||
+                                                                          0,
+                                                                        ingredient_name:
+                                                                          ing.ingredient_name ||
+                                                                          ing.name ||
+                                                                          "",
+                                                                        ingredient_status:
+                                                                          false,
+                                                                      })
+                                                                    ) || [],
+                                                                },
+                                                              ],
+                                                              newMenu: {
+                                                                menu_name: "",
+                                                                menu_total: 1,
+                                                              },
+                                                            }
+                                                          : prev;
+                                                      }
+                                                    )
                                                   }
                                                   disabled={
                                                     !editMenuDialog?.newMenu
@@ -2346,7 +2366,6 @@ const SummaryList: React.FC = () => {
                                       </div>
                                     </div>
                                   </DialogContent>
-
                                 </Dialog>
                                 <Accordion
                                   type="multiple"
@@ -2362,7 +2381,7 @@ const SummaryList: React.FC = () => {
                                       const isEditingThisMenu =
                                         editingMenu?.cartId === cart.id &&
                                         editingMenu?.menuName ===
-                                        menuGroup.menuName;
+                                          menuGroup.menuName;
                                       const allIngredientsChecked =
                                         menuGroup.ingredients.every(
                                           (ing) => ing.isChecked
@@ -2372,10 +2391,11 @@ const SummaryList: React.FC = () => {
                                         <AccordionItem
                                           key={groupIdx}
                                           value={`menu-${groupIdx}`}
-                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked
-                                            ? "bg-green-50 border-green-200"
-                                            : "bg-red-50 border-red-200"
-                                            }`}
+                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${
+                                            allIngredientsChecked
+                                              ? "bg-green-50 border-green-200"
+                                              : "bg-red-50 border-red-200"
+                                          }`}
                                         >
                                           <AccordionTrigger className="w-full flex items-center justify-between px-2 py-1 hover:no-underline">
                                             <span className="truncate text-sm text-gray-700">
@@ -2472,10 +2492,11 @@ const SummaryList: React.FC = () => {
                                               (ing, idx) => (
                                                 <div
                                                   key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked
-                                                    ? "bg-green-50 border-green-200"
-                                                    : "bg-red-50 border-red-200"
-                                                    } text-sm`}
+                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
+                                                    ing.isChecked
+                                                      ? "bg-green-50 border-green-200"
+                                                      : "bg-red-50 border-red-200"
+                                                  } text-sm`}
                                                 >
                                                   <span className="text-gray-700">
                                                     {ing.ingredient_name ||
@@ -2512,16 +2533,18 @@ const SummaryList: React.FC = () => {
                                                         className="hidden"
                                                       />
                                                       <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked
-                                                          ? "bg-green-500"
-                                                          : "bg-red-500"
-                                                          }`}
+                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                                          ing.isChecked
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                        }`}
                                                       >
                                                         <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked
-                                                            ? "translate-x-5"
-                                                            : "translate-x-0.5"
-                                                            }`}
+                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                                            ing.isChecked
+                                                              ? "translate-x-5"
+                                                              : "translate-x-0.5"
+                                                          }`}
                                                         />
                                                       </span>
                                                     </label>
@@ -2560,7 +2583,6 @@ const SummaryList: React.FC = () => {
               </div>
             ))
           )}
-
         </div>
         <Dialog
           open={editIngredientsMenu !== null}
@@ -2568,7 +2590,7 @@ const SummaryList: React.FC = () => {
         >
           <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
             <div style={{ color: "#000000" }}>
-              <div style={{fontSize: "20px" }}>
+              <div style={{ fontSize: "20px" }}>
                 <DialogTitle>
                   แก้ไขวัตถุดิบสำหรับเมนู {editIngredientsMenu?.menuName}
                 </DialogTitle>
@@ -2611,19 +2633,19 @@ const SummaryList: React.FC = () => {
                                     setEditIngredientsMenu((prev) =>
                                       prev
                                         ? {
-                                          ...prev,
-                                          ingredients: prev.ingredients.map(
-                                            (ing, i) =>
-                                              i === idx
-                                                ? {
-                                                  ...ing,
-                                                  useItem: Number(
-                                                    e.target.value
-                                                  ),
-                                                }
-                                                : ing
-                                          ),
-                                        }
+                                            ...prev,
+                                            ingredients: prev.ingredients.map(
+                                              (ing, i) =>
+                                                i === idx
+                                                  ? {
+                                                      ...ing,
+                                                      useItem: Number(
+                                                        e.target.value
+                                                      ),
+                                                    }
+                                                  : ing
+                                            ),
+                                          }
                                         : prev
                                     )
                                   }
@@ -2641,11 +2663,12 @@ const SummaryList: React.FC = () => {
                                     setEditIngredientsMenu((prev) =>
                                       prev
                                         ? {
-                                          ...prev,
-                                          ingredients: prev.ingredients.filter(
-                                            (_, i) => i !== idx
-                                          ),
-                                        }
+                                            ...prev,
+                                            ingredients:
+                                              prev.ingredients.filter(
+                                                (_, i) => i !== idx
+                                              ),
+                                          }
                                         : prev
                                     )
                                   }
@@ -2667,19 +2690,19 @@ const SummaryList: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <Select
                           value={
-                            editIngredientsMenu?.newIngredient.ingredient_name ||
-                            ""
+                            editIngredientsMenu?.newIngredient
+                              .ingredient_name || ""
                           }
                           onValueChange={(value) =>
                             setEditIngredientsMenu((prev) =>
                               prev
                                 ? {
-                                  ...prev,
-                                  newIngredient: {
-                                    ...prev.newIngredient,
-                                    ingredient_name: value,
-                                  },
-                                }
+                                    ...prev,
+                                    newIngredient: {
+                                      ...prev.newIngredient,
+                                      ingredient_name: value,
+                                    },
+                                  }
                                 : prev
                             )
                           }
@@ -2705,17 +2728,19 @@ const SummaryList: React.FC = () => {
                         </Select>
                         <Input
                           type="number"
-                          value={editIngredientsMenu?.newIngredient.useItem || 0}
+                          value={
+                            editIngredientsMenu?.newIngredient.useItem || 0
+                          }
                           onChange={(e) =>
                             setEditIngredientsMenu((prev) =>
                               prev
                                 ? {
-                                  ...prev,
-                                  newIngredient: {
-                                    ...prev.newIngredient,
-                                    useItem: Number(e.target.value),
-                                  },
-                                }
+                                    ...prev,
+                                    newIngredient: {
+                                      ...prev.newIngredient,
+                                      useItem: Number(e.target.value),
+                                    },
+                                  }
                                 : prev
                             )
                           }
@@ -2726,13 +2751,13 @@ const SummaryList: React.FC = () => {
                         <span className="text-sm">
                           {editIngredientsMenu?.newIngredient.ingredient_name
                             ? ingredientData?.find(
-                              (ing: { ingredient_name: string }) =>
-                                ing.ingredient_name ===
-                                editIngredientsMenu.newIngredient
-                                  .ingredient_name
-                            )?.ingredient_unit || "ไม่ระบุหน่วย"
-                            : ""} 
-                            {/* ^^^^ คือไร */}
+                                (ing: { ingredient_name: string }) =>
+                                  ing.ingredient_name ===
+                                  editIngredientsMenu.newIngredient
+                                    .ingredient_name
+                              )?.ingredient_unit || "ไม่ระบุหน่วย"
+                            : ""}
+                          {/* ^^^^ คือไร */}
                         </span>
                         <Button
                           size="sm"
@@ -2779,7 +2804,8 @@ const SummaryList: React.FC = () => {
                             })
                           }
                           disabled={
-                            !editIngredientsMenu?.newIngredient.ingredient_name ||
+                            !editIngredientsMenu?.newIngredient
+                              .ingredient_name ||
                             editIngredientsMenu?.newIngredient.useItem < 0 ||
                             !ingredientData
                           }
@@ -2823,7 +2849,6 @@ const SummaryList: React.FC = () => {
         >
           <DialogContent className="max-w-md max-h-[70vh] overflow-y-auto">
             <div>
-
               <DialogTitle className="text-lg font-bold">
                 {summaryDialogType === "order" && selectedCartForSummary && (
                   <div style={{ color: "#000000" }} className="mb-4">
@@ -2870,10 +2895,14 @@ const SummaryList: React.FC = () => {
                             </div>
                           ))}
                         </div>
-                        <div style={{ color: "#000000", background: "#5cfa6c" }}>
+                        <div
+                          style={{ color: "#000000", background: "#5cfa6c" }}
+                        >
                           <Button
                             onClick={() =>
-                              handleCheckAllIngredients(selectedCartForSummary.id)
+                              handleCheckAllIngredients(
+                                selectedCartForSummary.id
+                              )
                             }
                             className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
                             disabled={
@@ -2913,7 +2942,9 @@ const SummaryList: React.FC = () => {
                             </div>
                           ))}
                         </div>
-                        <div style={{ color: "#000000", background: "#5cfa6c" }}>
+                        <div
+                          style={{ color: "#000000", background: "#5cfa6c" }}
+                        >
                           <Button
                             onClick={() =>
                               handleCheckAllIngredientsForDate(
@@ -2921,7 +2952,9 @@ const SummaryList: React.FC = () => {
                               )
                             }
                             className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
-                            disabled={isSaving === "all" || allIngredientsChecked}
+                            disabled={
+                              isSaving === "all" || allIngredientsChecked
+                            }
                           >
                             {isSaving === "all"
                               ? "กำลังบันทึก..."
