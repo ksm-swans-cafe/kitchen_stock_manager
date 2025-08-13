@@ -22,10 +22,10 @@ export default function CartList() {
   const formatTime = (date?: Date) => {
     return date
       ? date.toLocaleTimeString("th-TH", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
       : "";
   };
 
@@ -163,54 +163,41 @@ export default function CartList() {
       <div className="p-4 max-w-md mx-auto">
         <h1 className="text-2xl font-bold mb-4">🛒 รายการในตะกร้า</h1>
 
-        {items.length === -1 ? (
-          <div className="text-center text-gray-500 space-y-4">
-            <div className="border p-4 rounded">
-              <button
-                onClick={() => router.push("/home/order/menu")}
-                className="w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                ➕ เพิ่มเมนู
-              </button>
-            </div>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1">
+            <label className="font-medium">ชื่อลูกค้า</label>
+            <input
+              type="text"
+              value={cart_customer_name}
+              onChange={(e) => setCustomerInfo({ name: e.target.value })}
+              placeholder="ชื่อลูกค้า"
+              className="border rounded px-3 py-2"
+            />
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-1">
-                <label className="font-medium">ชื่อลูกค้า</label>
-                <input
-                  type="text"
-                  value={cart_customer_name}
-                  onChange={(e) => setCustomerInfo({ name: e.target.value })}
-                  placeholder="ชื่อลูกค้า"
-                  className="border rounded px-3 py-2"
-                />
-              </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="font-medium">เบอร์โทรลูกค้า</label>
-                <input
-                  type="text"
-                  value={cart_customer_tel}
-                  onChange={handlePhoneChange}
-                  placeholder="081-234-5678"
-                  className="border rounded px-3 py-2"
-                />
-              </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-medium">เบอร์โทรลูกค้า</label>
+            <input
+              type="text"
+              value={cart_customer_tel}
+              onChange={handlePhoneChange}
+              placeholder="081-234-5678"
+              className="border rounded px-3 py-2"
+            />
+          </div>
 
-              <div className="col-span-2 flex flex-col gap-1">
-                <label className="font-medium">สถานที่จัดส่ง</label>
-                <input
-                  type="text"
-                  value={cart_location_send}
-                  onChange={(e) =>
-                    setCustomerInfo({ location: e.target.value })
-                  }
-                  placeholder="สถานที่จัดส่ง"
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
+          <div className="col-span-2 flex flex-col gap-1">
+            <label className="font-medium">สถานที่จัดส่ง</label>
+            <input
+              type="text"
+              value={cart_location_send}
+              onChange={(e) =>
+                setCustomerInfo({ location: e.target.value })
+              }
+              placeholder="สถานที่จัดส่ง"
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
 
               <div className="col-span-2 flex flex-col gap-1">
                 <label className="font-medium">วันที่จัดส่ง</label>
@@ -266,186 +253,184 @@ export default function CartList() {
                       "ธ.ค.",
                     ];
 
-                    return (
-                      <div className="flex justify-between items-center mb-2 px-2">
-                        <button
-                          onClick={decreaseMonth}
-                          disabled={prevMonthButtonDisabled}
-                        >
-                          {"<"}
-                        </button>
+                return (
+                  <div className="flex justify-between items-center mb-2 px-2">
+                    <button
+                      onClick={decreaseMonth}
+                      disabled={prevMonthButtonDisabled}
+                    >
+                      {"<"}
+                    </button>
 
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={date.getFullYear()}
-                            onChange={({ target: { value } }) =>
-                              changeYear(Number(value))
-                            }
-                            className="border rounded px-1 py-0.5"
-                          >
-                            {years.map((year) => (
-                              <option key={year} value={year}>
-                                {year + 543}
-                              </option>
-                            ))}
-                          </select>
-
-                          <select
-                            value={date.getMonth()}
-                            onChange={({ target: { value } }) =>
-                              changeMonth(Number(value))
-                            }
-                            className="border rounded px-1 py-0.5"
-                          >
-                            {months.map((month, index) => (
-                              <option key={index} value={index}>
-                                {month}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <button
-                          onClick={increaseMonth}
-                          disabled={nextMonthButtonDisabled}
-                        >
-                          {">"}
-                        </button>
-                      </div>
-                    );
-                  }}
-                />
-                {cart_delivery_date && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    วันที่จัดส่ง: {cart_delivery_date}
-                  </p>
-                )}
-              </div>
-
-              <div className="col-span-2 flex flex-col gap-1">
-                <label htmlFor="food-delivery-time" className="font-medium">
-                  เวลาส่งอาหาร
-                </label>
-                <Flatpickr
-                  id="food-delivery-time"
-                  options={{
-                    enableTime: true,
-                    noCalendar: true,
-                    dateFormat: "H:i",
-                    time_24hr: true,
-                  }}
-                  value={deliveryTime}
-                  onChange={([time]) => {
-                    setDeliveryTime(time);
-                    setCustomerInfo({ exportTime: formatTime(time) });
-                  }}
-                  className="border border-gray-300 rounded px-3 py-2"
-                />
-                <p className="text-sm text-gray-500">
-                  เวลาที่เลือก: {formatTime(deliveryTime)}
-                </p>
-              </div>
-
-              <div className="col-span-2 flex flex-col gap-1">
-                <label htmlFor="food-pickup-time" className="font-medium">
-                  เวลารับอาหาร
-                </label>
-                <Flatpickr
-                  id="food-pickup-time"
-                  options={{
-                    enableTime: true,
-                    noCalendar: true,
-                    dateFormat: "H:i",
-                    time_24hr: true,
-                  }}
-                  value={pickupTime}
-                  onChange={([time]) => {
-                    setPickupTime(time);
-                    setCustomerInfo({ receiveTime: formatTime(time) });
-                  }}
-                  className="border border-gray-300 rounded px-3 py-2"
-                />
-                <p className="text-sm text-gray-500">
-                  เวลาที่เลือก: {formatTime(pickupTime)}
-                </p>
-              </div>
-            </div>
-
-            <ul className="space-y-4 mb-4">
-              {items.map((item) =>
-                item.menu_id != null ? (
-                  <li
-                    key={item.menu_id}
-                    className="border p-4 rounded flex justify-between items-center"
-                  >
-                    <div>
-                      <div className="font-medium">{item.menu_name}</div>
-                      <div className="text-gray-500">{item.menu_price} ฿</div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => removeItem(item.menu_id!)}
-                        className="px-3 py-1 bg-red-500 text-white rounded"
-                      >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        value={item.menu_total}
-                        onChange={(e) =>
-                          handleChangeQuantity(
-                            item.menu_id!,
-                            Number(e.target.value)
-                          )
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={date.getFullYear()}
+                        onChange={({ target: { value } }) =>
+                          changeYear(Number(value))
                         }
-                        className="w-16 text-center border rounded"
-                      />
-                      <button
-                        onClick={() => addItem(item)}
-                        className="px-3 py-1 bg-green-500 text-white rounded"
+                        className="border rounded px-1 py-0.5"
                       >
-                        +
-                      </button>
+                        {years.map((year) => (
+                          <option key={year} value={year}>
+                            {year + 543}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={date.getMonth()}
+                        onChange={({ target: { value } }) =>
+                          changeMonth(Number(value))
+                        }
+                        className="border rounded px-1 py-0.5"
+                      >
+                        {months.map((month, index) => (
+                          <option key={index} value={index}>
+                            {month}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  </li>
-                ) : null
-              )}
 
-              <div className="border p-4 rounded">
-                <button
-                  onClick={() => router.push("/home/order/menu")}
-                  className="w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  ➕ เพิ่มเมนู
-                </button>
-              </div>
-            </ul>
-
-            <button
-              onClick={confirmOrder}
-              disabled={loading}
-              style={{
-                backgroundColor: loading
-                  ? "#a0aec0"
-                  : errors.length === 0
-                  ? "#38a169"
-                  : "#e53e3e",
-                cursor: loading ? "not-allowed" : "pointer",
-                color: "white",
+                    <button
+                      onClick={increaseMonth}
+                      disabled={nextMonthButtonDisabled}
+                    >
+                      {">"}
+                    </button>
+                  </div>
+                );
               }}
-              className="w-full py-2 rounded font-bold transition"
-            >
-              {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
-            </button>
-
-            {errors.length > 0 && (
-              <ul className="mt-4 text-red-500 space-y-1 list-disc list-inside text-sm">
-                {errors.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
+            />
+            {cart_delivery_date && (
+              <p className="text-sm text-gray-500 mt-1">
+                วันที่จัดส่ง: {cart_delivery_date}
+              </p>
             )}
-          </>
+          </div>
+
+          <div className="col-span-2 flex flex-col gap-1">
+            <label htmlFor="food-delivery-time" className="font-medium">
+              เวลาส่งอาหาร
+            </label>
+            <Flatpickr
+              id="food-delivery-time"
+              options={{
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+              }}
+              value={deliveryTime}
+              onChange={([time]) => {
+                setDeliveryTime(time);
+                setCustomerInfo({ exportTime: formatTime(time) });
+              }}
+              className="border border-gray-300 rounded px-3 py-2"
+            />
+            <p className="text-sm text-gray-500">
+              เวลาที่เลือก: {formatTime(deliveryTime)}
+            </p>
+          </div>
+
+          <div className="col-span-2 flex flex-col gap-1">
+            <label htmlFor="food-pickup-time" className="font-medium">
+              เวลารับอาหาร
+            </label>
+            <Flatpickr
+              id="food-pickup-time"
+              options={{
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+              }}
+              value={pickupTime}
+              onChange={([time]) => {
+                setPickupTime(time);
+                setCustomerInfo({ receiveTime: formatTime(time) });
+              }}
+              className="border border-gray-300 rounded px-3 py-2"
+            />
+            <p className="text-sm text-gray-500">
+              เวลาที่เลือก: {formatTime(pickupTime)}
+            </p>
+          </div>
+        </div>
+
+        <ul className="space-y-4 mb-4">
+          {items.map((item) =>
+            item.menu_id != null ? (
+              <li
+                key={item.menu_id}
+                className="border p-4 rounded flex justify-between items-center"
+              >
+                <div>
+                  <div className="font-medium">{item.menu_name}</div>
+                  <div className="text-gray-500">{item.menu_price} ฿</div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => removeItem(item.menu_id!)}
+                    className="px-3 py-1 bg-red-500 text-white rounded"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    value={item.menu_total}
+                    onChange={(e) =>
+                      handleChangeQuantity(
+                        item.menu_id!,
+                        Number(e.target.value)
+                      )
+                    }
+                    className="w-16 text-center border rounded"
+                  />
+                  <button
+                    onClick={() => addItem(item)}
+                    className="px-3 py-1 bg-green-500 text-white rounded"
+                  >
+                    +
+                  </button>
+                </div>
+              </li>
+            ) : null
+          )}
+
+          <div className="border p-4 rounded">
+            <button
+              onClick={() => router.push("/home/order/menu")}
+              className="w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              ➕ เพิ่มเมนู
+            </button>
+          </div>
+        </ul>
+
+        <button
+          onClick={confirmOrder}
+          disabled={loading}
+          style={{
+            backgroundColor: loading
+              ? "#a0aec0"
+              : errors.length === 0
+                ? "#38a169"
+                : "#e53e3e",
+            cursor: loading ? "not-allowed" : "pointer",
+            color: "white",
+          }}
+          className="w-full py-2 rounded font-bold transition"
+        >
+          {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
+        </button>
+
+        {errors.length > 0 && (
+          <ul className="mt-4 text-red-500 space-y-1 list-disc list-inside text-sm">
+            {errors.map((err, i) => (
+              <li key={i}>{err}</li>
+            ))}
+          </ul>
         )}
       </div>
 
