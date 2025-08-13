@@ -48,7 +48,7 @@ export default function CartList() {
   const [errors, setErrors] = useState<string[]>([]);
   const [success, setSuccess] = useState(false);
   const [rawDate, setRawDate] = useState<string>("");
-  const { userName } = useAuth();
+  const { userName, userRole } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -234,7 +234,7 @@ export default function CartList() {
                     }
                   }}
                   dateFormat="dd/MM/yyyy"
-                  minDate={new Date()}
+                  minDate={userRole === "admin" ? undefined : new Date()}
                   locale="th"
                   placeholderText="วัน/เดือน/ปี (พ.ศ.)"
                   className="w-full border rounded px-3 py-2"
