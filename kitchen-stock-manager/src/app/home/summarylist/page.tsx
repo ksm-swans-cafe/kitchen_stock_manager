@@ -360,8 +360,10 @@ const SummaryList: React.FC = () => {
   // State และฟังก์ชันสำหรับการแก้ไขเวลา
   const [editingTimes, setEditingTimes] = useState<{
     cartId: string;
-    exportTime: string;
-    receiveTime: string;
+    exportHour: string;
+    exportMinute: string;
+    receiveHour: string;
+    receiveMinute: string;
   } | null>(null);
 
   const handleEditTimes = (
@@ -369,12 +371,21 @@ const SummaryList: React.FC = () => {
     exportTime: string,
     receiveTime: string
   ) => {
-    const formatToThaiTime = (time: string) =>
-      time ? time.replace(":", ".") + " น." : "00.00 น.";
+    const parseTime = (time: string) => {
+      if (!time) return { hour: "00", minute: "00" };
+      const [hour, minute] = time.split(":").map((h) => h.padStart(2, "0"));
+      return { hour: hour || "00", minute: minute || "00" };
+    };
+
+    const exportParsed = parseTime(exportTime);
+    const receiveParsed = parseTime(receiveTime);
+
     setEditingTimes({
       cartId,
-      exportTime: formatToThaiTime(exportTime),
-      receiveTime: formatToThaiTime(receiveTime),
+      exportHour: exportParsed.hour,
+      exportMinute: exportParsed.minute,
+      receiveHour: receiveParsed.hour,
+      receiveMinute: receiveParsed.minute,
     });
   };
 
@@ -391,21 +402,8 @@ const SummaryList: React.FC = () => {
       return;
     }
 
-    const parseThaiTime = (thaiTime: string): string | null => {
-      const regex = /^([0-1]?[0-9]|2[0-3])\.[0-5][0-9](\s*น\.?)?$/;
-      if (!regex.test(thaiTime)) return null;
-      return thaiTime.replace(/\s*น\.?$/, "").replace(".", ":");
-    };
-
-    const exportTime = parseThaiTime(editingTimes.exportTime);
-    const receiveTime = parseThaiTime(editingTimes.receiveTime);
-
-    if (!exportTime || !receiveTime) {
-      console.error(
-        "เวลาส่งหรือรับอาหารต้องอยู่ในรูปแบบ HH.mm หรือ HH.mm น. (เช่น 14.00 หรือ 14.00 น.)"
-      );
-      return;
-    }
+    const exportTime = `${editingTimes.exportHour}:${editingTimes.exportMinute}`;
+    const receiveTime = `${editingTimes.receiveHour}:${editingTimes.receiveMinute}`;
 
     setIsSaving(cartId);
     try {
@@ -538,6 +536,7 @@ const SummaryList: React.FC = () => {
     const previousCarts = [...carts];
     setIsSaving(cartId);
 
+    // อัปเดต state ทันทีเพื่อให้ dialog แสดงผลเปลี่ยนแปลง
     setCarts((prevCarts) =>
       prevCarts.map((cart) =>
         cart.id === cartId
@@ -557,6 +556,26 @@ const SummaryList: React.FC = () => {
       )
     );
 
+    // อัปเดต selectedCartForSummary ด้วยเพื่อให้ dialog แสดงข้อมูลใหม่
+    if (selectedCartForSummary && selectedCartForSummary.id === cartId) {
+      setSelectedCartForSummary((prev) =>
+        prev
+          ? {
+              ...prev,
+              allIngredients: prev.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
+                  ingredient_status: true,
+                })),
+                ingredient_status: true,
+              })),
+            }
+          : prev
+      );
+    }
+
     try {
       const response = await fetch(
         `/api/edit/cart-menu/all-ingredients-status/${cartId}`,
@@ -575,7 +594,8 @@ const SummaryList: React.FC = () => {
       }
 
       mutateCarts();
-      setIsOrderSummaryModalOpen(false); // <-- เพิ่มบรรทัดนี้
+      // ไม่ปิด dialog ทันที เพื่อให้ผู้ใช้เห็นการเปลี่ยนแปลง
+      // setIsSummaryDialogOpen(false);
     } catch (err) {
       console.error("Error updating all ingredients status:", err);
       console.error(
@@ -583,7 +603,13 @@ const SummaryList: React.FC = () => {
           ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}`
           : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด"
       );
+      // คืนค่า state เดิมเมื่อเกิดข้อผิดพลาด
       setCarts(previousCarts);
+      if (selectedCartForSummary && selectedCartForSummary.id === cartId) {
+        setSelectedCartForSummary(
+          previousCarts.find((cart) => cart.id === cartId) || null
+        );
+      }
     } finally {
       setIsSaving(null);
     }
@@ -597,6 +623,7 @@ const SummaryList: React.FC = () => {
       (cart) => convertThaiDateToISO(cart.cart_delivery_date) === date
     );
 
+    // อัปเดต state ทันทีเพื่อให้ dialog แสดงผลเปลี่ยนแปลง
     setCarts((prevCarts) =>
       prevCarts.map((cart) =>
         targetCarts.some((target) => target.id === cart.id)
@@ -636,7 +663,8 @@ const SummaryList: React.FC = () => {
       );
 
       mutateCarts();
-      setIsSummaryModalOpen(false);
+      // ไม่ปิด dialog ทันที เพื่อให้ผู้ใช้เห็นการเปลี่ยนแปลง
+      // setIsSummaryModalOpen(false);
     } catch (err) {
       console.error("Error updating all ingredients for date:", err);
       console.error(
@@ -644,6 +672,7 @@ const SummaryList: React.FC = () => {
           ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่: ${err.message}`
           : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่"
       );
+      // คืนค่า state เดิมเมื่อเกิดข้อผิดพลาด
       setCarts(previousCarts);
     } finally {
       setIsSaving(null);
@@ -658,6 +687,13 @@ const SummaryList: React.FC = () => {
     const buddhistYear = parseInt(year, 10);
     const christianYear = buddhistYear - 543;
     return `${christianYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  };
+
+  // ฟังก์ชันช่วยแปลงเวลาเป็นนาทีสำหรับการเปรียบเทียบ
+  const getTimeInMinutes = (timeStr: string | undefined): number => {
+    if (!timeStr) return 9999; // ให้เวลาที่ไม่ระบุอยู่ท้ายสุด
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    return hours * 60 + minutes;
   };
 
   const handleDateClick = (info: { dateStr: string }) => {
@@ -848,8 +884,32 @@ const SummaryList: React.FC = () => {
       return acc;
     }, {} as { [key: string]: Cart[] });
 
+    // เรียงลำดับภายในแต่ละวันที่ตามเวลาส่งและเวลารับ
     Object.values(groupedByDate).forEach((orders) => {
       orders.sort((a, b) => {
+        // แปลงเวลาส่งเป็นนาทีสำหรับการเปรียบเทียบ
+        const getTimeInMinutes = (timeStr: string | undefined): number => {
+          if (!timeStr) return 9999; // ให้เวลาที่ไม่ระบุอยู่ท้ายสุด
+          const [hours, minutes] = timeStr.split(":").map(Number);
+          return hours * 60 + minutes;
+        };
+
+        const exportTimeA = getTimeInMinutes(a.cart_export_time);
+        const exportTimeB = getTimeInMinutes(b.cart_export_time);
+        const receiveTimeA = getTimeInMinutes(a.cart_receive_time);
+        const receiveTimeB = getTimeInMinutes(b.cart_receive_time);
+
+        // เรียงตามเวลาส่งก่อน (จากน้อยไปมาก)
+        if (exportTimeA !== exportTimeB) {
+          return exportTimeA - exportTimeB;
+        }
+
+        // ถ้าเวลาส่งเท่ากัน ให้เรียงตามเวลารับ (จากน้อยไปมาก)
+        if (receiveTimeA !== receiveTimeB) {
+          return receiveTimeA - receiveTimeB;
+        }
+
+        // ถ้าเวลาส่งและเวลารับเท่ากัน ให้เรียงตามเลขที่ออร์เดอร์
         const orderNumA = parseInt(a.order_number || "0");
         const orderNumB = parseInt(b.order_number || "0");
         return orderNumA - orderNumB;
@@ -883,6 +943,31 @@ const SummaryList: React.FC = () => {
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
     }, {} as { [key: string]: Cart[] });
+
+    // เรียงลำดับภายในแต่ละวันที่ตามเวลาส่งและเวลารับ
+    Object.values(grouped).forEach((orders) => {
+      orders.sort((a, b) => {
+        const exportTimeA = getTimeInMinutes(a.cart_export_time);
+        const exportTimeB = getTimeInMinutes(b.cart_export_time);
+        const receiveTimeA = getTimeInMinutes(a.cart_receive_time);
+        const receiveTimeB = getTimeInMinutes(b.cart_receive_time);
+
+        // เรียงตามเวลาส่งก่อน (จากน้อยไปมาก)
+        if (exportTimeA !== exportTimeB) {
+          return exportTimeA - exportTimeB;
+        }
+
+        // ถ้าเวลาส่งเท่ากัน ให้เรียงตามเวลารับ (จากน้อยไปมาก)
+        if (receiveTimeA !== receiveTimeB) {
+          return receiveTimeA - receiveTimeB;
+        }
+
+        // ถ้าเวลาส่งและเวลารับเท่ากัน ให้เรียงตามเลขที่ออร์เดอร์
+        const orderNumA = parseInt(a.order_number || "0");
+        const orderNumB = parseInt(b.order_number || "0");
+        return orderNumA - orderNumB;
+      });
+    });
 
     const currentDate = new Date();
     const currentDateDisplay = currentDate
@@ -1596,6 +1681,9 @@ const SummaryList: React.FC = () => {
                 >
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
                 </h3>
+                {/* <div className="text-center text-sm text-blue-600 mb-4">
+                  <span className="font-semibold">เรียงลำดับตาม:</span> เวลาส่งอาหาร (จากน้อยไปมาก) → เวลารับอาหาร (จากน้อยไปมาก) → เลขที่ออร์เดอร์
+                </div> */}
 
                 <div className="space-y-4">
                   {orders.map((cart) => (
@@ -1613,27 +1701,20 @@ const SummaryList: React.FC = () => {
                         >
                           <div className="flex w-full items-center">
                             <div className="ml-auto flex items-center gap-2">
+                              {/* <div className="flex items-center gap-2"> */}
                               {editingTimes?.cartId === cart.id ? (
                                 <div className="flex flex-col gap-2">
                                   <div className="flex items-center gap-2">
                                     <BsCashStack className="w-6 h-6" />
                                     <span>เวลาส่งอาหาร</span>
                                     <select
-                                      value={
-                                        editingTimes?.exportTime.split(".")[0]
-                                      }
+                                      value={editingTimes.exportHour}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
                                                 ...prev,
-                                                exportTime: `${
-                                                  e.target.value
-                                                }:${
-                                                  editingTimes?.exportTime.split(
-                                                    "."
-                                                  )[1]
-                                                }`,
+                                                exportHour: e.target.value,
                                               }
                                             : prev
                                         )
@@ -1650,19 +1731,13 @@ const SummaryList: React.FC = () => {
                                     </select>
                                     :
                                     <select
-                                      value={
-                                        editingTimes?.exportTime.split(".")[1]
-                                      }
+                                      value={editingTimes.exportMinute}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
                                                 ...prev,
-                                                exportTime: `${
-                                                  editingTimes?.exportTime.split(
-                                                    "."
-                                                  )[0]
-                                                }:${e.target.value}`,
+                                                exportMinute: e.target.value,
                                               }
                                             : prev
                                         )
@@ -1670,7 +1745,7 @@ const SummaryList: React.FC = () => {
                                       className="border rounded px-1"
                                     >
                                       {Array.from({ length: 60 }, (_, i) =>
-                                        (i + 1).toString().padStart(2, "0")
+                                        i.toString().padStart(2, "0")
                                       ).map((m) => (
                                         <option key={m} value={m}>
                                           {m}
@@ -1682,21 +1757,13 @@ const SummaryList: React.FC = () => {
                                     <FaWallet className="w-4 h-4" />
                                     <span>เวลารับอาหาร</span>
                                     <select
-                                      value={
-                                        editingTimes?.receiveTime.split(".")[0]
-                                      }
+                                      value={editingTimes.receiveHour}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
                                                 ...prev,
-                                                receiveTime: `${
-                                                  e.target.value
-                                                }:${
-                                                  editingTimes?.receiveTime.split(
-                                                    "."
-                                                  )[1]
-                                                }`,
+                                                receiveHour: e.target.value,
                                               }
                                             : prev
                                         )
@@ -1713,19 +1780,13 @@ const SummaryList: React.FC = () => {
                                     </select>
                                     :
                                     <select
-                                      value={
-                                        editingTimes?.receiveTime.split(".")[1]
-                                      }
+                                      value={editingTimes.receiveMinute}
                                       onChange={(e) =>
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
                                                 ...prev,
-                                                receiveTime: `${
-                                                  editingTimes?.receiveTime.split(
-                                                    "."
-                                                  )[0]
-                                                }:${e.target.value}`,
+                                                receiveMinute: e.target.value,
                                               }
                                             : prev
                                         )
@@ -1733,7 +1794,7 @@ const SummaryList: React.FC = () => {
                                       className="border rounded px-1"
                                     >
                                       {Array.from({ length: 60 }, (_, i) =>
-                                        (i + 1).toString().padStart(2, "0")
+                                        i.toString().padStart(2, "0")
                                       ).map((m) => (
                                         <option key={m} value={m}>
                                           {m}
@@ -1845,6 +1906,19 @@ const SummaryList: React.FC = () => {
                                   <Clock className="w-4 h-4" />
                                   <span>เวลา {cart.time} น.</span>
                                 </div>
+                                <div className="flex items-center gap-1">
+                                  <BsCashStack className="w-4 h-4" />
+                                  <span>
+                                    ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <FaWallet className="w-4 h-4" />
+                                  <span>
+                                    รับ: {cart.cart_receive_time || "ไม่ระบุ"}{" "}
+                                    น.
+                                  </span>
+                                </div>
                               </div>
                               <div className="hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500">
                                 <ResponsiveOrderId
@@ -1945,341 +2019,351 @@ const SummaryList: React.FC = () => {
                                   }}
                                 >
                                   <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
-                                    <DialogTitle>
-                                      แก้ไขเมนูสำหรับ Order
-                                    </DialogTitle>
-                                    <div className="space-y-4">
-                                      {menuListError ? (
-                                        <div className="text-red-600 text-sm">
-                                          เกิดข้อผิดพลาดในการดึงข้อมูลเมนู:{" "}
-                                          {menuListError.message}
-                                        </div>
-                                      ) : !menuListData ? (
-                                        <div className="text-gray-500 text-sm">
-                                          กำลังโหลดข้อมูลเมนู...
-                                        </div>
-                                      ) : (
-                                        <>
-                                          {/* แสดงเมนูปัจจุบัน */}
-                                          <div className="space-y-2">
-                                            <h5 className="text-sm font-semibold text-gray-700">
-                                              เมนูปัจจุบัน
-                                            </h5>
-                                            {editMenuDialog?.menuItems
-                                              .length === 0 ? (
-                                              <div className="text-gray-500 text-sm">
-                                                ไม่มีเมนูใน order นี้
-                                              </div>
-                                            ) : (
-                                              editMenuDialog?.menuItems.map(
-                                                (item, idx) => (
-                                                  <div
-                                                    key={idx}
-                                                    className="flex flex-col gap-2 border-b border-gray-200 py-2"
-                                                  >
-                                                    <div className="flex items-center gap-2">
-                                                      <span className="flex-1 text-sm text-gray-700">
-                                                        {item.menu_name}
-                                                      </span>
-                                                      <Input
-                                                        type="number"
-                                                        value={item.menu_total}
-                                                        onChange={(e) =>
-                                                          setEditMenuDialog(
-                                                            (prev) =>
-                                                              prev
-                                                                ? {
-                                                                    ...prev,
-                                                                    menuItems:
-                                                                      prev.menuItems.map(
-                                                                        (
-                                                                          m,
-                                                                          i
-                                                                        ) =>
-                                                                          i ===
-                                                                          idx
-                                                                            ? {
-                                                                                ...m,
-                                                                                menu_total:
-                                                                                  Number(
-                                                                                    e
-                                                                                      .target
-                                                                                      .value
-                                                                                  ),
-                                                                              }
-                                                                            : m
-                                                                      ),
-                                                                  }
-                                                                : prev
-                                                          )
-                                                        }
-                                                        placeholder="จำนวนกล่อง"
-                                                        min="0"
-                                                        className="w-20 h-8 text-sm"
-                                                      />
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                          setEditMenuDialog(
-                                                            (prev) =>
-                                                              prev
-                                                                ? {
-                                                                    ...prev,
-                                                                    menuItems:
-                                                                      prev.menuItems.filter(
-                                                                        (
-                                                                          _,
-                                                                          i
-                                                                        ) =>
-                                                                          i !==
-                                                                          idx
-                                                                      ),
-                                                                  }
-                                                                : prev
-                                                          )
-                                                        }
-                                                        className="text-red-600 hover:text-red-800"
-                                                      >
-                                                        ลบ
-                                                      </Button>
-                                                    </div>
-                                                    {/* แสดงวัตถุดิบของเมนูนี้ */}
-                                                    {/* <div className="ml-4 text-sm text-gray-600">
+                                    <div style={{ color: "black" }}>
+                                      <div style={{ fontSize: "20px" }}>
+                                        <DialogTitle>
+                                          แก้ไขเมนูสำหรับ Order
+                                        </DialogTitle>
+                                      </div>
+                                      <div className="space-y-4">
+                                        {menuListError ? (
+                                          <div className="text-red-600 text-sm">
+                                            เกิดข้อผิดพลาดในการดึงข้อมูลเมนู:{" "}
+                                            {menuListError.message}
+                                          </div>
+                                        ) : !menuListData ? (
+                                          <div className="text-gray-500 text-sm">
+                                            กำลังโหลดข้อมูลเมนู...
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {/* แสดงเมนูปัจจุบัน */}
+                                            <div className="space-y-2">
+                                              <h5 className="text-sm font-semibold text-gray-700">
+                                                เมนูปัจจุบัน
+                                              </h5>
+                                              {editMenuDialog?.menuItems
+                                                .length === 0 ? (
+                                                <div className="text-gray-500 text-sm">
+                                                  ไม่มีเมนูใน order นี้
+                                                </div>
+                                              ) : (
+                                                editMenuDialog?.menuItems.map(
+                                                  (item, idx) => (
+                                                    <div
+                                                      key={idx}
+                                                      className="flex flex-col gap-2 border-b border-gray-200 py-2"
+                                                    >
+                                                      <div className="flex items-center gap-2">
+                                                        <span className="flex-1 text-sm text-gray-700">
+                                                          {item.menu_name}
+                                                        </span>
+                                                        <Input
+                                                          type="number"
+                                                          value={
+                                                            item.menu_total
+                                                          }
+                                                          onChange={(e) =>
+                                                            setEditMenuDialog(
+                                                              (prev) =>
+                                                                prev
+                                                                  ? {
+                                                                      ...prev,
+                                                                      menuItems:
+                                                                        prev.menuItems.map(
+                                                                          (
+                                                                            m,
+                                                                            i
+                                                                          ) =>
+                                                                            i ===
+                                                                            idx
+                                                                              ? {
+                                                                                  ...m,
+                                                                                  menu_total:
+                                                                                    Number(
+                                                                                      e
+                                                                                        .target
+                                                                                        .value
+                                                                                    ),
+                                                                                }
+                                                                              : m
+                                                                        ),
+                                                                    }
+                                                                  : prev
+                                                            )
+                                                          }
+                                                          placeholder="จำนวนกล่อง"
+                                                          min="0"
+                                                          className="w-20 h-8 text-sm"
+                                                        />
+                                                        <Button
+                                                          variant="ghost"
+                                                          size="sm"
+                                                          onClick={() =>
+                                                            setEditMenuDialog(
+                                                              (prev) =>
+                                                                prev
+                                                                  ? {
+                                                                      ...prev,
+                                                                      menuItems:
+                                                                        prev.menuItems.filter(
+                                                                          (
+                                                                            _,
+                                                                            i
+                                                                          ) =>
+                                                                            i !==
+                                                                            idx
+                                                                        ),
+                                                                    }
+                                                                  : prev
+                                                            )
+                                                          }
+                                                          className="text-red-600 hover:text-red-800"
+                                                        >
+                                                          ลบ
+                                                        </Button>
+                                                      </div>
+                                                      {/* แสดงวัตถุดิบของเมนูนี้ */}
+                                                      {/* <div className="ml-4 text-sm text-gray-600">
                                                       <strong>วัตถุดิบ:</strong>
                                                       {Array.isArray(
                                                         item.menu_ingredients
-                                                      ) &&
-                                                      item.menu_ingredients
+                                                        ) &&
+                                                        item.menu_ingredients
                                                         .length > 0 ? (
-                                                        <ul className="list-disc ml-4">
+                                                          <ul className="list-disc ml-4">
                                                           {item.menu_ingredients.map(
                                                             (ing, ingIdx) => {
                                                               const ingredientUnit =
-                                                                ingredientData?.find(
-                                                                  (i: {
-                                                                    ingredient_name: string;
+                                                              ingredientData?.find(
+                                                                (i: {
+                                                                  ingredient_name: string;
                                                                   }) =>
-                                                                    i.ingredient_name ===
-                                                                    ing.ingredient_name
-                                                                )
-                                                                  ?.ingredient_unit ||
-                                                                "หน่วย";
-                                                              return (
-                                                                <li
-                                                                  key={ingIdx}
-                                                                >
-                                                                  {ing.ingredient_name ||
-                                                                    "ไม่ระบุวัตถุดิบ"}{" "}
-                                                                  (
-                                                                  {ing.useItem ??
-                                                                    0}{" "}
-                                                                  {
-                                                                    ingredientUnit
-                                                                  }
+                                                                  i.ingredient_name ===
+                                                                  ing.ingredient_name
                                                                   )
-                                                                </li>
-                                                              );
-                                                            }
-                                                          )}
-                                                        </ul>
-                                                      ) : (
-                                                        <span>
-                                                          ไม่มีวัตถุดิบ
-                                                        </span>
-                                                      )}
-                                                    </div> */}
-                                                  </div>
+                                                                  ?.ingredient_unit ||
+                                                                  "หน่วย";
+                                                                  return (
+                                                                    <li
+                                                                    key={ingIdx}
+                                                                    >
+                                                                    {ing.ingredient_name ||
+                                                                    "ไม่ระบุวัตถุดิบ"}{" "}
+                                                                    (
+                                                                      {ing.useItem ??
+                                                                      0}{" "}
+                                                                      {
+                                                                        ingredientUnit
+                                                                        }
+                                                                        )
+                                                                        </li>
+                                                                        );
+                                                                        }
+                                                                        )}
+                                                                        </ul>
+                                                                        ) : (
+                                                                          <span>
+                                                                          ไม่มีวัตถุดิบ
+                                                                          </span>
+                                                                          )}
+                                                                          </div> */}
+                                                    </div>
+                                                  )
                                                 )
-                                              )
-                                            )}
-                                          </div>
+                                              )}
+                                            </div>
 
-                                          {/* เพิ่มเมนูใหม่ */}
-                                          <div className="space-y-2">
-                                            <h5 className="text-sm font-semibold text-gray-700">
-                                              เพิ่มเมนูใหม่
-                                            </h5>
-                                            <div className="flex items-center gap-2">
-                                              <Select
-                                                value={
-                                                  editMenuDialog?.newMenu
-                                                    .menu_name || ""
-                                                }
-                                                onValueChange={(value) =>
-                                                  setEditMenuDialog((prev) =>
-                                                    prev
-                                                      ? {
-                                                          ...prev,
-                                                          newMenu: {
-                                                            ...prev.newMenu,
-                                                            menu_name: value,
-                                                          },
-                                                        }
-                                                      : prev
-                                                  )
-                                                }
-                                              >
-                                                <SelectTrigger className="flex-1 h-8 text-sm">
-                                                  <SelectValue placeholder="เลือกเมนู" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                  {menuListData?.map(
-                                                    (menu: {
-                                                      menu_name: string;
-                                                    }) => (
-                                                      <SelectItem
-                                                        key={menu.menu_name}
-                                                        value={menu.menu_name}
-                                                      >
-                                                        {menu.menu_name}
-                                                      </SelectItem>
-                                                    )
-                                                  )}
-                                                </SelectContent>
-                                              </Select>
-                                              <Input
-                                                type="number"
-                                                value={
-                                                  editMenuDialog?.newMenu
-                                                    .menu_total || 1
-                                                }
-                                                onChange={(e) =>
-                                                  setEditMenuDialog((prev) =>
-                                                    prev
-                                                      ? {
-                                                          ...prev,
-                                                          newMenu: {
-                                                            ...prev.newMenu,
-                                                            menu_total: Number(
-                                                              e.target.value
-                                                            ),
-                                                          },
-                                                        }
-                                                      : prev
-                                                  )
-                                                }
-                                                placeholder="จำนวน"
-                                                min="0"
-                                                className="w-20 h-8 text-sm"
-                                              />
-                                              <Button
-                                                size="sm"
-                                                onClick={() =>
-                                                  editMenuDialog?.newMenu
-                                                    .menu_name &&
-                                                  editMenuDialog?.newMenu
-                                                    .menu_total >= 0 &&
-                                                  setEditMenuDialog((prev) => {
-                                                    if (!menuListData) {
-                                                      Swal.fire({
-                                                        icon: "error",
-                                                        title: "เกิดข้อผิดพลาด",
-                                                        text: "ข้อมูลเมนูยังไม่พร้อม กรุณาลองอีกครั้ง",
-                                                        showConfirmButton:
-                                                          false,
-                                                        timer: 3000,
-                                                      });
-                                                      return prev;
-                                                    }
-                                                    const menuData =
-                                                      menuListData.find(
-                                                        (m: {
-                                                          menu_name: string;
-                                                        }) =>
-                                                          m.menu_name ===
-                                                          prev?.newMenu
-                                                            .menu_name
-                                                      );
-                                                    return prev
-                                                      ? {
-                                                          ...prev,
-                                                          menuItems: [
-                                                            ...prev.menuItems,
-                                                            {
-                                                              menu_name:
-                                                                prev.newMenu
-                                                                  .menu_name,
-                                                              menu_total:
-                                                                prev.newMenu
-                                                                  .menu_total,
-                                                              menu_ingredients:
-                                                                menuData?.menu_ingredients?.map(
-                                                                  (ing: {
-                                                                    useItem?: number;
-                                                                    quantity?: number;
-                                                                    ingredient_name?: string;
-                                                                    name?: string;
-                                                                  }) => ({
-                                                                    useItem:
-                                                                      ing.useItem ||
-                                                                      ing.quantity ||
-                                                                      0,
-                                                                    ingredient_name:
-                                                                      ing.ingredient_name ||
-                                                                      ing.name ||
-                                                                      "",
-                                                                    ingredient_status:
-                                                                      false,
-                                                                  })
-                                                                ) || [],
+                                            {/* เพิ่มเมนูใหม่ */}
+                                            <div className="space-y-2">
+                                              <h5 className="text-sm font-semibold text-gray-700">
+                                                เพิ่มเมนูใหม่
+                                              </h5>
+                                              <div className="flex items-center gap-2">
+                                                <Select
+                                                  value={
+                                                    editMenuDialog?.newMenu
+                                                      .menu_name || ""
+                                                  }
+                                                  onValueChange={(value) =>
+                                                    setEditMenuDialog((prev) =>
+                                                      prev
+                                                        ? {
+                                                            ...prev,
+                                                            newMenu: {
+                                                              ...prev.newMenu,
+                                                              menu_name: value,
                                                             },
-                                                          ],
-                                                          newMenu: {
-                                                            menu_name: "",
-                                                            menu_total: 1,
-                                                          },
+                                                          }
+                                                        : prev
+                                                    )
+                                                  }
+                                                >
+                                                  <SelectTrigger className="flex-1 h-8 text-sm">
+                                                    <SelectValue placeholder="เลือกเมนู" />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    {menuListData?.map(
+                                                      (menu: {
+                                                        menu_name: string;
+                                                      }) => (
+                                                        <SelectItem
+                                                          key={menu.menu_name}
+                                                          value={menu.menu_name}
+                                                        >
+                                                          {menu.menu_name}
+                                                        </SelectItem>
+                                                      )
+                                                    )}
+                                                  </SelectContent>
+                                                </Select>
+                                                <Input
+                                                  type="number"
+                                                  value={
+                                                    editMenuDialog?.newMenu
+                                                      .menu_total || 1
+                                                  }
+                                                  onChange={(e) =>
+                                                    setEditMenuDialog((prev) =>
+                                                      prev
+                                                        ? {
+                                                            ...prev,
+                                                            newMenu: {
+                                                              ...prev.newMenu,
+                                                              menu_total:
+                                                                Number(
+                                                                  e.target.value
+                                                                ),
+                                                            },
+                                                          }
+                                                        : prev
+                                                    )
+                                                  }
+                                                  placeholder="จำนวน"
+                                                  min="0"
+                                                  className="w-20 h-8 text-sm"
+                                                />
+                                                <Button
+                                                  size="sm"
+                                                  onClick={() =>
+                                                    editMenuDialog?.newMenu
+                                                      .menu_name &&
+                                                    editMenuDialog?.newMenu
+                                                      .menu_total >= 0 &&
+                                                    setEditMenuDialog(
+                                                      (prev) => {
+                                                        if (!menuListData) {
+                                                          Swal.fire({
+                                                            icon: "error",
+                                                            title:
+                                                              "เกิดข้อผิดพลาด",
+                                                            text: "ข้อมูลเมนูยังไม่พร้อม กรุณาลองอีกครั้ง",
+                                                            showConfirmButton:
+                                                              false,
+                                                            timer: 3000,
+                                                          });
+                                                          return prev;
                                                         }
-                                                      : prev;
-                                                  })
+                                                        const menuData =
+                                                          menuListData.find(
+                                                            (m: {
+                                                              menu_name: string;
+                                                            }) =>
+                                                              m.menu_name ===
+                                                              prev?.newMenu
+                                                                .menu_name
+                                                          );
+                                                        return prev
+                                                          ? {
+                                                              ...prev,
+                                                              menuItems: [
+                                                                ...prev.menuItems,
+                                                                {
+                                                                  menu_name:
+                                                                    prev.newMenu
+                                                                      .menu_name,
+                                                                  menu_total:
+                                                                    prev.newMenu
+                                                                      .menu_total,
+                                                                  menu_ingredients:
+                                                                    menuData?.menu_ingredients?.map(
+                                                                      (ing: {
+                                                                        useItem?: number;
+                                                                        quantity?: number;
+                                                                        ingredient_name?: string;
+                                                                        name?: string;
+                                                                      }) => ({
+                                                                        useItem:
+                                                                          ing.useItem ||
+                                                                          ing.quantity ||
+                                                                          0,
+                                                                        ingredient_name:
+                                                                          ing.ingredient_name ||
+                                                                          ing.name ||
+                                                                          "",
+                                                                        ingredient_status:
+                                                                          false,
+                                                                      })
+                                                                    ) || [],
+                                                                },
+                                                              ],
+                                                              newMenu: {
+                                                                menu_name: "",
+                                                                menu_total: 1,
+                                                              },
+                                                            }
+                                                          : prev;
+                                                      }
+                                                    )
+                                                  }
+                                                  disabled={
+                                                    !editMenuDialog?.newMenu
+                                                      .menu_name ||
+                                                    editMenuDialog?.newMenu
+                                                      .menu_total < 0 ||
+                                                    !menuListData
+                                                  }
+                                                  className="h-8"
+                                                >
+                                                  เพิ่ม
+                                                </Button>
+                                              </div>
+                                            </div>
+
+                                            {/* ปุ่มบันทึกและยกเลิก */}
+                                            <div className="flex justify-end gap-2">
+                                              <Button
+                                                onClick={() =>
+                                                  editMenuDialog &&
+                                                  handleEditMenu(
+                                                    editMenuDialog.cartId,
+                                                    editMenuDialog.menuItems
+                                                  )
                                                 }
                                                 disabled={
-                                                  !editMenuDialog?.newMenu
-                                                    .menu_name ||
-                                                  editMenuDialog?.newMenu
-                                                    .menu_total < 0 ||
-                                                  !menuListData
+                                                  isSaving !== null ||
+                                                  editMenuDialog?.menuItems.some(
+                                                    (m) => m.menu_total < 0
+                                                  )
                                                 }
-                                                className="h-8"
                                               >
-                                                เพิ่ม
+                                                {isSaving
+                                                  ? "กำลังบันทึก..."
+                                                  : "บันทึก"}
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                onClick={() => {
+                                                  setEditMenuDialog(null);
+                                                  setShouldFetchMenu(false);
+                                                }}
+                                              >
+                                                ยกเลิก
                                               </Button>
                                             </div>
-                                          </div>
-
-                                          {/* ปุ่มบันทึกและยกเลิก */}
-                                          <div className="flex justify-end gap-2">
-                                            <Button
-                                              onClick={() =>
-                                                editMenuDialog &&
-                                                handleEditMenu(
-                                                  editMenuDialog.cartId,
-                                                  editMenuDialog.menuItems
-                                                )
-                                              }
-                                              disabled={
-                                                isSaving !== null ||
-                                                editMenuDialog?.menuItems.some(
-                                                  (m) => m.menu_total < 0
-                                                )
-                                              }
-                                            >
-                                              {isSaving
-                                                ? "กำลังบันทึก..."
-                                                : "บันทึก"}
-                                            </Button>
-                                            <Button
-                                              variant="ghost"
-                                              onClick={() => {
-                                                setEditMenuDialog(null);
-                                                setShouldFetchMenu(false);
-                                              }}
-                                            >
-                                              ยกเลิก
-                                            </Button>
-                                          </div>
-                                        </>
-                                      )}
+                                          </>
+                                        )}
+                                      </div>
                                     </div>
                                   </DialogContent>
                                 </Dialog>
@@ -2500,253 +2584,261 @@ const SummaryList: React.FC = () => {
             ))
           )}
         </div>
-
         <Dialog
           open={editIngredientsMenu !== null}
           onOpenChange={() => setEditIngredientsMenu(null)}
         >
           <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
-            <DialogTitle>
-              แก้ไขวัตถุดิบสำหรับเมนู {editIngredientsMenu?.menuName}
-            </DialogTitle>
-            <div className="space-y-4">
-              {ingredientError ? (
-                <div className="text-red-600 text-sm">
-                  เกิดข้อผิดพลาดในการดึงข้อมูลวัตถุดิบ:{" "}
-                  {ingredientError.message}
-                </div>
-              ) : !ingredientData ? (
-                <div className="text-gray-500 text-sm">
-                  กำลังโหลดข้อมูลวัตถุดิบ...
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <h5 className="text-sm font-semibold text-gray-700">
-                      วัตถุดิบปัจจุบัน
-                    </h5>
-                    {editIngredientsMenu?.ingredients.length === 0 ? (
-                      <div className="text-gray-500 text-sm">
-                        ไม่มีวัตถุดิบในเมนูนี้
-                      </div>
-                    ) : (
-                      editIngredientsMenu?.ingredients.map(
-                        (ingredient, idx) => (
-                          <div
-                            key={idx}
-                            className="flex flex-col gap-2 border-b border-gray-200 py-2"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="flex-1 text-sm text-gray-700">
-                                {ingredient.ingredient_name}
-                              </span>
-                              <Input
-                                type="number"
-                                value={ingredient.useItem}
-                                onChange={(e) =>
-                                  setEditIngredientsMenu((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          ingredients: prev.ingredients.map(
-                                            (ing, i) =>
-                                              i === idx
-                                                ? {
-                                                    ...ing,
-                                                    useItem: Number(
-                                                      e.target.value
-                                                    ),
-                                                  }
-                                                : ing
-                                          ),
-                                        }
-                                      : prev
-                                  )
-                                }
-                                placeholder="จำนวน"
-                                min="0"
-                                className="w-20 h-8 text-sm"
-                              />
-                              <span className="text-sm">
-                                {ingredient.ingredient_unit}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  setEditIngredientsMenu((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          ingredients: prev.ingredients.filter(
-                                            (_, i) => i !== idx
-                                          ),
-                                        }
-                                      : prev
-                                  )
-                                }
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                ลบ
-                              </Button>
-                            </div>
-                          </div>
-                        )
-                      )
-                    )}
+            <div style={{ color: "#000000" }}>
+              <div style={{ fontSize: "20px" }}>
+                <DialogTitle>
+                  แก้ไขวัตถุดิบสำหรับเมนู {editIngredientsMenu?.menuName}
+                </DialogTitle>
+              </div>
+              <div className="space-y-4">
+                {ingredientError ? (
+                  <div className="text-red-600 text-sm">
+                    เกิดข้อผิดพลาดในการดึงข้อมูลวัตถุดิบ:{" "}
+                    {ingredientError.message}
                   </div>
+                ) : !ingredientData ? (
+                  <div className="text-gray-500 text-sm">
+                    กำลังโหลดข้อมูลวัตถุดิบ...
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-semibold text-gray-700">
+                        วัตถุดิบปัจจุบัน
+                      </h5>
+                      {editIngredientsMenu?.ingredients.length === 0 ? (
+                        <div className="text-gray-500 text-sm">
+                          ไม่มีวัตถุดิบในเมนูนี้
+                        </div>
+                      ) : (
+                        editIngredientsMenu?.ingredients.map(
+                          (ingredient, idx) => (
+                            <div
+                              key={idx}
+                              className="flex flex-col gap-2 border-b border-gray-200 py-2"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="flex-1 text-sm text-gray-700">
+                                  {ingredient.ingredient_name}
+                                </span>
+                                <Input
+                                  type="number"
+                                  value={ingredient.useItem}
+                                  onChange={(e) =>
+                                    setEditIngredientsMenu((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            ingredients: prev.ingredients.map(
+                                              (ing, i) =>
+                                                i === idx
+                                                  ? {
+                                                      ...ing,
+                                                      useItem: Number(
+                                                        e.target.value
+                                                      ),
+                                                    }
+                                                  : ing
+                                            ),
+                                          }
+                                        : prev
+                                    )
+                                  }
+                                  placeholder="จำนวน"
+                                  min="0"
+                                  className="w-20 h-8 text-sm"
+                                />
+                                <span className="text-sm">
+                                  {ingredient.ingredient_unit}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    setEditIngredientsMenu((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            ingredients:
+                                              prev.ingredients.filter(
+                                                (_, i) => i !== idx
+                                              ),
+                                          }
+                                        : prev
+                                    )
+                                  }
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  ลบ
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        )
+                      )}
+                    </div>
 
-                  <div className="space-y-2">
-                    <h5 className="text-sm font-semibold text-gray-700">
-                      เพิ่มวัตถุดิบใหม่
-                    </h5>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={
-                          editIngredientsMenu?.newIngredient.ingredient_name ||
-                          ""
-                        }
-                        onValueChange={(value) =>
-                          setEditIngredientsMenu((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  newIngredient: {
-                                    ...prev.newIngredient,
-                                    ingredient_name: value,
-                                  },
-                                }
-                              : prev
-                          )
-                        }
-                      >
-                        <SelectTrigger className="flex-1 h-8 text-sm">
-                          <SelectValue placeholder="เลือกวัตถุดิบ" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ingredientData?.map(
-                            (ing: {
-                              ingredient_name: string;
-                              ingredient_unit: string;
-                            }) => (
-                              <SelectItem
-                                key={ing.ingredient_name}
-                                value={ing.ingredient_name}
-                              >
-                                {ing.ingredient_name}
-                              </SelectItem>
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-semibold text-gray-700">
+                        เพิ่มวัตถุดิบใหม่
+                      </h5>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={
+                            editIngredientsMenu?.newIngredient
+                              .ingredient_name || ""
+                          }
+                          onValueChange={(value) =>
+                            setEditIngredientsMenu((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    newIngredient: {
+                                      ...prev.newIngredient,
+                                      ingredient_name: value,
+                                    },
+                                  }
+                                : prev
                             )
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        type="number"
-                        value={editIngredientsMenu?.newIngredient.useItem || 0}
-                        onChange={(e) =>
-                          setEditIngredientsMenu((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  newIngredient: {
-                                    ...prev.newIngredient,
-                                    useItem: Number(e.target.value),
+                          }
+                        >
+                          <SelectTrigger className="flex-1 h-8 text-sm">
+                            <SelectValue placeholder="เลือกวัตถุดิบ" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ingredientData?.map(
+                              (ing: {
+                                ingredient_name: string;
+                                ingredient_unit: string;
+                              }) => (
+                                <SelectItem
+                                  key={ing.ingredient_name}
+                                  value={ing.ingredient_name}
+                                >
+                                  {ing.ingredient_name}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          value={
+                            editIngredientsMenu?.newIngredient.useItem || 0
+                          }
+                          onChange={(e) =>
+                            setEditIngredientsMenu((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    newIngredient: {
+                                      ...prev.newIngredient,
+                                      useItem: Number(e.target.value),
+                                    },
+                                  }
+                                : prev
+                            )
+                          }
+                          placeholder="จำนวน"
+                          min="0"
+                          className="w-20 h-8 text-sm"
+                        />
+                        <span className="text-sm">
+                          {editIngredientsMenu?.newIngredient.ingredient_name
+                            ? ingredientData?.find(
+                                (ing: { ingredient_name: string }) =>
+                                  ing.ingredient_name ===
+                                  editIngredientsMenu.newIngredient
+                                    .ingredient_name
+                              )?.ingredient_unit || "ไม่ระบุหน่วย"
+                            : ""}
+                          {/* ^^^^ คือไร */}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            setEditIngredientsMenu((prev) => {
+                              if (
+                                !prev ||
+                                !prev.newIngredient.ingredient_name ||
+                                prev.newIngredient.useItem < 0
+                              ) {
+                                Swal.fire({
+                                  icon: "error",
+                                  title: "เกิดข้อผิดพลาด",
+                                  text: "กรุณาเลือกวัตถุดิบและระบุจำนวนที่ถูกต้อง",
+                                  showConfirmButton: false,
+                                  timer: 3000,
+                                });
+                                return prev;
+                              }
+                              const selectedIngredient = ingredientData?.find(
+                                (ing: { ingredient_name: string }) =>
+                                  ing.ingredient_name ===
+                                  prev.newIngredient.ingredient_name
+                              );
+                              return {
+                                ...prev,
+                                ingredients: [
+                                  ...prev.ingredients,
+                                  {
+                                    ingredient_name:
+                                      prev.newIngredient.ingredient_name,
+                                    useItem: prev.newIngredient.useItem,
+                                    ingredient_status: false,
+                                    ingredient_unit:
+                                      selectedIngredient?.ingredient_unit ||
+                                      "ไม่ระบุหน่วย",
                                   },
-                                }
-                              : prev
+                                ],
+                                newIngredient: {
+                                  ingredient_name: "",
+                                  useItem: 0,
+                                },
+                              };
+                            })
+                          }
+                          disabled={
+                            !editIngredientsMenu?.newIngredient
+                              .ingredient_name ||
+                            editIngredientsMenu?.newIngredient.useItem < 0 ||
+                            !ingredientData
+                          }
+                          className="h-8"
+                        >
+                          เพิ่ม
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        onClick={() =>
+                          editIngredientsMenu &&
+                          handleSaveIngredients(
+                            editIngredientsMenu.cartId,
+                            editIngredientsMenu.menuName
                           )
                         }
-                        placeholder="จำนวน"
-                        min="0"
-                        className="w-20 h-8 text-sm"
-                      />
-                      <span className="text-sm">
-                        {editIngredientsMenu?.newIngredient.ingredient_name
-                          ? ingredientData?.find(
-                              (ing: { ingredient_name: string }) =>
-                                ing.ingredient_name ===
-                                editIngredientsMenu.newIngredient
-                                  .ingredient_name
-                            )?.ingredient_unit || "ไม่ระบุหน่วย"
-                          : "เลือกวัตถุดิบ"}
-                      </span>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          setEditIngredientsMenu((prev) => {
-                            if (
-                              !prev ||
-                              !prev.newIngredient.ingredient_name ||
-                              prev.newIngredient.useItem < 0
-                            ) {
-                              Swal.fire({
-                                icon: "error",
-                                title: "เกิดข้อผิดพลาด",
-                                text: "กรุณาเลือกวัตถุดิบและระบุจำนวนที่ถูกต้อง",
-                                showConfirmButton: false,
-                                timer: 3000,
-                              });
-                              return prev;
-                            }
-                            const selectedIngredient = ingredientData?.find(
-                              (ing: { ingredient_name: string }) =>
-                                ing.ingredient_name ===
-                                prev.newIngredient.ingredient_name
-                            );
-                            return {
-                              ...prev,
-                              ingredients: [
-                                ...prev.ingredients,
-                                {
-                                  ingredient_name:
-                                    prev.newIngredient.ingredient_name,
-                                  useItem: prev.newIngredient.useItem,
-                                  ingredient_status: false,
-                                  ingredient_unit:
-                                    selectedIngredient?.ingredient_unit ||
-                                    "ไม่ระบุหน่วย",
-                                },
-                              ],
-                              newIngredient: {
-                                ingredient_name: "",
-                                useItem: 0,
-                              },
-                            };
-                          })
-                        }
-                        disabled={
-                          !editIngredientsMenu?.newIngredient.ingredient_name ||
-                          editIngredientsMenu?.newIngredient.useItem < 0 ||
-                          !ingredientData
-                        }
-                        className="h-8"
+                        disabled={isSaving !== null}
                       >
-                        เพิ่ม
+                        {isSaving ? "กำลังบันทึก..." : "บันทึก"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setEditIngredientsMenu(null)}
+                      >
+                        ยกเลิก
                       </Button>
                     </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      onClick={() =>
-                        editIngredientsMenu &&
-                        handleSaveIngredients(
-                          editIngredientsMenu.cartId,
-                          editIngredientsMenu.menuName
-                        )
-                      }
-                      disabled={isSaving !== null}
-                    >
-                      {isSaving ? "กำลังบันทึก..." : "บันทึก"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setEditIngredientsMenu(null)}
-                    >
-                      ยกเลิก
-                    </Button>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -2756,112 +2848,123 @@ const SummaryList: React.FC = () => {
           onOpenChange={setIsSummaryDialogOpen}
         >
           <DialogContent className="max-w-md max-h-[70vh] overflow-y-auto">
-            <DialogTitle className="text-lg font-bold">
-              {summaryDialogType === "order" && selectedCartForSummary && (
-                <div style={{ color: "#000000" }} className="mb-4">
-                  สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary.orderNumber}{" "}
-                  <br />
-                  (วันที่ส่ง: {selectedCartForSummary.cart_delivery_date})
-                </div>
-              )}
-              {summaryDialogType === "date" && selectedDateForSummary && (
-                <div style={{ color: "#000000" }} className="mb-4">
-                  สรุปวัตถุดิบทั้งหมดของวันที่{" "}
-                  {new Date(selectedDateForSummary).toLocaleDateString(
-                    "th-TH",
-                    {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    }
-                  )}
-                </div>
-              )}
-            </DialogTitle>
-            <div className="space-y-4">
-              {summaryDialogType === "order" &&
-                selectedCartForSummary &&
-                (() => {
-                  const { summary, allIngredientsChecked } =
-                    summarizeOrderIngredients(selectedCartForSummary);
-                  return (
-                    <>
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-semibold text-gray-700">
-                          สรุปวัตถุดิบของออเดอร์
-                        </h5>
-                        {summary.map((ing, idx) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
-                          >
-                            <span className="text-gray-700">{ing.name}</span>
-                            <span className="text-gray-600">
-                              {ing.checked}/{ing.total} {ing.unit}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ color: "#000000", background: "#5cfa6c" }}>
-                        <Button
-                          onClick={() =>
-                            handleCheckAllIngredients(selectedCartForSummary.id)
-                          }
-                          className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
-                          disabled={
-                            isSaving === selectedCartForSummary.id ||
-                            allIngredientsChecked
-                          }
+            <div>
+              <DialogTitle className="text-lg font-bold">
+                {summaryDialogType === "order" && selectedCartForSummary && (
+                  <div style={{ color: "#000000" }} className="mb-4">
+                    สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary.orderNumber}{" "}
+                    <br />
+                    (วันที่ส่ง: {selectedCartForSummary.cart_delivery_date})
+                  </div>
+                )}
+                {summaryDialogType === "date" && selectedDateForSummary && (
+                  <div style={{ color: "#000000" }} className="mb-4">
+                    สรุปวัตถุดิบทั้งหมดของวันที่{" "}
+                    {new Date(selectedDateForSummary).toLocaleDateString(
+                      "th-TH",
+                      {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      }
+                    )}
+                  </div>
+                )}
+              </DialogTitle>
+              <div className="space-y-4">
+                {summaryDialogType === "order" &&
+                  selectedCartForSummary &&
+                  (() => {
+                    const { summary, allIngredientsChecked } =
+                      summarizeOrderIngredients(selectedCartForSummary);
+                    return (
+                      <>
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-semibold text-gray-700">
+                            สรุปวัตถุดิบของออเดอร์
+                          </h5>
+                          {summary.map((ing, idx) => (
+                            <div
+                              key={idx}
+                              className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
+                            >
+                              <span className="text-gray-700">{ing.name}</span>
+                              <span className="text-gray-600">
+                                {ing.checked}/{ing.total} {ing.unit}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <div
+                          style={{ color: "#000000", background: "#5cfa6c" }}
                         >
-                          {isSaving === selectedCartForSummary.id
-                            ? "กำลังบันทึก..."
-                            : "เลือกวัตถุดิบทั้งหมด"}
-                        </Button>
-                      </div>
-                    </>
-                  );
-                })()}
-              {summaryDialogType === "date" &&
-                selectedDateForSummary &&
-                (() => {
-                  const { summary, allIngredientsChecked } =
-                    summarizeIngredients(selectedDateForSummary);
-                  return (
-                    <>
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-semibold text-gray-700">
-                          สรุปวัตถุดิบรวม
-                        </h5>
-                        {summary.map((ing, idx) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
+                          <Button
+                            onClick={() =>
+                              handleCheckAllIngredients(
+                                selectedCartForSummary.id
+                              )
+                            }
+                            className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
+                            disabled={
+                              isSaving === selectedCartForSummary.id ||
+                              allIngredientsChecked
+                            }
                           >
-                            <span className="text-gray-700">{ing.name}</span>
-                            <span className="text-gray-600">
-                              {ing.checked}/{ing.total} กรัม
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ color: "#000000", background: "#5cfa6c" }}>
-                        <Button
-                          onClick={() =>
-                            handleCheckAllIngredientsForDate(
-                              selectedDateForSummary
-                            )
-                          }
-                          className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
-                          disabled={isSaving === "all" || allIngredientsChecked}
+                            {isSaving === selectedCartForSummary.id
+                              ? "กำลังบันทึก..."
+                              : "เลือกวัตถุดิบทั้งหมด"}
+                          </Button>
+                        </div>
+                      </>
+                    );
+                  })()}
+
+                {summaryDialogType === "date" &&
+                  selectedDateForSummary &&
+                  (() => {
+                    const { summary, allIngredientsChecked } =
+                      summarizeIngredients(selectedDateForSummary);
+                    return (
+                      <>
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-semibold text-gray-700">
+                            สรุปวัตถุดิบรวม
+                          </h5>
+                          {summary.map((ing, idx) => (
+                            <div
+                              key={idx}
+                              className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
+                            >
+                              <span className="text-gray-700">{ing.name}</span>
+                              <span className="text-gray-600">
+                                {ing.checked}/{ing.total} กรัม
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <div
+                          style={{ color: "#000000", background: "#5cfa6c" }}
                         >
-                          {isSaving === "all"
-                            ? "กำลังบันทึก..."
-                            : "เลือกวัตถุดิบทั้งหมด"}
-                        </Button>
-                      </div>
-                    </>
-                  );
-                })()}
+                          <Button
+                            onClick={() =>
+                              handleCheckAllIngredientsForDate(
+                                selectedDateForSummary
+                              )
+                            }
+                            className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
+                            disabled={
+                              isSaving === "all" || allIngredientsChecked
+                            }
+                          >
+                            {isSaving === "all"
+                              ? "กำลังบันทึก..."
+                              : "เลือกวัตถุดิบทั้งหมด"}
+                          </Button>
+                        </div>
+                      </>
+                    );
+                  })()}
+              </div>
             </div>
           </DialogContent>
         </Dialog>

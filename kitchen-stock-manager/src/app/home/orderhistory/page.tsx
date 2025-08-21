@@ -1556,37 +1556,6 @@ const OrderHistory: React.FC = () => {
                                                       </strong>{" "}
                                                       {ing.ingredient_unit}
                                                     </span>
-                                                    <label className="cursor-pointer">
-                                                      <input
-                                                        type="checkbox"
-                                                        checked={
-                                                          ing.isChecked || false
-                                                        }
-                                                        onChange={() =>
-                                                          handleToggleIngredientCheck(
-                                                            cart.id,
-                                                            menuGroup.menuName,
-                                                            ing.ingredient_name
-                                                          )
-                                                        }
-                                                        className="hidden"
-                                                      />
-                                                      <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                                          ing.isChecked
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
-                                                        }`}
-                                                      >
-                                                        <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                                            ing.isChecked
-                                                              ? "translate-x-5"
-                                                              : "translate-x-0.5"
-                                                          }`}
-                                                        />
-                                                      </span>
-                                                    </label>
                                                   </div>
                                                 </div>
                                               )
