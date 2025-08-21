@@ -111,7 +111,7 @@ const SummaryPrice: React.FC = () => {
       const data = await response.json();
       console.log("Fetched carts data:", data);
 
-      const menuResponse = await fetch("/api/get/menu-list");
+      const menuResponse = await fetch("/api/get/menu/list");
       if (!menuResponse.ok) throw new Error("Failed to fetch menu");
 
       const ingredientResponse = await fetch("/api/get/ingredients");
@@ -423,7 +423,7 @@ const SummaryPrice: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/edit/cart_menu_ingredient_status/${cartId}`,
+        `/api/edit/cart-menu/ingredient-status/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -480,7 +480,7 @@ const SummaryPrice: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/edit/cart_menu_all_ingredients_status/${cartId}`,
+        `/api/edit/cart-menu/all-ingredients-status/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -540,7 +540,7 @@ const SummaryPrice: React.FC = () => {
     try {
       await Promise.all(
         targetCarts.map((cart) =>
-          fetch(`/api/edit/cart_menu_all_ingredients_status/${cart.id}`, {
+          fetch(`/api/edit/cart-menu/all-ingredients-status/${cart.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ isChecked: true }),
@@ -677,7 +677,7 @@ const SummaryPrice: React.FC = () => {
 
     setIsSaving(cartId);
     try {
-      const patchResponse = await fetch(`/api/edit/cart_menu/${cartId}`, {
+      const patchResponse = await fetch(`/api/edit/cart-menu/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

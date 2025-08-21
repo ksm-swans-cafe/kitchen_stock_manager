@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import sql from "@/app/database/connect";
-import { Server } from "socket.io";
+// import sql from "@/app/database/connect";
+import prisma from "@/lib/prisma";
 export async function GET() {
   try {
-    const result =
-      await sql`SELECT * FROM cart ORDER BY cart_create_date DESC `;
+    const result = await prisma.cart.findMany({
+      orderBy: {
+        cart_create_date: "desc",
+      },
+    });
     if (result.length === 0) {
       return NextResponse.json({ message: "No carts found" }, { status: 404 });
     }

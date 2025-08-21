@@ -129,7 +129,7 @@ const OrderHistory: React.FC = () => {
     mutate: mutateCarts,
   } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR(
-    "/api/get/menu-list",
+    "/api/get/menu/list",
     fetcher
   );
   const { data: ingredientData, error: ingredientError } = useSWR(
@@ -391,7 +391,7 @@ const OrderHistory: React.FC = () => {
     const cleanedMenuName = menuName.trim();
     setIsSaving(cartId);
     try {
-      const patchResponse = await fetch(`/api/edit/cart_menu/${cartId}`, {
+      const patchResponse = await fetch(`/api/edit/cart-menu/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ menuName: menuName, menu_total: editTotalBox }),
@@ -597,7 +597,7 @@ const OrderHistory: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/edit/cart_menu_ingredient_status/${cartId}`,
+        `/api/edit/cart-menu/ingredient-status/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -653,7 +653,7 @@ const OrderHistory: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/edit/cart_menu_all_ingredients_status/${cartId}`,
+        `/api/edit/cart-menu/all-ingredients-status/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -712,7 +712,7 @@ const OrderHistory: React.FC = () => {
     try {
       await Promise.all(
         targetCarts.map((cart) =>
-          fetch(`/api/edit/cart_menu_all_ingredients_status/${cart.id}`, {
+          fetch(`/api/edit/cart-menu/all-ingredients-status/${cart.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ isChecked: true }),

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import sql from "@/app/database/connect";
-
+import prisma from "@/lib/prisma";
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -37,11 +36,11 @@ export async function PATCH(
 
   try {
     // ตรวจสอบว่ามีเมนูนั้นจริงหรือไม่
-    const existing = await sql`
-        SELECT * FROM menu WHERE menu_id = ${id};
-      `;
+    const existing = await prisma.menu.findUnique({
+      where: { menu_id: Number(id) },
+    });
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "ไม่พบเมนูที่ต้องการแก้ไข" },
         { status: 404 }
@@ -53,19 +52,27 @@ export async function PATCH(
     const updatedSubname = menuSubname.trim();
 
     // อัปเดตข้อมูลในตาราง menu
-    const result = await sql`
-        UPDATE menu
-        SET 
-          menu_name = ${updatedName},
-          menu_subname = ${updatedSubname},
-          menu_ingredients = ${JSON.stringify(menuIngredients)}
-        WHERE menu_id = ${id}
-        RETURNING *;
-      `;
+    // const result = await sql`
+    //     UPDATE menu
+    //     SET 
+    //       menu_name = ${updatedName},
+    //       menu_subname = ${updatedSubname},
+    //       menu_ingredients = ${JSON.stringify(menuIngredients)}
+    //     WHERE menu_id = ${id}
+    //     RETURNING *;
+    //   `;
+    const result = await prisma.menu.update({
+      where: { menu_id: Number(id) },
+      data: {
+        menu_name: updatedName,
+        menu_subname: updatedSubname,
+        menu_ingredients: JSON.stringify(menuIngredients),
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      updatedMenu: result[0],
+      updatedMenu: result,
     });
   } catch (error) {
     console.error("Server error:", error);
