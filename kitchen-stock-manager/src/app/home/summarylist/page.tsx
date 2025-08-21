@@ -119,7 +119,7 @@ const SummaryList: React.FC = () => {
   } | null>(null);
   // ใช้ SWR เพื่อดึงข้อมูล
   const { data: menuListData, error: menuListError } = useSWR(
-    shouldFetchMenu ? "/api/get/menu-name" : null,
+    shouldFetchMenu ? "/api/get/menu/name" : null,
     fetcher,
     {
       refreshInterval: 30000,
@@ -131,7 +131,7 @@ const SummaryList: React.FC = () => {
     mutate: mutateCarts,
   } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR(
-    "/api/get/menu-list",
+    "/api/get/menu/list",
     fetcher,
     { refreshInterval: 30000 }
   );
@@ -503,7 +503,7 @@ const SummaryList: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/edit/cart_menu_ingredient_status/${cartId}`,
+        `/api/edit/cart-menu/ingredient-status/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -559,7 +559,7 @@ const SummaryList: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/api/edit/cart_menu_all_ingredients_status/${cartId}`,
+        `/api/edit/cart-menu/all-ingredients-status/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -619,7 +619,7 @@ const SummaryList: React.FC = () => {
     try {
       await Promise.all(
         targetCarts.map((cart) =>
-          fetch(`/api/edit/cart_menu_all_ingredients_status/${cart.id}`, {
+          fetch(`/api/edit/cart-menu/all-ingredients-status/${cart.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ isChecked: true }),
@@ -708,7 +708,7 @@ const SummaryList: React.FC = () => {
     const cleanedMenuName = menuName.trim();
     setIsSaving(cartId);
     try {
-      const patchResponse = await fetch(`/api/edit/cart_menu/${cartId}`, {
+      const patchResponse = await fetch(`/api/edit/cart-menu/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ menuName: menuName, menu_total: editTotalBox }),
@@ -1210,7 +1210,7 @@ const SummaryList: React.FC = () => {
       );
 
       const response = await fetch(
-        `/api/edit/cart_menu_summaryList/${cartId}`,
+        `/api/edit/cart-menu/summary-list/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -1323,7 +1323,7 @@ const SummaryList: React.FC = () => {
     try {
       console.log("Sending request with cartId:", cartId); // เพิ่ม log เพื่อตรวจสอบ
       const response = await fetch(
-        `/api/edit/cart_menu_ingredients/${cartId}`,
+        `/api/edit/cart-menu/ingredients/${cartId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

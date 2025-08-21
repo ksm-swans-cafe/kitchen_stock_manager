@@ -20,7 +20,7 @@ export default function Order() {
     const fetchMenus = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/get/menu-list");
+        const res = await fetch("/api/get/menu/list");
         if (!res.ok) throw new Error("Failed to fetch menu list");
         let data: MenuItem[] = await res.json();
 

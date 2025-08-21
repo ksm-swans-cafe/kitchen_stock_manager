@@ -40,7 +40,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   useEffect(() => {
     if (showPopup && title) {
       setLoading(true);
-      fetch("/api/get/menu-list")
+      fetch("/api/get/menu/list")
         .then((res) => res.json())
         .then((data: MenuListItem[]) => {
           const filtered = data.filter((menu) => menu.menu_subname === title);

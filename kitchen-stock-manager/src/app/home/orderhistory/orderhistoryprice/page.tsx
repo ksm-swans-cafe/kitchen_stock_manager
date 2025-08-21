@@ -114,7 +114,7 @@ const OrderHistory: React.FC = () => {
             const cartData = await response.json();
 
             // Fetch menu list
-            const menuResponse = await fetch("/api/get/menu-list");
+            const menuResponse = await fetch("/api/get/menu/list");
             if (!menuResponse.ok) throw new Error("Failed to fetch menu");
             const menuData = await menuResponse.json();
 
@@ -222,9 +222,7 @@ const OrderHistory: React.FC = () => {
 
             setAllCarts(formattedOrders);
             setCarts(formattedOrders);
-            // อัปเดต calendarEvents หรือ state อื่น ๆ ตามต้องการ
         } catch (error) {
-            // setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
             if (error instanceof Error) {
                 setError("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
             } else {
@@ -235,9 +233,7 @@ const OrderHistory: React.FC = () => {
         }
     };
 
-    // ฟังก์ชันจัดรูปแบบเวลาโดยอัตโนมัติ
     const formatInputTime = (value: string): string => {
-        // ลบตัวอักษรที่ไม่ใช่ตัวเลขหรือจุด
         const cleaned = value.replace(/[^0-9.]/g, "");
         if (cleaned.length >= 4) {
             const hours = cleaned.slice(0, 2);

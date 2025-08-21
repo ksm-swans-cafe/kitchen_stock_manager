@@ -1,7 +1,8 @@
 // File: /api/edit/stock/[transaction_date]/[ingredient_name]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import sql from "@app/database/connect";
+import prisma from "@/lib/prisma"
+// import sql from "@app/database/connect";
 
 export async function PATCH(
   req: NextRequest,
@@ -38,28 +39,49 @@ export async function PATCH(
       );
     }
 
-    const result = await sql`
-      UPDATE ingredient_transactions
-      SET
-        transaction_from_username = ${username},
-        transaction_type = ${type},
-        transaction_total_price = ${total_price},
-        transaction_quantity = ${quantity},
-        transaction_units = ${unit}
-      WHERE
-        transaction_date = ${rawDateTime}::timestamp AND
-        ingredient_name = ${ingredientName}
-      RETURNING *;
-    `;
+    // const result = await sql`
+    //   UPDATE ingredient_transactions
+    //   SET
+    //     transaction_from_username = ${username},
+    //     transaction_type = ${type},
+    //     transaction_total_price = ${total_price},
+    //     transaction_quantity = ${quantity},
+    //     transaction_units = ${unit}
+    //   WHERE
+    //     transaction_date = ${rawDateTime}::timestamp AND
+    //     ingredient_name = ${ingredientName}
+    //   RETURNING *;
+    // `;
+    // Find the transaction by date and ingredient name
+    const transaction = await prisma.ingredient_transactions.findFirst({
+      where: {
+        transaction_date: new Date(rawDateTime),
+        ingredient_name: ingredientName,
+      },
+    });
 
-    if (result.length === 0) {
+    if (!transaction) {
       return NextResponse.json(
         { error: "Transaction not found." },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(result[0], { status: 200 });
+    // Update using the unique transaction_id
+    const result = await prisma.ingredient_transactions.update({
+      where: {
+        transaction_id: transaction.transaction_id,
+      },
+      data: {
+        transaction_from_username: username,
+        transaction_type: type,
+        transaction_total_price: Number(total_price),
+        transaction_quantity: Number(quantity),
+        transaction_units: unit,
+      },
+    });
+
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error("Error updating stock:", error);
     return NextResponse.json(
