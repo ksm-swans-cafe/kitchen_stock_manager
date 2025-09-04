@@ -4,6 +4,7 @@ import { MenuItem } from "@/models/menu_card/MenuCard-model";
 
 export interface CartItem extends MenuItem {
   menu_total: number;
+  menu_description: string;
 }
 
 interface CartState {
@@ -45,7 +46,14 @@ export const useCartStore = create<CartState>()(
         const existing = items.find((i) => i.menu_id === item.menu_id);
         if (!existing) {
           set({
-            items: [...items, { ...item, menu_total: 1 }],
+            items: [
+              ...items,
+              {
+                ...item,
+                menu_total: 1,
+                menu_description: item.menu_description ?? "",
+              },
+            ],
           });
         } else {
           set({

@@ -6,6 +6,7 @@ interface Ingredient {
   ingredient_name: string;
   useItem: number;
   ingredient_status: boolean;
+  description: string;
 }
 
 interface MenuItem {

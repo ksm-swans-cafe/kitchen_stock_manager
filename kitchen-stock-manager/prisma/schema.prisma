@@ -22,6 +22,7 @@ model cart {
   cart_delivery_date String?   @db.VarChar(10)
   cart_export_time   String?   @db.VarChar(10)
   cart_receive_time  String?   @db.VarChar(10)
+  cart_shipping_cost Decimal?  @default(0) @db.Decimal(4, 0)
 }
 
 model employee {

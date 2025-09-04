@@ -1226,8 +1226,18 @@ export namespace Prisma {
 
   export type AggregateCart = {
     _count: CartCountAggregateOutputType | null
+    _avg: CartAvgAggregateOutputType | null
+    _sum: CartSumAggregateOutputType | null
     _min: CartMinAggregateOutputType | null
     _max: CartMaxAggregateOutputType | null
+  }
+
+  export type CartAvgAggregateOutputType = {
+    cart_shipping_cost: Decimal | null
+  }
+
+  export type CartSumAggregateOutputType = {
+    cart_shipping_cost: Decimal | null
   }
 
   export type CartMinAggregateOutputType = {
@@ -1243,6 +1253,7 @@ export namespace Prisma {
     cart_delivery_date: string | null
     cart_export_time: string | null
     cart_receive_time: string | null
+    cart_shipping_cost: Decimal | null
   }
 
   export type CartMaxAggregateOutputType = {
@@ -1258,6 +1269,7 @@ export namespace Prisma {
     cart_delivery_date: string | null
     cart_export_time: string | null
     cart_receive_time: string | null
+    cart_shipping_cost: Decimal | null
   }
 
   export type CartCountAggregateOutputType = {
@@ -1274,9 +1286,18 @@ export namespace Prisma {
     cart_delivery_date: number
     cart_export_time: number
     cart_receive_time: number
+    cart_shipping_cost: number
     _all: number
   }
 
+
+  export type CartAvgAggregateInputType = {
+    cart_shipping_cost?: true
+  }
+
+  export type CartSumAggregateInputType = {
+    cart_shipping_cost?: true
+  }
 
   export type CartMinAggregateInputType = {
     cart_id?: true
@@ -1291,6 +1312,7 @@ export namespace Prisma {
     cart_delivery_date?: true
     cart_export_time?: true
     cart_receive_time?: true
+    cart_shipping_cost?: true
   }
 
   export type CartMaxAggregateInputType = {
@@ -1306,6 +1328,7 @@ export namespace Prisma {
     cart_delivery_date?: true
     cart_export_time?: true
     cart_receive_time?: true
+    cart_shipping_cost?: true
   }
 
   export type CartCountAggregateInputType = {
@@ -1322,6 +1345,7 @@ export namespace Prisma {
     cart_delivery_date?: true
     cart_export_time?: true
     cart_receive_time?: true
+    cart_shipping_cost?: true
     _all?: true
   }
 
@@ -1363,6 +1387,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: CartAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CartSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: CartMinAggregateInputType
@@ -1393,6 +1429,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: CartCountAggregateInputType | true
+    _avg?: CartAvgAggregateInputType
+    _sum?: CartSumAggregateInputType
     _min?: CartMinAggregateInputType
     _max?: CartMaxAggregateInputType
   }
@@ -1411,7 +1449,10 @@ export namespace Prisma {
     cart_delivery_date: string | null
     cart_export_time: string | null
     cart_receive_time: string | null
+    cart_shipping_cost: Decimal | null
     _count: CartCountAggregateOutputType | null
+    _avg: CartAvgAggregateOutputType | null
+    _sum: CartSumAggregateOutputType | null
     _min: CartMinAggregateOutputType | null
     _max: CartMaxAggregateOutputType | null
   }
@@ -1444,6 +1485,7 @@ export namespace Prisma {
     cart_delivery_date?: boolean
     cart_export_time?: boolean
     cart_receive_time?: boolean
+    cart_shipping_cost?: boolean
   }, ExtArgs["result"]["cart"]>
 
   export type cartSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1460,6 +1502,7 @@ export namespace Prisma {
     cart_delivery_date?: boolean
     cart_export_time?: boolean
     cart_receive_time?: boolean
+    cart_shipping_cost?: boolean
   }, ExtArgs["result"]["cart"]>
 
   export type cartSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1476,6 +1519,7 @@ export namespace Prisma {
     cart_delivery_date?: boolean
     cart_export_time?: boolean
     cart_receive_time?: boolean
+    cart_shipping_cost?: boolean
   }, ExtArgs["result"]["cart"]>
 
   export type cartSelectScalar = {
@@ -1492,9 +1536,10 @@ export namespace Prisma {
     cart_delivery_date?: boolean
     cart_export_time?: boolean
     cart_receive_time?: boolean
+    cart_shipping_cost?: boolean
   }
 
-  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"cart_id" | "cart_username" | "cart_menu_items" | "cart_create_date" | "cart_status" | "cart_order_number" | "cart_last_update" | "cart_customer_name" | "cart_customer_tel" | "cart_location_send" | "cart_delivery_date" | "cart_export_time" | "cart_receive_time", ExtArgs["result"]["cart"]>
+  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"cart_id" | "cart_username" | "cart_menu_items" | "cart_create_date" | "cart_status" | "cart_order_number" | "cart_last_update" | "cart_customer_name" | "cart_customer_tel" | "cart_location_send" | "cart_delivery_date" | "cart_export_time" | "cart_receive_time" | "cart_shipping_cost", ExtArgs["result"]["cart"]>
 
   export type $cartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "cart"
@@ -1513,6 +1558,7 @@ export namespace Prisma {
       cart_delivery_date: string | null
       cart_export_time: string | null
       cart_receive_time: string | null
+      cart_shipping_cost: Prisma.Decimal | null
     }, ExtArgs["result"]["cart"]>
     composites: {}
   }
@@ -1949,6 +1995,7 @@ export namespace Prisma {
     readonly cart_delivery_date: FieldRef<"cart", 'String'>
     readonly cart_export_time: FieldRef<"cart", 'String'>
     readonly cart_receive_time: FieldRef<"cart", 'String'>
+    readonly cart_shipping_cost: FieldRef<"cart", 'Decimal'>
   }
     
 
@@ -6638,7 +6685,8 @@ export namespace Prisma {
     cart_location_send: 'cart_location_send',
     cart_delivery_date: 'cart_delivery_date',
     cart_export_time: 'cart_export_time',
-    cart_receive_time: 'cart_receive_time'
+    cart_receive_time: 'cart_receive_time',
+    cart_shipping_cost: 'cart_shipping_cost'
   };
 
   export type CartScalarFieldEnum = (typeof CartScalarFieldEnum)[keyof typeof CartScalarFieldEnum]
@@ -6849,6 +6897,7 @@ export namespace Prisma {
     cart_delivery_date?: StringNullableFilter<"cart"> | string | null
     cart_export_time?: StringNullableFilter<"cart"> | string | null
     cart_receive_time?: StringNullableFilter<"cart"> | string | null
+    cart_shipping_cost?: DecimalNullableFilter<"cart"> | Decimal | DecimalJsLike | number | string | null
   }
 
   export type cartOrderByWithRelationInput = {
@@ -6865,6 +6914,7 @@ export namespace Prisma {
     cart_delivery_date?: SortOrderInput | SortOrder
     cart_export_time?: SortOrderInput | SortOrder
     cart_receive_time?: SortOrderInput | SortOrder
+    cart_shipping_cost?: SortOrderInput | SortOrder
   }
 
   export type cartWhereUniqueInput = Prisma.AtLeast<{
@@ -6884,6 +6934,7 @@ export namespace Prisma {
     cart_delivery_date?: StringNullableFilter<"cart"> | string | null
     cart_export_time?: StringNullableFilter<"cart"> | string | null
     cart_receive_time?: StringNullableFilter<"cart"> | string | null
+    cart_shipping_cost?: DecimalNullableFilter<"cart"> | Decimal | DecimalJsLike | number | string | null
   }, "cart_id">
 
   export type cartOrderByWithAggregationInput = {
@@ -6900,9 +6951,12 @@ export namespace Prisma {
     cart_delivery_date?: SortOrderInput | SortOrder
     cart_export_time?: SortOrderInput | SortOrder
     cart_receive_time?: SortOrderInput | SortOrder
+    cart_shipping_cost?: SortOrderInput | SortOrder
     _count?: cartCountOrderByAggregateInput
+    _avg?: cartAvgOrderByAggregateInput
     _max?: cartMaxOrderByAggregateInput
     _min?: cartMinOrderByAggregateInput
+    _sum?: cartSumOrderByAggregateInput
   }
 
   export type cartScalarWhereWithAggregatesInput = {
@@ -6922,6 +6976,7 @@ export namespace Prisma {
     cart_delivery_date?: StringNullableWithAggregatesFilter<"cart"> | string | null
     cart_export_time?: StringNullableWithAggregatesFilter<"cart"> | string | null
     cart_receive_time?: StringNullableWithAggregatesFilter<"cart"> | string | null
+    cart_shipping_cost?: DecimalNullableWithAggregatesFilter<"cart"> | Decimal | DecimalJsLike | number | string | null
   }
 
   export type employeeWhereInput = {
@@ -7214,6 +7269,7 @@ export namespace Prisma {
     cart_delivery_date?: string | null
     cart_export_time?: string | null
     cart_receive_time?: string | null
+    cart_shipping_cost?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type cartUncheckedCreateInput = {
@@ -7230,6 +7286,7 @@ export namespace Prisma {
     cart_delivery_date?: string | null
     cart_export_time?: string | null
     cart_receive_time?: string | null
+    cart_shipping_cost?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type cartUpdateInput = {
@@ -7246,6 +7303,7 @@ export namespace Prisma {
     cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
     cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
     cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
+    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type cartUncheckedUpdateInput = {
@@ -7262,6 +7320,7 @@ export namespace Prisma {
     cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
     cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
     cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
+    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type cartCreateManyInput = {
@@ -7278,6 +7337,7 @@ export namespace Prisma {
     cart_delivery_date?: string | null
     cart_export_time?: string | null
     cart_receive_time?: string | null
+    cart_shipping_cost?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type cartUpdateManyMutationInput = {
@@ -7294,6 +7354,7 @@ export namespace Prisma {
     cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
     cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
     cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
+    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type cartUncheckedUpdateManyInput = {
@@ -7310,6 +7371,7 @@ export namespace Prisma {
     cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
     cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
     cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
+    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type employeeCreateInput = {
@@ -7687,6 +7749,17 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -7706,6 +7779,11 @@ export namespace Prisma {
     cart_delivery_date?: SortOrder
     cart_export_time?: SortOrder
     cart_receive_time?: SortOrder
+    cart_shipping_cost?: SortOrder
+  }
+
+  export type cartAvgOrderByAggregateInput = {
+    cart_shipping_cost?: SortOrder
   }
 
   export type cartMaxOrderByAggregateInput = {
@@ -7721,6 +7799,7 @@ export namespace Prisma {
     cart_delivery_date?: SortOrder
     cart_export_time?: SortOrder
     cart_receive_time?: SortOrder
+    cart_shipping_cost?: SortOrder
   }
 
   export type cartMinOrderByAggregateInput = {
@@ -7736,6 +7815,11 @@ export namespace Prisma {
     cart_delivery_date?: SortOrder
     cart_export_time?: SortOrder
     cart_receive_time?: SortOrder
+    cart_shipping_cost?: SortOrder
+  }
+
+  export type cartSumOrderByAggregateInput = {
+    cart_shipping_cost?: SortOrder
   }
 
   export type UuidWithAggregatesFilter<$PrismaModel = never> = {
@@ -7829,7 +7913,7 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
-  export type DecimalNullableFilter<$PrismaModel = never> = {
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
     in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
     notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
@@ -7837,7 +7921,12 @@ export namespace Prisma {
     lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type employeeCountOrderByAggregateInput = {
@@ -7873,22 +7962,6 @@ export namespace Prisma {
 
   export type employeeSumOrderByAggregateInput = {
     employee_pin?: SortOrder
-  }
-
-  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -8201,6 +8274,17 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
   export type NestedUuidWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -8306,17 +8390,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
   }
 
   export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {

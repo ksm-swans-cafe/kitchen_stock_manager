@@ -1,6 +1,7 @@
 export interface Ingredients {
   useItem?: number;
   ingredient_id?: string;
+  ingredient_status?: boolean;
 }
 
 export interface MenuItem {
@@ -11,23 +12,23 @@ export interface MenuItem {
   menu_price?: number;
   menu_ingredients?: Ingredients[];
   menu_total?: number;
-  description?: string;
+  menu_description?: string;
 }
 
-export interface ingredient{
-  ingredient_id? : string;
-  ingredient_name? : string;
-  ingredient_total? : number;
-  ingredient_unit? : string;
-  ingredient_lastupdate? : string;
-  ingredient_image? : string;
-  ingredient_total_alert? : number;
-  ingredient_status? : string;
+export interface ingredient {
+  ingredient_id?: string;
+  ingredient_name?: string;
+  ingredient_total?: number;
+  ingredient_unit?: string;
+  ingredient_lastupdate?: string;
+  ingredient_image?: string;
+  ingredient_total_alert?: number;
+  ingredient_status?: string;
   ingredient_category?: string;
   ingredient_sub_category?: string;
-  ingredient_price? : number;
-  transaction_from_username? : string;
-};
+  ingredient_price?: number;
+  transaction_from_username?: string;
+}
 
 // export interface newIngredient{
 //   ingredient_id? : string;

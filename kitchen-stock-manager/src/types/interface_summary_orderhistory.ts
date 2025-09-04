@@ -15,6 +15,7 @@ export interface MenuItem {
     menu_name: string;
     menu_total: number;
     menu_ingredients: Ingredient[];
+    menu_description?: string;
     status?: string;
     order_number?: string;
   }
@@ -76,18 +77,6 @@ export type StatusOption = {
       value: string;
     };
 
-// export type StatusDropdownProps = {
-//     cartId: string;
-//     allIngredients: {
-//       menuName: string;
-//       ingredients: Ingredient[];
-//     }[];
-//     defaultStatus?: string;
-//     onUpdated?: () => void;
-//     cart_receive_time?: string; 
-//     cart_export_time?: string; 
-//     cart?: Cart;
-//   };
 export interface StatusDropdownProps {
   cartId: string;
   // allIngredients: MenuItem[];
