@@ -3,25 +3,12 @@
 import { Dispatch, SetStateAction } from "react";
 import { MenuItem } from "@/models/menu_card/MenuCard-model";
 
-// interface CartItem {
-//   menu_name: string;
-//   menu_total: number;
-//   menu_ingredients: string;
-// }
-
 export interface CartItem extends MenuItem {
   menu_total: number;
+  menu_description: string;
 }
 
-export const validateInputs = (
-  name: string,
-  tel: string,
-  location: string,
-  deliveryDate: string,
-  exportTime: string,
-  receiveTime: string,
-  setErrors: Dispatch<SetStateAction<string[]>>
-): boolean => {
+export const validateInputs = (name: string, tel: string, location: string, deliveryDate: string, exportTime: string, receiveTime: string, setErrors: Dispatch<SetStateAction<string[]>>): boolean => {
   const newErrors: string[] = [];
 
   if (!name.trim()) newErrors.push("กรุณากรอกชื่อลูกค้า");
@@ -39,10 +26,7 @@ export const validateInputs = (
   return newErrors.length === 0;
 };
 
-export const handlePhoneChange = (
-  e: React.ChangeEvent<HTMLInputElement>,
-  setCustomerInfo: (data: { tel: string }) => void
-) => {
+export const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, setCustomerInfo: (data: { tel: string }) => void) => {
   let value = e.target.value.replace(/\D/g, "");
 
   if (value.length > 3 && value.length <= 6) {
@@ -81,9 +65,7 @@ export const confirmOrder = async (
     if (!response.ok) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
     setSuccess(true);
   } catch (err: unknown) {
-    setErrors([
-      err instanceof Error ? err.message : "เกิดข้อผิดพลาดไม่ทราบสาเหตุ",
-    ]);
+    setErrors([err instanceof Error ? err.message : "เกิดข้อผิดพลาดไม่ทราบสาเหตุ"]);
   } finally {
     setLoading(false);
   }

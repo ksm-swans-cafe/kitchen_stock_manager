@@ -133,7 +133,8 @@ exports.Prisma.CartScalarFieldEnum = {
   cart_location_send: 'cart_location_send',
   cart_delivery_date: 'cart_delivery_date',
   cart_export_time: 'cart_export_time',
-  cart_receive_time: 'cart_receive_time'
+  cart_receive_time: 'cart_receive_time',
+  cart_shipping_cost: 'cart_shipping_cost'
 };
 
 exports.Prisma.EmployeeScalarFieldEnum = {
