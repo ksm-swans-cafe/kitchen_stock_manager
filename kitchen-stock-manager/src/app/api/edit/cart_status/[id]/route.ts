@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 // import sql from "@app/database/connect";
-import prisma
- from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 export async function PATCH(request: NextRequest) {
   // Await params เพื่อดึง id จาก dynamic route
   // const params = await request.nextUrl.searchParams; // หรือใช้ dynamic params ผ่าน context
@@ -34,12 +33,18 @@ export async function PATCH(request: NextRequest) {
     });
 
     if (!result) {
-      return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Cart item not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error updating cart item:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

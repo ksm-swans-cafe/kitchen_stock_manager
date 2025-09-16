@@ -98,7 +98,9 @@ export async function PATCH(
           );
         }
       } else if (Array.isArray(cart.cart_menu_items)) {
-        menuItems = (cart.cart_menu_items as unknown as MenuItem[]).filter((item): item is MenuItem => item !== null);
+        menuItems = (cart.cart_menu_items as unknown as MenuItem[]).filter(
+          (item): item is MenuItem => item !== null
+        );
       } else {
         console.error("Invalid cart_menu_items format:", cart.cart_menu_items);
         return NextResponse.json(

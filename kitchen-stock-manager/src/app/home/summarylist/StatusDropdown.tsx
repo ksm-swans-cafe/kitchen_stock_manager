@@ -3,10 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import useSWR from "swr";
-import {
-  StatusOption,
-  StatusDropdownProps,
-} from "@/types/interface_summary_orderhistory";
+import { StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
 
 // Fetcher function สำหรับ SWR
@@ -23,21 +20,10 @@ const statusOptions: StatusOption[] = [
   { label: "ยกเลิก", value: "cancelled" },
 ];
 
-const StatusDropdown: React.FC<StatusDropdownProps> = ({
-  cartId,
-  allIngredients,
-  defaultStatus = "pending",
-  onUpdated,
-  cart_receive_time,
-  cart_export_time,
-  onOrderSummaryClick,
-  cart,
-}) => {
+const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients, defaultStatus = "pending", onUpdated, cart_receive_time, cart_export_time, onOrderSummaryClick, cart }) => {
   const [selectedStatus, setSelectedStatus] = useState(defaultStatus);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLocked, setIsLocked] = useState(
-    defaultStatus === "success" || defaultStatus === "cancelled"
-  );
+  const [isLocked, setIsLocked] = useState(defaultStatus === "success" || defaultStatus === "cancelled");
   const { userName } = useAuth();
 
   const { mutate: mutateCarts } = useSWR("/api/get/carts", fetcher);
@@ -55,9 +41,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
       // ตรวจสอบเงื่อนไขสำหรับสถานะ "success"
       if (statusToUpdate === "success") {
-        const allIngredientsChecked = allIngredients.every((menu) =>
-          menu.ingredients.every((ing) => ing.isChecked)
-        );
+        const allIngredientsChecked = allIngredients.every((menu) => menu.ingredients.every((ing) => ing.isChecked));
 
         if (!allIngredientsChecked) {
           Swal.fire({
@@ -117,9 +101,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       Swal.fire({
         icon: "success",
         title: "อัปเดตสถานะสำเร็จ",
-        text: `สถานะถูกเปลี่ยนเป็น "${
-          statusOptions.find((o) => o.value === statusToUpdate)?.label
-        }"`,
+        text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === statusToUpdate)?.label}"`,
         showConfirmButton: false,
         timer: 4000,
       });
@@ -142,12 +124,8 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
-    const newStatusLabel = statusOptions.find(
-      (o) => o.value === newStatus
-    )?.label;
-    const currentStatusLabel = statusOptions.find(
-      (o) => o.value === selectedStatus
-    )?.label;
+    const newStatusLabel = statusOptions.find((o) => o.value === newStatus)?.label;
+    const currentStatusLabel = statusOptions.find((o) => o.value === selectedStatus)?.label;
 
     if (newStatus !== selectedStatus) {
       Swal.fire({
@@ -167,24 +145,17 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   };
 
   return (
-    <div className="relative inline-flex items-center space-x-2">
-      <div className="relative px-4">
+    <div className='relative inline-flex items-center space-x-2'>
+      <div className='relative px-4'>
         <button
           style={{
             background: "#5bd9fc",
             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
           }}
-          className="inline-block hover:bg-blue-200 hover:shadow-md rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow"
-        >
+          className='inline-block hover:bg-blue-200 hover:shadow-md rounded-full bg-white px-4 py-1 text-xs font-bold text-slate-800 shadow'>
           {statusOptions.find((o) => o.value === selectedStatus)?.label}
         </button>
-        <select
-          value={selectedStatus}
-          onChange={handleStatusChange}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-          disabled={isLocked || isSubmitting}
-          style={{ background: "#a2e1f2" }}
-        >
+        <select value={selectedStatus} onChange={handleStatusChange} className='absolute inset-0 opacity-0 cursor-pointer' disabled={isLocked || isSubmitting} style={{ background: "#a2e1f2" }}>
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -194,13 +165,12 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       </div>
       <button
         onClick={() => onOrderSummaryClick?.(cart)}
-        className="inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed"
+        className='inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed'
         style={{
           color: "#000000",
           background: "#a3e635",
           boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-        }}
-      >
+        }}>
         สรุปวัตถุดิบของออเดอร์นี้
       </button>
     </div>

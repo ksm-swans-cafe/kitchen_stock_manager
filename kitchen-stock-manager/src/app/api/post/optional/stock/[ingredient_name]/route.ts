@@ -1,5 +1,5 @@
 // http://localhost:3000/api/post/optional/stock/[ingredient_name]
-// 
+//
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@app/database/connect";
 
@@ -11,7 +11,10 @@ export async function POST(
 
   try {
     const formData = await req.formData();
-    const username = formData.get("transaction_from_username")?.toString()?.trim();
+    const username = formData
+      .get("transaction_from_username")
+      ?.toString()
+      ?.trim();
     const add_decrease = formData.get("transaction_add_decrease")?.toString();
     const total_price = formData.get("transaction_total_price");
     const quantity = formData.get("transaction_quantity");

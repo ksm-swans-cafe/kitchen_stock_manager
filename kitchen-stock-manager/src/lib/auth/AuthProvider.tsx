@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-type EmployeeRole = 'admin' | 'employee' | 'customer';
+type EmployeeRole = "admin" | "employee" | "customer";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -33,11 +33,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAuth = async (preventRedirect = false): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/check', {
-        method: 'GET',
-        credentials: 'include',
+      const response = await fetch("/api/auth/check", {
+        method: "GET",
+        credentials: "include",
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setIsAuthenticated(true);
@@ -49,17 +49,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(null);
         setUserName(null);
         if (!preventRedirect) {
-          router.push('/login');
+          router.push("/login");
         }
         return false;
       }
     } catch (error) {
-      console.error('Authentication check failed:', error);
+      console.error("Authentication check failed:", error);
       setIsAuthenticated(false);
       setUserRole(null);
       setUserName(null);
       if (!preventRedirect) {
-        router.push('/login');
+        router.push("/login");
       }
       return false;
     } finally {
@@ -69,21 +69,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      const response = await fetch('/api/post/logout', {
-        method: 'POST',
-        credentials: 'include',
+      const response = await fetch("/api/post/logout", {
+        method: "POST",
+        credentials: "include",
       });
 
       if (response.ok) {
         setIsAuthenticated(false);
         setUserRole(null);
         setUserName(null);
-        location.href = '/login';
+        location.href = "/login";
         // router.push('/login');
         // router.refresh();
       }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
@@ -92,14 +92,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated, 
-      isLoading, 
-      userRole, 
-      userName,
-      checkAuth, 
-      logout 
-    }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        isLoading,
+        userRole,
+        userName,
+        checkAuth,
+        logout,
+      }}>
       {children}
     </AuthContext.Provider>
   );

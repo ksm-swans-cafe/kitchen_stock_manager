@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma"
+import prisma from "@/lib/prisma";
 // import sql from "@app/database/connect";
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const menu_name = formData.get("menu_name")?.toString().trim();
-    const menu_ingredients = formData.get("menu_ingredients")?.toString().trim();
+    const menu_ingredients = formData
+      .get("menu_ingredients")
+      ?.toString()
+      .trim();
     const menu_subname = formData.get("menu_subname")?.toString().trim();
 
     if (!menu_name || !menu_ingredients) {

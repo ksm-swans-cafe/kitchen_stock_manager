@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const { token, name, role } = await request.json();
 
   const cookieStore = await cookies();
-  
+
   // ตั้งค่า cookies
   cookieStore.set("token", token, {
     httpOnly: true,

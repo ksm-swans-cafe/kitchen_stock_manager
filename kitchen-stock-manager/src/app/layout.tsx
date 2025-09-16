@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-// import { Geist, Geist_Mono, } from "next/font/google";
 import { Sarabun } from "next/font/google";
 import "./globals.css";
 
@@ -11,12 +10,10 @@ import Footer from "@/components/ui/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-
-
 const sarabun = Sarabun({
-  weight: ["400", "700"], 
-  subsets: ["latin", "thai"], 
-  display: "swap", 
+  weight: ["400", "700"],
+  subsets: ["latin", "thai"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,13 +22,9 @@ export const metadata: Metadata = {
   charset: "utf-8",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body className={`${sarabun.className} antialiased`}>
         <AuthProvider>
           <Menubar />

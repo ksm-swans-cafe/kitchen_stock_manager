@@ -15,7 +15,7 @@ export async function DELETE(
     // const result = await sql`DELETE FROM menu WHERE menu_id = ${id} RETURNING *`;
     const result = await prisma.menu.delete({
       where: { menu_id: Number(id) },
-    })
+    });
     if (!result) {
       return NextResponse.json({ error: "Menu not found" }, { status: 404 });
     }
