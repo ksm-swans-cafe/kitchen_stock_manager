@@ -9,16 +9,13 @@ export async function GET() {
   const userRole = cookieStore.get("userRole")?.value;
 
   if (!token || !userRole) {
-    return NextResponse.json(
-      { authenticated: false },
-      { status: 401 }
-    );
+    return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 
   return NextResponse.json({
     authenticated: true,
     token,
     userName,
-    role: userRole
+    role: userRole,
   });
 }
