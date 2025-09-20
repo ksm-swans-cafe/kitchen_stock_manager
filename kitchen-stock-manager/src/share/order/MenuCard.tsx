@@ -370,7 +370,7 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
     const menuItem = item as MenuItem;
     title = menuItem.menu_name;
     imageUrl = menuItem.imageUrl;
-    description = menuItem.description;
+    description = menuItem.menu_description;
 
     total = useCartStore((state) => state.items.find((i) => i.menu_id === menuItem.menu_id)?.menu_total ?? 0);
   } else {
@@ -523,10 +523,19 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value='กรัม'>กรัม</SelectItem>
+                              <SelectItem value='กิโลกรัม'>กิโลกรัม</SelectItem>
                               <SelectItem value='มิลลิลิตร'>มิลลิลิตร</SelectItem>
+                              <SelectItem value='ลิตร'>ลิตร</SelectItem>
+                              <SelectItem value='ชิ้น'>ชิ้น</SelectItem>
+                              <SelectItem value='ตัว'>ตัว</SelectItem>
+                              <SelectItem value='ซอง'>ซอง</SelectItem>
+                              <SelectItem value='ใบ'>ใบ</SelectItem>
+                              <SelectItem value='ถ้วย'>ถ้วย</SelectItem>
+                              <SelectItem value='กระป๋อง'>กระป๋อง</SelectItem>
+                              <SelectItem value='ขวด'>ขวด</SelectItem>
+                              <SelectItem value='ก้อน'>ก้อน</SelectItem>
                               <SelectItem value='ฟอง'>ฟอง</SelectItem>
                               <SelectItem value='ลูก'>ลูก</SelectItem>
-                              {/* <SelectItem value="ชิ้น">ชิ้น</SelectItem> */}
                             </SelectContent>
                           </Select>
                         </div>
