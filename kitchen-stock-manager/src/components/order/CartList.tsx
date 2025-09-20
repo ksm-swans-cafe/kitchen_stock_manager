@@ -41,6 +41,7 @@ export default function CartList() {
     cart_delivery_date,
     cart_export_time,
     cart_receive_time,
+    cart_shippingcost,
     setCustomerInfo,
   } = useCartStore();
 
@@ -128,6 +129,7 @@ export default function CartList() {
           cart_delivery_date,
           cart_export_time,
           cart_receive_time,
+          cart_shipping_cost: cart_shippingcost,
           cart_menu_items: items.map(({ menu_name, menu_total, menu_ingredients, menu_description}) => ({
             menu_name,
             menu_total,
@@ -280,6 +282,12 @@ export default function CartList() {
             />
             <p className='text-sm text-gray-500'>เวลาที่เลือก: {formatTime(pickupTime)}</p>
           </div>
+
+          <div className='col-span-2 flex flex-col gap-1'>
+           <label className='font-medium'>ค่าจัดส่ง</label>
+           <input type='text' value={cart_shippingcost} onChange={(e) => setCustomerInfo({ shippingcost: e.target.value })} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
+          </div>
+
         </div>
 
         <ul className='space-y-4 mb-4'>
