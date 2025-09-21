@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
       cart_location_send,
       cart_export_time,
       cart_receive_time,
+      cart_shipping_cost,
     } = body;
     if (!cart_username || !cart_menu_items) {
       return NextResponse.json(
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
         cart_location_send: cart_location_send,
         cart_export_time: cart_export_time,
         cart_receive_time: cart_receive_time,
+        cart_shipping_cost: cart_shipping_cost,
       },
     });
 
@@ -59,8 +61,8 @@ export async function POST(request: NextRequest) {
       { message: "Cart created successfully", cart: result },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Error creating cart:", error);
+  } catch (error: any) {
+    console.error("Error creating cart:", error.message); 
     return NextResponse.json(
       {
         error: "Failed to create cart",

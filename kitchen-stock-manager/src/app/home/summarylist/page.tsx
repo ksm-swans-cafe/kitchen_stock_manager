@@ -26,6 +26,7 @@ import {
   Download,
   Users,
   Edit2,
+  Container,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -292,6 +293,7 @@ const SummaryList: React.FC = () => {
             cart_customer_tel: cart.cart_customer_tel,
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
+            cart_shipping_cost: cart.cart_shipping_cost
           };
         });
 
@@ -1875,6 +1877,11 @@ const SummaryList: React.FC = () => {
                                   <Wallet className="w-4 h-4 text-green-400" />
                                   <span className="text-sm sm:text-base font-normal">
                                     ราคาทั้งหมด {cart.price.toLocaleString()}{" "}
+                                    บาท
+                                  </span>
+                                  <Container className="w-4 h-4 text-green-400" />
+                                  <span className="text-sm sm:text-base font-normal">
+                                    ค่าจัดส่ง {cart.cart_shipping_cost?.toLocaleString() ?? "0"}{" "}
                                     บาท
                                   </span>
                                 </div>
