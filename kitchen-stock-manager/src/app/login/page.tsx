@@ -110,47 +110,44 @@ const Login: React.FC = () => {
   }, [handleLogin, username, pin]);
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4 relative overflow-hidden'>
+    <div className='min-h-screen h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4 relative overflow-hidden'>
       {/* Background decoration */}
       <div className='absolute inset-0 bg-grid-small-black/[0.02] bg-grid-small' />
-      <div className='absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse' />
-      <div className='absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-1000' />
+      <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse' />
+      <div className='absolute bottom-1/4 right-1/4 w-64 h-64 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-1000' />
 
-      <Card className='w-full max-w-md relative backdrop-blur-sm bg-card/95 border-border/50 shadow-2xl animate-fade-in'>
+      <Card className='w-full max-w-lg relative backdrop-blur-sm bg-card/95 border-border/50 shadow-2xl animate-fade-in'>
         {loading && (
           <div className='absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-20 rounded-lg'>
-            <div className='flex flex-col items-center space-y-4'>
+            <div className='flex flex-col items-center space-y-3'>
               <div className='w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin' />
-              <p className='text-sm text-muted-foreground font-medium'>กำลังเข้าสู่ระบบ...</p>
+              <p className='text-lg text-muted-foreground font-medium'>กำลังเข้าสู่ระบบ...</p>
             </div>
           </div>
         )}
 
-        <CardHeader className='space-y-2 text-center pb-6'>
-          {/* <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <ArrowRight className="w-8 h-8 text-primary-foreground" />
-          </div> */}
-          <div className='mx-auto flex items-center justify-center mb-4'>
+        <CardHeader className='space-y-2 text-center pb-4'>
+          <div className='mx-auto flex items-center justify-center mb-3'>
             <img
               src='https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/logo/S__3842055-Pzp1LBEQErI3yqCqwKiiCxobjW6Y8K.jpg'
-              className='custom-logo-img cursor-pointer border border-gray-300 rounded-full transition-transform duration-200 transform hover:scale-125 inline-block'
+              className='custom-logo-img cursor-pointer border border-gray-300 rounded-full transition-transform duration-200 transform hover:scale-110 inline-block'
               alt='Logo'
             />
           </div>
 
-          <CardTitle className='text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent'>เข้าสู่ระบบ</CardTitle>
-          <CardDescription className='text-muted-foreground'>กรอกชื่อผู้ใช้และรหัส PIN เพื่อเข้าสู่ระบบ</CardDescription>
+          <CardTitle className='text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text'>เข้าสู่ระบบ</CardTitle>
+          <CardDescription className='text-lg text-muted-foreground mt-2'>กรอกชื่อผู้ใช้และรหัส PIN เพื่อเข้าสู่ระบบ</CardDescription>
         </CardHeader>
 
-        <CardContent className='space-y-6'>
+        <CardContent className='space-y-4'>
           {error && (
             <Alert variant='destructive' className='animate-fade-in'>
-              <AlertDescription className='text-sm'>{error}</AlertDescription>
+              <AlertDescription className='text-base'>{error}</AlertDescription>
             </Alert>
           )}
 
           <div className='space-y-2'>
-            <Label htmlFor='username' className='text-sm font-semibold text-foreground'>
+            <Label htmlFor='username' className='text-lg font-semibold text-foreground'>
               ชื่อ
             </Label>
             <Input
@@ -159,13 +156,13 @@ const Login: React.FC = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder='กรอกชื่อพนักงาน'
-              className='h-12 text-base transition-all duration-200 focus:ring-2 focus:ring-primary/20 border-border/60 hover:border-primary/30'
+              className='h-12 text-lg transition-all duration-200 focus:ring-2 focus:ring-primary/20 border-border/60 hover:border-primary/30'
               disabled={loading}
             />
           </div>
 
-          <div className=' space-y-3'>
-            <div className='่text-sm font-semibold text-foreground flex items-center justify-center'>รหัส PIN</div>
+          <div className='space-y-3'>
+            <div className='text-lg font-semibold text-foreground flex items-center justify-center'>รหัส PIN</div>
             <div className='flex justify-center space-x-3'>
               {pin.map((digit, i) => (
                 <input
@@ -179,7 +176,7 @@ const Login: React.FC = () => {
                   ref={setInputRef(i)}
                   disabled={loading}
                   className={cn(
-                    "w-14 h-14 text-center text-xl font-bold",
+                    "w-16 h-16 text-center text-2xl font-bold",
                     "border-2 rounded-full transition-all duration-200",
                     "focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary",
                     "hover:border-primary/50 bg-background/50",
@@ -189,7 +186,7 @@ const Login: React.FC = () => {
                 />
               ))}
             </div>
-            <p className='text-xs text-muted-foreground text-center'>ใส่ PIN 4 หลักเพื่อเข้าสู่ระบบอัตโนมัติ</p>
+            <p className='text-sm text-muted-foreground text-center'>ใส่ PIN 4 หลักเพื่อเข้าสู่ระบบอัตโนมัติ</p>
           </div>
         </CardContent>
       </Card>

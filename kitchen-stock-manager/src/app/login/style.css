@@ -1,4 +1,14 @@
 .custom-logo-img {
-  width: 100px;
-  height: 100px;           
+  width: 150px;
+  height: 150px;
+}
+
+input::placeholder {
+  font-size: 1rem !important;
+  font-family: "Sarabun", sans-serif;
+}
+
+.large-placeholder::placeholder {
+  font-size: 1rem !important;
+  font-family: "Sarabun", sans-serif;
 }
