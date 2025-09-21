@@ -96,10 +96,10 @@ export default function Menubar() {
 
             {/* สำหรับหน้าจอขนาดกลางขึ้นไป */}
             <div className="hidden md:flex flex-col items-start">
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-base font-medium text-foreground">
                 {userName || 'Guest'}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-base text-muted-foreground">
                 {getRoleName(userRole)}
               </span>
             </div>
@@ -127,9 +127,9 @@ export default function Menubar() {
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="flex items-center space-x-1 hover:bg-accent hover:text-accent-foreground"
+                className="flex items-center space-x-1 hover:bg-accent hover:text-accent-foreground text-base font-medium"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-5 h-5" />
                 <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>

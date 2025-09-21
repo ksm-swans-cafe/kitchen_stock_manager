@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Menubar />
           <Navigatebar />
           {children}
-          <Footer />
+          {/* <Footer /> */}
           <Analytics />
           <SpeedInsights />
         </AuthProvider>
