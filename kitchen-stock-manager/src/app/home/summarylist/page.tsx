@@ -293,7 +293,7 @@ const SummaryList: React.FC = () => {
             cart_customer_tel: cart.cart_customer_tel,
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
-            shippingcost: cart.cart_shippingcost
+            cart_shipping_cost: cart.cart_shipping_cost
           };
         });
 
@@ -1881,7 +1881,7 @@ const SummaryList: React.FC = () => {
                                   </span>
                                   <Container className="w-4 h-4 text-green-400" />
                                   <span className="text-sm sm:text-base font-normal">
-                                    ค่าจัดส่ง {cart.shippingcost?.toLocaleString() ?? "0"}{" "}
+                                    ค่าจัดส่ง {cart.cart_shipping_cost?.toLocaleString() ?? "0"}{" "}
                                     บาท
                                   </span>
                                 </div>
