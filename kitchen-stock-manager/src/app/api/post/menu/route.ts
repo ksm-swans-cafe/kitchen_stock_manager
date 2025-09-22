@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import sql from "@app/database/connect";
+import prisma from "@/lib/prisma";
+// import sql from "@app/database/connect";
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const menu_name = formData.get("menu_name")?.toString().trim();
-    const menu_ingredients = formData.get("menu_ingredients")?.toString().trim();
+    const menu_ingredients = formData
+      .get("menu_ingredients")
+      ?.toString()
+      .trim();
     const menu_subname = formData.get("menu_subname")?.toString().trim();
 
     if (!menu_name || !menu_ingredients) {
@@ -18,7 +22,7 @@ export async function POST(req: NextRequest) {
     // Validate JSON for menu_ingredients
     try {
       JSON.parse(menu_ingredients);
-    } catch (e) {
+    } catch (error) {
       return NextResponse.json(
         { error: "Invalid JSON format for menu_ingredients." },
         { status: 400 }
@@ -29,24 +33,26 @@ export async function POST(req: NextRequest) {
     console.log("Menu ingredients:", menu_ingredients);
     console.log("Creating menu with subname:", menu_subname);
 
-    const result = await sql`
-      INSERT INTO menu (menu_name, menu_ingredients, menu_subname)
-      VALUES (${menu_name}, ${menu_ingredients}, ${menu_subname})
-      RETURNING *;
-    `;
+    const result = await prisma.menu.create({
+      data: {
+        menu_name,
+        menu_ingredients: JSON.parse(menu_ingredients),
+        menu_subname,
+      },
+    });
 
-    if (result.length === 0) {
+    if (result === null) {
       return NextResponse.json(
         { error: "Menu ID already exists." },
         { status: 409 }
       );
     }
 
-    return NextResponse.json(result[0], { status: 201 });
-  } catch (error: any) {
+    return NextResponse.json(result, { status: 201 });
+  } catch (error) {
     console.error("Error creating menu:", error);
     return NextResponse.json(
-      { error: `Failed to create menu: ${error.message}` },
+      { error: `Failed to create menu` },
       { status: 500 }
     );
   }

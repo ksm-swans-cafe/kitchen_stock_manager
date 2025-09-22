@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model cart {
+  cart_id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cart_username      String    @db.VarChar(100)
+  cart_menu_items    Json
+  cart_create_date   DateTime? @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
+  cart_status        String?   @default("pending") @db.VarChar
+  cart_order_number  String?   @db.VarChar(3)
+  cart_last_update   String?   @db.VarChar(100)
+  cart_customer_name String?   @db.VarChar(300)
+  cart_customer_tel  String?   @db.VarChar(12)
+  cart_location_send String?   @db.VarChar(100)
+  cart_delivery_date String?   @db.VarChar(10)
+  cart_export_time   String?   @db.VarChar(10)
+  cart_receive_time  String?   @db.VarChar(10)
+  cart_shipping_cost Decimal?  @default(0) @db.Decimal(4, 0)
+}
+
+model employee {
+  employee_id        String   @id(map: "employee_new_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employee_username  String?  @db.VarChar(30)
+  employee_firstname String?  @db.VarChar(50)
+  employee_lastname  String?  @db.VarChar(50)
+  employee_pin       Decimal? @db.Decimal(4, 0)
+  employee_role      String?  @default("employee") @db.VarChar(20)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ingredient_transactions {
+  transaction_id            Int      @id @default(autoincrement())
+  transaction_date          DateTime @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
+  transaction_from_username String   @db.VarChar(100)
+  transaction_type          String?  @db.VarChar(7)
+  ingredient_name           String   @db.VarChar(100)
+  transaction_total_price   Decimal  @db.Decimal(10, 2)
+  transaction_quantity      Decimal  @db.Decimal(10, 2)
+  transaction_units         String   @db.VarChar(50)
+}
+
+model ingredients {
+  ingredient_id             Int       @id @default(autoincrement())
+  ingredient_name           String    @db.VarChar(30)
+  ingredient_total          Decimal?  @default(0) @db.Decimal(10, 2)
+  ingredient_unit           String    @db.VarChar(20)
+  ingredient_lastupdate     DateTime? @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
+  ingredient_image          String?   @db.VarChar(300)
+  ingredient_total_alert    Decimal?  @db.Decimal(10, 2)
+  ingredient_category       String?   @db.VarChar(30)
+  ingredient_sub_category   String?   @db.VarChar(30)
+  ingredient_price          Decimal?  @default(0) @db.Decimal(10, 2)
+  ingredient_price_per_unit Decimal?  @default(0) @db.Decimal(10, 2)
+}
+
+model menu {
+  menu_id          Int      @id @default(autoincrement())
+  menu_name        String   @db.VarChar(100)
+  menu_ingredients Json
+  menu_total       Decimal? @db.Decimal(7, 0)
+  menu_image       String?  @db.VarChar(999)
+  menu_subname     String?  @db.VarChar(100)
+  menu_catagory    String?  @db.VarChar(100)
+}

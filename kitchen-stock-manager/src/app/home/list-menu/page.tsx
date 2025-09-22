@@ -54,7 +54,7 @@ export default function Page() {
       setIsLoading(true);
       try {
         const [menuRes, ingOptRes] = await Promise.all([
-          fetch(`/api/get/menu-page?page=${currentPage}&limit=${itemsPerPage}`),
+          fetch(`/api/get/menu/page?page=${currentPage}&limit=${itemsPerPage}`),
           fetch("/api/get/ingredients"),
         ]);
 
@@ -81,7 +81,7 @@ export default function Page() {
         });
 
         const res = await fetch(
-          `/api/get/ingredients-name?names=${encodeURIComponent(
+          `/api/get/ingredients/list?names=${encodeURIComponent(
             [...uniqueIngredients].join(",")
           )}`
         );
@@ -164,10 +164,10 @@ export default function Page() {
     }
   };
 
-  const deleteMenu = async (menuId: string) => {
+  const deleteMenu = async () => {
     if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?")) return;
-    setIsSubmitting(true); 
-  }
+    setIsSubmitting(true);
+  };
 
   const openEditDialog = (item: MenuItem) => {
     setMenuName(item.menu_name);
@@ -375,8 +375,8 @@ export default function Page() {
           totalPages={totalPages}
           currentPage={currentPage}
           setCurrentPage={(page) => {
-            setMenuItems([]); // ล้างข้อมูลเดิมก่อนเพื่อให้ไม่โชว์เก่า
-            setCurrentPage(page); // จากนั้น set หน้าใหม่
+            setMenuItems([]); 
+            setCurrentPage(page); 
           }}
         />
       )}

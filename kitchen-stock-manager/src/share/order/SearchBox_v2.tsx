@@ -1,16 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { SearchBoxProps } from '@/models/order/search-model';
+import { useState, useEffect, useRef } from "react";
+import { SearchBoxProps } from "@/models/order/search-model";
 
-export default function SearchBox({
-  apiUrl,
-  dataSource,
-  minLength = 0,
-  onSelect,
-  onChangeQuery,
-}: SearchBoxProps) {
-  const [query, setQuery] = useState('');
+export default function SearchBox({ apiUrl, dataSource, minLength = 0, onSelect, onChangeQuery }: SearchBoxProps) {
+  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
@@ -26,13 +20,16 @@ export default function SearchBox({
       try {
         if (dataSource) {
           // Local search
-          const fuse = (await import('fuse.js')).default;
+          const fuse = (await import("fuse.js")).default;
           const fuseInstance = new fuse(dataSource, {
             threshold: 0.3,
             minMatchCharLength: minLength,
           });
 
-          const results = fuseInstance.search(query).slice(0, 5).map(r => r.item);
+          const results = fuseInstance
+            .search(query)
+            .slice(0, 5)
+            .map((r) => r.item);
           setSuggestions(results);
         } else if (apiUrl) {
           // API search
@@ -43,7 +40,7 @@ export default function SearchBox({
 
         setShowSuggestions(true);
       } catch (error) {
-        console.error('Search error:', error);
+        console.error("Search error:", error);
       }
     }, 200);
 
@@ -57,8 +54,8 @@ export default function SearchBox({
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSelect = (value: string) => {
@@ -68,22 +65,22 @@ export default function SearchBox({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveSuggestion(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
-    } else if (e.key === 'ArrowUp') {
+      setActiveSuggestion((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveSuggestion(prev => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === 'Enter' && activeSuggestion >= 0) {
+      setActiveSuggestion((prev) => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === "Enter" && activeSuggestion >= 0) {
       e.preventDefault();
       handleSelect(suggestions[activeSuggestion]);
     }
   };
 
   return (
-    <div className="relative w-full max-w-md" ref={searchRef}>
+    <div className='relative w-full max-w-md' ref={searchRef}>
       <input
-        type="text"
+        type='text'
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -92,19 +89,13 @@ export default function SearchBox({
         }}
         onFocus={() => setShowSuggestions(true)}
         onKeyDown={handleKeyDown}
-        placeholder="Search..."
-        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder='Search...'
+        className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
       />
       {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+        <ul className='absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg'>
           {suggestions.map((s, i) => (
-            <li
-              key={i}
-              onClick={() => handleSelect(s)}
-              className={`p-3 cursor-pointer hover:bg-gray-100 ${
-                i === activeSuggestion ? 'bg-gray-100' : ''
-              }`}
-            >
+            <li key={i} onClick={() => handleSelect(s)} className={`p-3 cursor-pointer hover:bg-gray-100 ${i === activeSuggestion ? "bg-gray-100" : ""}`}>
               {s}
             </li>
           ))}

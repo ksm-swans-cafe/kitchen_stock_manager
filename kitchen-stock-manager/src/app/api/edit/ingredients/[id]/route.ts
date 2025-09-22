@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import sql from '@/app/database/connect';
+import prisma from '@/lib/prisma';
 import { put, del } from '@vercel/blob';
 import { randomUUID } from 'crypto';
 
@@ -51,11 +51,16 @@ export async function PATCH(
     }
 
     // ตรวจสอบว่า ingredient_id มีอยู่ในระบบ
-    const existingIngredient = await sql`
-      SELECT ingredient_id, ingredient_image 
-      FROM ingredients 
-      WHERE ingredient_id = ${id}
-    `;
+    // const existingIngredient = await sql`
+    //   SELECT ingredient_id, ingredient_image 
+    //   FROM ingredients 
+    //   WHERE ingredient_id = ${id}
+    // `;
+
+    const existingIngredient = await prisma.ingredients.findMany({
+      where: { ingredient_id: Number(id) },
+      select: { ingredient_id: true, ingredient_image: true },
+    });
 
     if (existingIngredient.length === 0) {
       return NextResponse.json(
@@ -65,12 +70,19 @@ export async function PATCH(
     }
 
     if (ingredient_name) {
-      const duplicateName = await sql`
-        SELECT ingredient_name 
-        FROM ingredients 
-        WHERE ingredient_name = ${ingredient_name} 
-        AND ingredient_id != ${id}
-      `;
+      // const duplicateName = await sql`
+      //   SELECT ingredient_name 
+      //   FROM ingredients 
+      //   WHERE ingredient_name = ${ingredient_name} 
+      //   AND ingredient_id != ${id}
+      // `;
+      const duplicateName = await prisma.ingredients.findMany({
+        where: {
+          ingredient_name: ingredient_name,
+          ingredient_id: { not: Number(id) },
+        },
+        select: { ingredient_name: true },
+      });
 
       if (duplicateName.length > 0) {
         return NextResponse.json(
@@ -103,22 +115,46 @@ export async function PATCH(
       }
     }
 
-    const ingredientPriceperUnit = (ingredient_price / ingredient_total).toFixed(2);
+    let ingredientPriceperUnit: string | null = null;
+    const priceNum = ingredient_price !== null ? Number(ingredient_price) : null;
+    const totalNum = ingredient_total !== null ? Number(ingredient_total) : null;
+    if (
+      priceNum !== null &&
+      totalNum !== null &&
+      Number.isFinite(priceNum) &&
+      Number.isFinite(totalNum) &&
+      totalNum !== 0
+    ) {
+      ingredientPriceperUnit = (priceNum / totalNum).toFixed(2);
+    }
 
-    const result = await sql`
-      UPDATE ingredients 
-      SET 
-        ingredient_name = COALESCE(${ingredient_name}, ingredient_name),
-        ingredient_total = COALESCE(${ingredient_total ? Number(ingredient_total) : null}, ingredient_total),
-        ingredient_unit = COALESCE(${ingredient_unit}, ingredient_unit),
-        ingredient_total_alert = COALESCE(${ingredient_total_alert ? Number(ingredient_total_alert) : null}, ingredient_total_alert),
-        ingredient_price = COALESCE(${ingredient_price ? Number(ingredient_price) : null}, ingredient_price),
-        ingredient_image = COALESCE(${ingredient_image_url}, ingredient_image),
-        ingredient_price_per_unit = COALESCE(${ingredientPriceperUnit}, ingredient_price_per_unit),
-        ingredient_lastupdate = NOW()
-      WHERE ingredient_id = ${id}
-      RETURNING *
-    `;
+    // const result = await sql`
+    //   UPDATE ingredients 
+    //   SET 
+    //     ingredient_name = COALESCE(${ingredient_name}, ingredient_name),
+    //     ingredient_total = COALESCE(${ingredient_total ? Number(ingredient_total) : null}, ingredient_total),
+    //     ingredient_unit = COALESCE(${ingredient_unit}, ingredient_unit),
+    //     ingredient_total_alert = COALESCE(${ingredient_total_alert ? Number(ingredient_total_alert) : null}, ingredient_total_alert),
+    //     ingredient_price = COALESCE(${ingredient_price ? Number(ingredient_price) : null}, ingredient_price),
+    //     ingredient_image = COALESCE(${ingredient_image_url}, ingredient_image),
+    //     ingredient_price_per_unit = COALESCE(${ingredientPriceperUnit}, ingredient_price_per_unit),
+    //     ingredient_lastupdate = NOW()
+    //   WHERE ingredient_id = ${id}
+    //   RETURNING *
+    // `;
+    const result = await prisma.ingredients.update({
+      where: { ingredient_id: Number(id) },
+      data: {
+        ingredient_name: ingredient_name,
+        ingredient_total: ingredient_total ? Number(ingredient_total) : null,
+        ingredient_unit: ingredient_unit,
+        ingredient_total_alert: ingredient_total_alert ? Number(ingredient_total_alert) : null,
+        ingredient_price: ingredient_price ? Number(ingredient_price) : null,
+        ingredient_image: ingredient_image_url,
+        ingredient_price_per_unit: ingredientPriceperUnit,
+        ingredient_lastupdate: new Date(),
+      },
+    })
 
     // const result = await sql`
     //   UPDATE ingredients 
@@ -136,7 +172,7 @@ export async function PATCH(
     //   RETURNING *
     // `;
 
-    if (!result || result.length === 0) {
+    if (!result) {
       return NextResponse.json(
         { error: 'Failed to update ingredient' },
         { status: 404 }
@@ -146,7 +182,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         message: 'Ingredient updated successfully',
-        ingredient: result[0],
+        ingredient: result,
       },
       { status: 200 }
     );

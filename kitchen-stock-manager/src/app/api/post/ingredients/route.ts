@@ -1,20 +1,22 @@
-import { NextResponse, NextRequest } from 'next/server';
-import sql from '@/app/database/connect';
-import { put } from '@vercel/blob';
-import { randomUUID } from 'crypto';
+import { NextResponse, NextRequest } from "next/server";
+import sql from "@/app/database/connect";
+import { put } from "@vercel/blob";
+import { randomUUID } from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
 
-    const ingredient_name = formData.get('ingredient_name')?.toString();
-    const ingredient_total = Number(formData.get('ingredient_total'));
-    const ingredient_unit = formData.get('ingredient_unit')?.toString();
+    const ingredient_name = formData.get("ingredient_name")?.toString();
+    const ingredient_total = Number(formData.get("ingredient_total"));
+    const ingredient_unit = formData.get("ingredient_unit")?.toString();
     // const ingredient_category = formData.get('ingredient_category')?.toString();
     // const ingredient_sub_category = formData.get('ingredient_sub_category')?.toString();
-    const ingredient_total_alert = Number(formData.get('ingredient_total_alert'));
-    const ingredient_price = Number(formData.get('ingredient_price'));
-    const file = formData.get('ingredient_image') as File | null;
+    const ingredient_total_alert = Number(
+      formData.get("ingredient_total_alert")
+    );
+    const ingredient_price = Number(formData.get("ingredient_price"));
+    const file = formData.get("ingredient_image") as File | null;
 
     if (
       !ingredient_name?.trim() ||
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
       ingredient_total_alert <= 0
     ) {
       return NextResponse.json(
-        { error: 'Missing or invalid required fields' },
+        { error: "Missing or invalid required fields" },
         { status: 400 }
       );
     }
@@ -38,20 +40,26 @@ export async function POST(request: NextRequest) {
 
     if (existingIngredient.length > 0) {
       return NextResponse.json(
-        { error: 'Ingredient name already exists' },
+        { error: "Ingredient name already exists" },
         { status: 409 }
       );
     }
 
     let ingredient_image = null;
     if (file) {
-      const blob = await put(`Ingredients-image/${randomUUID()}-${file.name}`, file, {
-        access: 'public',
-      });
-      console.log('Uploaded blob:', blob);
+      const blob = await put(
+        `Ingredients-image/${randomUUID()}-${file.name}`,
+        file,
+        {
+          access: "public",
+        }
+      );
+      console.log("Uploaded blob:", blob);
       ingredient_image = blob.url;
     }
-    const ingredientPriceperUnit = (ingredient_price / ingredient_total).toFixed(2);
+    const ingredientPriceperUnit = (
+      ingredient_price / ingredient_total
+    ).toFixed(2);
 
     const result = await sql`
       INSERT INTO ingredients (
@@ -97,15 +105,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'Ingredient created successfully',
+        message: "Ingredient created successfully",
         ingredient: result,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating ingredient:', error);
+    console.error("Error creating ingredient:", error);
     return NextResponse.json(
-      { error: 'Failed to create ingredient' },
+      { error: "Failed to create ingredient" },
       { status: 500 }
     );
   }

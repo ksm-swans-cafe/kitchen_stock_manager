@@ -15,6 +15,7 @@ export interface MenuItem {
     menu_name: string;
     menu_total: number;
     menu_ingredients: Ingredient[];
+    menu_description?: string;
     status?: string;
     order_number?: string;
   }
@@ -30,6 +31,7 @@ export interface Cart {
     price: number;
     status: string;
     createdBy: string;
+    cart_shipping_cost: string;
     menuItems: MenuItem[];
     allIngredients: {
       menuName: string;
@@ -63,6 +65,7 @@ export type RawCart = {
     cart_delivery_date: string;
     cart_export_time: string;
     cart_receive_time: string;
+    cart_shipping_cost: string;
   };
 
 export type ResponsiveOrderIdProps = {
@@ -76,18 +79,6 @@ export type StatusOption = {
       value: string;
     };
 
-// export type StatusDropdownProps = {
-//     cartId: string;
-//     allIngredients: {
-//       menuName: string;
-//       ingredients: Ingredient[];
-//     }[];
-//     defaultStatus?: string;
-//     onUpdated?: () => void;
-//     cart_receive_time?: string; 
-//     cart_export_time?: string; 
-//     cart?: Cart;
-//   };
 export interface StatusDropdownProps {
   cartId: string;
   // allIngredients: MenuItem[];
@@ -99,6 +90,6 @@ export interface StatusDropdownProps {
   onUpdated?: () => void;
   cart_receive_time?: string;
   cart_export_time?: string;
-  cart: Cart; // เพิ่ม prop นี้
+  cart: Cart;
   onOrderSummaryClick?: (cart: Cart) => void; // เพิ่ม prop สำหรับ callback
 }
