@@ -164,12 +164,10 @@ export default function Page() {
     }
   };
 
-  const deleteMenu = async (menuId: string) => {
+  const deleteMenu = async () => {
     if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?")) return;
     setIsSubmitting(true);
   };
-    setIsSubmitting(true); 
-  }
 
   const openEditDialog = (item: MenuItem) => {
     setMenuName(item.menu_name);
