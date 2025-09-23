@@ -31,7 +31,7 @@ export interface Cart {
     price: number;
     status: string;
     createdBy: string;
-    cart_shipping_cost: string;
+    shippingcost: string;
     menuItems: MenuItem[];
     allIngredients: {
       menuName: string;
@@ -65,7 +65,7 @@ export type RawCart = {
     cart_delivery_date: string;
     cart_export_time: string;
     cart_receive_time: string;
-    cart_shipping_cost: string;
+    cart_shippingcost: string;
   };
 
 export type ResponsiveOrderIdProps = {
