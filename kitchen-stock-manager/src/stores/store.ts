@@ -28,7 +28,7 @@ interface CartState {
     deliveryDate?: string;
     exportTime?: string;
     receiveTime?: string;
-    cart_shipping_cost?: string;
+    shippingcost?: string;
   }) => void;
 }
 
@@ -115,7 +115,7 @@ export const useCartStore = create<CartState>()(
         deliveryDate,
         exportTime,
         receiveTime,
-        cart_shipping_cost,
+        shippingcost,
       }) => {
         set((state) => ({
           cart_customer_name: name ?? state.cart_customer_name,
@@ -124,7 +124,7 @@ export const useCartStore = create<CartState>()(
           cart_delivery_date: deliveryDate ?? state.cart_delivery_date,
           cart_export_time: exportTime ?? state.cart_export_time,
           cart_receive_time: receiveTime ?? state.cart_receive_time,
-          cart_shipping_cost: cart_shipping_cost ?? state.cart_shipping_cost,
+          cart_shipping_cost: shippingcost ?? state.cart_shipping_cost,
         }));
       },
     }),
