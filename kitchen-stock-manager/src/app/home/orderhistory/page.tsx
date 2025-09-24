@@ -941,7 +941,7 @@ const OrderHistory: React.FC = () => {
                 <span className='text-red-500'>เกิดข้อผิดพลาด: {combinedError.message}</span>
               </CardContent>
             </Card>
-          ) : groupedOrders.length === 0 ? (
+          ) : paginatedGroupedOrders.length === 0 ? (
             <Card>
               <CardContent className='text-center py-12'>
                 <Package className='w-12 h-12 text-slate-400 mx-auto mb-2' />
@@ -949,7 +949,7 @@ const OrderHistory: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            groupedOrders.map(([date, orders], index) => (
+            paginatedGroupedOrders.map(([date, orders], index) => (
               <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
                 <h3 style={{ fontSize: "28px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
