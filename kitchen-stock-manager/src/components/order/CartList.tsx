@@ -91,8 +91,17 @@ export default function CartList() {
     } else if (value.length > 6) {
       value = `${value.slice(0, 3)}-${value.slice(3, 6)}-${value.slice(6, 10)}`;
     }
-
     setCustomerInfo({ tel: value });
+  };
+
+  const handleShippingCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = e.target.value.replace(/[^\d]/g, "");
+    if (!numericValue) {
+      setCustomerInfo({ cart_shipping_cost: "" });
+      return;
+    }
+    const formattedValue = Number(numericValue).toLocaleString("th-TH");
+    setCustomerInfo({ cart_shipping_cost: formattedValue });
   };
 
   const validateInputs = (): boolean => {
@@ -129,8 +138,8 @@ export default function CartList() {
           cart_delivery_date,
           cart_export_time,
           cart_receive_time,
-          cart_shipping_cost,
-          cart_menu_items: items.map(({ menu_name, menu_total, menu_ingredients, menu_description}) => ({
+          cart_shipping_cost: cart_shipping_cost.replace(/[^\d]/g, ""),
+          cart_menu_items: items.map(({ menu_name, menu_total, menu_ingredients, menu_description }) => ({
             menu_name,
             menu_total,
             menu_ingredients,
@@ -284,10 +293,9 @@ export default function CartList() {
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
-           <label className='font-medium'>ค่าจัดส่ง</label>
-           <input type='text' value={cart_shipping_cost} onChange={(e) => setCustomerInfo({ cart_shipping_cost: e.target.value })} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
+            <label className='font-medium'>ค่าจัดส่ง</label>
+            <input type='text' value={cart_shipping_cost} onChange={handleShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
           </div>
-
         </div>
 
         <ul className='space-y-4 mb-4'>
