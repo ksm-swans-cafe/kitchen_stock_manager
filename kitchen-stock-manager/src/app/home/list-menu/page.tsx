@@ -164,10 +164,10 @@ export default function Page() {
     }
   };
 
-  const deleteMenu = async () => {
+  const deleteMenu = async (menuId: string) => {
     if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?")) return;
     setIsSubmitting(true);
-    
+  
     try {
       const res = await fetch(`/api/delete/menu/${menuId}`, {
         method: "DELETE",
