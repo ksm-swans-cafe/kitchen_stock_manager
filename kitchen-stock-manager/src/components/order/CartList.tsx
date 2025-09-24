@@ -41,7 +41,7 @@ export default function CartList() {
     cart_delivery_date,
     cart_export_time,
     cart_receive_time,
-    cart_shipping_cost,
+    cart_shippingcost,
     setCustomerInfo,
   } = useCartStore();
 
@@ -129,7 +129,11 @@ export default function CartList() {
           cart_delivery_date,
           cart_export_time,
           cart_receive_time,
+<<<<<<< HEAD
           cart_shipping_cost: cart_shipping_cost,
+=======
+          cart_shipping_cost: cart_shippingcost,
+>>>>>>> 76c0e3413c8b06be4b11e9e9fe62b03ec17759a2
           cart_menu_items: items.map(({ menu_name, menu_total, menu_ingredients, menu_description}) => ({
             menu_name,
             menu_total,
@@ -285,8 +289,12 @@ export default function CartList() {
 
           <div className='col-span-2 flex flex-col gap-1'>
            <label className='font-medium'>ค่าจัดส่ง</label>
+<<<<<<< HEAD
            <input type='text' inputMode='numeric' pattern='[0-9,]*' value={cart_shipping_cost} onChange={(e) => setCustomerInfo({ cart_shipping_cost: e.target.value.replace(/\D/g, "")})} 
            placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2'/>
+=======
+           <input type='text' value={cart_shippingcost} onChange={(e) => setCustomerInfo({ shippingcost: e.target.value })} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
+>>>>>>> 76c0e3413c8b06be4b11e9e9fe62b03ec17759a2
           </div>
 
         </div>
