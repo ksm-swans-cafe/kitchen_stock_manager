@@ -90,6 +90,6 @@ export interface StatusDropdownProps {
   onUpdated?: () => void;
   cart_receive_time?: string;
   cart_export_time?: string;
-  cart: Cart; // เพิ่ม prop นี้
+  cart: Cart;
   onOrderSummaryClick?: (cart: Cart) => void; // เพิ่ม prop สำหรับ callback
 }
