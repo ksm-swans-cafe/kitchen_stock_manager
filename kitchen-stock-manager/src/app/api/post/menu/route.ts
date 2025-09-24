@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
       ?.toString()
       .trim();
     const menu_subname = formData.get("menu_subname")?.toString().trim();
+    const menu_description = formData.get("menu_description")?.toString().trim();
 
     if (!menu_name || !menu_ingredients) {
       return NextResponse.json(
@@ -32,12 +33,14 @@ export async function POST(req: NextRequest) {
     console.log("Creating menu with name:", menu_name);
     console.log("Menu ingredients:", menu_ingredients);
     console.log("Creating menu with subname:", menu_subname);
+    console.log("Creating menu with description:", menu_description);
 
     const result = await prisma.menu.create({
       data: {
         menu_name,
         menu_ingredients: JSON.parse(menu_ingredients),
         menu_subname,
+        menu_description,
       },
     });
 

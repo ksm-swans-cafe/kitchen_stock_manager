@@ -293,10 +293,15 @@ export default function CartList() {
         <ul className='space-y-4 mb-4'>
           {items.map((item) =>
             item.menu_id != null ? (
-              <li key={item.menu_id} className='border p-4 rounded flex justify-between items-center'>
-                <div>
+              <li key={item.menu_id} className='border p-4 rounded flex justify-between items-start'>
+                <div className='flex-1'>
                   <div className='font-medium'>{item.menu_name}</div>
                   <div className='text-gray-500'>{item.menu_price} ฿</div>
+                  {(item as any).menu_description && (
+                    <div className='text-sm text-gray-600 mt-1 italic'>
+                      {((item as any).menu_description)}
+                    </div>
+                  )}
                 </div>
                 <div className='flex items-center space-x-2'>
                   <button onClick={() => removeItem(item.menu_id!)} className='px-3 py-1 bg-red-500 text-white rounded'>

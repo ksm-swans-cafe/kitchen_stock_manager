@@ -19,6 +19,7 @@ interface MenuItem {
   menu_name: string;
   menu_ingredients: string | Ingredient[];
   menu_subname: string;
+  menu_description?: string;
 }
 
 interface IngredientUnit {
@@ -41,6 +42,7 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1); // เพิ่ม state สำหรับ totalPages
   const [menuSubName, setMenuSubName] = useState("เมนู");
+  const [menuDescription, setMenuDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dialog, setDialog] = useState(false);
@@ -137,6 +139,7 @@ export default function Page() {
       formData.append("menu_name", menuName);
       formData.append("menu_ingredients", JSON.stringify(ingredients));
       formData.append("menu_subname", menuSubName);
+      formData.append("menu_description", menuDescription);
 
       const res = await fetch(
         editMenuId ? `/api/edit/menu/${editMenuId}` : "/api/post/menu",
@@ -154,6 +157,7 @@ export default function Page() {
       setMenuName("");
       setIngredients([{ useItem: 0, ingredient_name: "" }]);
       setMenuSubName("เมนู");
+      setMenuDescription("");
       setDialog(false);
       setEditMenuId(null);
       location.reload();
@@ -186,6 +190,7 @@ export default function Page() {
   const openEditDialog = (item: MenuItem) => {
     setMenuName(item.menu_name);
     setMenuSubName(item.menu_subname);
+    setMenuDescription((item as any).menu_description || "");
     setIngredients(
       typeof item.menu_ingredients === "string"
         ? JSON.parse(item.menu_ingredients)
@@ -211,6 +216,7 @@ export default function Page() {
               setEditMenuId(null);
               setMenuName("");
               setMenuSubName("เมนู");
+              setMenuDescription("");
               setIngredients([{ useItem: 0, ingredient_name: "" }]);
             }}
             className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
@@ -248,6 +254,13 @@ export default function Page() {
                 placeholder="ชื่อรอง"
                 className="w-full border p-2"
                 required
+              />
+              <textarea
+                value={menuDescription}
+                onChange={(e) => setMenuDescription(e.target.value)}
+                placeholder="คำอธิบายเมนู"
+                className="w-full border p-2 h-20 resize-none"
+                rows={3}
               />
               {ingredients.map((ing, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
@@ -345,13 +358,14 @@ export default function Page() {
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูอาหาร</th>
               <th className="py-2 px-4 border-b text-left">วัตถุดิบในอาหาร</th>
               <th className="py-2 px-4 border-b text-left">ชื่อเมนูรอง</th>
+              <th className="py-2 px-4 border-b text-left">คำอธิบาย</th>
               <th className="py-2 px-4 border-b text-left">การ restraining</th>
             </tr>
           </thead>
           <tbody className="text-black">
             {menuItems.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-2 px-4 text-center">
+                <td colSpan={5} className="py-2 px-4 text-center">
                   ไม่มีข้อมูล
                 </td>
               </tr>
@@ -363,6 +377,11 @@ export default function Page() {
                     {formatIngredients(item.menu_ingredients)}
                   </td>
                   <td className="py-2 px-4 border-b">{item.menu_subname}</td>
+                  <td className="py-2 px-4 border-b max-w-xs">
+                    <div className="truncate" title={item.menu_description || ""}>
+                      {item.menu_description || "-"}
+                    </div>
+                  </td>
                   <td className="py-2 px-4 border-b">
                     <button
                       onClick={() => openEditDialog(item)}

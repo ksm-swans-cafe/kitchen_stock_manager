@@ -29,6 +29,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   const [filteredMenuList, setFilteredMenuList] = useState<MenuListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const [descriptions, setDescriptions] = useState<{ [key: string]: string }>({});
   const router = useRouter();
 
   let title: string | undefined;
@@ -48,17 +49,21 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
 
           const cartItems = useCartStore.getState().items;
           const initialQuantities: { [key: string]: number } = {};
+          const initialDescriptions: { [key: string]: string } = {};
           filtered.forEach((menu) => {
             const inCart = cartItems.find((item) => item.menu_id === menu.menu_id);
             initialQuantities[menu.menu_id] = inCart?.menu_total ?? 0;
+            initialDescriptions[menu.menu_id] = "";
           });
           setQuantities(initialQuantities);
+          setDescriptions(initialDescriptions);
 
           setLoading(false);
         })
         .catch(() => {
           setFilteredMenuList([]);
           setQuantities({});
+          setDescriptions({});
           setLoading(false);
         });
     }
@@ -68,7 +73,31 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   const handleAddClick = () => setShowPopup(true);
   const handleCancel = () => setShowPopup(false);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    // อัปเดต description ใน database สำหรับเมนูที่มีจำนวน > 0
+    const updatePromises = filteredMenuList.map(async (menu) => {
+      const qty = quantities[menu.menu_id] ?? 0;
+      const description = descriptions[menu.menu_id] ?? "";
+      
+      if (qty > 0) {
+        try {
+          const formData = new FormData();
+          formData.append("menu_description", description.trim() || "");
+          
+          await fetch(`/api/edit/menu/${menu.menu_id}`, {
+            method: "PATCH",
+            body: formData,
+          });
+        } catch (error) {
+          console.error("Error updating menu description:", error);
+        }
+      }
+    });
+
+    // รอให้การอัปเดต description เสร็จสิ้น
+    await Promise.all(updatePromises);
+
+    // เพิ่มเมนูลงใน cart
     filteredMenuList.forEach((menu) => {
       const qty = quantities[menu.menu_id] ?? 0;
       if (qty > 0) {
@@ -76,11 +105,12 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
           (item) => item.menu_id === menu.menu_id
         );
         if (!existing) {
-          addItem({ ...menu, menu_total: 0 }); // ให้ menu_total เริ่มที่ 0
+          addItem({ ...menu, menu_total: 0, menu_description: descriptions[menu.menu_id] || "" }); // ให้ menu_total เริ่มที่ 0
         }
         setItemQuantity(menu.menu_id, qty);
       }
     });
+    
     setShowPopup(false);
     router.push("/home/order");
   };
@@ -103,6 +133,13 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
     setQuantities((prev) => ({
       ...prev,
       [menu_id]: value < 0 ? 0 : value,
+    }));
+  };
+
+  const handleChangeDescription = (menu_id: string, value: string) => {
+    setDescriptions((prev) => ({
+      ...prev,
+      [menu_id]: value,
     }));
   };
 
@@ -141,17 +178,17 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
                 {filteredMenuList.map((menu) => (
                   <li
                     key={menu.menu_id}
-                    className="border-b py-2 flex items-center justify-between"
+                    className="border-b py-3"
                   >
-                    <span>{menu.menu_name}</span>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleDecrease(menu.menu_id)}
-                        className="px-2 py-1 rounded bg-gray-300 text-gray-700 font-bold hover:bg-gray-400 transition"
-                      >
-                        <FontAwesomeIcon icon={faMinus} />
-                      </button>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">{menu.menu_name}</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleDecrease(menu.menu_id)}
+                          className="px-2 py-1 rounded bg-gray-300 text-gray-700 font-bold hover:bg-gray-400 transition"
+                        >
+                          <FontAwesomeIcon icon={faMinus} />
+                        </button>
                         <input
                           type="number"
                           value={quantities[menu.menu_id] ?? 0}
@@ -167,17 +204,30 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
                           className="w-16 text-center border rounded px-2 py-1"
                           min={0}
                         />
-                      <button
-                        onClick={() => handleIncrease(menu.menu_id)}
-                        className="px-2 py-1 rounded bg-gray-300 text-gray-700 font-bold hover:bg-gray-400 transition"
-                      >
-                        <FontAwesomeIcon icon={faPlus} />
-                      </button>
+                        <button
+                          onClick={() => handleIncrease(menu.menu_id)}
+                          className="px-2 py-1 rounded bg-gray-300 text-gray-700 font-bold hover:bg-gray-400 transition"
+                        >
+                          <FontAwesomeIcon icon={faPlus} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <textarea
+                        value={descriptions[menu.menu_id] ?? ""}
+                        onChange={(e) => handleChangeDescription(menu.menu_id, e.target.value)}
+                        placeholder="คำอธิบายเพิ่มเติม (ถ้ามี)"
+                        className="w-full border rounded px-2 py-1 text-sm resize-none"
+                        rows={2}
+                        maxLength={100}
+                      />
                     </div>
                   </li>
                 ))}
               </ul>
             )}
+
+            
 
             <div className="flex justify-between mt-6">
               <button
