@@ -1462,13 +1462,21 @@ const SummaryList: React.FC = () => {
                                 </span>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
-                                <div className='flex items-center gap-1 text-sm sm:text-base'>
-                                  <Package className='w-4 h-4' />
-                                  <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
-                                  <Wallet className='w-4 h-4 text-green-400' />
-                                  <span className='text-sm sm:text-base font-normal'>ราคาทั้งหมด {cart.price.toLocaleString()} บาท</span>
-                                  <Container className='w-4 h-4 text-green-400' />
-                                  <span className='text-sm sm:text-base font-normal'>ค่าจัดส่ง {cart.cart_shipping_cost?.toLocaleString() ?? "0"} บาท</span>
+                                <div className='flex flex-col sm:flex-row sm:items-center gap-2 text-sm sm:text-base'>
+                                  <div className='flex items-center gap-1'>
+                                    <Package className='w-4 h-4' />
+                                    <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
+                                  </div>
+                                  <div className='flex items-center gap-1'>
+                                    <Wallet className='w-4 h-4 text-green-400' />
+                                    <span>ราคาอาหาร {cart.price.toLocaleString()} บาท</span>
+                                  </div>
+                                  <div className='flex items-center gap-1'>
+                                    <Container className='w-4 h-4 text-blue-500' />
+                                    <span className='font-medium text-blue-600'>
+                                      ค่าจัดส่ง {cart.cart_shipping_cost?.toLocaleString() ?? "0"} บาท
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
