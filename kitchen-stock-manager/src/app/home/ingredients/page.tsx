@@ -409,12 +409,19 @@ export default function IngredientManagement() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value='กรัม'>กรัม</SelectItem>
+                            <SelectItem value='กิโลกรัม'>กิโลกรัม</SelectItem>
                             <SelectItem value='มิลลิลิตร'>มิลลิลิตร</SelectItem>
-                            {/* <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem> */}
+                            <SelectItem value='ลิตร'>ลิตร</SelectItem>
+                            <SelectItem value='ชิ้น'>ชิ้น</SelectItem>
+                            <SelectItem value='ตัว'>ตัว</SelectItem>
+                            <SelectItem value='ซอง'>ซอง</SelectItem>
+                            <SelectItem value='ใบ'>ใบ</SelectItem>
+                            <SelectItem value='ถ้วย'>ถ้วย</SelectItem>
+                            <SelectItem value='กระป๋อง'>กระป๋อง</SelectItem>
+                            <SelectItem value='ขวด'>ขวด</SelectItem>
+                            <SelectItem value='ก้อน'>ก้อน</SelectItem>
                             <SelectItem value='ฟอง'>ฟอง</SelectItem>
                             <SelectItem value='ลูก'>ลูก</SelectItem>
-                            {/* <SelectItem value="ลิตร">ลิตร</SelectItem> */}
-                            {/* <SelectItem value="ถุง">ถุง</SelectItem> */}
                           </SelectContent>
                         </Select>
                       </div>
