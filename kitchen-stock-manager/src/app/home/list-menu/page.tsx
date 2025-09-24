@@ -167,9 +167,21 @@ export default function Page() {
   const deleteMenu = async (menuId: string) => {
     if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?")) return;
     setIsSubmitting(true);
+    
+    try {
+      const res = await fetch(`/api/delete/menu/${menuId}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) throw new Error("ไม่สามารถลบเมนูได้");
+      
+      location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-    setIsSubmitting(true); 
-  }
 
   const openEditDialog = (item: MenuItem) => {
     setMenuName(item.menu_name);
@@ -359,8 +371,8 @@ export default function Page() {
                       แก้ไข
                     </button>
                     <button
-                      onClick={() => deleteMenu}
-                      className="px-3 py-1 bg-yellow-400 text-white rounded"
+                      onClick={() => deleteMenu(item.menu_id)}
+                      className="px-3 py-1 bg-red-500 text-white rounded ml-2"
                     >
                       ลบ
                     </button>
