@@ -62,6 +62,7 @@ const SummaryList: React.FC = () => {
     menuItems: {
       menu_name: string;
       menu_total: number;
+      menu_description?: string;
       menu_ingredients: {
         useItem: number;
         ingredient_name: string;
@@ -195,6 +196,7 @@ const SummaryList: React.FC = () => {
             menuItems: menuItems.map((item) => ({
               ...item,
               menu_ingredients: item.menu_ingredients || [],
+              menu_description: item.menu_description || undefined,
             })),
             allIngredients,
             order_number: cart.cart_order_number,
@@ -921,10 +923,13 @@ const SummaryList: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
+    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
     const csvContent = [
       headers.join(","),
-      ...filteredAndSortedOrders.map((cart) => [cart.id, cart.name, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy].join(",")),
+      ...filteredAndSortedOrders.map((cart) => {
+        const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
+        return [cart.id, cart.name, menuDescriptions, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy].join(",");
+      }),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -943,9 +948,12 @@ const SummaryList: React.FC = () => {
     doc.setFontSize(16);
     doc.text("Order History", 14, 20);
 
-    const tableColumn = ["Order ID", "Menu", "Date", "Time", "Sets", "Price", "Status", "Created By"];
+    const tableColumn = ["Order ID", "Menu", "Menu Description", "Date", "Time", "Sets", "Price", "Status", "Created By"];
 
-    const tableRows = filteredAndSortedOrders.map((cart) => [cart.id, cart.name, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy]);
+    const tableRows = filteredAndSortedOrders.map((cart) => {
+      const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
+      return [cart.id, cart.name, menuDescriptions, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy];
+    });
 
     autoTable(doc, {
       head: [tableColumn],
@@ -1557,6 +1565,7 @@ const SummaryList: React.FC = () => {
                                           menuItems: currentCart.menuItems.map((item) => ({
                                             menu_name: item.menu_name || "เมนูไม่ระบุ",
                                             menu_total: item.menu_total || 0,
+                                            menu_description: item.menu_description || undefined,
                                             menu_ingredients: Array.isArray(item.menu_ingredients)
                                               ? item.menu_ingredients.map((ing) => ({
                                                   useItem: ing.useItem ?? 0,
@@ -1603,8 +1612,13 @@ const SummaryList: React.FC = () => {
                                               ) : (
                                                 editMenuDialog?.menuItems.map((item, idx) => (
                                                   <div key={idx} className='flex flex-col gap-2 border-b border-gray-200 py-2'>
+                                                    <div className='flex flex-col gap-1'>
+                                                      <span className='flex-1 text-sm text-gray-700 font-medium'>{item.menu_name}</span>
+                                                      {item.menu_description && (
+                                                        <span className='text-xs text-gray-500'>{item.menu_description}</span>
+                                                      )}
+                                                    </div>
                                                     <div className='flex items-center gap-2'>
-                                                      <span className='flex-1 text-sm text-gray-700'>{item.menu_name}</span>
                                                       <Input
                                                         type='number'
                                                         value={item.menu_total}
@@ -1828,7 +1842,15 @@ const SummaryList: React.FC = () => {
                                         value={`menu-${groupIdx}`}
                                         className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                          <span className='truncate text-sm text-gray-700'>{menuGroup.menuName}</span>
+                                          <div className='flex flex-col items-start'>
+                                            <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                            {(() => {
+                                              const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                              return menuItem?.menu_description ? (
+                                                <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span>
+                                              ) : null;
+                                            })()}
+                                          </div>
                                           <span className='flex items-center gap-2'>
                                             {isEditingThisMenu ? (
                                               <>
