@@ -62,17 +62,19 @@ const SummaryList: React.FC = () => {
     menuItems: {
       menu_name: string;
       menu_total: number;
-      menu_description?: string;
+      menu_order_id: number;
+      menu_description: string;
       menu_ingredients: {
         useItem: number;
         ingredient_name: string;
         ingredient_status: boolean;
       }[];
     }[];
-    newMenu: { menu_name: string; menu_total: number };
+    newMenu: { menu_name: string; menu_total: number; menu_description: string };
   } | null>(null);
   const [editIngredientsMenu, setEditIngredientsMenu] = useState<{
     cartId: string;
+    menu_order_id: number;
     menuName: string;
     ingredients: {
       ingredient_name: string;
@@ -82,6 +84,17 @@ const SummaryList: React.FC = () => {
     }[];
     newIngredient: { ingredient_name: string; useItem: number };
   } | null>(null);
+  const [newIngredient, setNewIngredient] = useState<{
+    name: string;
+    useItem: number;
+    unit: string;
+  }>({ name: "", useItem: 1, unit: "" });
+  const [addMenuDialog, setAddMenuDialog] = useState<{ cartId: string } | null>(null);
+  const [newMenu, setNewMenu] = useState<{ name: string; total: number; description: string }>({
+    name: "",
+    total: 1,
+    description: "",
+  });
   // ใช้ SWR เพื่อดึงข้อมูล
   const { data: menuListData, error: menuListError } = useSWR(shouldFetchMenu ? "/api/get/menu/name" : null, fetcher, {
     refreshInterval: 30000,
@@ -93,23 +106,6 @@ const SummaryList: React.FC = () => {
   const isLoading = !cartsData || !menuData || !ingredientData;
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
-  // const [editIngredientsMenu, setEditIngredientsMenu] = useState<{
-  //   cartId: string;
-  //   menuName: string;
-  //   ingredients: Ingredient[];
-  // } | null>(null);
-
-  const [newIngredient, setNewIngredient] = useState<{
-    name: string;
-    useItem: number;
-    unit: string;
-  }>({ name: "", useItem: 1, unit: "" });
-
-  const [addMenuDialog, setAddMenuDialog] = useState<{ cartId: string } | null>(null);
-  const [newMenu, setNewMenu] = useState<{ name: string; total: number }>({
-    name: "",
-    total: 1,
-  });
 
   const handleSummaryprice = () => {
     router.push("/home/summarylist/summaryprice");
@@ -894,15 +890,6 @@ const SummaryList: React.FC = () => {
     };
   };
 
-  // const handleSummaryClick = (date: string) => {
-  //   setSelectedDateForSummary(date);
-  //   setIsSummaryModalOpen(true);
-  // };
-
-  // const handleOrderSummaryClick = (cart: Cart) => {
-  //   setSelectedCartForSummary(cart);
-  //   setIsOrderSummaryModalOpen(true);
-  // };
   const handleSummaryClick = (date: string) => {
     setSelectedDateForSummary(date);
     setSummaryDialogType("date");
@@ -927,7 +914,7 @@ const SummaryList: React.FC = () => {
     const csvContent = [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) => {
-        const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
+        const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
         return [cart.id, cart.name, menuDescriptions, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy].join(",");
       }),
     ].join("\n");
@@ -951,7 +938,7 @@ const SummaryList: React.FC = () => {
     const tableColumn = ["Order ID", "Menu", "Menu Description", "Date", "Time", "Sets", "Price", "Status", "Created By"];
 
     const tableRows = filteredAndSortedOrders.map((cart) => {
-      const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
+      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
       return [cart.id, cart.name, menuDescriptions, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy];
     });
 
@@ -1026,6 +1013,7 @@ const SummaryList: React.FC = () => {
           menu_name: item.menu_name,
           menu_total: item.menu_total,
           menu_ingredients: menuIngredients,
+          menu_description: item.menu_description || "",
         };
       });
 
@@ -1119,7 +1107,7 @@ const SummaryList: React.FC = () => {
 
     setIsSaving(cartId);
     try {
-      console.log("Sending request with cartId:", cartId); // เพิ่ม log เพื่อตรวจสอบ
+      console.log("Sending request with cartId:", cartId);
       const response = await fetch(`/api/edit/cart-menu/ingredients/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -1481,9 +1469,7 @@ const SummaryList: React.FC = () => {
                                   </div>
                                   <div className='flex items-center gap-1'>
                                     <Container className='w-4 h-4 text-blue-500' />
-                                    <span className='font-medium text-blue-600'>
-                                      ค่าจัดส่ง {cart.cart_shipping_cost?.toLocaleString() ?? "0"} บาท
-                                    </span>
+                                    <span className='font-medium text-blue-600'>ค่าจัดส่ง {cart.cart_shipping_cost?.toLocaleString() ?? "0"} บาท</span>
                                   </div>
                                 </div>
                               </div>
@@ -1614,14 +1600,12 @@ const SummaryList: React.FC = () => {
                                                   <div key={idx} className='flex flex-col gap-2 border-b border-gray-200 py-2'>
                                                     <div className='flex flex-col gap-1'>
                                                       <span className='flex-1 text-sm text-gray-700 font-medium'>{item.menu_name}</span>
-                                                      {item.menu_description && (
-                                                        <span className='text-xs text-gray-500'>{item.menu_description}</span>
-                                                      )}
                                                     </div>
                                                     <div className='flex items-center gap-2'>
+                                                      <span>จำนวนกล่อง</span>
                                                       <Input
                                                         type='number'
-                                                        value={item.menu_total}
+                                                        value={item.menu_total || 0}
                                                         onChange={(e) =>
                                                           setEditMenuDialog((prev) =>
                                                             prev
@@ -1631,7 +1615,7 @@ const SummaryList: React.FC = () => {
                                                                     i === idx
                                                                       ? {
                                                                           ...m,
-                                                                          menu_total: Number(e.target.value),
+                                                                          menu_total: Number(e.target.value) || 0,
                                                                         }
                                                                       : m
                                                                   ),
@@ -1641,6 +1625,29 @@ const SummaryList: React.FC = () => {
                                                         }
                                                         placeholder='จำนวนกล่อง'
                                                         min='0'
+                                                        className='w-20 h-8 text-sm'
+                                                      />
+                                                      <span>รายละเอียด</span>
+                                                      <Input
+                                                        type='text'
+                                                        value={item.menu_description || ""}
+                                                        onChange={(e) =>
+                                                          setEditMenuDialog((prev) =>
+                                                            prev
+                                                              ? {
+                                                                  ...prev,
+                                                                  menuItems: prev.menuItems.map((m, i) =>
+                                                                    i === idx
+                                                                      ? {
+                                                                          ...m,
+                                                                          menu_description: e.target.value || "",
+                                                                        }
+                                                                      : m
+                                                                  ),
+                                                                }
+                                                              : prev
+                                                          )
+                                                        }
                                                         className='w-20 h-8 text-sm'
                                                       />
                                                       <Button
@@ -1660,51 +1667,6 @@ const SummaryList: React.FC = () => {
                                                         ลบ
                                                       </Button>
                                                     </div>
-                                                    {/* แสดงวัตถุดิบของเมนูนี้ */}
-                                                    {/* <div className="ml-4 text-sm text-gray-600">
-                                                      <strong>วัตถุดิบ:</strong>
-                                                      {Array.isArray(
-                                                        item.menu_ingredients
-                                                        ) &&
-                                                        item.menu_ingredients
-                                                        .length > 0 ? (
-                                                          <ul className="list-disc ml-4">
-                                                          {item.menu_ingredients.map(
-                                                            (ing, ingIdx) => {
-                                                              const ingredientUnit =
-                                                              ingredientData?.find(
-                                                                (i: {
-                                                                  ingredient_name: string;
-                                                                  }) =>
-                                                                  i.ingredient_name ===
-                                                                  ing.ingredient_name
-                                                                  )
-                                                                  ?.ingredient_unit ||
-                                                                  "หน่วย";
-                                                                  return (
-                                                                    <li
-                                                                    key={ingIdx}
-                                                                    >
-                                                                    {ing.ingredient_name ||
-                                                                    "ไม่ระบุวัตถุดิบ"}{" "}
-                                                                    (
-                                                                      {ing.useItem ??
-                                                                      0}{" "}
-                                                                      {
-                                                                        ingredientUnit
-                                                                        }
-                                                                        )
-                                                                        </li>
-                                                                        );
-                                                                        }
-                                                                        )}
-                                                                        </ul>
-                                                                        ) : (
-                                                                          <span>
-                                                                          ไม่มีวัตถุดิบ
-                                                                          </span>
-                                                                          )}
-                                                                          </div> */}
                                                   </div>
                                                 ))
                                               )}
@@ -1713,36 +1675,59 @@ const SummaryList: React.FC = () => {
                                             {/* เพิ่มเมนูใหม่ */}
                                             <div className='space-y-2'>
                                               <h5 className='text-sm font-semibold text-gray-700'>เพิ่มเมนูใหม่</h5>
-                                              <div className='flex items-center gap-2'>
-                                                <Select
-                                                  value={editMenuDialog?.newMenu.menu_name || ""}
-                                                  onValueChange={(value) =>
-                                                    setEditMenuDialog((prev) =>
-                                                      prev
-                                                        ? {
-                                                            ...prev,
-                                                            newMenu: {
-                                                              ...prev.newMenu,
-                                                              menu_name: value,
-                                                            },
-                                                          }
-                                                        : prev
-                                                    )
-                                                  }>
-                                                  <SelectTrigger className='flex-1 h-8 text-sm'>
-                                                    <SelectValue placeholder='เลือกเมนู' />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                    {menuListData?.map((menu: { menu_name: string }) => (
-                                                      <SelectItem key={menu.menu_name} value={menu.menu_name}>
-                                                        {menu.menu_name}
-                                                      </SelectItem>
-                                                    ))}
-                                                  </SelectContent>
-                                                </Select>
+                                              <div className='flex flex-col gap-2'>
+                                                <div className='flex items-center gap-2'>
+                                                  <Select
+                                                    value={editMenuDialog?.newMenu.menu_name || ""}
+                                                    onValueChange={(value) =>
+                                                      setEditMenuDialog((prev) =>
+                                                        prev
+                                                          ? {
+                                                              ...prev,
+                                                              newMenu: {
+                                                                ...prev.newMenu,
+                                                                menu_name: value || "",
+                                                              },
+                                                            }
+                                                          : prev
+                                                      )
+                                                    }>
+                                                    <SelectTrigger className='flex-1 h-8 text-sm'>
+                                                      <SelectValue placeholder='เลือกเมนู' />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      {menuListData?.map((menu: { menu_name: string }) => (
+                                                        <SelectItem key={menu.menu_name} value={menu.menu_name}>
+                                                          {menu.menu_name}
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                  <Input
+                                                    type='number'
+                                                    value={editMenuDialog?.newMenu.menu_total || 1}
+                                                    onChange={(e) =>
+                                                      setEditMenuDialog((prev) =>
+                                                        prev
+                                                          ? {
+                                                              ...prev,
+                                                              newMenu: {
+                                                                ...prev.newMenu,
+                                                                menu_total: Number(e.target.value) || 1,
+                                                              },
+                                                            }
+                                                          : prev
+                                                      )
+                                                    }
+                                                    placeholder='จำนวน'
+                                                    min='0'
+                                                    className='w-20 h-8 text-sm'
+                                                  />
+                                                </div>
+                                                {/* เพิ่ม input field สำหรับ description */}
                                                 <Input
-                                                  type='number'
-                                                  value={editMenuDialog?.newMenu.menu_total || 1}
+                                                  type='text'
+                                                  value={editMenuDialog?.newMenu.menu_description || ""}
                                                   onChange={(e) =>
                                                     setEditMenuDialog((prev) =>
                                                       prev
@@ -1750,15 +1735,14 @@ const SummaryList: React.FC = () => {
                                                             ...prev,
                                                             newMenu: {
                                                               ...prev.newMenu,
-                                                              menu_total: Number(e.target.value),
+                                                              menu_description: e.target.value || "",
                                                             },
                                                           }
                                                         : prev
                                                     )
                                                   }
-                                                  placeholder='จำนวน'
-                                                  min='0'
-                                                  className='w-20 h-8 text-sm'
+                                                  placeholder='รายละเอียดเมนู (ไม่บังคับ)'
+                                                  className='w-full h-8 text-sm'
                                                 />
                                                 <Button
                                                   size='sm'
@@ -1783,8 +1767,9 @@ const SummaryList: React.FC = () => {
                                                             menuItems: [
                                                               ...prev.menuItems,
                                                               {
-                                                                menu_name: prev.newMenu.menu_name,
-                                                                menu_total: prev.newMenu.menu_total,
+                                                                menu_name: prev.newMenu.menu_name || "",
+                                                                menu_total: prev.newMenu.menu_total || 1,
+                                                                menu_description: prev.newMenu.menu_description || "",
                                                                 menu_ingredients:
                                                                   menuData?.menu_ingredients?.map((ing: { useItem?: number; quantity?: number; ingredient_name?: string; name?: string }) => ({
                                                                     useItem: ing.useItem || ing.quantity || 0,
@@ -1796,6 +1781,7 @@ const SummaryList: React.FC = () => {
                                                             newMenu: {
                                                               menu_name: "",
                                                               menu_total: 1,
+                                                              menu_description: "",
                                                             },
                                                           }
                                                         : prev;
@@ -1846,9 +1832,7 @@ const SummaryList: React.FC = () => {
                                             <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
                                             {(() => {
                                               const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                              return menuItem?.menu_description ? (
-                                                <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span>
-                                              ) : null;
+                                              return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
                                             })()}
                                           </div>
                                           <span className='flex items-center gap-2'>
@@ -2003,7 +1987,7 @@ const SummaryList: React.FC = () => {
                               <span className='flex-1 text-sm text-gray-700'>{ingredient.ingredient_name}</span>
                               <Input
                                 type='number'
-                                value={ingredient.useItem}
+                                value={ingredient.useItem || 0}
                                 onChange={(e) =>
                                   setEditIngredientsMenu((prev) =>
                                     prev
@@ -2013,7 +1997,7 @@ const SummaryList: React.FC = () => {
                                             i === idx
                                               ? {
                                                   ...ing,
-                                                  useItem: Number(e.target.value),
+                                                  useItem: Number(e.target.value) || 0,
                                                 }
                                               : ing
                                           ),
@@ -2060,7 +2044,7 @@ const SummaryList: React.FC = () => {
                                     ...prev,
                                     newIngredient: {
                                       ...prev.newIngredient,
-                                      ingredient_name: value,
+                                      ingredient_name: value || "",
                                     },
                                   }
                                 : prev
@@ -2087,7 +2071,7 @@ const SummaryList: React.FC = () => {
                                     ...prev,
                                     newIngredient: {
                                       ...prev.newIngredient,
-                                      useItem: Number(e.target.value),
+                                      useItem: Number(e.target.value) || 0,
                                     },
                                   }
                                 : prev
@@ -2101,7 +2085,6 @@ const SummaryList: React.FC = () => {
                           {editIngredientsMenu?.newIngredient.ingredient_name
                             ? ingredientData?.find((ing: { ingredient_name: string }) => ing.ingredient_name === editIngredientsMenu.newIngredient.ingredient_name)?.ingredient_unit || "ไม่ระบุหน่วย"
                             : ""}
-                          {/* ^^^^ คือไร */}
                         </span>
                         <Button
                           size='sm'
@@ -2123,8 +2106,8 @@ const SummaryList: React.FC = () => {
                                 ingredients: [
                                   ...prev.ingredients,
                                   {
-                                    ingredient_name: prev.newIngredient.ingredient_name,
-                                    useItem: prev.newIngredient.useItem,
+                                    ingredient_name: prev.newIngredient.ingredient_name || "",
+                                    useItem: prev.newIngredient.useItem || 0,
                                     ingredient_status: false,
                                     ingredient_unit: selectedIngredient?.ingredient_unit || "ไม่ระบุหน่วย",
                                   },

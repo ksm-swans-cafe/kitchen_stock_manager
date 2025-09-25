@@ -11,6 +11,8 @@ interface MenuItem {
     ingredient_name?: string;
     ingredient_status?: boolean;
   }[];
+  menu_description?: string;
+  menu_order_id?: number;
 }
 
 export async function PATCH(

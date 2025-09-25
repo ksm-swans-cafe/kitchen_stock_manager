@@ -130,11 +130,12 @@ export default function CartList() {
           cart_export_time,
           cart_receive_time,
           cart_shipping_cost,
-          cart_menu_items: items.map(({ menu_name, menu_total, menu_ingredients, menu_description }) => ({
-            menu_name,
-            menu_total,
-            menu_ingredients,
-            menu_description,
+          cart_menu_items: items.map((item, index) => ({
+            menu_name: item.menu_name,
+            menu_total: item.menu_total,
+            menu_ingredients: item.menu_ingredients,
+            menu_description: item.menu_description,
+            menu_order_id: index + 1, 
           })),
         }),
       });
