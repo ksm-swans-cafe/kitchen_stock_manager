@@ -12,48 +12,16 @@ import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
 import { BsCashStack } from "react-icons/bs";
 import { FaWallet } from "react-icons/fa";
-import {
-  Clock,
-  User,
-  Package,
-  FileText,
-  Search,
-  CalendarDays,
-  Filter,
-  Smartphone,
-  Wallet,
-  Map,
-  Download,
-  Users,
-  Edit2,
-  Container,
-} from "lucide-react";
+import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map, Download, Users, Edit2, Container } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/share/ui/accordion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/share/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/share/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
 import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
 import PaginationComponent from "@/components/ui/Totalpage";
-import {
-  Ingredient,
-  MenuItem,
-  Cart,
-  CartItem,
-  RawCart,
-} from "@/types/interface_summary_orderhistory";
+import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
 
 // Fetcher function สำหรับ SWR
@@ -81,16 +49,11 @@ const SummaryList: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [calendarEvents, setCalendarEvents] = useState<EventInput[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<Cart[]>([]);
-  const [selectedDateForSummary, setSelectedDateForSummary] = useState<
-    string | null
-  >(null);
+  const [selectedDateForSummary, setSelectedDateForSummary] = useState<string | null>(null);
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
-  const [summaryDialogType, setSummaryDialogType] = useState<
-    "order" | "date" | null
-  >(null);
-  const [selectedCartForSummary, setSelectedCartForSummary] =
-    useState<Cart | null>(null);
+  const [summaryDialogType, setSummaryDialogType] = useState<"order" | "date" | null>(null);
+  const [selectedCartForSummary, setSelectedCartForSummary] = useState<Cart | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isOrderSummaryModalOpen, setIsOrderSummaryModalOpen] = useState(false);
   const [shouldFetchMenu, setShouldFetchMenu] = useState(false);
@@ -133,46 +96,16 @@ const SummaryList: React.FC = () => {
     description: "",
   });
   // ใช้ SWR เพื่อดึงข้อมูล
-  const { data: menuListData, error: menuListError } = useSWR(
-    shouldFetchMenu ? "/api/get/menu/name" : null,
-    fetcher,
-    {
-      refreshInterval: 30000,
-    }
-  );
-  const {
-    data: cartsData,
-    error: cartsError,
-    mutate: mutateCarts,
-  } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
-  const { data: menuData, error: menuError } = useSWR(
-    "/api/get/menu/list",
-    fetcher,
-    { refreshInterval: 30000 }
-  );
-  const { data: ingredientData, error: ingredientError } = useSWR(
-    "/api/get/ingredients",
-    fetcher,
-    { refreshInterval: 30000 }
-  );
+  const { data: menuListData, error: menuListError } = useSWR(shouldFetchMenu ? "/api/get/menu/name" : null, fetcher, {
+    refreshInterval: 30000,
+  });
+  const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
+  const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher, { refreshInterval: 30000 });
+  const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
   const error = cartsError || menuError || ingredientError;
   const isLoading = !cartsData || !menuData || !ingredientData;
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
-
-  const [newIngredient, setNewIngredient] = useState<{
-    name: string;
-    useItem: number;
-    unit: string;
-  }>({ name: "", useItem: 1, unit: "" });
-
-  const [addMenuDialog, setAddMenuDialog] = useState<{ cartId: string } | null>(
-    null
-  );
-  const [newMenu, setNewMenu] = useState<{ name: string; total: number }>({
-    name: "",
-    total: 1,
-  });
 
   const handleSummaryprice = () => {
     router.push("/home/summarylist/summaryprice");
@@ -198,20 +131,14 @@ const SummaryList: React.FC = () => {
     const formatOrders = async () => {
       try {
         const ingredientUnitMap = new globalThis.Map<string, string>();
-        ingredientData.forEach(
-          (ing: { ingredient_name: string; ingredient_unit: string }) => {
-            ingredientUnitMap.set(ing.ingredient_name, ing.ingredient_unit);
-          }
-        );
+        ingredientData.forEach((ing: { ingredient_name: string; ingredient_unit: string }) => {
+          ingredientUnitMap.set(ing.ingredient_name, ing.ingredient_unit);
+        });
 
         const formattedOrders: Cart[] = cartsData.map((cart: RawCart) => {
           const [rawDate] = cart.cart_create_date.split("T");
           const [year, month, day] = rawDate.split("-");
-          const dateObjectForLocale = new Date(
-            Number(year),
-            Number(month) - 1,
-            Number(day)
-          );
+          const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
           const formattedDate = dateObjectForLocale
             .toLocaleDateString("th-TH", {
               day: "numeric",
@@ -222,63 +149,35 @@ const SummaryList: React.FC = () => {
 
           const date = new Date(cart.cart_create_date);
           const formattedDateISO = date.toISOString().split("T")[0];
-          const formattedTime = cart.cart_create_date
-            .split("T")[1]
-            .split(".")[0]
-            .slice(0, 5);
+          const formattedTime = cart.cart_create_date.split("T")[1].split(".")[0].slice(0, 5);
 
           const menuItems: MenuItem[] =
             typeof cart.cart_menu_items === "string" && cart.cart_menu_items
               ? safeParseJSON(cart.cart_menu_items)
               : Array.isArray(cart.cart_menu_items)
-              ? cart.cart_menu_items.filter(
-                  (item) => item && typeof item.menu_total === "number"
-                )
+              ? cart.cart_menu_items.filter((item) => item && typeof item.menu_total === "number")
               : [];
 
-          const totalSets = menuItems
-            .filter(
-              (item) =>
-                item &&
-                typeof item === "object" &&
-                typeof item.menu_total === "number"
-            )
-            .reduce((sum, item) => sum + (item.menu_total || 0), 0);
+          const totalSets = menuItems.filter((item) => item && typeof item === "object" && typeof item.menu_total === "number").reduce((sum, item) => sum + (item.menu_total || 0), 0);
 
-          const menuDisplayName =
-            menuItems.length > 0
-              ? menuItems
-                  .map(
-                    (item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`
-                  )
-                  .join(" + ")
-              : "ไม่มีชื่อเมนู";
+          const menuDisplayName = menuItems.length > 0 ? menuItems.map((item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`).join(" + ") : "ไม่มีชื่อเมนู";
 
           const allIngredients = menuItems.map((menu) => ({
             menuName: menu.menu_name,
-            ingredients: (menu.menu_ingredients ?? []).map(
-              (dbIng: Ingredient) => ({
-                ...dbIng,
-                ingredient_id: dbIng.ingredient_id || undefined,
-                ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-                calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
-                sourceMenu: menu.menu_name,
-                isChecked: dbIng.ingredient_status ?? false,
-                ingredient_status: dbIng.ingredient_status ?? false,
-                ingredient_unit:
-                  ingredientUnitMap.get(
-                    dbIng.ingredient_name?.toString() || ""
-                  ) || "ไม่ระบุหน่วย",
-              })
-            ),
-            ingredient_status: (menu.menu_ingredients ?? []).every(
-              (ing: Ingredient) => ing.ingredient_status ?? false
-            ),
+            ingredients: (menu.menu_ingredients ?? []).map((dbIng: Ingredient) => ({
+              ...dbIng,
+              ingredient_id: dbIng.ingredient_id || undefined,
+              ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
+              calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+              sourceMenu: menu.menu_name,
+              isChecked: dbIng.ingredient_status ?? false,
+              ingredient_status: dbIng.ingredient_status ?? false,
+              ingredient_unit: ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
+            })),
+            ingredient_status: (menu.menu_ingredients ?? []).every((ing: Ingredient) => ing.ingredient_status ?? false),
           }));
 
-          const orderNumber = `ORD${
-            cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"
-          }`;
+          const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -303,7 +202,7 @@ const SummaryList: React.FC = () => {
             cart_customer_tel: cart.cart_customer_tel,
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
-            cart_shipping_cost: cart.cart_shipping_cost
+            cart_shipping_cost: cart.cart_shipping_cost,
           };
         });
 
@@ -314,12 +213,8 @@ const SummaryList: React.FC = () => {
           if (!dateA) return 1;
           if (!dateB) return -1;
 
-          const diffA = Math.abs(
-            new Date(dateA).getTime() - new Date().getTime()
-          );
-          const diffB = Math.abs(
-            new Date(dateB).getTime() - new Date().getTime()
-          );
+          const diffA = Math.abs(new Date(dateA).getTime() - new Date().getTime());
+          const diffB = Math.abs(new Date(dateB).getTime() - new Date().getTime());
 
           if (diffA !== diffB) {
             return diffA - diffB;
@@ -378,11 +273,7 @@ const SummaryList: React.FC = () => {
     receiveMinute: string;
   } | null>(null);
 
-  const handleEditTimes = (
-    cartId: string,
-    exportTime: string,
-    receiveTime: string
-  ) => {
+  const handleEditTimes = (cartId: string, exportTime: string, receiveTime: string) => {
     const parseTime = (time: string) => {
       if (!time) return { hour: "00", minute: "00" };
       const [hour, minute] = time.split(":").map((h) => h.padStart(2, "0"));
@@ -445,11 +336,7 @@ const SummaryList: React.FC = () => {
       });
     } catch (err) {
       console.error("Error updating times:", err);
-      console.error(
-        err instanceof Error
-          ? `ไม่สามารถอัปเดตเวลา: ${err.message}`
-          : "เกิดข้อผิดพลาดในการอัปเดตเวลา"
-      );
+      console.error(err instanceof Error ? `ไม่สามารถอัปเดตเวลา: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตเวลา");
     } finally {
       setIsSaving(null);
     }
@@ -467,16 +354,10 @@ const SummaryList: React.FC = () => {
     return value;
   };
 
-  const handleToggleIngredientCheck = async (
-    cartId: string,
-    menuName: string,
-    ingredientName: string
-  ) => {
+  const handleToggleIngredientCheck = async (cartId: string, menuName: string, ingredientName: string) => {
     const previousCarts = [...carts];
     const currentCart = carts.find((cart) => cart.id === cartId);
-    const currentIngredient = currentCart?.allIngredients
-      .find((group) => group.menuName === menuName)
-      ?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
+    const currentIngredient = currentCart?.allIngredients.find((group) => group.menuName === menuName)?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
 
     const newCheckedStatus = !currentIngredient?.isChecked;
 
@@ -498,11 +379,7 @@ const SummaryList: React.FC = () => {
                             }
                           : ing
                       ),
-                      ingredient_status: group.ingredients.every((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? newCheckedStatus
-                          : ing.isChecked
-                      ),
+                      ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),
                     }
                   : group
               ),
@@ -512,34 +389,25 @@ const SummaryList: React.FC = () => {
     );
 
     try {
-      const response = await fetch(
-        `/api/edit/cart-menu/ingredient-status/${cartId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            menuName,
-            ingredientName,
-            isChecked: newCheckedStatus,
-          }),
-        }
-      );
+      const response = await fetch(`/api/edit/cart-menu/ingredient-status/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          menuName,
+          ingredientName,
+          isChecked: newCheckedStatus,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.error || "Failed to update ingredient status"
-        );
+        throw new Error(errorData.error || "Failed to update ingredient status");
       }
 
       mutateCarts();
     } catch (err) {
       console.error("Error updating ingredient status:", err);
-      console.error(
-        err instanceof Error
-          ? `ไม่สามารถอัปเดตสถานะวัตถุดิบ: ${err.message}`
-          : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบ"
-      );
+      console.error(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบ: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบ");
       setCarts(previousCarts);
     }
   };
@@ -589,20 +457,15 @@ const SummaryList: React.FC = () => {
     }
 
     try {
-      const response = await fetch(
-        `/api/edit/cart-menu/all-ingredients-status/${cartId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isChecked: true }),
-        }
-      );
+      const response = await fetch(`/api/edit/cart-menu/all-ingredients-status/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isChecked: true }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.error || "Failed to update all ingredients status"
-        );
+        throw new Error(errorData.error || "Failed to update all ingredients status");
       }
 
       mutateCarts();
@@ -610,17 +473,11 @@ const SummaryList: React.FC = () => {
       // setIsSummaryDialogOpen(false);
     } catch (err) {
       console.error("Error updating all ingredients status:", err);
-      console.error(
-        err instanceof Error
-          ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}`
-          : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด"
-      );
+      console.error(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด");
       // คืนค่า state เดิมเมื่อเกิดข้อผิดพลาด
       setCarts(previousCarts);
       if (selectedCartForSummary && selectedCartForSummary.id === cartId) {
-        setSelectedCartForSummary(
-          previousCarts.find((cart) => cart.id === cartId) || null
-        );
+        setSelectedCartForSummary(previousCarts.find((cart) => cart.id === cartId) || null);
       }
     } finally {
       setIsSaving(null);
@@ -631,9 +488,7 @@ const SummaryList: React.FC = () => {
     const previousCarts = [...carts];
     setIsSaving("all");
 
-    const targetCarts = carts.filter(
-      (cart) => convertThaiDateToISO(cart.cart_delivery_date) === date
-    );
+    const targetCarts = carts.filter((cart) => convertThaiDateToISO(cart.cart_delivery_date) === date);
 
     // อัปเดต state ทันทีเพื่อให้ dialog แสดงผลเปลี่ยนแปลง
     setCarts((prevCarts) =>
@@ -665,10 +520,7 @@ const SummaryList: React.FC = () => {
           }).then(async (response) => {
             if (!response.ok) {
               const errorData = await response.json();
-              throw new Error(
-                errorData.error ||
-                  `Failed to update all ingredients status for cart ${cart.id}`
-              );
+              throw new Error(errorData.error || `Failed to update all ingredients status for cart ${cart.id}`);
             }
           })
         )
@@ -679,11 +531,7 @@ const SummaryList: React.FC = () => {
       // setIsSummaryModalOpen(false);
     } catch (err) {
       console.error("Error updating all ingredients for date:", err);
-      console.error(
-        err instanceof Error
-          ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่: ${err.message}`
-          : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่"
-      );
+      console.error(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมดสำหรับวันที่");
       // คืนค่า state เดิมเมื่อเกิดข้อผิดพลาด
       setCarts(previousCarts);
     } finally {
@@ -691,9 +539,7 @@ const SummaryList: React.FC = () => {
     }
   };
 
-  const convertThaiDateToISO = (
-    thaiDate: string | undefined
-  ): string | null => {
+  const convertThaiDateToISO = (thaiDate: string | undefined): string | null => {
     if (!thaiDate) return null;
     const [day, month, year] = thaiDate.split("/");
     const buddhistYear = parseInt(year, 10);
@@ -710,10 +556,7 @@ const SummaryList: React.FC = () => {
 
   const handleDateClick = (info: { dateStr: string }) => {
     const selectedDateStr = info.dateStr;
-    const filteredOrders = allCarts.filter(
-      (cart) =>
-        convertThaiDateToISO(cart.cart_delivery_date) === selectedDateStr
-    );
+    const filteredOrders = allCarts.filter((cart) => convertThaiDateToISO(cart.cart_delivery_date) === selectedDateStr);
     setSelectedOrders(filteredOrders);
     setIsOrderModalOpen(true);
     setSelectedDate(new Date(selectedDateStr));
@@ -734,11 +577,7 @@ const SummaryList: React.FC = () => {
     }
   };
 
-  const handleEditTotalBox = (
-    cartId: string,
-    menuName: string,
-    currentTotal: number
-  ) => {
+  const handleEditTotalBox = (cartId: string, menuName: string, currentTotal: number) => {
     setEditingMenu({ cartId, menuName });
     setEditTotalBox(currentTotal);
   };
@@ -772,11 +611,7 @@ const SummaryList: React.FC = () => {
           cart.id === cartId
             ? {
                 ...cart,
-                menuItems: cart.menuItems.map((item) =>
-                  item.menu_name === cleanedMenuName
-                    ? { ...item, menu_total: editTotalBox }
-                    : item
-                ),
+                menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
                 allIngredients: cart.allIngredients.map((group) =>
                   group.menuName === cleanedMenuName
                     ? {
@@ -788,14 +623,7 @@ const SummaryList: React.FC = () => {
                       }
                     : group
                 ),
-                sets: cart.menuItems.reduce(
-                  (sum, item) =>
-                    sum +
-                    (item.menu_name === cleanedMenuName
-                      ? editTotalBox
-                      : item.menu_total),
-                  0
-                ),
+                sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
               }
             : cart
         )
@@ -813,11 +641,7 @@ const SummaryList: React.FC = () => {
       setEditingMenu(null);
     } catch (err) {
       console.error("Error updating total box:", err);
-      console.error(
-        err instanceof Error
-          ? `ไม่สามารถอัปเดตจำนวนกล่อง: ${err.message}`
-          : "เกิดข้อผิดพลาดในการอัปเดตจำนวนกล่อง"
-      );
+      console.error(err instanceof Error ? `ไม่สามารถอัปเดตจำนวนกล่อง: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตจำนวนกล่อง");
     } finally {
       setIsSaving(null);
     }
@@ -858,37 +682,25 @@ const SummaryList: React.FC = () => {
   }, [carts]);
 
   const filteredAndSortedOrders = useMemo(() => {
-    let filtered = [...carts].filter(
-      (cart) => cart.status === "pending" || cart.status === "completed"
-    );
+    let filtered = [...carts].filter((cart) => cart.status === "pending" || cart.status === "completed");
 
     if (selectedDate) {
       const selectedDateISO = selectedDate.toISOString().split("T")[0];
-      filtered = filtered.filter(
-        (order) =>
-          convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO
-      );
+      filtered = filtered.filter((order) => convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO);
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((order) =>
-        [order.name, order.id, order.createdBy].some((field) =>
-          (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
+      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
     }
     if (filterStatus !== "ทั้งหมด") {
-      filtered = filtered.filter(
-        (order) => getStatusText(order.status) === filterStatus
-      );
+      filtered = filtered.filter((order) => getStatusText(order.status) === filterStatus);
     }
     if (filterCreator !== "ทั้งหมด") {
       filtered = filtered.filter((order) => order.createdBy === filterCreator);
     }
 
     const groupedByDate = filtered.reduce((acc, cart) => {
-      const deliveryDateISO =
-        convertThaiDateToISO(cart.cart_delivery_date) || "no-date";
+      const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date) || "no-date";
       if (!acc[deliveryDateISO]) {
         acc[deliveryDateISO] = [];
       }
@@ -990,12 +802,8 @@ const SummaryList: React.FC = () => {
       })
       .replace(/ /g, " ");
 
-    const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay]
-      ? [[currentDateDisplay, grouped[currentDateDisplay]]]
-      : [];
-    const otherDateGroups = Object.entries(grouped).filter(
-      ([date]) => date !== currentDateDisplay
-    );
+    const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay] ? [[currentDateDisplay, grouped[currentDateDisplay]]] : [];
+    const otherDateGroups = Object.entries(grouped).filter(([date]) => date !== currentDateDisplay);
 
     const sortedOtherDates = otherDateGroups.sort((a, b) => {
       const dateA = convertThaiDateToISO(a[1][0].cart_delivery_date);
@@ -1018,9 +826,7 @@ const SummaryList: React.FC = () => {
       [key: string]: { checked: number; total: number };
     } = {};
 
-    const ordersOnDate = filteredAndSortedOrders.filter(
-      (cart) => convertThaiDateToISO(cart.cart_delivery_date) === date
-    );
+    const ordersOnDate = filteredAndSortedOrders.filter((cart) => convertThaiDateToISO(cart.cart_delivery_date) === date);
 
     ordersOnDate.forEach((cart) => {
       cart.allIngredients.forEach((menuGroup) => {
@@ -1037,20 +843,14 @@ const SummaryList: React.FC = () => {
       });
     });
 
-    const allIngredientsChecked = ordersOnDate.every((cart) =>
-      cart.allIngredients.every((menuGroup) =>
-        menuGroup.ingredients.every((ing) => ing.isChecked)
-      )
-    );
+    const allIngredientsChecked = ordersOnDate.every((cart) => cart.allIngredients.every((menuGroup) => menuGroup.ingredients.every((ing) => ing.isChecked)));
 
     return {
-      summary: Object.entries(ingredientSummary).map(
-        ([name, { checked, total }]) => ({
-          name,
-          checked,
-          total,
-        })
-      ),
+      summary: Object.entries(ingredientSummary).map(([name, { checked, total }]) => ({
+        name,
+        checked,
+        total,
+      })),
       allIngredientsChecked,
     };
   };
@@ -1077,19 +877,15 @@ const SummaryList: React.FC = () => {
       });
     });
 
-    const allIngredientsChecked = cart.allIngredients.every((menuGroup) =>
-      menuGroup.ingredients.every((ing) => ing.isChecked)
-    );
+    const allIngredientsChecked = cart.allIngredients.every((menuGroup) => menuGroup.ingredients.every((ing) => ing.isChecked));
 
     return {
-      summary: Object.entries(ingredientSummary).map(
-        ([name, { checked, total, unit }]) => ({
-          name,
-          checked,
-          total,
-          unit,
-        })
-      ),
+      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({
+        name,
+        checked,
+        total,
+        unit,
+      })),
       allIngredientsChecked,
     };
   };
@@ -1107,15 +903,9 @@ const SummaryList: React.FC = () => {
   };
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
-  const paginatedGroupedOrders = groupedOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleUpdateWithCheck = (cart: {
-    id: string;
-    allIngredients: unknown[];
-  }) => {
+  const handleUpdateWithCheck = (cart: { id: string; allIngredients: unknown[] }) => {
     mutateCarts();
   };
 
@@ -1167,15 +957,7 @@ const SummaryList: React.FC = () => {
       !cartId ||
       !menuItems ||
       !Array.isArray(menuItems) ||
-      menuItems.some(
-        (m) =>
-          !m.menu_name ||
-          m.menu_total < 0 ||
-          !Array.isArray(m.menu_ingredients) ||
-          m.menu_ingredients.some(
-            (ing) => !ing.ingredient_name || ing.useItem < 0
-          )
-      )
+      menuItems.some((m) => !m.menu_name || m.menu_total < 0 || !Array.isArray(m.menu_ingredients) || m.menu_ingredients.some((ing) => !ing.ingredient_name || ing.useItem < 0))
     ) {
       Swal.fire({
         icon: "error",
@@ -1187,10 +969,7 @@ const SummaryList: React.FC = () => {
       return;
     }
 
-    console.log(
-      "Sending menuItems to API:",
-      JSON.stringify(menuItems, null, 2)
-    );
+    console.log("Sending menuItems to API:", JSON.stringify(menuItems, null, 2));
 
     setIsSaving(cartId);
     try {
@@ -1206,50 +985,27 @@ const SummaryList: React.FC = () => {
       const ingredientsData = await ingredientsResponse.json();
 
       const ingredientUnitMap = new globalThis.Map<string, string>();
-      ingredientsData.forEach(
-        (ing: { ingredient_name: string; ingredient_unit: string }) => {
-          ingredientUnitMap.set(ing.ingredient_name, ing.ingredient_unit);
-        }
-      );
+      ingredientsData.forEach((ing: { ingredient_name: string; ingredient_unit: string }) => {
+        ingredientUnitMap.set(ing.ingredient_name, ing.ingredient_unit);
+      });
 
       const updatedMenuItems = menuItems.map((item) => {
-        const existingMenu = currentCart.menuItems.find(
-          (m) => m.menu_name === item.menu_name
-        );
-        const menuData = menuListData?.find(
-          (m: { menu_name: string }) => m.menu_name === item.menu_name
-        );
+        const existingMenu = currentCart.menuItems.find((m) => m.menu_name === item.menu_name);
+        const menuData = menuListData?.find((m: { menu_name: string }) => m.menu_name === item.menu_name);
 
-        const menuIngredients = (
-          existingMenu?.menu_ingredients ||
-          menuData?.menu_ingredients ||
-          []
-        ).map(
-          (ing: {
-            useItem?: number;
-            quantity?: number;
-            ingredient_name?: string;
-            name?: string;
-            ingredient_status?: boolean;
-          }) => {
-            const ingredientName =
-              ing.ingredient_name ?? ing.name ?? "ไม่ระบุวัตถุดิบ";
+        const menuIngredients = (existingMenu?.menu_ingredients || menuData?.menu_ingredients || []).map(
+          (ing: { useItem?: number; quantity?: number; ingredient_name?: string; name?: string; ingredient_status?: boolean }) => {
+            const ingredientName = ing.ingredient_name ?? ing.name ?? "ไม่ระบุวัตถุดิบ";
             return {
               useItem: ing.useItem ?? ing.quantity ?? 0,
               ingredient_name: ingredientName,
               ingredient_status: ing.ingredient_status ?? false,
-              ingredient_unit:
-                ingredientUnitMap.get(ingredientName) ?? "ไม่ระบุหน่วย",
+              ingredient_unit: ingredientUnitMap.get(ingredientName) ?? "ไม่ระบุหน่วย",
             };
           }
         );
 
-        if (
-          !menuIngredients.every(
-            (ing: { ingredient_name: string; useItem: number }) =>
-              ing.ingredient_name && ing.useItem >= 0
-          )
-        ) {
+        if (!menuIngredients.every((ing: { ingredient_name: string; useItem: number }) => ing.ingredient_name && ing.useItem >= 0)) {
           throw new Error(`Invalid ingredients for menu: ${item.menu_name}`);
         }
 
@@ -1261,19 +1017,13 @@ const SummaryList: React.FC = () => {
         };
       });
 
-      console.log(
-        "Updated menuItems to send:",
-        JSON.stringify(updatedMenuItems, null, 2)
-      );
+      console.log("Updated menuItems to send:", JSON.stringify(updatedMenuItems, null, 2));
 
-      const response = await fetch(
-        `/api/edit/cart-menu/summary-list/${cartId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ menuItems: updatedMenuItems }),
-        }
-      );
+      const response = await fetch(`/api/edit/cart-menu/summary-list/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuItems: updatedMenuItems }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -1288,30 +1038,16 @@ const SummaryList: React.FC = () => {
                 menuItems: updatedMenuItems,
                 allIngredients: updatedMenuItems.map((item) => ({
                   menuName: item.menu_name,
-                  ingredients: item.menu_ingredients.map(
-                    (ing: {
-                      useItem: number;
-                      ingredient_name: string;
-                      ingredient_status: boolean;
-                    }) => ({
-                      ...ing,
-                      calculatedTotal: ing.useItem * item.menu_total,
-                      isChecked: ing.ingredient_status,
-                      ingredient_status: ing.ingredient_status,
-                      ingredient_unit:
-                        ingredientUnitMap.get(ing.ingredient_name) ??
-                        "ไม่ระบุหน่วย",
-                    })
-                  ),
-                  ingredient_status: item.menu_ingredients.every(
-                    (ing: { ingredient_status: boolean }) =>
-                      ing.ingredient_status
-                  ),
+                  ingredients: item.menu_ingredients.map((ing: { useItem: number; ingredient_name: string; ingredient_status: boolean }) => ({
+                    ...ing,
+                    calculatedTotal: ing.useItem * item.menu_total,
+                    isChecked: ing.ingredient_status,
+                    ingredient_status: ing.ingredient_status,
+                    ingredient_unit: ingredientUnitMap.get(ing.ingredient_name) ?? "ไม่ระบุหน่วย",
+                  })),
+                  ingredient_status: item.menu_ingredients.every((ing: { ingredient_status: boolean }) => ing.ingredient_status),
                 })),
-                sets: updatedMenuItems.reduce(
-                  (sum, item) => sum + item.menu_total,
-                  0
-                ),
+                sets: updatedMenuItems.reduce((sum, item) => sum + item.menu_total, 0),
               }
             : cart
         )
@@ -1333,10 +1069,7 @@ const SummaryList: React.FC = () => {
       Swal.fire({
         icon: "error",
         title: "เกิดข้อผิดพลาด",
-        text:
-          err instanceof Error
-            ? `ไม่สามารถอัปเดตเมนู: ${err.message}`
-            : "เกิดข้อผิดพลาดในการอัปเดตเมนู",
+        text: err instanceof Error ? `ไม่สามารถอัปเดตเมนู: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตเมนู",
         showConfirmButton: false,
         timer: 3000,
       });
@@ -1345,11 +1078,7 @@ const SummaryList: React.FC = () => {
     }
   };
 
-  const handleEditIngredients = async (
-    cartId: string,
-    menuName: string,
-    ingredients: Ingredient[]
-  ) => {
+  const handleEditIngredients = async (cartId: string, menuName: string, ingredients: Ingredient[]) => {
     setEditIngredientsMenu({
       cartId,
       menuName,
@@ -1410,21 +1139,12 @@ const SummaryList: React.FC = () => {
                   group.menuName === menuName
                     ? {
                         ...group,
-                        ingredients: editIngredientsMenu.ingredients.map(
-                          (ing) => ({
-                            ...ing,
-                            calculatedTotal:
-                              ing.useItem *
-                              (cart.menuItems.find(
-                                (m) => m.menu_name === menuName
-                              )?.menu_total || 0),
-                            isChecked: ing.ingredient_status,
-                          })
-                        ),
-                        ingredient_status:
-                          editIngredientsMenu.ingredients.every(
-                            (ing) => ing.ingredient_status
-                          ),
+                        ingredients: editIngredientsMenu.ingredients.map((ing) => ({
+                          ...ing,
+                          calculatedTotal: ing.useItem * (cart.menuItems.find((m) => m.menu_name === menuName)?.menu_total || 0),
+                          isChecked: ing.ingredient_status,
+                        })),
+                        ingredient_status: editIngredientsMenu.ingredients.every((ing) => ing.ingredient_status),
                       }
                     : group
                 ),
@@ -1448,10 +1168,7 @@ const SummaryList: React.FC = () => {
       Swal.fire({
         icon: "error",
         title: "เกิดข้อผิดพลาด",
-        text:
-          err instanceof Error
-            ? `ไม่สามารถอัปเดตวัตถุดิบ: ${err.message}`
-            : "เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ",
+        text: err instanceof Error ? `ไม่สามารถอัปเดตวัตถุดิบ: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ",
         showConfirmButton: false,
         timer: 3000,
       });
@@ -1461,37 +1178,28 @@ const SummaryList: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold mb-2">สรุปรายการ</h2>
-        <p className="text-slate-600 mb-4">
-          จัดการและติดตามประวัติการสั่งซื้อทั้งหมด
-        </p>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50'>
+      <div className='p-6'>
+        <h2 className='text-2xl font-bold mb-2'>สรุปรายการ</h2>
+        <p className='text-slate-600 mb-4'>จัดการและติดตามประวัติการสั่งซื้อทั้งหมด</p>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-            {error.message}
-          </div>
-        )}
+        {error && <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4'>{error.message}</div>}
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
-          <div className="col-span-full xl:col-span-2">
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+        <div className='grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6'>
+          <div className='col-span-full xl:col-span-2'>
+            <div className='relative'>
+              <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
               <Input
-                placeholder="Enter name, order ID..."
+                placeholder='Enter name, order ID...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm"
+                className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
               />
             </div>
           </div>
 
           <div>
-            <Button
-              onClick={handleOpenDatePicker}
-              className="w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600"
-            >
+            <Button onClick={handleOpenDatePicker} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
                     year: "numeric",
@@ -1504,16 +1212,16 @@ const SummaryList: React.FC = () => {
             </Button>
 
             <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-              <DialogContent className="max-w-4xl">
-                <DialogTitle className="sr-only">Calendar View</DialogTitle>
+              <DialogContent className='max-w-4xl'>
+                <DialogTitle className='sr-only'>Calendar View</DialogTitle>
                 <FullCalendar
                   plugins={[dayGridPlugin, interactionPlugin]}
-                  initialView="dayGridMonth"
-                  timeZone="Asia/Bangkok"
+                  initialView='dayGridMonth'
+                  timeZone='Asia/Bangkok'
                   events={calendarEvents}
                   dateClick={handleDateClick}
-                  height="auto"
-                  locale="th"
+                  height='auto'
+                  locale='th'
                   buttonText={{
                     today: "วันนี้",
                     month: "เดือน",
@@ -1531,54 +1239,39 @@ const SummaryList: React.FC = () => {
           </div>
 
           <div>
-            <Select
-              value={sortOrder}
-              onValueChange={(val: "asc" | "desc") => setSortOrder(val)}
-            >
-              <SelectTrigger className="w-full h-10 rounded-lg border-slate-300 shadow-sm">
-                <SelectValue placeholder="Order" />
+            <Select value={sortOrder} onValueChange={(val: "asc" | "desc") => setSortOrder(val)}>
+              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
+                <SelectValue placeholder='Order' />
               </SelectTrigger>
-              <SelectContent
-                side="bottom"
-                align="start"
-                avoidCollisions={false}
-              >
-                <SelectItem value="asc">เรียงจากใหม่ไปเก่า</SelectItem>
-                <SelectItem value="desc">เรียงจากเก่าไปใหม่</SelectItem>
+              <SelectContent side='bottom' align='start' avoidCollisions={false}>
+                <SelectItem value='asc'>เรียงจากใหม่ไปเก่า</SelectItem>
+                <SelectItem value='desc'>เรียงจากเก่าไปใหม่</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full h-10 rounded-lg border-slate-300 shadow-sm">
-                <Filter className="w-4 h-4 mr-2 text-slate-500" />
-                <SelectValue placeholder="All statuses" />
+              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
+                <Filter className='w-4 h-4 mr-2 text-slate-500' />
+                <SelectValue placeholder='All statuses' />
               </SelectTrigger>
-              <SelectContent
-                side="bottom"
-                align="start"
-                avoidCollisions={false}
-              >
-                <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
-                <SelectItem value="รอมัดจำ">รอมัดจำ</SelectItem>
-                <SelectItem value="ชำระเงินเเล้ว">ชำระเงินเเล้ว</SelectItem>
+              <SelectContent side='bottom' align='start' avoidCollisions={false}>
+                <SelectItem value='ทั้งหมด'>ทั้งหมด</SelectItem>
+                <SelectItem value='รอมัดจำ'>รอมัดจำ</SelectItem>
+                <SelectItem value='ชำระเงินเเล้ว'>ชำระเงินเเล้ว</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
             <Select value={filterCreator} onValueChange={setFilterCreator}>
-              <SelectTrigger className="w-full h-10 rounded-lg border-slate-300 shadow-sm">
-                <Users className="w-4 h-4 mr-2 text-slate-500" />
-                <SelectValue placeholder="All creators" />
+              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
+                <Users className='w-4 h-4 mr-2 text-slate-500' />
+                <SelectValue placeholder='All creators' />
               </SelectTrigger>
-              <SelectContent
-                side="bottom"
-                align="start"
-                avoidCollisions={false}
-              >
-                <SelectItem value="ทั้งหมด">ทั้งหมด</SelectItem>
+              <SelectContent side='bottom' align='start' avoidCollisions={false}>
+                <SelectItem value='ทั้งหมด'>ทั้งหมด</SelectItem>
                 {uniqueCreators.map((creator) => (
                   <SelectItem key={creator} value={creator}>
                     {creator}
@@ -1589,92 +1282,64 @@ const SummaryList: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5">
+        <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
           <Button
             onClick={() => {
               setSelectedDate(null);
               setCarts(allCarts);
             }}
-            className="h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm"
-          >
+            className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>
             ล้างวันที่
           </Button>
-          <div className="flex flex-center">
-            <Button
-              onClick={handleExportCSV}
-              className="h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm"
-            >
-              <Download className="w-4 h-4 mr-2" /> CSV
+          <div className='flex flex-center'>
+            <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
+              <Download className='w-4 h-4 mr-2' /> CSV
             </Button>
-            <Button
-              onClick={handleExportPDF}
-              className="h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm"
-            >
-              <Download className="w-4 h-4 mr-2" /> PDF
+            <Button onClick={handleExportPDF} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
+              <Download className='w-4 h-4 mr-2' /> PDF
             </Button>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className='space-y-6'>
           {isLoading ? (
             <Card>
-              <CardContent className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <span className="text-slate-500">Loading...</span>
+              <CardContent className='text-center py-12'>
+                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4'></div>
+                <span className='text-slate-500'>Loading...</span>
               </CardContent>
             </Card>
           ) : error ? (
             <Card>
-              <CardContent className="text-center py-12">
-                <span className="text-red-500">
-                  เกิดข้อผิดพลาด: {error.message}
-                </span>
+              <CardContent className='text-center py-12'>
+                <span className='text-red-500'>เกิดข้อผิดพลาด: {error.message}</span>
               </CardContent>
             </Card>
-          ) : groupedOrders.length === 0 ? (
+          ) : paginatedGroupedOrders.length === 0 ? (
             <Card>
-              <CardContent className="text-center py-12">
-                <Package className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                <span className="text-slate-500">No orders found</span>
+              <CardContent className='text-center py-12'>
+                <Package className='w-12 h-12 text-slate-400 mx-auto mb-2' />
+                <span className='text-slate-500'>No orders found</span>
               </CardContent>
             </Card>
           ) : (
             paginatedGroupedOrders.map(([date, orders], index) => (
-              <div
-                key={`date-${index}`}
-                className="space-y-4 bg-blue-50 rounded-xl shadow-sm"
-              >
-                <h3
-                  style={{ fontSize: "28px" }}
-                  className="text-6xl font-bold text-blue-700 text-center px-4 py-3"
-                >
+              <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
+                <h3 style={{ fontSize: "28px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
                 </h3>
-                {/* <div className="text-center text-sm text-blue-600 mb-4">
-                  <span className="font-semibold">เรียงลำดับตาม:</span> เวลาส่งอาหาร (จากน้อยไปมาก) → เวลารับอาหาร (จากน้อยไปมาก) → เลขที่ออร์เดอร์
-                </div> */}
 
-                <div className="space-y-4">
+                <div className='space-y-4'>
                   {orders.map((cart) => (
-                    <Accordion
-                      key={cart.id}
-                      type="multiple"
-                      defaultValue={[]}
-                      className="border-none m-4"
-                    >
-                      <AccordionItem value={cart.id} className="border-none">
-                        <Card
-                          className={`bg-gradient-to-r ${getStatusColor(
-                            cart.status
-                          )} p-4 rounded-xl shadow-sm`}
-                        >
-                          <div className="flex w-full items-center">
-                            <div className="ml-auto flex items-center gap-2">
-                              {/* <div className="flex items-center gap-2"> */}
+                    <Accordion key={cart.id} type='multiple' defaultValue={[]} className='border-none m-4'>
+                      <AccordionItem value={cart.id} className='border-none'>
+                        <Card className={`bg-gradient-to-r ${getStatusColor(cart.status)} p-4 rounded-xl shadow-sm`}>
+                          <div className='flex w-full items-center'>
+                            <div className='ml-auto flex items-center gap-2'>
                               {editingTimes?.cartId === cart.id ? (
-                                <div className="flex flex-col gap-2">
-                                  <div className="flex items-center gap-2">
-                                    <BsCashStack className="w-6 h-6" />
+                                <div className='flex flex-col gap-2'>
+                                  <div className='flex items-center gap-2'>
+                                    <BsCashStack className='w-6 h-6' />
                                     <span>เวลาส่งอาหาร</span>
                                     <select
                                       value={editingTimes.exportHour}
@@ -1688,11 +1353,8 @@ const SummaryList: React.FC = () => {
                                             : prev
                                         )
                                       }
-                                      className="border rounded px-1"
-                                    >
-                                      {Array.from({ length: 24 }, (_, i) =>
-                                        i.toString().padStart(2, "0")
-                                      ).map((h) => (
+                                      className='border rounded px-1'>
+                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
                                         <option key={h} value={h}>
                                           {h}
                                         </option>
@@ -1711,19 +1373,16 @@ const SummaryList: React.FC = () => {
                                             : prev
                                         )
                                       }
-                                      className="border rounded px-1"
-                                    >
-                                      {Array.from({ length: 60 }, (_, i) =>
-                                        i.toString().padStart(2, "0")
-                                      ).map((m) => (
+                                      className='border rounded px-1'>
+                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
                                         <option key={m} value={m}>
                                           {m}
                                         </option>
                                       ))}
                                     </select>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <FaWallet className="w-4 h-4" />
+                                  <div className='flex items-center gap-2'>
+                                    <FaWallet className='w-4 h-4' />
                                     <span>เวลารับอาหาร</span>
                                     <select
                                       value={editingTimes.receiveHour}
@@ -1737,11 +1396,8 @@ const SummaryList: React.FC = () => {
                                             : prev
                                         )
                                       }
-                                      className="border rounded px-1"
-                                    >
-                                      {Array.from({ length: 24 }, (_, i) =>
-                                        i.toString().padStart(2, "0")
-                                      ).map((h) => (
+                                      className='border rounded px-1'>
+                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
                                         <option key={h} value={h}>
                                           {h}
                                         </option>
@@ -1760,81 +1416,45 @@ const SummaryList: React.FC = () => {
                                             : prev
                                         )
                                       }
-                                      className="border rounded px-1"
-                                    >
-                                      {Array.from({ length: 60 }, (_, i) =>
-                                        i.toString().padStart(2, "0")
-                                      ).map((m) => (
+                                      className='border rounded px-1'>
+                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
                                         <option key={m} value={m}>
                                           {m}
                                         </option>
                                       ))}
                                     </select>
                                   </div>
-                                  <div className="flex w-full items-center">
-                                    <div className="ml-auto flex items-center gap-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleSaveTimes(cart.id)}
-                                        className="h-8 px-2"
-                                        disabled={isSaving === cart.id}
-                                      >
-                                        {isSaving === cart.id
-                                          ? "Saving..."
-                                          : "Save"}
+                                  <div className='flex w-full items-center'>
+                                    <div className='ml-auto flex items-center gap-2'>
+                                      <Button variant='ghost' size='sm' onClick={() => handleSaveTimes(cart.id)} className='h-8 px-2' disabled={isSaving === cart.id}>
+                                        {isSaving === cart.id ? "Saving..." : "Save"}
                                       </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setEditingTimes(null)}
-                                        className="h-8 px-2 text-gray-600 hover:bg-gray-50"
-                                        disabled={isSaving === cart.id}
-                                      >
+                                      <Button variant='ghost' size='sm' onClick={() => setEditingTimes(null)} className='h-8 px-2 text-gray-600 hover:bg-gray-50' disabled={isSaving === cart.id}>
                                         Cancel
                                       </Button>
                                     </div>
                                   </div>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2">
-                                  <BsCashStack className="w-6 h-6" />
-                                  <span>
-                                    เวลาส่งอาหาร{" "}
-                                    {cart.cart_export_time || "ไม่ระบุ"} น.
-                                  </span>
-                                  <FaWallet className="w-4 h-4 ml-4" />
-                                  <span>
-                                    เวลารับอาหาร{" "}
-                                    {cart.cart_receive_time || "ไม่ระบุ"} น.
-                                  </span>
-                                  <span
-                                    className="cursor-pointer ml-2"
-                                    onClick={() =>
-                                      handleEditTimes(
-                                        cart.id,
-                                        cart.cart_export_time || "",
-                                        cart.cart_receive_time || ""
-                                      )
-                                    }
-                                  >
-                                    <Edit2 className="w-4 h-4" />
+                                <div className='flex items-center gap-2'>
+                                  <BsCashStack className='w-6 h-6' />
+                                  <span>เวลาส่งอาหาร {cart.cart_export_time || "ไม่ระบุ"} น.</span>
+                                  <FaWallet className='w-4 h-4 ml-4' />
+                                  <span>เวลารับอาหาร {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
+                                  <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")}>
+                                    <Edit2 className='w-4 h-4' />
                                   </span>
                                 </div>
                               )}
                             </div>
                           </div>
-                          <AccordionTrigger className="w-full hover:no-underline px-0">
-                            <div className="flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base font-bold">
-                              <div>
-                                รายการคำสั่งซื้อหมายเลข{" "}
-                                {String(cart.order_number).padStart(3, "0")}
-                              </div>
-                              <div className="flex items-center gap-2 font-medium text-slate-800">
-                                <FileText className="w-4 h-4 text-blue-500" />
-                                <span className="truncate text-sm sm:text-base">
-                                  ผู้สร้างรายการคำสั่งซื้อ:{" "}
-                                  <span className="">{cart.createdBy}</span>
+                          <AccordionTrigger className='w-full hover:no-underline px-0'>
+                            <div className='flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base font-bold'>
+                              <div>รายการคำสั่งซื้อหมายเลข {String(cart.order_number).padStart(3, "0")}</div>
+                              <div className='flex items-center gap-2 font-medium text-slate-800'>
+                                <FileText className='w-4 h-4 text-blue-500' />
+                                <span className='truncate text-sm sm:text-base'>
+                                  ผู้สร้างรายการคำสั่งซื้อ: <span className=''>{cart.createdBy}</span>
                                 </span>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
@@ -1853,92 +1473,70 @@ const SummaryList: React.FC = () => {
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black">
-                                <div className="flex items-center gap-1 text-sm sm:text-base">
-                                  <Map className="w-4 h-4 text-red-600" />
-                                  <span>
-                                    สถานที่จัดส่ง {cart.cart_location_send}{" "}
-                                  </span>
+                              <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
+                                <div className='flex items-center gap-1 text-sm sm:text-base'>
+                                  <Map className='w-4 h-4 text-red-600' />
+                                  <span>สถานที่จัดส่ง {cart.cart_location_send} </span>
                                 </div>
                               </div>
-                              <div className="font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black">
-                                <div className="flex items-center gap-1 text-sm sm:text-base">
-                                  <User className="w-4 h-4" />
-                                  <span>
-                                    ส่งถึงคุณ {cart.cart_customer_name}
-                                  </span>
-                                  <Smartphone className="w-4 h-4" />
+                              <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
+                                <div className='flex items-center gap-1 text-sm sm:text-base'>
+                                  <User className='w-4 h-4' />
+                                  <span>ส่งถึงคุณ {cart.cart_customer_name}</span>
+                                  <Smartphone className='w-4 h-4' />
                                   <span>เบอร์ {cart.cart_customer_tel} </span>
                                 </div>
                               </div>
-                              <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm font-normal text-black">
-                                <div className="flex items-center gap-1">
-                                  <CalendarDays className="w-4 h-4" />
+                              <div className='flex flex-wrap items-center gap-4 text-xs sm:text-sm font-normal text-black'>
+                                <div className='flex items-center gap-1'>
+                                  <CalendarDays className='w-4 h-4' />
                                   <span>วันที่สั่งอาหาร {cart.date}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
+                                <div className='flex items-center gap-1'>
+                                  <Clock className='w-4 h-4' />
                                   <span>เวลา {cart.time} น.</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <BsCashStack className="w-4 h-4" />
-                                  <span>
-                                    ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.
-                                  </span>
+                                <div className='flex items-center gap-1'>
+                                  <BsCashStack className='w-4 h-4' />
+                                  <span>ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <FaWallet className="w-4 h-4" />
-                                  <span>
-                                    รับ: {cart.cart_receive_time || "ไม่ระบุ"}{" "}
-                                    น.
-                                  </span>
+                                <div className='flex items-center gap-1'>
+                                  <FaWallet className='w-4 h-4' />
+                                  <span>รับ: {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                 </div>
                               </div>
-                              <div className="hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500">
-                                <ResponsiveOrderId
-                                  id={cart.id}
-                                  maxFontSize={10}
-                                  minFontSize={10}
-                                />
+                              <div className='hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
+                                <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                               </div>
                             </div>
                           </AccordionTrigger>
-                          <div className="flex justify-center mt-2">
+                          <div className='flex justify-center mt-2'>
                             <StatusDropdown
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
-                              cart_receive_time={formatToHHMM(
-                                cart.cart_receive_time
-                              )}
-                              cart_export_time={formatToHHMM(
-                                cart.cart_export_time
-                              )}
+                              cart_receive_time={formatToHHMM(cart.cart_receive_time)}
+                              cart_export_time={formatToHHMM(cart.cart_export_time)}
                               cart={cart}
                               onUpdated={() => handleUpdateWithCheck(cart)}
                               onOrderSummaryClick={handleOrderSummaryClick}
                             />
                           </div>
-                          <AccordionContent className="mt-4">
-                            <div className="grid md:grid-cols-2 gap-6">
+                          <AccordionContent className='mt-4'>
+                            <div className='grid md:grid-cols-2 gap-6'>
                               <div>
-                                <div className="flex justify-between items-center mb-2">
+                                <div className='flex justify-between items-center mb-2'>
                                   <div>
-                                    <h4 className="text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2">
-                                      <User className="w-4 h-4" /> เมนูที่สั่ง
+                                    <h4 className='text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2'>
+                                      <User className='w-4 h-4' /> เมนูที่สั่ง
                                     </h4>
                                   </div>
                                   <div>
                                     <Button
                                       onClick={() => {
                                         setShouldFetchMenu(true);
-                                        const currentCart = carts.find(
-                                          (c) => c.id === cart.id
-                                        );
-                                        if (
-                                          !currentCart ||
-                                          !currentCart.menuItems
-                                        ) {
+                                        const currentCart = carts.find((c) => c.id === cart.id);
+                                        if (!currentCart || !currentCart.menuItems) {
                                           Swal.fire({
                                             icon: "error",
                                             title: "เกิดข้อผิดพลาด",
@@ -1965,13 +1563,13 @@ const SummaryList: React.FC = () => {
                                           newMenu: {
                                             menu_name: "",
                                             menu_total: 1,
+                                            menu_description: "",
                                           },
                                         });
                                       }}
-                                      className="flex items-center gap-2"
-                                    >
+                                      className='flex items-center gap-2'>
                                       แก้ไขเมนูที่สั่ง
-                                      <Edit2 className="w-4 h-4" />
+                                      <Edit2 className='w-4 h-4' />
                                     </Button>
                                   </div>
                                 </div>
@@ -1980,37 +1578,24 @@ const SummaryList: React.FC = () => {
                                   onOpenChange={() => {
                                     setEditMenuDialog(null);
                                     setShouldFetchMenu(false);
-                                  }}
-                                >
-                                  <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
+                                  }}>
+                                  <DialogContent className='max-w-lg max-h-[70vh] overflow-y-auto'>
                                     <div style={{ color: "black" }}>
                                       <div style={{ fontSize: "20px" }}>
-                                        <DialogTitle>
-                                          แก้ไขเมนูสำหรับ Order
-                                        </DialogTitle>
+                                        <DialogTitle>แก้ไขเมนูสำหรับ Order</DialogTitle>
                                       </div>
-                                      <div className="space-y-4">
+                                      <div className='space-y-4'>
                                         {menuListError ? (
-                                          <div className="text-red-600 text-sm">
-                                            เกิดข้อผิดพลาดในการดึงข้อมูลเมนู:{" "}
-                                            {menuListError.message}
-                                          </div>
+                                          <div className='text-red-600 text-sm'>เกิดข้อผิดพลาดในการดึงข้อมูลเมนู: {menuListError.message}</div>
                                         ) : !menuListData ? (
-                                          <div className="text-gray-500 text-sm">
-                                            กำลังโหลดข้อมูลเมนู...
-                                          </div>
+                                          <div className='text-gray-500 text-sm'>กำลังโหลดข้อมูลเมนู...</div>
                                         ) : (
                                           <>
                                             {/* แสดงเมนูปัจจุบัน */}
-                                            <div className="space-y-2">
-                                              <h5 className="text-sm font-semibold text-gray-700">
-                                                เมนูปัจจุบัน
-                                              </h5>
-                                              {editMenuDialog?.menuItems
-                                                .length === 0 ? (
-                                                <div className="text-gray-500 text-sm">
-                                                  ไม่มีเมนูใน order นี้
-                                                </div>
+                                            <div className='space-y-2'>
+                                              <h5 className='text-sm font-semibold text-gray-700'>เมนูปัจจุบัน</h5>
+                                              {editMenuDialog?.menuItems.length === 0 ? (
+                                                <div className='text-gray-500 text-sm'>ไม่มีเมนูใน order นี้</div>
                                               ) : (
                                                 editMenuDialog?.menuItems.map((item, idx) => (
                                                   <div key={idx} className='flex flex-col gap-2 border-b border-gray-200 py-2'>
@@ -2161,7 +1746,7 @@ const SummaryList: React.FC = () => {
                                                   className='w-full h-8 text-sm'
                                                 />
                                                 <Button
-                                                  size="sm"
+                                                  size='sm'
                                                   onClick={() =>
                                                     editMenuDialog?.newMenu.menu_name &&
                                                     editMenuDialog?.newMenu.menu_total >= 0 &&
@@ -2186,6 +1771,7 @@ const SummaryList: React.FC = () => {
                                                                 menu_name: prev.newMenu.menu_name || "",
                                                                 menu_total: prev.newMenu.menu_total || 1,
                                                                 menu_description: prev.newMenu.menu_description || "",
+                                                                menu_order_id: prev.menuItems.length + 1,
                                                                 menu_ingredients:
                                                                   menuData?.menu_ingredients?.map((ing: { useItem?: number; quantity?: number; ingredient_name?: string; name?: string }) => ({
                                                                     useItem: ing.useItem || ing.quantity || 0,
@@ -2203,41 +1789,26 @@ const SummaryList: React.FC = () => {
                                                         : prev;
                                                     })
                                                   }
-                                                  className="h-8"
-                                                >
+                                                  disabled={!editMenuDialog?.newMenu.menu_name || editMenuDialog?.newMenu.menu_total < 0 || !menuListData}
+                                                  className='h-8'>
                                                   เพิ่ม
                                                 </Button>
                                               </div>
                                             </div>
 
                                             {/* ปุ่มบันทึกและยกเลิก */}
-                                            <div className="flex justify-end gap-2">
+                                            <div className='flex justify-end gap-2'>
                                               <Button
-                                                onClick={() =>
-                                                  editMenuDialog &&
-                                                  handleEditMenu(
-                                                    editMenuDialog.cartId,
-                                                    editMenuDialog.menuItems
-                                                  )
-                                                }
-                                                disabled={
-                                                  isSaving !== null ||
-                                                  editMenuDialog?.menuItems.some(
-                                                    (m) => m.menu_total < 0
-                                                  )
-                                                }
-                                              >
-                                                {isSaving
-                                                  ? "กำลังบันทึก..."
-                                                  : "บันทึก"}
+                                                onClick={() => editMenuDialog && handleEditMenu(editMenuDialog.cartId, editMenuDialog.menuItems)}
+                                                disabled={isSaving !== null || editMenuDialog?.menuItems.some((m) => m.menu_total < 0)}>
+                                                {isSaving ? "กำลังบันทึก..." : "บันทึก"}
                                               </Button>
                                               <Button
-                                                variant="ghost"
+                                                variant='ghost'
                                                 onClick={() => {
                                                   setEditMenuDialog(null);
                                                   setShouldFetchMenu(false);
-                                                }}
-                                              >
+                                                }}>
                                                 ยกเลิก
                                               </Button>
                                             </div>
@@ -2349,158 +1920,29 @@ const SummaryList: React.FC = () => {
                                                 </span>
                                                 <label className='cursor-pointer'>
                                                   <input
-                                                    type="number"
-                                                    value={editTotalBox}
-                                                    onChange={(e) =>
-                                                      setEditTotalBox(
-                                                        Number(e.target.value)
-                                                      )
-                                                    }
-                                                    className="w-20 h-8 text-sm rounded-md border-gray-300 px-2"
-                                                    min="0"
-                                                    aria-label="Edit box quantity"
-                                                    style={{
-                                                      outline: "1px solid #ccc",
-                                                    }}
+                                                    type='checkbox'
+                                                    checked={ing.isChecked || false}
+                                                    onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)}
+                                                    className='hidden'
                                                   />
                                                   <span
-                                                    className="cursor-pointer text-green-600 hover:text-green-800 px-1"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleSaveTotalBox(
-                                                        cart.id,
-                                                        menuGroup.menuName
-                                                      );
-                                                    }}
-                                                    tabIndex={0}
-                                                    role="button"
-                                                    aria-label="บันทึกจำนวนกล่อง"
-                                                  >
-                                                    ✔
+                                                    className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
+                                                      ing.isChecked ? "bg-green-500" : "bg-red-500"
+                                                    }`}>
+                                                    <span
+                                                      className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                                                        ing.isChecked ? "translate-x-5" : "translate-x-0.5"
+                                                      }`}
+                                                    />
                                                   </span>
-                                                  <span
-                                                    className="cursor-pointer text-gray-600 hover:text-gray-800 px-1"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setEditingMenu(null);
-                                                    }}
-                                                    tabIndex={0}
-                                                    role="button"
-                                                    aria-label="ยกเลิก"
-                                                  >
-                                                    ✖
-                                                  </span>
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <span className="text-sm font-mono text-blue-600">
-                                                    (จำนวน {totalBox} กล่อง)
-                                                  </span>
-                                                  <span
-                                                    className="cursor-pointer text-blue-600 hover:text-blue-800"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleEditTotalBox(
-                                                        cart.id,
-                                                        menuGroup.menuName,
-                                                        totalBox
-                                                      );
-                                                    }}
-                                                    tabIndex={0}
-                                                    role="button"
-                                                    aria-label="แก้ไขจำนวนกล่อง"
-                                                  >
-                                                    <Edit2 className="w-4 h-4" />
-                                                  </span>
-                                                </>
-                                              )}
-                                            </span>
-                                          </AccordionTrigger>
-                                          <AccordionContent className="pt-3 space-y-2">
-                                            <div className="flex justify-end mb-2">
-                                              <Button
-                                                onClick={() =>
-                                                  handleEditIngredients(
-                                                    cart.id,
-                                                    menuGroup.menuName,
-                                                    menuGroup.ingredients
-                                                  )
-                                                }
-                                                className="flex items-center gap-2"
-                                              >
-                                                แก้ไขวัตถุดิบ
-                                                <Edit2 className="w-4 h-4" />
-                                              </Button>
+                                                </label>
+                                              </div>
                                             </div>
-                                            {menuGroup.ingredients.map(
-                                              (ing, idx) => (
-                                                <div
-                                                  key={idx}
-                                                  className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                                    ing.isChecked
-                                                      ? "bg-green-50 border-green-200"
-                                                      : "bg-red-50 border-red-200"
-                                                  } text-sm`}
-                                                >
-                                                  <span className="text-gray-700">
-                                                    {ing.ingredient_name ||
-                                                      `Unknown ingredient`}
-                                                  </span>
-                                                  <div className="flex items-center gap-4">
-                                                    <span className="text-gray-600">
-                                                      ใช้ {ing.useItem}{" "}
-                                                      {ing.ingredient_unit} ×{" "}
-                                                      {totalBox} กล่อง ={" "}
-                                                      <strong
-                                                        className="text-black-600"
-                                                        style={{
-                                                          color: "#000000",
-                                                        }}
-                                                      >
-                                                        {ing.calculatedTotal}
-                                                      </strong>{" "}
-                                                      {ing.ingredient_unit}
-                                                    </span>
-                                                    <label className="cursor-pointer">
-                                                      <input
-                                                        type="checkbox"
-                                                        checked={
-                                                          ing.isChecked || false
-                                                        }
-                                                        onChange={() =>
-                                                          handleToggleIngredientCheck(
-                                                            cart.id,
-                                                            menuGroup.menuName,
-                                                            ing.ingredient_name
-                                                          )
-                                                        }
-                                                        className="hidden"
-                                                      />
-                                                      <span
-                                                        className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${
-                                                          ing.isChecked
-                                                            ? "bg-green-500"
-                                                            : "bg-red-500"
-                                                        }`}
-                                                      >
-                                                        <span
-                                                          className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
-                                                            ing.isChecked
-                                                              ? "translate-x-5"
-                                                              : "translate-x-0.5"
-                                                          }`}
-                                                        />
-                                                      </span>
-                                                    </label>
-                                                  </div>
-                                                </div>
-                                              )
-                                            )}
-                                          </AccordionContent>
-                                        </AccordionItem>
-                                      );
-                                    }
-                                  )}
+                                          ))}
+                                        </AccordionContent>
+                                      </AccordionItem>
+                                    );
+                                  })}
                                 </Accordion>
                               </div>
                             </div>
@@ -2509,17 +1951,12 @@ const SummaryList: React.FC = () => {
                       </AccordionItem>
                     </Accordion>
                   ))}
-                  <div className="flex justify-center m-4">
+                  <div className='flex justify-center m-4'>
                     <Button
-                      size="sm"
-                      onClick={() =>
-                        handleSummaryClick(
-                          convertThaiDateToISO(orders[0].cart_delivery_date)!
-                        )
-                      }
-                      className="h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4"
-                      style={{ color: "#000000", background: "#fcf22d" }}
-                    >
+                      size='sm'
+                      onClick={() => handleSummaryClick(convertThaiDateToISO(orders[0].cart_delivery_date)!)}
+                      className='h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4'
+                      style={{ color: "#000000", background: "#fcf22d" }}>
                       📦 สรุปวัตถุดิบทั้งหมด
                     </Button>
                   </div>
@@ -2528,37 +1965,23 @@ const SummaryList: React.FC = () => {
             ))
           )}
         </div>
-        <Dialog
-          open={editIngredientsMenu !== null}
-          onOpenChange={() => setEditIngredientsMenu(null)}
-        >
-          <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
+        <Dialog open={editIngredientsMenu !== null} onOpenChange={() => setEditIngredientsMenu(null)}>
+          <DialogContent className='max-w-lg max-h-[70vh] overflow-y-auto'>
             <div style={{ color: "#000000" }}>
               <div style={{ fontSize: "20px" }}>
-                <DialogTitle>
-                  แก้ไขวัตถุดิบสำหรับเมนู {editIngredientsMenu?.menuName}
-                </DialogTitle>
+                <DialogTitle>แก้ไขวัตถุดิบสำหรับเมนู {editIngredientsMenu?.menuName}</DialogTitle>
               </div>
-              <div className="space-y-4">
+              <div className='space-y-4'>
                 {ingredientError ? (
-                  <div className="text-red-600 text-sm">
-                    เกิดข้อผิดพลาดในการดึงข้อมูลวัตถุดิบ:{" "}
-                    {ingredientError.message}
-                  </div>
+                  <div className='text-red-600 text-sm'>เกิดข้อผิดพลาดในการดึงข้อมูลวัตถุดิบ: {ingredientError.message}</div>
                 ) : !ingredientData ? (
-                  <div className="text-gray-500 text-sm">
-                    กำลังโหลดข้อมูลวัตถุดิบ...
-                  </div>
+                  <div className='text-gray-500 text-sm'>กำลังโหลดข้อมูลวัตถุดิบ...</div>
                 ) : (
                   <>
-                    <div className="space-y-2">
-                      <h5 className="text-sm font-semibold text-gray-700">
-                        วัตถุดิบปัจจุบัน
-                      </h5>
+                    <div className='space-y-2'>
+                      <h5 className='text-sm font-semibold text-gray-700'>วัตถุดิบปัจจุบัน</h5>
                       {editIngredientsMenu?.ingredients.length === 0 ? (
-                        <div className="text-gray-500 text-sm">
-                          ไม่มีวัตถุดิบในเมนูนี้
-                        </div>
+                        <div className='text-gray-500 text-sm'>ไม่มีวัตถุดิบในเมนูนี้</div>
                       ) : (
                         editIngredientsMenu?.ingredients.map((ingredient, idx) => (
                           <div key={idx} className='flex flex-col gap-2 border-b border-gray-200 py-2'>
@@ -2606,21 +2029,16 @@ const SummaryList: React.FC = () => {
                                 ลบ
                               </Button>
                             </div>
-                          )
-                        )
+                          </div>
+                        ))
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <h5 className="text-sm font-semibold text-gray-700">
-                        เพิ่มวัตถุดิบใหม่
-                      </h5>
-                      <div className="flex items-center gap-2">
+                    <div className='space-y-2'>
+                      <h5 className='text-sm font-semibold text-gray-700'>เพิ่มวัตถุดิบใหม่</h5>
+                      <div className='flex items-center gap-2'>
                         <Select
-                          value={
-                            editIngredientsMenu?.newIngredient
-                              .ingredient_name || ""
-                          }
+                          value={editIngredientsMenu?.newIngredient.ingredient_name || ""}
                           onValueChange={(value) =>
                             setEditIngredientsMenu((prev) =>
                               prev
@@ -2633,32 +2051,21 @@ const SummaryList: React.FC = () => {
                                   }
                                 : prev
                             )
-                          }
-                        >
-                          <SelectTrigger className="flex-1 h-8 text-sm">
-                            <SelectValue placeholder="เลือกวัตถุดิบ" />
+                          }>
+                          <SelectTrigger className='flex-1 h-8 text-sm'>
+                            <SelectValue placeholder='เลือกวัตถุดิบ' />
                           </SelectTrigger>
                           <SelectContent>
-                            {ingredientData?.map(
-                              (ing: {
-                                ingredient_name: string;
-                                ingredient_unit: string;
-                              }) => (
-                                <SelectItem
-                                  key={ing.ingredient_name}
-                                  value={ing.ingredient_name}
-                                >
-                                  {ing.ingredient_name}
-                                </SelectItem>
-                              )
-                            )}
+                            {ingredientData?.map((ing: { ingredient_name: string; ingredient_unit: string }) => (
+                              <SelectItem key={ing.ingredient_name} value={ing.ingredient_name}>
+                                {ing.ingredient_name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <Input
-                          type="number"
-                          value={
-                            editIngredientsMenu?.newIngredient.useItem || 0
-                          }
+                          type='number'
+                          value={editIngredientsMenu?.newIngredient.useItem || 0}
                           onChange={(e) =>
                             setEditIngredientsMenu((prev) =>
                               prev
@@ -2672,29 +2079,20 @@ const SummaryList: React.FC = () => {
                                 : prev
                             )
                           }
-                          placeholder="จำนวน"
-                          min="0"
-                          className="w-20 h-8 text-sm"
+                          placeholder='จำนวน'
+                          min='0'
+                          className='w-20 h-8 text-sm'
                         />
-                        <span className="text-sm">
+                        <span className='text-sm'>
                           {editIngredientsMenu?.newIngredient.ingredient_name
-                            ? ingredientData?.find(
-                                (ing: { ingredient_name: string }) =>
-                                  ing.ingredient_name ===
-                                  editIngredientsMenu.newIngredient
-                                    .ingredient_name
-                              )?.ingredient_unit || "ไม่ระบุหน่วย"
+                            ? ingredientData?.find((ing: { ingredient_name: string }) => ing.ingredient_name === editIngredientsMenu.newIngredient.ingredient_name)?.ingredient_unit || "ไม่ระบุหน่วย"
                             : ""}
                         </span>
                         <Button
-                          size="sm"
+                          size='sm'
                           onClick={() =>
                             setEditIngredientsMenu((prev) => {
-                              if (
-                                !prev ||
-                                !prev.newIngredient.ingredient_name ||
-                                prev.newIngredient.useItem < 0
-                              ) {
+                              if (!prev || !prev.newIngredient.ingredient_name || prev.newIngredient.useItem < 0) {
                                 Swal.fire({
                                   icon: "error",
                                   title: "เกิดข้อผิดพลาด",
@@ -2704,11 +2102,7 @@ const SummaryList: React.FC = () => {
                                 });
                                 return prev;
                               }
-                              const selectedIngredient = ingredientData?.find(
-                                (ing: { ingredient_name: string }) =>
-                                  ing.ingredient_name ===
-                                  prev.newIngredient.ingredient_name
-                              );
+                              const selectedIngredient = ingredientData?.find((ing: { ingredient_name: string }) => ing.ingredient_name === prev.newIngredient.ingredient_name);
                               return {
                                 ...prev,
                                 ingredients: [
@@ -2717,9 +2111,7 @@ const SummaryList: React.FC = () => {
                                     ingredient_name: prev.newIngredient.ingredient_name || "",
                                     useItem: prev.newIngredient.useItem || 0,
                                     ingredient_status: false,
-                                    ingredient_unit:
-                                      selectedIngredient?.ingredient_unit ||
-                                      "ไม่ระบุหน่วย",
+                                    ingredient_unit: selectedIngredient?.ingredient_unit || "ไม่ระบุหน่วย",
                                   },
                                 ],
                                 newIngredient: {
@@ -2729,36 +2121,18 @@ const SummaryList: React.FC = () => {
                               };
                             })
                           }
-                          disabled={
-                            !editIngredientsMenu?.newIngredient
-                              .ingredient_name ||
-                            editIngredientsMenu?.newIngredient.useItem < 0 ||
-                            !ingredientData
-                          }
-                          className="h-8"
-                        >
+                          disabled={!editIngredientsMenu?.newIngredient.ingredient_name || editIngredientsMenu?.newIngredient.useItem < 0 || !ingredientData}
+                          className='h-8'>
                           เพิ่ม
                         </Button>
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        onClick={() =>
-                          editIngredientsMenu &&
-                          handleSaveIngredients(
-                            editIngredientsMenu.cartId,
-                            editIngredientsMenu.menuName
-                          )
-                        }
-                        disabled={isSaving !== null}
-                      >
+                    <div className='flex justify-end gap-2'>
+                      <Button onClick={() => editIngredientsMenu && handleSaveIngredients(editIngredientsMenu.cartId, editIngredientsMenu.menuName)} disabled={isSaving !== null}>
                         {isSaving ? "กำลังบันทึก..." : "บันทึก"}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setEditIngredientsMenu(null)}
-                      >
+                      <Button variant='ghost' onClick={() => setEditIngredientsMenu(null)}>
                         ยกเลิก
                       </Button>
                     </div>
@@ -2769,76 +2143,51 @@ const SummaryList: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        <Dialog
-          open={isSummaryDialogOpen}
-          onOpenChange={setIsSummaryDialogOpen}
-        >
-          <DialogContent className="max-w-md max-h-[70vh] overflow-y-auto">
+        <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
+          <DialogContent className='max-w-md max-h-[70vh] overflow-y-auto'>
             <div>
-              <DialogTitle className="text-lg font-bold">
+              <DialogTitle className='text-lg font-bold'>
                 {summaryDialogType === "order" && selectedCartForSummary && (
-                  <div style={{ color: "#000000" }} className="mb-4">
-                    สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary.orderNumber}{" "}
-                    <br />
+                  <div style={{ color: "#000000" }} className='mb-4'>
+                    สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary.orderNumber} <br />
                     (วันที่ส่ง: {selectedCartForSummary.cart_delivery_date})
                   </div>
                 )}
                 {summaryDialogType === "date" && selectedDateForSummary && (
-                  <div style={{ color: "#000000" }} className="mb-4">
+                  <div style={{ color: "#000000" }} className='mb-4'>
                     สรุปวัตถุดิบทั้งหมดของวันที่{" "}
-                    {new Date(selectedDateForSummary).toLocaleDateString(
-                      "th-TH",
-                      {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      }
-                    )}
+                    {new Date(selectedDateForSummary).toLocaleDateString("th-TH", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </div>
                 )}
               </DialogTitle>
-              <div className="space-y-4">
+              <div className='space-y-4'>
                 {summaryDialogType === "order" &&
                   selectedCartForSummary &&
                   (() => {
-                    const { summary, allIngredientsChecked } =
-                      summarizeOrderIngredients(selectedCartForSummary);
+                    const { summary, allIngredientsChecked } = summarizeOrderIngredients(selectedCartForSummary);
                     return (
                       <>
-                        <div className="space-y-2">
-                          <h5 className="text-sm font-semibold text-gray-700">
-                            สรุปวัตถุดิบของออเดอร์
-                          </h5>
+                        <div className='space-y-2'>
+                          <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบของออเดอร์</h5>
                           {summary.map((ing, idx) => (
-                            <div
-                              key={idx}
-                              className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
-                            >
-                              <span className="text-gray-700">{ing.name}</span>
-                              <span className="text-gray-600">
+                            <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
+                              <span className='text-gray-700'>{ing.name}</span>
+                              <span className='text-gray-600'>
                                 {ing.checked}/{ing.total} {ing.unit}
                               </span>
                             </div>
                           ))}
                         </div>
-                        <div
-                          style={{ color: "#000000", background: "#5cfa6c" }}
-                        >
+                        <div style={{ color: "#000000", background: "#5cfa6c" }}>
                           <Button
-                            onClick={() =>
-                              handleCheckAllIngredients(
-                                selectedCartForSummary.id
-                              )
-                            }
-                            className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
-                            disabled={
-                              isSaving === selectedCartForSummary.id ||
-                              allIngredientsChecked
-                            }
-                          >
-                            {isSaving === selectedCartForSummary.id
-                              ? "กำลังบันทึก..."
-                              : "เลือกวัตถุดิบทั้งหมด"}
+                            onClick={() => handleCheckAllIngredients(selectedCartForSummary.id)}
+                            className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg'
+                            disabled={isSaving === selectedCartForSummary.id || allIngredientsChecked}>
+                            {isSaving === selectedCartForSummary.id ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
                           </Button>
                         </div>
                       </>
@@ -2848,43 +2197,26 @@ const SummaryList: React.FC = () => {
                 {summaryDialogType === "date" &&
                   selectedDateForSummary &&
                   (() => {
-                    const { summary, allIngredientsChecked } =
-                      summarizeIngredients(selectedDateForSummary);
+                    const { summary, allIngredientsChecked } = summarizeIngredients(selectedDateForSummary);
                     return (
                       <>
-                        <div className="space-y-2">
-                          <h5 className="text-sm font-semibold text-gray-700">
-                            สรุปวัตถุดิบรวม
-                          </h5>
+                        <div className='space-y-2'>
+                          <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบรวม</h5>
                           {summary.map((ing, idx) => (
-                            <div
-                              key={idx}
-                              className="flex justify-between items-center text-sm border-b border-gray-200 py-2"
-                            >
-                              <span className="text-gray-700">{ing.name}</span>
-                              <span className="text-gray-600">
+                            <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
+                              <span className='text-gray-700'>{ing.name}</span>
+                              <span className='text-gray-600'>
                                 {ing.checked}/{ing.total} กรัม
                               </span>
                             </div>
                           ))}
                         </div>
-                        <div
-                          style={{ color: "#000000", background: "#5cfa6c" }}
-                        >
+                        <div style={{ color: "#000000", background: "#5cfa6c" }}>
                           <Button
-                            onClick={() =>
-                              handleCheckAllIngredientsForDate(
-                                selectedDateForSummary
-                              )
-                            }
-                            className="w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg"
-                            disabled={
-                              isSaving === "all" || allIngredientsChecked
-                            }
-                          >
-                            {isSaving === "all"
-                              ? "กำลังบันทึก..."
-                              : "เลือกวัตถุดิบทั้งหมด"}
+                            onClick={() => handleCheckAllIngredientsForDate(selectedDateForSummary)}
+                            className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg'
+                            disabled={isSaving === "all" || allIngredientsChecked}>
+                            {isSaving === "all" ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
                           </Button>
                         </div>
                       </>
@@ -2895,13 +2227,7 @@ const SummaryList: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {totalPages > 1 && (
-          <PaginationComponent
-            totalPages={totalPages}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-          />
-        )}
+        {totalPages > 1 && <PaginationComponent totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />}
       </div>
     </div>
   );
