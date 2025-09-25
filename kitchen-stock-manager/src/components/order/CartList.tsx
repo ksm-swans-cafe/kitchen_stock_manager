@@ -100,6 +100,7 @@ export default function CartList() {
       setCustomerInfo({ cart_shipping_cost: "" });
       return;
     }
+    
     const formattedValue = Number(numericValue).toLocaleString("th-TH");
     setCustomerInfo({ cart_shipping_cost: formattedValue });
   };
