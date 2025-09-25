@@ -5,6 +5,7 @@ import { MenuItem } from "@/models/menu_card/MenuCard-model";
 export interface CartItem extends MenuItem {
   menu_total: number;
   menu_description: string;
+  cart_item_id: string; // เพิ่ม unique ID สำหรับแต่ละ item ในตะกร้า
 }
 
 interface CartState {
@@ -17,9 +18,9 @@ interface CartState {
   cart_receive_time: string;
   cart_shipping_cost: string;
 
-  addItem: (item: MenuItem) => void;
-  removeItem: (itemId: string | number) => void;
-  setItemQuantity: (itemId: string | number, quantity: number) => void;
+  addItem: (item: MenuItem, description?: string) => void; // เปลี่ยนเป็น optional parameter
+  removeItem: (cartItemId: string) => void;
+  setItemQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   setCustomerInfo: (info: {
     name?: string;
@@ -31,6 +32,16 @@ interface CartState {
     cart_shipping_cost?: string;
   }) => void;
 }
+
+// ฟังก์ชันสร้าง unique ID สำหรับ cart item
+const generateCartItemId = (
+  menuId: string | undefined,
+  description: string
+) => {
+  return `${menuId || "no-id"}_${Date.now()}_${Math.random()
+    .toString(36)
+    .substr(2, 9)}_${description.replace(/\s+/g, "_")}`;
+};
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -44,52 +55,76 @@ export const useCartStore = create<CartState>()(
       cart_receive_time: "",
       cart_shipping_cost: "",
 
-      addItem: (item) => {
+      addItem: (item, description = "") => {
         const { items } = get();
-        const existing = items.find((i) => i.menu_id === item.menu_id);
-        if (!existing) {
+        // ใช้ description จาก parameter หรือจาก item.menu_description
+        const finalDescription = description || item.menu_description || "";
+        const cartItemId = generateCartItemId(
+          item.menu_id || "",
+          finalDescription
+        );
+
+        // ตรวจสอบว่ามีรายการที่มี menu_id และ description เหมือนกันหรือไม่
+        const existingIndex = items.findIndex(
+          (i) =>
+            i.menu_id === item.menu_id &&
+            i.menu_description === finalDescription
+        );
+
+        if (existingIndex !== -1) {
+          // ถ้ามีรายการเดียวกัน ให้เพิ่มจำนวน
+          set({
+            items: items.map((i, index) =>
+              index === existingIndex
+                ? { ...i, menu_total: i.menu_total + 1 }
+                : i
+            ),
+          });
+        } else {
+          // ถ้าไม่มี ให้เพิ่มรายการใหม่
           set({
             items: [
               ...items,
               {
                 ...item,
                 menu_total: 1,
-                menu_description: item.menu_description ?? "",
+                menu_description: finalDescription,
+                cart_item_id: cartItemId,
               },
             ],
           });
-        } else {
-          set({
-            items: items.map((i) =>
-              i.menu_id === item.menu_id
-                ? { ...i, menu_total: i.menu_total + 1 }
-                : i
-            ),
-          });
         }
       },
 
-      removeItem: (itemId) => {
+      removeItem: (cartItemId) => {
         const { items } = get();
-        const existing = items.find((i) => i.menu_id === itemId);
-        if (existing && existing.menu_total > 1) {
-          set({
-            items: items.map((i) =>
-              i.menu_id === itemId ? { ...i, menu_total: i.menu_total - 1 } : i
-            ),
-          });
-        } else {
-          set({
-            items: items.filter((i) => i.menu_id !== itemId),
-          });
+        const existingIndex = items.findIndex(
+          (i) => i.cart_item_id === cartItemId
+        );
+
+        if (existingIndex !== -1) {
+          const existing = items[existingIndex];
+          if (existing.menu_total > 1) {
+            set({
+              items: items.map((i, index) =>
+                index === existingIndex
+                  ? { ...i, menu_total: i.menu_total - 1 }
+                  : i
+              ),
+            });
+          } else {
+            set({
+              items: items.filter((i) => i.cart_item_id !== cartItemId),
+            });
+          }
         }
       },
 
-      setItemQuantity: (itemId, quantity) => {
+      setItemQuantity: (cartItemId, quantity) => {
         const { items } = get();
         set({
           items: items.map((i) =>
-            i.menu_id === itemId ? { ...i, menu_total: quantity } : i
+            i.cart_item_id === cartItemId ? { ...i, menu_total: quantity } : i
           ),
         });
       },
@@ -105,26 +140,18 @@ export const useCartStore = create<CartState>()(
           cart_receive_time: "",
           cart_shipping_cost: "",
         });
-        localStorage.removeItem("cart-storage");
       },
 
-      setCustomerInfo: ({
-        name,
-        tel,
-        location,
-        deliveryDate,
-        exportTime,
-        receiveTime,
-        cart_shipping_cost,
-      }) => {
+      setCustomerInfo: (info) => {
         set((state) => ({
-          cart_customer_name: name ?? state.cart_customer_name,
-          cart_customer_tel: tel ?? state.cart_customer_tel,
-          cart_location_send: location ?? state.cart_location_send,
-          cart_delivery_date: deliveryDate ?? state.cart_delivery_date,
-          cart_export_time: exportTime ?? state.cart_export_time,
-          cart_receive_time: receiveTime ?? state.cart_receive_time,
-          cart_shipping_cost: cart_shipping_cost ?? state.cart_shipping_cost,
+          cart_customer_name: info.name ?? state.cart_customer_name,
+          cart_customer_tel: info.tel ?? state.cart_customer_tel,
+          cart_location_send: info.location ?? state.cart_location_send,
+          cart_delivery_date: info.deliveryDate ?? state.cart_delivery_date,
+          cart_export_time: info.exportTime ?? state.cart_export_time,
+          cart_receive_time: info.receiveTime ?? state.cart_receive_time,
+          cart_shipping_cost:
+            info.cart_shipping_cost ?? state.cart_shipping_cost,
         }));
       },
     }),

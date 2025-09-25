@@ -13,6 +13,7 @@ export interface MenuItem {
   menu_ingredients?: Ingredients[];
   menu_total?: number;
   menu_description?: string;
+  menu_order_id?: number;
 }
 
 export interface ingredient {
