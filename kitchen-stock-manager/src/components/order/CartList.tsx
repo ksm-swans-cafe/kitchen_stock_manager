@@ -91,8 +91,18 @@ export default function CartList() {
     } else if (value.length > 6) {
       value = `${value.slice(0, 3)}-${value.slice(3, 6)}-${value.slice(6, 10)}`;
     }
-
     setCustomerInfo({ tel: value });
+  };
+
+  const handleShippingCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = e.target.value.replace(/[^\d]/g, "");
+    if (!numericValue) {
+      setCustomerInfo({ cart_shipping_cost: "" });
+      return;
+    }
+    
+    const formattedValue = Number(numericValue).toLocaleString("th-TH");
+    setCustomerInfo({ cart_shipping_cost: formattedValue });
   };
 
   const validateInputs = (): boolean => {
