@@ -10,6 +10,7 @@ interface MenuItem {
     ingredient_name: string;
     ingredient_status: boolean;
   }[];
+  menu_description: string;
 }
 
 export async function PATCH(
@@ -44,6 +45,7 @@ export async function PATCH(
         m.menu_ingredients.some(
           (ing) => !ing.ingredient_name || ing.useItem < 0
         )
+        || !m.menu_description
     )
   ) {
     return NextResponse.json(
@@ -128,6 +130,7 @@ const [cart] = await prisma.cart.findMany({
         menu_name: item.menu_name,
         menu_total: item.menu_total,
         menu_ingredients: menuIngredients,
+        menu_description: item.menu_description,
       };
     });
 

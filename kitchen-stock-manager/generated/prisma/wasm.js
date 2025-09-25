@@ -5,13 +5,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 
 const {
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientInitializationError,
+  PrismaClientValidationError,
+  getPrismaClient,
+  sqltag,
+  empty,
+  join,
+  raw,
+  skip,
   Decimal,
+  Debug,
   objectEnumValues,
   makeStrictEnum,
+  Extensions,
+  warnOnce,
+  defineDmmfProperty,
   Public,
   getRuntime,
-  skip
-} = require('./runtime/index-browser.js')
+  createParam,
+} = require('./runtime/wasm-engine-edge.js')
 
 
 const Prisma = {}
@@ -20,79 +35,35 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.14.0
- * Query Engine version: 717184b7b35ea05dfa71a3236b7af656013e1e49
+ * Prisma Client JS version: 6.16.2
+ * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
  */
 Prisma.prismaVersion = {
-  client: "6.14.0",
-  engine: "717184b7b35ea05dfa71a3236b7af656013e1e49"
+  client: "6.16.2",
+  engine: "1c57fdcd7e44b29b9313256c76699e91c3ac3c43"
 }
 
-Prisma.PrismaClientKnownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientKnownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)};
-Prisma.PrismaClientUnknownRequestError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientUnknownRequestError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientRustPanicError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientRustPanicError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientInitializationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientInitializationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.PrismaClientValidationError = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`PrismaClientValidationError is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
+Prisma.PrismaClientUnknownRequestError = PrismaClientUnknownRequestError
+Prisma.PrismaClientRustPanicError = PrismaClientRustPanicError
+Prisma.PrismaClientInitializationError = PrismaClientInitializationError
+Prisma.PrismaClientValidationError = PrismaClientValidationError
 Prisma.Decimal = Decimal
 
 /**
  * Re-export of sql-template-tag
  */
-Prisma.sql = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`sqltag is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.empty = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`empty is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.join = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`join is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.raw = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`raw is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.sql = sqltag
+Prisma.empty = empty
+Prisma.join = join
+Prisma.raw = raw
 Prisma.validator = Public.validator
 
 /**
 * Extensions
 */
-Prisma.getExtensionContext = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.getExtensionContext is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
-Prisma.defineExtension = () => {
-  const runtimeName = getRuntime().prettyName;
-  throw new Error(`Extensions.defineExtension is unable to run in this browser environment, or has been bundled for the browser (running in ${runtimeName}).
-In case this error is unexpected for you, please report it in https://pris.ly/prisma-prisma-bug-report`,
-)}
+Prisma.getExtensionContext = Extensions.getExtensionContext
+Prisma.defineExtension = Extensions.defineExtension
 
 /**
  * Shorthand utilities for JSON filtering
@@ -109,10 +80,11 @@ Prisma.NullTypes = {
 
 
 
+
+
 /**
  * Enums
  */
-
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
@@ -178,7 +150,8 @@ exports.Prisma.MenuScalarFieldEnum = {
   menu_total: 'menu_total',
   menu_image: 'menu_image',
   menu_subname: 'menu_subname',
-  menu_catagory: 'menu_catagory'
+  menu_catagory: 'menu_catagory',
+  menu_description: 'menu_description'
 };
 
 exports.Prisma.SortOrder = {
@@ -214,34 +187,83 @@ exports.Prisma.ModelName = {
   ingredients: 'ingredients',
   menu: 'menu'
 };
-
 /**
- * This is a stub Prisma Client that will error at runtime if called.
+ * Create the Client
  */
-class PrismaClient {
-  constructor() {
-    return new Proxy(this, {
-      get(target, prop) {
-        let message
-        const runtime = getRuntime()
-        if (runtime.isEdge) {
-          message = `PrismaClient is not configured to run in ${runtime.prettyName}. In order to run Prisma Client on edge runtime, either:
-- Use Prisma Accelerate: https://pris.ly/d/accelerate
-- Use Driver Adapters: https://pris.ly/d/driver-adapters
-`;
-        } else {
-          message = 'PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `' + runtime.prettyName + '`).'
-        }
-
-        message += `
-If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report`
-
-        throw new Error(message)
+const config = {
+  "generator": {
+    "name": "client",
+    "provider": {
+      "fromEnvVar": null,
+      "value": "prisma-client-js"
+    },
+    "output": {
+      "value": "C:\\Users\\boomh\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\generated\\prisma",
+      "fromEnvVar": null
+    },
+    "config": {
+      "engineType": "library"
+    },
+    "binaryTargets": [
+      {
+        "fromEnvVar": null,
+        "value": "windows",
+        "native": true
       }
-    })
+    ],
+    "previewFeatures": [],
+    "sourceFilePath": "C:\\Users\\boomh\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\prisma\\schema.prisma",
+    "isCustomOutput": true
+  },
+  "relativeEnvPaths": {
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../.env"
+  },
+  "relativePath": "../../prisma",
+  "clientVersion": "6.16.2",
+  "engineVersion": "1c57fdcd7e44b29b9313256c76699e91c3ac3c43",
+  "datasourceNames": [
+    "db"
+  ],
+  "activeProvider": "postgresql",
+  "postinstall": false,
+  "inlineDatasources": {
+    "db": {
+      "url": {
+        "fromEnvVar": "DATABASE_URL",
+        "value": null
+      }
+    }
+  },
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel cart {\n  cart_id            String    @id @default(dbgenerated(\"gen_random_uuid()\")) @db.Uuid\n  cart_username      String    @db.VarChar(100)\n  cart_menu_items    Json\n  cart_create_date   DateTime? @default(dbgenerated(\"(now() AT TIME ZONE 'Asia/Bangkok'::text)\")) @db.Timestamptz(6)\n  cart_status        String?   @default(\"pending\") @db.VarChar\n  cart_order_number  String?   @db.VarChar(3)\n  cart_last_update   String?   @db.VarChar(100)\n  cart_customer_name String?   @db.VarChar(300)\n  cart_customer_tel  String?   @db.VarChar(12)\n  cart_location_send String?   @db.VarChar(100)\n  cart_delivery_date String?   @db.VarChar(10)\n  cart_export_time   String?   @db.VarChar(10)\n  cart_receive_time  String?   @db.VarChar(10)\n  cart_shipping_cost Decimal?  @default(0) @db.Decimal(4, 0)\n}\n\nmodel employee {\n  employee_id        String   @id(map: \"employee_new_pkey\") @default(dbgenerated(\"gen_random_uuid()\")) @db.Uuid\n  employee_username  String?  @db.VarChar(30)\n  employee_firstname String?  @db.VarChar(50)\n  employee_lastname  String?  @db.VarChar(50)\n  employee_pin       Decimal? @db.Decimal(4, 0)\n  employee_role      String?  @default(\"employee\") @db.VarChar(20)\n}\n\n/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.\nmodel ingredient_transactions {\n  transaction_id            Int      @id @default(autoincrement())\n  transaction_date          DateTime @default(dbgenerated(\"(now() AT TIME ZONE 'Asia/Bangkok'::text)\")) @db.Timestamptz(6)\n  transaction_from_username String   @db.VarChar(100)\n  transaction_type          String?  @db.VarChar(7)\n  ingredient_name           String   @db.VarChar(100)\n  transaction_total_price   Decimal  @db.Decimal(10, 2)\n  transaction_quantity      Decimal  @db.Decimal(10, 2)\n  transaction_units         String   @db.VarChar(50)\n}\n\nmodel ingredients {\n  ingredient_id             Int       @id @default(autoincrement())\n  ingredient_name           String    @db.VarChar(30)\n  ingredient_total          Decimal?  @default(0) @db.Decimal(10, 2)\n  ingredient_unit           String    @db.VarChar(20)\n  ingredient_lastupdate     DateTime? @default(dbgenerated(\"(now() AT TIME ZONE 'Asia/Bangkok'::text)\")) @db.Timestamptz(6)\n  ingredient_image          String?   @db.VarChar(300)\n  ingredient_total_alert    Decimal?  @db.Decimal(10, 2)\n  ingredient_category       String?   @db.VarChar(30)\n  ingredient_sub_category   String?   @db.VarChar(30)\n  ingredient_price          Decimal?  @default(0) @db.Decimal(10, 2)\n  ingredient_price_per_unit Decimal?  @default(0) @db.Decimal(10, 2)\n}\n\nmodel menu {\n  menu_id          Int      @id @default(autoincrement())\n  menu_name        String   @db.VarChar(100)\n  menu_ingredients Json\n  menu_total       Decimal? @db.Decimal(7, 0)\n  menu_image       String?  @db.VarChar(999)\n  menu_subname     String?  @db.VarChar(100)\n  menu_catagory    String?  @db.VarChar(100)\n  menu_description String?  @db.VarChar(100)\n}\n",
+  "inlineSchemaHash": "c20e13098a86e6212538af4faf803995fa2fd02d56bf47dc15fda0be88ed83b8",
+  "copyEngine": true
+}
+config.dirname = '/'
+
+config.runtimeDataModel = JSON.parse("{\"models\":{\"cart\":{\"fields\":[{\"name\":\"cart_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_menu_items\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"cart_create_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"cart_status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_order_number\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_last_update\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_customer_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_customer_tel\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_location_send\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_delivery_date\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_export_time\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_receive_time\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_shipping_cost\",\"kind\":\"scalar\",\"type\":\"Decimal\"}],\"dbName\":null},\"employee\":{\"fields\":[{\"name\":\"employee_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_firstname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_lastname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_pin\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"employee_role\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ingredient_transactions\":{\"fields\":[{\"name\":\"transaction_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"transaction_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"transaction_from_username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_total_price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"transaction_quantity\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"transaction_units\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ingredients\":{\"fields\":[{\"name\":\"ingredient_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"ingredient_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_total\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"ingredient_unit\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_lastupdate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"ingredient_image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_total_alert\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"ingredient_category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_sub_category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"ingredient_price_per_unit\",\"kind\":\"scalar\",\"type\":\"Decimal\"}],\"dbName\":null},\"menu\":{\"fields\":[{\"name\":\"menu_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"menu_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_ingredients\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"menu_total\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"menu_image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_subname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_catagory\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_description\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
+config.engineWasm = {
+  getRuntime: async () => require('./query_engine_bg.js'),
+  getQueryEngineWasmModule: async () => {
+    const loader = (await import('#wasm-engine-loader')).default
+    const engine = (await loader).default
+    return engine
   }
 }
+config.compilerWasm = undefined
 
+config.injectableEdgeEnv = () => ({
+  parsed: {
+    DATABASE_URL: typeof globalThis !== 'undefined' && globalThis['DATABASE_URL'] || typeof process !== 'undefined' && process.env && process.env.DATABASE_URL || undefined
+  }
+})
+
+if (typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined) {
+  Debug.enable(typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined)
+}
+
+const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
-
 Object.assign(exports, Prisma)
+

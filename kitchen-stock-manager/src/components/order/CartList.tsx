@@ -139,12 +139,13 @@ export default function CartList() {
           cart_delivery_date,
           cart_export_time,
           cart_receive_time,
-          cart_shipping_cost: cart_shipping_cost.replace(/[^\d]/g, ""),
-          cart_menu_items: items.map(({ menu_name, menu_total, menu_ingredients, menu_description }) => ({
-            menu_name,
-            menu_total,
-            menu_ingredients,
-            menu_description,
+          cart_shipping_cost,
+          cart_menu_items: items.map((item, index) => ({
+            menu_name: item.menu_name,
+            menu_total: item.menu_total,
+            menu_ingredients: item.menu_ingredients,
+            menu_description: item.menu_description,
+            menu_order_id: index + 1, 
           })),
         }),
       });
@@ -163,8 +164,8 @@ export default function CartList() {
     router.push("/home/summarylist");
   };
 
-  const handleChangeQuantity = (itemId: string | number, quantity: number) => {
-    if (quantity >= 1) setItemQuantity(itemId, quantity);
+  const handleChangeQuantity = (cartItemId: string, quantity: number) => {
+    if (quantity >= 1) setItemQuantity(cartItemId, quantity);
   };
 
   return (
@@ -295,24 +296,25 @@ export default function CartList() {
 
           <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-medium'>ค่าจัดส่ง</label>
-            <input type='text' value={cart_shipping_cost} onChange={handleShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
+            <input type='text' value={cart_shipping_cost} onChange={(e) => setCustomerInfo({ cart_shipping_cost: e.target.value })} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
           </div>
         </div>
 
         <ul className='space-y-4 mb-4'>
           {items.map((item) =>
-            item.menu_id != null ? (
-              <li key={item.menu_id} className='border p-4 rounded flex justify-between items-center'>
-                <div>
+            item.cart_item_id ? (
+              <li key={item.cart_item_id} className='border p-4 rounded flex justify-between items-start'>
+                <div className='flex-1'>
                   <div className='font-medium'>{item.menu_name}</div>
                   <div className='text-gray-500'>{item.menu_price} ฿</div>
+                  {item.menu_description && <div className='text-sm text-gray-600 mt-1 italic'>หมายเหตุ: {item.menu_description}</div>}
                 </div>
                 <div className='flex items-center space-x-2'>
-                  <button onClick={() => removeItem(item.menu_id!)} className='px-3 py-1 bg-red-500 text-white rounded'>
+                  <button onClick={() => removeItem(item.cart_item_id!)} className='px-3 py-1 bg-red-500 text-white rounded'>
                     −
                   </button>
-                  <input type='number' value={item.menu_total} onChange={(e) => handleChangeQuantity(item.menu_id!, Number(e.target.value))} className='w-16 text-center border rounded' />
-                  <button onClick={() => addItem(item)} className='px-3 py-1 bg-green-500 text-white rounded'>
+                  <input type='number' value={item.menu_total} onChange={(e) => handleChangeQuantity(item.cart_item_id!, Number(e.target.value))} className='w-16 text-center border rounded' />
+                  <button onClick={() => addItem(item, item.menu_description || "")} className='px-3 py-1 bg-green-500 text-white rounded'>
                     +
                   </button>
                 </div>

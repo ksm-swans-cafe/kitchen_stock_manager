@@ -21,7 +21,13 @@ import PaginationComponent from "@/components/ui/Totalpage";
 import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "./ResponsiveOrderId";
 import StatusDropdown from "./StatusDropdown";
-import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
+import {
+  Ingredient,
+  MenuItem,
+  Cart,
+  CartItem,
+  RawCart,
+} from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
 // import { thSarabunFont } from "../../th-sarabun-font"; // import font base64
 
@@ -59,7 +65,7 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-const OrderHistory: React.FC = () => {
+const OrderHistory = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -109,7 +115,7 @@ const OrderHistory: React.FC = () => {
       console.error("Failed to parse JSON:", e);
       return [];
     }
-  };
+};
 
   // แปลงข้อมูลเมื่อข้อมูลจาก SWR พร้อม
   useEffect(() => {
@@ -176,7 +182,10 @@ const OrderHistory: React.FC = () => {
             price: cart.cart_total_price || 0,
             status: cart.cart_status,
             createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
-            menuItems: menuItems.map((item) => ({ ...item })),
+            menuItems: menuItems.map((item) => ({
+              ...item,
+              menu_description: item.menu_description || undefined,
+            })),
             allIngredients,
             order_number: cart.cart_order_number,
             cart_delivery_date: cart.cart_delivery_date,
@@ -708,8 +717,6 @@ const OrderHistory: React.FC = () => {
     return [...currentDateGroup, ...sortedOtherDates];
   }, [filteredAndSortedOrders, sortOrder]);
 
-  const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
-  const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const summarizeIngredients = (date: string) => {
     const ingredientSummary: {
@@ -750,22 +757,55 @@ const OrderHistory: React.FC = () => {
     };
   };
 
+
+  const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
+  const paginatedGroupedOrders = groupedOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const handleExportCSV = () => {
-    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
+    const headers = [
+      "เลขที่ออร์เดอร์",
+      "ชื่อเมนู",
+      "คำอธิบายเมนู",
+      "วันที่",
+      "เวลา",
+      "จำนวน Set",
+      "ราคา",
+      "สถานะ",
+      "ผู้สร้าง",
+    ];
     const csvContent = [
       headers.join(","),
-      ...filteredAndSortedOrders.map((cart) => [cart.id, cart.name, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy].join(",")),
+      ...filteredAndSortedOrders.map((cart) => {
+        const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
+        return [
+          cart.id,
+          `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
+          `"${menuDescriptions.replace(/"/g, '""')}"`, // ป้องกัน comma ในคำอธิบายเมนู
+          cart.date,
+          cart.time,
+          cart.sets,
+          cart.price,
+          getStatusText(cart.status),
+          cart.createdBy,
+        ].join(",");
+      }),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "order_history.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "order_history.csv";
+  link.target = "_blank";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+// ...existing code...
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -773,8 +813,11 @@ const OrderHistory: React.FC = () => {
     doc.setFontSize(16);
     doc.text("Order History", 14, 20);
 
-    const tableColumn = ["Order ID", "Menu", "Date", "Time", "Sets", "Price", "Status", "Created By"];
-    const tableRows = filteredAndSortedOrders.map((cart) => [cart.id, cart.name, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy]);
+    const tableColumn = ["Order ID", "Menu", "Menu Description", "Date", "Time", "Sets", "Price", "Status", "Created By"];
+    const tableRows = filteredAndSortedOrders.map((cart) => {
+      const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
+      return [cart.id, cart.name, menuDescriptions, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy];
+    });
 
     autoTable(doc, {
       head: [tableColumn],
@@ -1106,7 +1149,15 @@ const OrderHistory: React.FC = () => {
                                         value={`menu-${groupIdx}`}
                                         className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                          <span className='truncate text-sm text-gray-700'>{menuGroup.menuName}</span>
+                                          <div className='flex flex-col items-start'>
+                                            <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                            {(() => {
+                                              const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                              return menuItem?.menu_description ? (
+                                                <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span>
+                                              ) : null;
+                                            })()}
+                                          </div>
                                           <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
                                         </AccordionTrigger>
                                         <AccordionContent className='pt-3 space-y-2'>

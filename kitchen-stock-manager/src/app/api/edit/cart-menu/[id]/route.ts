@@ -11,6 +11,8 @@ interface MenuItem {
     ingredient_name?: string;
     ingredient_status?: boolean;
   }[];
+  menu_description?: string;
+  menu_order_id?: number;
 }
 
 export async function PATCH(
@@ -72,7 +74,6 @@ export async function PATCH(
 
     console.log("Fetched cart_menu_items:", cart.cart_menu_items);
 
-    // จัดการ cart_menu_items
     let menuItems: MenuItem[] = [];
     if (cart.cart_menu_items) {
       if (typeof cart.cart_menu_items === "string") {
@@ -115,7 +116,6 @@ export async function PATCH(
       return NextResponse.json({ error: "ไม่มีเมนูในตะกร้า" }, { status: 400 });
     }
 
-    // ทำความสะอาดและตรวจสอบ menuName
     const cleanedMenuName = menuName.trim();
     const menuExists = menuItems.find(
       (item: MenuItem) => item.menu_name?.trim() === cleanedMenuName

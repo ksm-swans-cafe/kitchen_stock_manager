@@ -68,4 +68,5 @@ model menu {
   menu_image       String?  @db.VarChar(999)
   menu_subname     String?  @db.VarChar(100)
   menu_catagory    String?  @db.VarChar(100)
+  menu_description String?  @db.VarChar(100)
 }

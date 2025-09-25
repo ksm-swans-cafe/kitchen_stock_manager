@@ -264,8 +264,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.14.0
-   * Query Engine version: 717184b7b35ea05dfa71a3236b7af656013e1e49
+   * Prisma Client JS version: 6.16.2
+   * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
    */
   export type PrismaVersion = {
     client: string
@@ -1118,6 +1118,10 @@ export namespace Prisma {
       timeout?: number
       isolationLevel?: Prisma.TransactionIsolationLevel
     }
+    /**
+     * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
+     */
+    adapter?: runtime.SqlDriverAdapterFactory | null
     /**
      * Global configuration for omitting model fields by default.
      * 
@@ -5632,6 +5636,7 @@ export namespace Prisma {
     menu_image: string | null
     menu_subname: string | null
     menu_catagory: string | null
+    menu_description: string | null
   }
 
   export type MenuMaxAggregateOutputType = {
@@ -5641,6 +5646,7 @@ export namespace Prisma {
     menu_image: string | null
     menu_subname: string | null
     menu_catagory: string | null
+    menu_description: string | null
   }
 
   export type MenuCountAggregateOutputType = {
@@ -5651,6 +5657,7 @@ export namespace Prisma {
     menu_image: number
     menu_subname: number
     menu_catagory: number
+    menu_description: number
     _all: number
   }
 
@@ -5672,6 +5679,7 @@ export namespace Prisma {
     menu_image?: true
     menu_subname?: true
     menu_catagory?: true
+    menu_description?: true
   }
 
   export type MenuMaxAggregateInputType = {
@@ -5681,6 +5689,7 @@ export namespace Prisma {
     menu_image?: true
     menu_subname?: true
     menu_catagory?: true
+    menu_description?: true
   }
 
   export type MenuCountAggregateInputType = {
@@ -5691,6 +5700,7 @@ export namespace Prisma {
     menu_image?: true
     menu_subname?: true
     menu_catagory?: true
+    menu_description?: true
     _all?: true
   }
 
@@ -5788,6 +5798,7 @@ export namespace Prisma {
     menu_image: string | null
     menu_subname: string | null
     menu_catagory: string | null
+    menu_description: string | null
     _count: MenuCountAggregateOutputType | null
     _avg: MenuAvgAggregateOutputType | null
     _sum: MenuSumAggregateOutputType | null
@@ -5817,6 +5828,7 @@ export namespace Prisma {
     menu_image?: boolean
     menu_subname?: boolean
     menu_catagory?: boolean
+    menu_description?: boolean
   }, ExtArgs["result"]["menu"]>
 
   export type menuSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -5827,6 +5839,7 @@ export namespace Prisma {
     menu_image?: boolean
     menu_subname?: boolean
     menu_catagory?: boolean
+    menu_description?: boolean
   }, ExtArgs["result"]["menu"]>
 
   export type menuSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -5837,6 +5850,7 @@ export namespace Prisma {
     menu_image?: boolean
     menu_subname?: boolean
     menu_catagory?: boolean
+    menu_description?: boolean
   }, ExtArgs["result"]["menu"]>
 
   export type menuSelectScalar = {
@@ -5847,9 +5861,10 @@ export namespace Prisma {
     menu_image?: boolean
     menu_subname?: boolean
     menu_catagory?: boolean
+    menu_description?: boolean
   }
 
-  export type menuOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_id" | "menu_name" | "menu_ingredients" | "menu_total" | "menu_image" | "menu_subname" | "menu_catagory", ExtArgs["result"]["menu"]>
+  export type menuOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_id" | "menu_name" | "menu_ingredients" | "menu_total" | "menu_image" | "menu_subname" | "menu_catagory" | "menu_description", ExtArgs["result"]["menu"]>
 
   export type $menuPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "menu"
@@ -5862,6 +5877,7 @@ export namespace Prisma {
       menu_image: string | null
       menu_subname: string | null
       menu_catagory: string | null
+      menu_description: string | null
     }, ExtArgs["result"]["menu"]>
     composites: {}
   }
@@ -6292,6 +6308,7 @@ export namespace Prisma {
     readonly menu_image: FieldRef<"menu", 'String'>
     readonly menu_subname: FieldRef<"menu", 'String'>
     readonly menu_catagory: FieldRef<"menu", 'String'>
+    readonly menu_description: FieldRef<"menu", 'String'>
   }
     
 
@@ -6742,7 +6759,8 @@ export namespace Prisma {
     menu_total: 'menu_total',
     menu_image: 'menu_image',
     menu_subname: 'menu_subname',
-    menu_catagory: 'menu_catagory'
+    menu_catagory: 'menu_catagory',
+    menu_description: 'menu_description'
   };
 
   export type MenuScalarFieldEnum = (typeof MenuScalarFieldEnum)[keyof typeof MenuScalarFieldEnum]
@@ -7202,6 +7220,7 @@ export namespace Prisma {
     menu_image?: StringNullableFilter<"menu"> | string | null
     menu_subname?: StringNullableFilter<"menu"> | string | null
     menu_catagory?: StringNullableFilter<"menu"> | string | null
+    menu_description?: StringNullableFilter<"menu"> | string | null
   }
 
   export type menuOrderByWithRelationInput = {
@@ -7212,6 +7231,7 @@ export namespace Prisma {
     menu_image?: SortOrderInput | SortOrder
     menu_subname?: SortOrderInput | SortOrder
     menu_catagory?: SortOrderInput | SortOrder
+    menu_description?: SortOrderInput | SortOrder
   }
 
   export type menuWhereUniqueInput = Prisma.AtLeast<{
@@ -7225,6 +7245,7 @@ export namespace Prisma {
     menu_image?: StringNullableFilter<"menu"> | string | null
     menu_subname?: StringNullableFilter<"menu"> | string | null
     menu_catagory?: StringNullableFilter<"menu"> | string | null
+    menu_description?: StringNullableFilter<"menu"> | string | null
   }, "menu_id">
 
   export type menuOrderByWithAggregationInput = {
@@ -7235,6 +7256,7 @@ export namespace Prisma {
     menu_image?: SortOrderInput | SortOrder
     menu_subname?: SortOrderInput | SortOrder
     menu_catagory?: SortOrderInput | SortOrder
+    menu_description?: SortOrderInput | SortOrder
     _count?: menuCountOrderByAggregateInput
     _avg?: menuAvgOrderByAggregateInput
     _max?: menuMaxOrderByAggregateInput
@@ -7253,6 +7275,7 @@ export namespace Prisma {
     menu_image?: StringNullableWithAggregatesFilter<"menu"> | string | null
     menu_subname?: StringNullableWithAggregatesFilter<"menu"> | string | null
     menu_catagory?: StringNullableWithAggregatesFilter<"menu"> | string | null
+    menu_description?: StringNullableWithAggregatesFilter<"menu"> | string | null
   }
 
   export type cartCreateInput = {
@@ -7613,6 +7636,7 @@ export namespace Prisma {
     menu_image?: string | null
     menu_subname?: string | null
     menu_catagory?: string | null
+    menu_description?: string | null
   }
 
   export type menuUncheckedCreateInput = {
@@ -7623,6 +7647,7 @@ export namespace Prisma {
     menu_image?: string | null
     menu_subname?: string | null
     menu_catagory?: string | null
+    menu_description?: string | null
   }
 
   export type menuUpdateInput = {
@@ -7632,6 +7657,7 @@ export namespace Prisma {
     menu_image?: NullableStringFieldUpdateOperationsInput | string | null
     menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
     menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type menuUncheckedUpdateInput = {
@@ -7642,6 +7668,7 @@ export namespace Prisma {
     menu_image?: NullableStringFieldUpdateOperationsInput | string | null
     menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
     menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type menuCreateManyInput = {
@@ -7652,6 +7679,7 @@ export namespace Prisma {
     menu_image?: string | null
     menu_subname?: string | null
     menu_catagory?: string | null
+    menu_description?: string | null
   }
 
   export type menuUpdateManyMutationInput = {
@@ -7661,6 +7689,7 @@ export namespace Prisma {
     menu_image?: NullableStringFieldUpdateOperationsInput | string | null
     menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
     menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type menuUncheckedUpdateManyInput = {
@@ -7671,6 +7700,7 @@ export namespace Prisma {
     menu_image?: NullableStringFieldUpdateOperationsInput | string | null
     menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
     menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -8154,6 +8184,7 @@ export namespace Prisma {
     menu_image?: SortOrder
     menu_subname?: SortOrder
     menu_catagory?: SortOrder
+    menu_description?: SortOrder
   }
 
   export type menuAvgOrderByAggregateInput = {
@@ -8168,6 +8199,7 @@ export namespace Prisma {
     menu_image?: SortOrder
     menu_subname?: SortOrder
     menu_catagory?: SortOrder
+    menu_description?: SortOrder
   }
 
   export type menuMinOrderByAggregateInput = {
@@ -8177,6 +8209,7 @@ export namespace Prisma {
     menu_image?: SortOrder
     menu_subname?: SortOrder
     menu_catagory?: SortOrder
+    menu_description?: SortOrder
   }
 
   export type menuSumOrderByAggregateInput = {

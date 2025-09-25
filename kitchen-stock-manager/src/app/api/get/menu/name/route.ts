@@ -8,7 +8,8 @@ export async function GET() {
       select: {
         menu_id: true,
         menu_name: true,
-        menu_ingredients: true
+        menu_ingredients: true,
+        menu_description: true
       }
     })
     if (result.length === 0) {
