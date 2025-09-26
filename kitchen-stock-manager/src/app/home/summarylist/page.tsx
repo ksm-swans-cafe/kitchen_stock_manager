@@ -1581,7 +1581,7 @@ const SummaryList: React.FC = () => {
                                     setShouldFetchMenu(false);
                                   }}>
                                   <DialogContent className='max-w-2xl max-h-[80vh] overflow-hidden flex flex-col'>
-                                    <DialogTitle className='text-lg font-semibold text-gray-800 border-b pb-3'>แก้ไขเมนูสำหรับ Order #{editMenuDialog?.cartId}</DialogTitle>
+                                    <DialogTitle className='text-lg font-semibold text-gray-800 border-b pb-3'>แก้ไขเมนูสำหรับ Order </DialogTitle>
                                     <div className='flex-1 overflow-y-auto p-1'>
                                       <div className='space-y-6'>
                                         {menuListError ? (
