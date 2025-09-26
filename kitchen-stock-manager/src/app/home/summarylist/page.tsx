@@ -407,6 +407,7 @@ const SummaryList: React.FC = () => {
     }
   };
 
+  
   const handleCheckAllIngredients = async (cartId: string) => {
     const previousCarts = [...carts];
     setIsSaving(cartId);
@@ -681,6 +682,18 @@ const SummaryList: React.FC = () => {
       const selectedDateISO = selectedDate.toISOString().split("T")[0];
       filtered = filtered.filter((order) => convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO);
     }
+
+    // if (selectedCategory) {
+    //   filtered = filtered.filter(order => order.category === selectedCategory);
+    // }
+
+    // if (priceRange) {
+    //   filtered = filtered.filter(order => order.price >= priceRange[0] && order.price <= priceRange[1]);
+    // }
+
+    // if (searchKeyword) {
+    //   filtered = filtered.filter(order => order.name.includes(searchKeyword));
+    // }
 
     if (searchTerm) {
       filtered = filtered.filter((order) => [
@@ -1306,6 +1319,15 @@ const SummaryList: React.FC = () => {
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
+          <Button
+            onClick={() => {
+              setSearchTerm("");
+              setSortOrder("asc");
+              setSelectedDate(null);
+              setFilterCreator("ทั้งหมด");
+              setFilterStatus("ทั้งหมด");
+              setCarts(allCarts);
+              }} className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>ล้างทั้งหมด</Button>
           <div className='flex flex-center'>
             <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> CSV
@@ -1484,7 +1506,7 @@ const SummaryList: React.FC = () => {
                                   </div>
                                   <div className='flex items-center gap-1'>
                                     <Container className='w-4 h-4 text-blue-500' />
-                                    <span className='font-medium text-blue-600'>ค่าจัดส่ง {cart.cart_shipping_cost?.toLocaleString() ?? "0"} บาท</span>
+                                    <span>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
                                   </div>
                                 </div>
                               </div>
