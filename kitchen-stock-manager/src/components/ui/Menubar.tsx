@@ -122,7 +122,7 @@ export default function Menubar() {
         {!isLoading && (
           
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" style={{ color: 'black' }}>
               <Button
                 variant="outline"
                 size="sm"
