@@ -12,7 +12,7 @@ import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
 import { BsCashStack } from "react-icons/bs";
 import { FaWallet } from "react-icons/fa";
-import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map as MapIcon, Download, Users, Edit2 } from "lucide-react";
+import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map as MapIcon, Download, Users, Edit2 , Container } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/share/ui/accordion";
@@ -194,6 +194,7 @@ const OrderHistory = () => {
             cart_customer_tel: cart.cart_customer_tel,
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
+            cart_shipping_cost: cart.cart_shipping_cost,
           };
         });
 
@@ -960,14 +961,15 @@ const OrderHistory = () => {
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
-          <Button
-            onClick={() => {
-              setSelectedDate(null);
-              setCarts(allCarts);
-            }}
-            className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>
-            ล้างวันที่
-          </Button>
+           <Button
+              onClick={() => {
+                        setSearchTerm("");
+                        setSortOrder("asc");
+                        setSelectedDate(null);
+                        setFilterCreator("ทั้งหมด");
+                        setFilterStatus("ทั้งหมด");
+                        setCarts(allCarts);
+                        }} className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>ล้างทั้งหมด</Button>
           <div className='flex flex-center'>
             <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> CSV
@@ -1097,6 +1099,8 @@ const OrderHistory = () => {
                                   <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
                                   <Wallet className='w-4 h-4 text-green-400' />
                                   <span className='text-sm sm:text-base font-normal'>ราคาทั้งหมด {cart.price.toLocaleString()} บาท</span>
+                                  <Container className='w-4 h-4 text-blue-500' />
+                                  <span className='font-medium text-blue-600'>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>

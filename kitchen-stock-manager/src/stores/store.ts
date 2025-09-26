@@ -150,8 +150,7 @@ export const useCartStore = create<CartState>()(
           cart_delivery_date: info.deliveryDate ?? state.cart_delivery_date,
           cart_export_time: info.exportTime ?? state.cart_export_time,
           cart_receive_time: info.receiveTime ?? state.cart_receive_time,
-          cart_shipping_cost:
-            info.cart_shipping_cost ?? state.cart_shipping_cost,
+          cart_shipping_cost: info.cart_shipping_cost ?? state.cart_shipping_cost,
         }));
       },
     }),
