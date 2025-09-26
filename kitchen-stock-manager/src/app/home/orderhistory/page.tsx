@@ -29,35 +29,7 @@ import {
   RawCart,
 } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
-// import { thSarabunFont } from "../../th-sarabun-font"; // import font base64
 
-// export const exportThaiPDF = () => {
-//   const doc = new jsPDF();
-
-//   // เพิ่มฟอนต์เข้าไป
-//   doc.addFileToVFS("THSarabunNew.ttf", thSarabunFont);
-//   doc.addFont("THSarabunNew.ttf", "THSarabun", "normal");
-//   doc.setFont("THSarabun");
-
-//   // เพิ่มข้อความไทย
-//   doc.setFontSize(16);
-//   doc.text("ประวัติคำสั่งซื้อ", 14, 20);
-
-//   autoTable(doc, {
-//     head: [["ลำดับ", "ชื่อเมนู", "จำนวน"]],
-//     body: [
-//       ["1", "ข้าวผัดหมู", "5"],
-//       ["2", "ไข่เจียวหมูสับ", "3"],
-//     ],
-//     styles: {
-//       font: "THSarabun",
-//       fontSize: 14,
-//     },
-//     startY: 30,
-//   });
-
-//   doc.save("thai_order.pdf");
-// };
 // Fetcher function สำหรับ SWR
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -66,7 +38,6 @@ const fetcher = async (url: string) => {
 };
 
 const OrderHistory = () => {
-  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
@@ -265,6 +236,11 @@ const OrderHistory = () => {
     return `${christianYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   };
 
+    const handleDatePicker = (action: string) => {
+      if (action === "open") return setIsDatePickerOpen(true);
+      else if (action === "close") return setIsDatePickerOpen(false);
+    };
+  
   const handleDateClick = (info: { dateStr: string }) => {
     const selectedDateStr = info.dateStr;
     const filteredOrders = allCarts.filter((cart) => convertThaiDateToISO(cart.cart_delivery_date) === selectedDateStr);
@@ -435,109 +411,6 @@ const OrderHistory = () => {
     } catch (err) {
       console.error("Error updating times:", err);
       setError(err instanceof Error ? `ไม่สามารถอัปเดตเวลา: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตเวลา");
-    } finally {
-      setIsSaving(null);
-    }
-  };
-
-  const handleToggleIngredientCheck = async (cartId: string, menuName: string, ingredientName: string) => {
-    const previousCarts = [...carts];
-    const currentCart = carts.find((cart) => cart.id === cartId);
-    const currentIngredient = currentCart?.allIngredients.find((group) => group.menuName === menuName)?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
-
-    const newCheckedStatus = !currentIngredient?.isChecked;
-
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? {
-                              ...ing,
-                              isChecked: newCheckedStatus,
-                              ingredient_status: newCheckedStatus,
-                            }
-                          : ing
-                      ),
-                      ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),
-                    }
-                  : group
-              ),
-            }
-          : cart
-      )
-    );
-
-    try {
-      const response = await fetch(`/api/edit/cart-menu/ingredient-status/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menuName,
-          ingredientName,
-          isChecked: newCheckedStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update ingredient status");
-      }
-
-      mutateCarts();
-    } catch (err) {
-      console.error("Error updating ingredient status:", err);
-      setError(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบ: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบ");
-      setCarts(previousCarts);
-    }
-  };
-
-  const handleCheckAllIngredients = async (cartId: string) => {
-    const previousCarts = [...carts];
-    setIsSaving(cartId);
-
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) => ({
-                ...group,
-                ingredients: group.ingredients.map((ing) => ({
-                  ...ing,
-                  isChecked: true,
-                  ingredient_status: true,
-                })),
-                ingredient_status: true,
-              })),
-            }
-          : cart
-      )
-    );
-
-    try {
-      const response = await fetch(`/api/edit/cart-menu/all-ingredients-status/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isChecked: true }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update all ingredients status");
-      }
-
-      mutateCarts();
-    } catch (err) {
-      console.error("Error updating all ingredients status:", err);
-      setError(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด");
-      setCarts(previousCarts);
     } finally {
       setIsSaving(null);
     }
@@ -868,7 +741,7 @@ const OrderHistory = () => {
           </div>
 
           <div>
-            <Button onClick={() => setIsDatePickerOpen(true)} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
+            <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
                     year: "numeric",
@@ -882,7 +755,7 @@ const OrderHistory = () => {
 
             <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
               <DialogContent className='max-w-4xl'>
-                <DialogTitle className='sr-only'>Calendar View</DialogTitle>
+                <DialogTitle className='sr-only'>เลือกวันที่จัดส่ง</DialogTitle>
                 <FullCalendar
                   plugins={[dayGridPlugin, interactionPlugin]}
                   initialView='dayGridMonth'
@@ -890,6 +763,7 @@ const OrderHistory = () => {
                   events={calendarEvents}
                   dateClick={handleDateClick}
                   height='auto'
+                  contentHeight='auto'
                   locale='th'
                   buttonText={{
                     today: "วันนี้",
@@ -901,6 +775,21 @@ const OrderHistory = () => {
                     left: "prev,next today",
                     center: "title",
                     right: "dayGridMonth,dayGridWeek,dayGridDay",
+                  }}
+                  footerToolbar={{
+                    start: "",
+                    center: "",
+                    end: "custom1",
+                  }}
+                  customButtons={{
+                    custom1: {
+                      text: "ล้างวันที่",
+                      click: function () {
+                        setSelectedDate(null);
+                        setCarts(allCarts);
+                        handleDatePicker("close");
+                      },
+                    },
                   }}
                 />
               </DialogContent>
@@ -952,14 +841,6 @@ const OrderHistory = () => {
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
-          <Button
-            onClick={() => {
-              setSelectedDate(null);
-              setCarts(allCarts);
-            }}
-            className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>
-            ล้างวันที่
-          </Button>
           <div className='flex flex-center'>
             <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> CSV
@@ -1153,9 +1034,7 @@ const OrderHistory = () => {
                                             <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
                                             {(() => {
                                               const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                              return menuItem?.menu_description ? (
-                                                <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span>
-                                              ) : null;
+                                              return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
                                             })()}
                                           </div>
                                           <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>

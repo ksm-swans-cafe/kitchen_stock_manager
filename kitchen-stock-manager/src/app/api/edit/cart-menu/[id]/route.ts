@@ -5,14 +5,14 @@ import prisma from "@/lib/prisma";
 interface MenuItem {
   menu_name: string;
   menu_total: number;
-  ingredients?: {
+  ingredients: {
     useItem: number;
-    ingredient_id?: number;
-    ingredient_name?: string;
-    ingredient_status?: boolean;
+    ingredient_id: number;
+    ingredient_name: string;
+    ingredient_status: boolean;
   }[];
-  menu_description?: string;
-  menu_order_id?: number;
+  menu_description: string;
+  menu_order_id: number;
 }
 
 export async function PATCH(
