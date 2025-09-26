@@ -328,8 +328,8 @@ export default function IngredientManagement() {
           </Card>
         )}
 
-        <div className='flex flex-row items-center gap-2 w-full mb-2'>
-          <div className='relative flex-1 min-w-[120px] mt-2'>
+        <div className='flex flex-row  items-center gap-2 w-full mb-2'>
+          <div className='relative flex-1 min-w-[120px] padding-right-10 mt-2'>
             <SearchBox
               dataSource={ingredients}
               onSelect={(val) => setSearchQuery(val)}
@@ -345,7 +345,6 @@ export default function IngredientManagement() {
               <Select
                 value={selectedStatus}
                 onValueChange={(value) => {
-                  // console.log("Selected status:", value);
                   setSelectedStatus(value);
                 }}>
                 <SelectTrigger className='inline-flex min-w-fit px-3' style={{ zIndex: 1000 }}>
@@ -426,82 +425,6 @@ export default function IngredientManagement() {
                         </Select>
                       </div>
                     </div>
-
-                    {/* <div>
-                      <Label htmlFor="category">ประเภท</Label>
-                      <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
-                        <Select
-                          value={ingredient.ingredient_category ?? ""}
-                          onValueChange={(value) =>
-                            setingredient({
-                              ...ingredient,
-                              ingredient_category: value,
-                              ingredient_sub_category: "",
-                            })
-                          }
-                          required
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="เลือกประเภท" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="วัตถุดิบหลัก">
-                              วัตถุดิบหลัก
-                            </SelectItem>
-                            <SelectItem value="ผักและผลไม้">
-                              ผักและผลไม้
-                            </SelectItem>
-                            <SelectItem value="ธัญพืชและแป้ง">
-                              ธัญพืชและแป้ง
-                            </SelectItem>
-                            <SelectItem value="เครื่องปรุงรส">
-                              เครื่องปรุงรส
-                            </SelectItem>
-                            <SelectItem value="วัตถุดิบแช่แข็งและแปรรูป">
-                              วัตถุดิบแช่แข็งและแปรรูป
-                            </SelectItem>
-                            <SelectItem value="ของแห้งและของแปรรูป">
-                              ของแห้งและของแปรรูป
-                            </SelectItem>
-                            <SelectItem value="เครื่องดื่มและส่วนผสมอื่น">
-                              เครื่องดื่มและส่วนผสมอื่น
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div> */}
-
-                    {/* {subCategoryMap[ingredient.ingredient_category ?? ""] && (
-                      <div>
-                        <Label htmlFor="sub-category">ประเภทย่อย</Label>
-                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
-                          <Select
-                            value={ingredient.ingredient_sub_category ?? ""}
-                            onValueChange={(value) =>
-                              setingredient({
-                                ...ingredient,
-                                ingredient_sub_category: value,
-                              })
-                            }
-                            required
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="เลือกประเภทย่อย" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {subCategoryMap[
-                                ingredient.ingredient_category ?? ""
-                              ].map((sub) => (
-                                <SelectItem key={sub} value={sub}>
-                                  {sub}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )} */}
-
                     <div>
                       <Label htmlFor='currentStock'>จำนวนปัจจุบัน</Label>
                       <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400'>
@@ -572,21 +495,6 @@ export default function IngredientManagement() {
                         />
                       </div>
                     </div>
-
-                    {/* <div>
-                      <Label htmlFor="image">รูปภาพวัตถุดิบ (ถ้ามี)</Label>
-                      <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
-                        <Input
-                          id="image"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) =>
-                            setImageFile(e.target.files?.[0] || null)
-                          }
-                        />
-                      </div>
-                    </div> */}
-
                     <Button type='submit' className='w-full' disabled={loading}>
                       {loading ? "กำลังเพิ่ม..." : "เพิ่มวัตถุดิบ"}
                     </Button>

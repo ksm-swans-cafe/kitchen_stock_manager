@@ -690,7 +690,15 @@ const SummaryList: React.FC = () => {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
+      filtered = filtered.filter((order) => [
+        order.name, 
+        order.id, 
+        order.createdBy,
+        order.cart_customer_tel,
+        order.cart_customer_name,
+        order.order_number,
+        order.cart_location_send
+      ].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
     }
     if (filterStatus !== "ทั้งหมด") {
       filtered = filtered.filter((order) => getStatusText(order.status) === filterStatus);
@@ -1078,9 +1086,15 @@ const SummaryList: React.FC = () => {
     }
   };
 
-  const handleEditIngredients = async (cartId: string, menuName: string, ingredients: Ingredient[]) => {
+  const handleEditIngredients = async (
+    cartId: string,
+    menuName: string,
+    ingredients: Ingredient[],
+    menu_order_id?: number
+  ) => {
     setEditIngredientsMenu({
       cartId,
+      menu_order_id: menu_order_id ?? 0,
       menuName,
       ingredients: ingredients.map((ing) => ({
         ingredient_name: ing.ingredient_name,
@@ -1190,7 +1204,7 @@ const SummaryList: React.FC = () => {
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
               <Input
-                placeholder='Enter name, order ID...'
+                placeholder='ค้นหาชื่อ, รหัสคำสั่ง, เบอร์โทร, สถานที่ส่ง...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
@@ -1548,10 +1562,11 @@ const SummaryList: React.FC = () => {
                                         }
                                         setEditMenuDialog({
                                           cartId: cart.id,
-                                          menuItems: currentCart.menuItems.map((item) => ({
+                                          menuItems: currentCart.menuItems.map((item, idx) => ({
                                             menu_name: item.menu_name || "เมนูไม่ระบุ",
                                             menu_total: item.menu_total || 0,
-                                            menu_description: item.menu_description || undefined,
+                                            menu_order_id: idx, // or item.menu_order_id if available
+                                            menu_description: item.menu_description || "",
                                             menu_ingredients: Array.isArray(item.menu_ingredients)
                                               ? item.menu_ingredients.map((ing) => ({
                                                   useItem: ing.useItem ?? 0,

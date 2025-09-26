@@ -635,7 +635,15 @@ const OrderHistory = () => {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
+      filtered = filtered.filter((order) => [
+        order.name, 
+        order.id, 
+        order.createdBy,
+        order.cart_customer_tel,
+        order.cart_customer_name,
+        order.order_number,
+        order.cart_location_send
+      ].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
     }
     if (filterStatus !== "ทั้งหมด") {
       filtered = filtered.filter((order) => getStatusText(order.status) === filterStatus);
@@ -859,7 +867,7 @@ const OrderHistory = () => {
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
               <Input
-                placeholder='Enter name, order ID...'
+                placeholder='ค้นหาชื่อ, รหัสคำสั่ง, เบอร์โทร, สถานที่ส่ง...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
