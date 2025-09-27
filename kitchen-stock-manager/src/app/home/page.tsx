@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import useSWR, { mutate } from "swr";
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
-import { Plus, ShoppingCart, History, AlertTriangle, FileText, DollarSign } from "lucide-react";
+import { Plus, ShoppingCart, History, AlertTriangle, FileText, DollarSign, LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/share/ui/badge";
 import { ingredient } from "@/models/menu_card/MenuCard-model";
@@ -16,16 +16,85 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+interface MenuItem {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  color: {
+    bg: string;
+    hover: string;
+    icon: string;
+  };
+  onClick: () => void;
+  hasBadge?: boolean;
+  badgeText?: string;
+}
+
 export default function Page() {
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
   const [showFullList, setShowFullList] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
-  const handleAddIngredients = () => router.push("/home/ingredients");
-  const handleOrder = () => router.push("/home/order");
-  const handleSummaryList = () => router.push("/home/summarylist");
-  const handleOrderHistory = () => router.push("/home/orderhistory");
-  const handleFinance = () => router.push("/home/finance");
+
+  const menuItems: MenuItem[] = [
+    {
+      id: "add-ingredients",
+      title: "เพิ่มวัตถุดิบ",
+      icon: Plus,
+      color: {
+        bg: "bg-green-500/10",
+        hover: "group-hover:bg-green-500/20",
+        icon: "text-green-600"
+      },
+      onClick: () => router.push("/home/ingredients")
+    },
+    {
+      id: "order",
+      title: "คำสั่งซื้อ",
+      icon: ShoppingCart,
+      color: {
+        bg: "bg-blue-500/10",
+        hover: "group-hover:bg-blue-500/20",
+        icon: "text-blue-600"
+      },
+      onClick: () => router.push("/home/order")
+    },
+    {
+      id: "summary-list",
+      title: "สรุปรายการ",
+      icon: FileText,
+      color: {
+        bg: "bg-purple-500/10",
+        hover: "group-hover:bg-purple-500/20",
+        icon: "text-purple-600"
+      },
+      onClick: () => router.push("/home/summarylist")
+    },
+    {
+      id: "order-history",
+      title: "ประวัติการสั่งอาหาร",
+      icon: History,
+      color: {
+        bg: "bg-gray-700/10",
+        hover: "group-hover:bg-gray-500/20",
+        icon: "text-gray-600"
+      },
+      onClick: () => router.push("/home/orderhistory")
+    },
+    {
+      id: "finance",
+      title: "การเงิน",
+      icon: DollarSign,
+      color: {
+        bg: "bg-amber-500/10",
+        hover: "group-hover:bg-amber-500/20",
+        icon: "text-amber-600"
+      },
+      onClick: () => router.push("/home/finance"),
+      hasBadge: true,
+      badgeText: "Demo"
+    }
+  ];
 
   const {
     data: allIngredient = [],
@@ -45,8 +114,8 @@ export default function Page() {
   useEffect(() => {
     const navEntry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
     if (navEntry.type !== "reload") {
-      mutate("/api/get/ingredients", undefined, { revalidate: false }); // 🧹 Clear cache
-      location.reload(); // 🔄 Reload page
+      mutate("/api/get/ingredients", undefined, { revalidate: false }); 
+      location.reload(); 
     }
   }, []);
 
@@ -71,6 +140,7 @@ export default function Page() {
 
   return (
     <div className='min-h-screen pt-[160px] bg-gradient-to-br from-background via-secondary/10 to-background p-4'>
+      {/* Low Stock Alert */}
       {lowStockIngredients.length > 0 && (
         <div className='fixed bottom-6 right-6 z-50'>
           <div className='relative'>
@@ -107,67 +177,30 @@ export default function Page() {
         </div>
       )}
 
-      {/* เมนูหลัก */}
+      {/* Main Menu */}
       <div className='flex-1 flex items-center justify-center min-h-[calc(100vh-140px)]'>
         <div className='w-full max-w-xl flex flex-col gap-6'>
-          <Card className='group hover:shadow-xl transition-all'>
-            <CardContent className='p-0'>
-              <Button variant='ghost' onClick={handleAddIngredients} className='w-full h-24 ml-2 flex items-center justify-start space-x-5 px-7 text-foreground font-semibold hover:bg-transparent'>
-                <div className='w-14 h-14 bg-green-500/10 group-hover:bg-green-500/20 rounded-xl flex items-center justify-center'>
-                  <Plus className='w-7 h-7 text-green-600' />
-                </div>
-                <span className='text-lg'>เพิ่มวัตถุดิบ</span>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Order */}
-          <Card className='group hover:shadow-xl transition-all'>
-            <CardContent className='p-0'>
-              <Button variant='ghost' onClick={handleOrder} className='w-full h-24 ml-2 flex items-center justify-start space-x-5 px-7 text-foreground font-semibold hover:bg-transparent'>
-                <div className='w-14 h-14 bg-blue-500/10 group-hover:bg-blue-500/20 rounded-xl flex items-center justify-center'>
-                  <ShoppingCart className='w-7 h-7 text-blue-600' />
-                </div>
-                <span className='text-lg'>คำสั่งซื้อ</span>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className='group hover:shadow-xl transition-all'>
-            <CardContent className='p-0'>
-              <Button variant='ghost' onClick={handleSummaryList} className='w-full h-24 ml-2 flex items-center justify-start space-x-5 px-7 text-foreground font-semibold hover:bg-transparent'>
-                <div className='w-14 h-14 bg-purple-500/10 group-hover:bg-purple-500/20 rounded-xl flex items-center justify-center'>
-                  <FileText className='w-7 h-7 text-purple-600' />
-                </div>
-                <span className='text-lg'>สรุปรายการ</span>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Order History */}
-          <Card className='group hover:shadow-xl transition-all'>
-            <CardContent className='p-0'>
-              <Button variant='ghost' onClick={handleOrderHistory} className='w-full h-24 ml-2 flex items-center justify-start space-x-5 px-7 text-foreground font-semibold hover:bg-transparent'>
-                <div className='w-14 h-14 bg-gray-700/10 group-hover:bg-gray-500/20 rounded-xl flex items-center justify-center'>
-                  <History className='w-7 h-7 text-gray-600' />
-                </div>
-                <span className='text-lg'>ประวัติการสั่งอาหาร</span>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Finance Card */}
-          <Card className='group hover:shadow-xl transition-all'>
-            <CardContent className='relative p-0'>
-              <div className='absolute top-2 right-2 bg-red-500 text-white text-sm font-bold px-2 py-0.5 rounded-md z-10'>Demo</div>
-              <Button variant='ghost' className='w-full h-24 ml-2 flex items-center justify-start space-x-5 px-7 text-foreground font-semibold hover:bg-transparent' onClick={handleFinance}>
-                <div className='w-14 h-14 bg-amber-500/10 group-hover:bg-amber-500/20 rounded-xl flex items-center justify-center'>
-                  <DollarSign className='w-7 h-7 text-amber-600' />
-                </div>
-                <span className='text-lg'>การเงิน</span>
-              </Button>
-            </CardContent>
-          </Card>
+          {menuItems.map((item) => (
+            <Card key={item.id} className='group hover:shadow-xl transition-all'>
+              <CardContent className='relative p-0'>
+                {item.hasBadge && (
+                  <div className='absolute top-2 right-2 bg-red-500 text-white text-sm font-bold px-2 py-0.5 rounded-md z-10'>
+                    {item.badgeText}
+                  </div>
+                )}
+                <Button 
+                  variant='ghost' 
+                  onClick={item.onClick} 
+                  className='w-full h-24 ml-2 flex items-center justify-start space-x-5 px-7 text-foreground font-semibold hover:bg-transparent'
+                >
+                  <div className={`w-14 h-14 ${item.color.bg} ${item.color.hover} rounded-xl flex items-center justify-center`}>
+                    <item.icon className={`w-7 h-7 ${item.color.icon}`} />
+                  </div>
+                  <span className='text-lg'>{item.title}</span>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </div>

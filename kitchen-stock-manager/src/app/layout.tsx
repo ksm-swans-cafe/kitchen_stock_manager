@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Sarabun } from "next/font/google";
 import "./globals.css";
-
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import Menubar from "@/components/ui/Menubar";
 import Navigatebar from "@/components/ui/Navigatebar";
@@ -19,7 +18,6 @@ const sarabun = Sarabun({
 export const metadata: Metadata = {
   title: "Kitchen Stock Manager",
   description: "Use for manage stock in kitchen",
-  charset: "utf-8",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

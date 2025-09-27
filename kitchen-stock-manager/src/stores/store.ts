@@ -5,7 +5,7 @@ import { MenuItem } from "@/models/menu_card/MenuCard-model";
 export interface CartItem extends MenuItem {
   menu_total: number;
   menu_description: string;
-  cart_item_id: string; // เพิ่ม unique ID สำหรับแต่ละ item ในตะกร้า
+  cart_item_id: string;
 }
 
 interface CartState {
@@ -18,7 +18,7 @@ interface CartState {
   cart_receive_time: string;
   cart_shipping_cost: string;
 
-  addItem: (item: MenuItem, description?: string) => void; // เปลี่ยนเป็น optional parameter
+  addItem: (item: MenuItem, description?: string) => void;
   removeItem: (cartItemId: string) => void;
   setItemQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -33,7 +33,6 @@ interface CartState {
   }) => void;
 }
 
-// ฟังก์ชันสร้าง unique ID สำหรับ cart item
 const generateCartItemId = (
   menuId: string | undefined,
   description: string
@@ -57,14 +56,12 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item, description = "") => {
         const { items } = get();
-        // ใช้ description จาก parameter หรือจาก item.menu_description
         const finalDescription = description || item.menu_description || "";
         const cartItemId = generateCartItemId(
           item.menu_id || "",
           finalDescription
         );
 
-        // ตรวจสอบว่ามีรายการที่มี menu_id และ description เหมือนกันหรือไม่
         const existingIndex = items.findIndex(
           (i) =>
             i.menu_id === item.menu_id &&
@@ -72,7 +69,6 @@ export const useCartStore = create<CartState>()(
         );
 
         if (existingIndex !== -1) {
-          // ถ้ามีรายการเดียวกัน ให้เพิ่มจำนวน
           set({
             items: items.map((i, index) =>
               index === existingIndex
@@ -81,7 +77,6 @@ export const useCartStore = create<CartState>()(
             ),
           });
         } else {
-          // ถ้าไม่มี ให้เพิ่มรายการใหม่
           set({
             items: [
               ...items,

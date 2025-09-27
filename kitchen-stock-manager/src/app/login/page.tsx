@@ -77,17 +77,15 @@ const Login: React.FC = () => {
         if (loginResponse.status === 200) {
           router.push("/home");
           router.refresh();
-        } else {
-          throw new Error("Failed to set login cookie");
-        }
+        } else throw new Error("Failed to set login cookie");
+        
       } else {
         setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
         setPin(["", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-      console.log(error);
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ " + error);
     } finally {
       setLoading(false);
     }
@@ -95,14 +93,10 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     const pinComplete = pin.join("").length === 4 && pin.every((p) => p !== "");
-    if (pinComplete) {
-      handleLogin();
-    }
+    if (pinComplete) handleLogin();
 
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        handleLogin();
-      }
+      if (e.key === "Enter") handleLogin();
     };
 
     window.addEventListener("keydown", handleKeyPress);
@@ -111,7 +105,6 @@ const Login: React.FC = () => {
 
   return (
     <div className='min-h-screen h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4 relative overflow-hidden'>
-      {/* Background decoration */}
       <div className='absolute inset-0 bg-grid-small-black/[0.02] bg-grid-small' />
       <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse' />
       <div className='absolute bottom-1/4 right-1/4 w-64 h-64 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-1000' />

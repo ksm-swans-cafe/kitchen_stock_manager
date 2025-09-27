@@ -81,7 +81,6 @@ export type StatusOption = {
 
 export interface StatusDropdownProps {
   cartId: string;
-  // allIngredients: MenuItem[];
     allIngredients: {
       menuName: string;
       ingredients: Ingredient[];
@@ -91,5 +90,5 @@ export interface StatusDropdownProps {
   cart_receive_time?: string;
   cart_export_time?: string;
   cart: Cart;
-  onOrderSummaryClick?: (cart: Cart) => void; // เพิ่ม prop สำหรับ callback
+  onOrderSummaryClick?: (cart: Cart) => void; 
 }
