@@ -29,36 +29,6 @@ import {
   RawCart,
 } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
-// import { thSarabunFont } from "../../th-sarabun-font"; // import font base64
-
-// export const exportThaiPDF = () => {
-//   const doc = new jsPDF();
-
-//   // เพิ่มฟอนต์เข้าไป
-//   doc.addFileToVFS("THSarabunNew.ttf", thSarabunFont);
-//   doc.addFont("THSarabunNew.ttf", "THSarabun", "normal");
-//   doc.setFont("THSarabun");
-
-//   // เพิ่มข้อความไทย
-//   doc.setFontSize(16);
-//   doc.text("ประวัติคำสั่งซื้อ", 14, 20);
-
-//   autoTable(doc, {
-//     head: [["ลำดับ", "ชื่อเมนู", "จำนวน"]],
-//     body: [
-//       ["1", "ข้าวผัดหมู", "5"],
-//       ["2", "ไข่เจียวหมูสับ", "3"],
-//     ],
-//     styles: {
-//       font: "THSarabun",
-//       fontSize: 14,
-//     },
-//     startY: 30,
-//   });
-
-//   doc.save("thai_order.pdf");
-// };
-// Fetcher function สำหรับ SWR
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
@@ -87,24 +57,19 @@ const OrderHistory = () => {
   const [selectedDateForSummary, setSelectedDateForSummary] = useState<string | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // State สำหรับการแก้ไขเวลา
   const [editingTimes, setEditingTimes] = useState<{
     cartId: string;
     exportTime: string;
     receiveTime: string;
   } | null>(null);
 
-  // ใช้ SWR เพื่อดึงข้อมูล
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher);
   const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
 
-  // รวมข้อผิดพลาดจากทุก API
   const combinedError = cartsError || menuError || ingredientError;
   const isLoading = !cartsData || !menuData || !ingredientData;
 
-  // State สำหรับ carts และ allCarts
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
 
@@ -117,7 +82,6 @@ const OrderHistory = () => {
     }
 };
 
-  // แปลงข้อมูลเมื่อข้อมูลจาก SWR พร้อม
   useEffect(() => {
     if (!cartsData || !ingredientData) return;
 
@@ -133,13 +97,8 @@ const OrderHistory = () => {
           const [year, month, day] = rawDate.split("-");
           const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
           const formattedDate = dateObjectForLocale
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
+            .toLocaleDateString("th-TH", {day: "numeric",month: "short",year: "numeric",})
             .replace(/ /g, " ");
-
           const date = new Date(cart.cart_create_date);
           const formattedDateISO = date.toISOString().split("T")[0];
           const formattedTime = cart.cart_create_date.split("T")[1].split(".")[0].slice(0, 5);
@@ -226,8 +185,6 @@ const OrderHistory = () => {
 
     formatOrders();
   }, [cartsData, ingredientData]);
-
-  // แปลงข้อมูลสำหรับปฏิทิน
   useEffect(() => {
     if (!cartsData) return;
 
@@ -274,15 +231,7 @@ const OrderHistory = () => {
     setIsDatePickerOpen(false);
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
-      setError(
-        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          locale: "th",
-          timeZone: "Asia/Bangkok",
-        })}`
-      );
+      setError(`ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
     } else {
       setError(null);
     }
@@ -325,29 +274,8 @@ const OrderHistory = () => {
                 menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
                 allIngredients: cart.allIngredients.map((group) =>
                   group.menuName === cleanedMenuName
-                    ? {
-                        ...group,
-                        ingredients: group.ingredients.map((ing) => ({
-                          ...ing,
-                          calculatedTotal: ing.useItem * editTotalBox,
-                        })),
-                      }
-                    : group
-                ),
-                sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
-              }
-            : cart
-        )
-      );
-
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตจำนวนกล่องเรียบร้อย!",
-        text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-
+                    ? {...group,ingredients: group.ingredients.map((ing) => ({...ing,calculatedTotal: ing.useItem * editTotalBox,})),}: group),sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),}: cart));
+      Swal.fire({icon: "success",title: "อัปเดตจำนวนกล่องเรียบร้อย!",text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`, showConfirmButton: false,timer: 3000,});
       mutateCarts();
       setEditingMenu(null);
     } catch (err) {
@@ -360,12 +288,7 @@ const OrderHistory = () => {
 
   const handleEditTimes = (cartId: string, exportTime: string, receiveTime: string) => {
     const formatToThaiTime = (time: string) => (time ? time.replace(":", ".") + " น." : "00.00 น.");
-    setEditingTimes({
-      cartId,
-      exportTime: formatToThaiTime(exportTime),
-      receiveTime: formatToThaiTime(receiveTime),
-    });
-  };
+    setEditingTimes({cartId, exportTime: formatToThaiTime(exportTime),receiveTime: formatToThaiTime(receiveTime),});};
 
   const formatInputTime = (value: string): string => {
     const cleaned = value.replace(/[^0-9.]/g, "");
@@ -422,16 +345,9 @@ const OrderHistory = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to update times");
       }
-
       mutateCarts();
       setEditingTimes(null);
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตเวลาเรียบร้อย!",
-        text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`,
-        showConfirmButton: false,
-        timer: 3000,
-      });
+      Swal.fire({icon: "success",title: "อัปเดตเวลาเรียบร้อย!",text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`,showConfirmButton: false,timer: 3000,});
     } catch (err) {
       console.error("Error updating times:", err);
       setError(err instanceof Error ? `ไม่สามารถอัปเดตเวลา: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตเวลา");
@@ -450,29 +366,7 @@ const OrderHistory = () => {
     setCarts((prevCarts) =>
       prevCarts.map((cart) =>
         cart.id === cartId
-          ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? {
-                              ...ing,
-                              isChecked: newCheckedStatus,
-                              ingredient_status: newCheckedStatus,
-                            }
-                          : ing
-                      ),
-                      ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),
-                    }
-                  : group
-              ),
-            }
-          : cart
-      )
-    );
+          ? {...cart,allIngredients: cart.allIngredients.map((group) =>group.menuName === menuName? {...group,ingredients: group.ingredients.map((ing) =>ing.ingredient_name === ingredientName? {...ing,isChecked: newCheckedStatus,ingredient_status: newCheckedStatus,}: ing),ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),}: group ),}: cart));
 
     try {
       const response = await fetch(`/api/edit/cart-menu/ingredient-status/${cartId}`, {
@@ -635,16 +529,7 @@ const OrderHistory = () => {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((order) => [
-        order.name, 
-        order.id, 
-        order.createdBy,
-        order.cart_customer_tel,
-        order.cart_customer_name,
-        order.order_number,
-        order.cart_location_send
-      ].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
-    }
+      filtered = filtered.filter((order) => [ order.name, order.id,  order.createdBy, order.cart_customer_tel,order.cart_customer_name,order.order_number,order.cart_location_send].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));}
     if (filterStatus !== "ทั้งหมด") {
       filtered = filtered.filter((order) => getStatusText(order.status) === filterStatus);
     }
@@ -662,12 +547,7 @@ const OrderHistory = () => {
     }, {} as { [key: string]: Cart[] });
 
     Object.values(groupedByDate).forEach((orders) => {
-      orders.sort((a, b) => {
-        const orderNumA = parseInt(a.order_number || "0");
-        const orderNumB = parseInt(b.order_number || "0");
-        return orderNumA - orderNumB;
-      });
-    });
+      orders.sort((a, b) => { const orderNumA = parseInt(a.order_number || "0");  const orderNumB = parseInt(b.order_number || "0");  return orderNumA - orderNumB; }); });
 
     const currentDate = new Date();
     const sortedDates = Object.keys(groupedByDate).sort((dateA, dateB) => {
@@ -686,25 +566,10 @@ const OrderHistory = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
-        : "ไม่มีวันที่จัดส่ง";
-      (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
-      return acc;
-    }, {} as { [key: string]: Cart[] });
-
+            .toLocaleDateString("th-TH", {  day: "numeric", month: "short",  year: "numeric",  })  .replace(/ /g, " "): "ไม่มีวันที่จัดส่ง";(acc[dateDisplay] = acc[dateDisplay] || []).push(cart);return acc;}, {} as { [key: string]: Cart[] });
     const currentDate = new Date();
     const currentDateDisplay = currentDate
-      .toLocaleDateString("th-TH", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      .replace(/ /g, " ");
+      .toLocaleDateString("th-TH", {  day: "numeric",  month: "short",  year: "numeric",}).replace(/ /g, " ");
 
     const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay] ? [[currentDateDisplay, grouped[currentDateDisplay]]] : [];
     const otherDateGroups = Object.entries(grouped).filter(([date]) => date !== currentDateDisplay);
@@ -737,33 +602,17 @@ const OrderHistory = () => {
       cart.allIngredients.forEach((menuGroup) => {
         menuGroup.ingredients.forEach((ing) => {
           if (!ingredientSummary[ing.ingredient_name]) {
-            ingredientSummary[ing.ingredient_name] = {
-              checked: 0,
-              total: 0,
-              unit: ing.ingredient_unit || "ไม่ระบุหน่วย",
-            };
-          }
+            ingredientSummary[ing.ingredient_name] = {  checked: 0,  total: 0,  unit: ing.ingredient_unit || "ไม่ระบุหน่วย",  };}
           const totalGrams = ing.calculatedTotal || 0;
           ingredientSummary[ing.ingredient_name].total += totalGrams;
           if (ing.isChecked) {
             ingredientSummary[ing.ingredient_name].checked += totalGrams;
-          }
-        });
-      });
-    });
+          }});});});
 
     const allIngredientsChecked = ordersOnDate.every((cart) => cart.allIngredients.every((menuGroup) => menuGroup.ingredients.every((ing) => ing.isChecked)));
 
     return {
-      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({
-        name,
-        checked,
-        total,
-        unit,
-      })),
-      allIngredientsChecked,
-    };
-  };
+      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({name,checked,total,unit,})),allIngredientsChecked,};};
 
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
@@ -773,34 +622,12 @@ const OrderHistory = () => {
   );
 
   const handleExportCSV = () => {
-    const headers = [
-      "เลขที่ออร์เดอร์",
-      "ชื่อเมนู",
-      "คำอธิบายเมนู",
-      "วันที่",
-      "เวลา",
-      "จำนวน Set",
-      "ราคา",
-      "สถานะ",
-      "ผู้สร้าง",
-    ];
+    const headers = ["เลขที่ออร์เดอร์","ชื่อเมนู","คำอธิบายเมนู","วันที่","เวลา","จำนวน Set","ราคา","สถานะ","ผู้สร้าง",];
     const csvContent = [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) => {
         const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
-        return [
-          cart.id,
-          `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
-          `"${menuDescriptions.replace(/"/g, '""')}"`, // ป้องกัน comma ในคำอธิบายเมนู
-          cart.date,
-          cart.time,
-          cart.sets,
-          cart.price,
-          getStatusText(cart.status),
-          cart.createdBy,
-        ].join(",");
-      }),
-    ].join("\n");
+        return [cart.id,`"${cart.name.replace(/"/g, '""')}"`,`"${menuDescriptions.replace(/"/g, '""')}"`,cart.date,cart.time,cart.sets,cart.price,getStatusText(cart.status),cart.createdBy,].join(",");}),].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -813,7 +640,6 @@ const OrderHistory = () => {
   document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
-// ...existing code...
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -883,9 +709,7 @@ const OrderHistory = () => {
                     month: "short",
                     day: "numeric",
                     locale: "th",
-                    timeZone: "Asia/Bangkok",
-                  })}`
-                : "เลือกวันที่ที่ต้องการ"}
+                    timeZone: "Asia/Bangkok",})}`: "เลือกวันที่ที่ต้องการ"}
             </Button>
 
             <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
@@ -899,17 +723,8 @@ const OrderHistory = () => {
                   dateClick={handleDateClick}
                   height='auto'
                   locale='th'
-                  buttonText={{
-                    today: "วันนี้",
-                    month: "เดือน",
-                    week: "สัปดาห์",
-                    day: "วัน",
-                  }}
-                  headerToolbar={{
-                    left: "prev,next today",
-                    center: "title",
-                    right: "dayGridMonth,dayGridWeek,dayGridDay",
-                  }}
+                  buttonText={{today: "วันนี้",month: "เดือน",week: "สัปดาห์",day: "วัน",}}
+                  headerToolbar={{left: "prev,next today",center: "title",right: "dayGridMonth,dayGridWeek,dayGridDay",}}
                 />
               </DialogContent>
             </Dialog>
@@ -961,10 +776,7 @@ const OrderHistory = () => {
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
           <Button
-            onClick={() => {
-              setSelectedDate(null);
-              setCarts(allCarts);
-            }}
+            onClick={() => {setSelectedDate(null);setCarts(allCarts);}}
             className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>
             ล้างวันที่
           </Button>
@@ -1022,15 +834,7 @@ const OrderHistory = () => {
                                       value={editingTimes?.exportTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                exportTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
+                                        setEditingTimes((prev) => prev? {...prev,exportTime: formattedValue,}: prev);}}
                                       placeholder='14.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit export time'
@@ -1043,15 +847,7 @@ const OrderHistory = () => {
                                       value={editingTimes?.receiveTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                receiveTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
+                                        setEditingTimes((prev) => prev? {...prev,receiveTime: formattedValue,}: prev);}}
                                       placeholder='19.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit receive time'
@@ -1076,7 +872,6 @@ const OrderHistory = () => {
                                   <FaWallet className='w-4 h-4 ml-4' />
                                   <span>เวลารับอาหาร {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                   <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")}>
-                                    {/* <Edit2 className="w-4 h-4" /> */}
                                   </span>
                                 </div>
                               )}
@@ -1205,7 +1000,6 @@ const OrderHistory = () => {
                                                 size='sm'
                                                 onClick={() => handleEditTotalBox(cart.id, menuGroup.menuName, totalBox)}
                                                 className='h-8 px-2 text-blue-600 hover:bg-blue-100'>
-                                                {/* <Edit2 className="w-4 h-4" /> */}
                                               </Button>
                                             </div>
                                           )}
