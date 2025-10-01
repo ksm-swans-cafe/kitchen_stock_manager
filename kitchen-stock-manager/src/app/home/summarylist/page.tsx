@@ -1674,7 +1674,7 @@ const SummaryList: React.FC = () => {
                 setFilterStatus("ทั้งหมด");
                 setCarts(allCarts);
               }}
-              className="h-10 w-35 rounded-lg border border-slate-300 shadow-sm text-sm"
+              className="h-12 w-35 text-sm"
             >
               [ X ] ล้างฟิลเตอร์
             </Button>

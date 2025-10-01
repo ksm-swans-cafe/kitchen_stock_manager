@@ -859,7 +859,8 @@ const OrderHistory = () => {
                         setFilterCreator("ทั้งหมด");
                         setFilterStatus("ทั้งหมด");
                         setCarts(allCarts);
-                        }} className='h-10 w-35 rounded-lg border border-slate-300 shadow-sm text-sm'>[ X ] ล้างฟิลเตอร์</Button>
+                        }} className='h-12 w-35 text-sm'>[ X ] ล้างฟิลเตอร์</Button>
+                        {/* rounded-lg border border-slate-300 shadow-sm  */}
           </div>
           <div className='flex flex-center'>
             <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
