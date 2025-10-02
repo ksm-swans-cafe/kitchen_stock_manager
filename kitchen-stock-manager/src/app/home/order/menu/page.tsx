@@ -1,14 +1,17 @@
 "use client";
 
-import SearchBox from "@/share/order/SearchBox_v2";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MenuItem } from "@/models/menu_card/MenuCard-model";
+import axios from "axios";
+
+import { MenuItem } from "@/models/menu_card/MenuCard";
+
+import SearchBox from "@/share/order/SearchBox_v2";
 import MenuCard from "@/share/order/MenuCardForMenu";
+
 import "./style.css";
 
 export default function Menu() {
   const chunkSize = 10;
-
   const [visibleCount, setVisibleCount] = useState(chunkSize);
   const [allMenus, setAllMenus] = useState<MenuItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -20,9 +23,9 @@ export default function Menu() {
     const fetchMenus = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/get/menu/list");
-        if (!res.ok) throw new Error("Failed to fetch menu list");
-        let data: MenuItem[] = await res.json();
+        const res = await axios.get("/api/get/menu/list");
+        if (res.status !== 200) throw new Error("Failed to fetch menu list");
+        let data: MenuItem[] = await res.data;
 
         const seen = new Set<string>();
         data = data.filter((menu) => {
@@ -39,11 +42,8 @@ export default function Menu() {
 
         setAllMenus(data);
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
-        }
+        if (err instanceof Error) setError(err.message);
+        else setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
       } finally {
         setLoading(false);
       }
@@ -69,9 +69,7 @@ export default function Menu() {
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting) {
-          loadMore();
-        }
+        if (entry.isIntersecting) loadMore();
       },
       {
         root: null,
@@ -94,6 +92,7 @@ export default function Menu() {
   return (
     <main className='flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto'>
       <SearchBox
+        apiUrl=""
         dataSource={menus}
         onSelect={(val) => setSearchQuery(val)}
         onChangeQuery={(val) => {

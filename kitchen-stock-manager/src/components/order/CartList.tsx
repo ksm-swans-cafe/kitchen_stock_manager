@@ -1,27 +1,23 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Package, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+import useSWR from "swr";
+import axios from "axios";
+
 import { Card } from "@/share/ui/card";
 import { Button } from "@/share/ui/button";
 import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { Badge } from "@/share/ui/badge";
 import SearchBox from "@/share/order/SearchBox_v2";
-import { ingredient } from "@/models/menu_card/MenuCard-model";
-// import { Employee } from "@/models/employee/employee-model";
 import MenuCard from "@/share/order/MenuCard";
-import {
-  Dialog,
-  DialogContent,
-  // DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/share/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/share/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
-import { Package, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
+
 import { useAuth } from "@/lib/auth/AuthProvider";
-import useSWR from "swr";
-import axios from "axios";
+
+import { DetailIngredient } from "@/models/menu_card/MenuCard";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -36,7 +32,6 @@ const normalizeThaiVowel = (text: string): string => {
 
 export default function IngredientManagement() {
   const chunkSize = 1000;
-  // const [allEmployee, setEmployee] = useState<Employee[]>([]);
   const [visibleCount, setVisibleCount] = useState(chunkSize);
   const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("ทั้งหมด");
@@ -70,13 +65,13 @@ export default function IngredientManagement() {
     error,
     isLoading,
     mutate,
-  } = useSWR<ingredient[]>("/api/get/ingredients", fetcher, {
+  } = useSWR<DetailIngredient[]>("/api/get/ingredients", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     refreshInterval: 30000,
   });
 
-  const [ingredient, setingredient] = useState<ingredient>({
+  const [ingredient, setingredient] = useState<DetailIngredient>({
     ingredient_name: "",
     ingredient_total: 0,
     ingredient_unit: "",
@@ -160,7 +155,6 @@ export default function IngredientManagement() {
         throw new Error("Invalid transaction response format");
       }
 
-      // อัปเดตข้อมูลในแคชด้วย mutate
       mutate(allIngredient ? [...allIngredient, addedIngredient] : [addedIngredient], false);
 
       setingredient({
@@ -181,7 +175,7 @@ export default function IngredientManagement() {
     }
   };
 
-  const getStockStatus = (ingredient: ingredient): { label: string; color: string } => {
+  const getStockStatus = (ingredient: DetailIngredient): { label: string; color: string } => {
     const total = Number(ingredient.ingredient_total ?? 0);
     const alert = Number(ingredient.ingredient_total_alert ?? 0);
     if (total >= alert * 2) return { label: "เพียงพอ", color: "success" };

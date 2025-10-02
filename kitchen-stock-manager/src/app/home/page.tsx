@@ -3,12 +3,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSWR, { mutate } from "swr";
+import { toast } from "sonner";
+import { Plus, ShoppingCart, History, AlertTriangle, FileText, DollarSign} from "lucide-react";
+
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
-import { Plus, ShoppingCart, History, AlertTriangle, FileText, DollarSign, LucideIcon } from "lucide-react";
-import { toast } from "sonner";
 import { Badge } from "@/share/ui/badge";
-import { ingredient } from "@/models/menu_card/MenuCard-model";
+
+import { DetailIngredient } from "@/models/menu_card/MenuCard";
+import { MenuHome } from "@/models/common";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -16,27 +19,13 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-interface MenuItem {
-  id: string;
-  title: string;
-  icon: LucideIcon;
-  color: {
-    bg: string;
-    hover: string;
-    icon: string;
-  };
-  onClick: () => void;
-  hasBadge?: boolean;
-  badgeText?: string;
-}
-
 export default function Page() {
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
   const [showFullList, setShowFullList] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  const menuItems: MenuItem[] = [
+  const menuItems: MenuHome[] = [
     {
       id: "add-ingredients",
       title: "เพิ่มวัตถุดิบ",
@@ -46,7 +35,9 @@ export default function Page() {
         hover: "group-hover:bg-green-500/20",
         icon: "text-green-600"
       },
-      onClick: () => router.push("/home/ingredients")
+      onClick: () => router.push("/home/ingredients"),
+      hasBadge: false,
+      badgeText: ""
     },
     {
       id: "order",
@@ -57,7 +48,9 @@ export default function Page() {
         hover: "group-hover:bg-blue-500/20",
         icon: "text-blue-600"
       },
-      onClick: () => router.push("/home/order")
+      onClick: () => router.push("/home/order"),
+      hasBadge: false,
+      badgeText: ""
     },
     {
       id: "summary-list",
@@ -68,7 +61,9 @@ export default function Page() {
         hover: "group-hover:bg-purple-500/20",
         icon: "text-purple-600"
       },
-      onClick: () => router.push("/home/summarylist")
+      onClick: () => router.push("/home/summarylist"),
+      hasBadge: false,
+      badgeText: ""
     },
     {
       id: "order-history",
@@ -79,7 +74,9 @@ export default function Page() {
         hover: "group-hover:bg-gray-500/20",
         icon: "text-gray-600"
       },
-      onClick: () => router.push("/home/orderhistory")
+      onClick: () => router.push("/home/orderhistory"),
+      hasBadge: false,
+      badgeText: ""
     },
     {
       id: "finance",
@@ -104,7 +101,7 @@ export default function Page() {
     revalidateOnFocus: false,
     refreshInterval: 30000,
     onSuccess: (data) => {
-      const lowStock = data.filter((item: ingredient) => Number(item.ingredient_total) <= Number(item.ingredient_total_alert));
+      const lowStock = data.filter((item: DetailIngredient) => Number(item.ingredient_total) <= Number(item.ingredient_total_alert));
       if (lowStock.length > 0) {
         toast.warning(`🔔 แจ้งเตือน: วัตถุดิบใกล้หมด ${lowStock.length} รายการ`);
       }
@@ -119,7 +116,7 @@ export default function Page() {
     }
   }, []);
 
-  const lowStockIngredients = allIngredient.filter((item: ingredient) => {
+  const lowStockIngredients = allIngredient.filter((item: DetailIngredient) => {
     const total = Number(item.ingredient_total) || 0;
     const alert = Number(item.ingredient_total_alert) || 0;
     return total <= alert;

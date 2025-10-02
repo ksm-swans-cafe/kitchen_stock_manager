@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-// import sql from "@app/database/connect";
 import prisma from "@/lib/prisma";
 
 interface MenuItem {
@@ -28,7 +27,6 @@ export async function PATCH(
     menu_total,
   });
 
-  // ตรวจสอบข้อมูลที่จำเป็น
   if (!id || !menuName || menu_total == null) {
     console.warn("Missing fields:", { id, menuName, menu_total });
     return NextResponse.json(
@@ -37,7 +35,6 @@ export async function PATCH(
     );
   }
 
-  // ตรวจสอบว่า menu_total เป็นจำนวนเต็มบวก
   const total = Number(menu_total);
   if (!Number.isInteger(total) || total < 0) {
     console.warn("Invalid menu_total:", menu_total);
@@ -48,12 +45,6 @@ export async function PATCH(
   }
 
   try {
-    // ดึงข้อมูลตะกร้า
-    // const [cart] = await sql`
-    //   SELECT cart_id, cart_menu_items
-    //   FROM cart
-    //   WHERE cart_id = ${id};
-    // `;
     const [cart] = await prisma.cart.findMany({
       where: {
         cart_id: id,
@@ -129,20 +120,12 @@ export async function PATCH(
       );
     }
 
-    // อัปเดต menu_total
     const updatedMenuItems = menuItems.map((item: MenuItem) =>
       item.menu_name?.trim() === cleanedMenuName
         ? { ...item, menu_total: total }
         : item
     );
 
-    // อัปเดตฐานข้อมูล
-    // const result = await sql`
-    //   UPDATE cart
-    //   SET cart_menu_items = ${JSON.stringify(updatedMenuItems)}
-    //   WHERE cart_id = ${id}
-    //   RETURNING *;
-    // `;
     const result = await prisma.cart.update({
       where: { cart_id: id },
       data: {

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { MenuItem, ingredient } from "@/models/menu_card/MenuCard-model";
+import { MenuItem, ingredient } from "@/models/menu_card/MenuCard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/share/ui/dialog";
@@ -418,9 +418,7 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
               />
             </figure> */}
             {mode === "ingredient" && (
-              <div
-                style={{ color: "#000000" }}
-                className={`mt-2 subtitle text-black is-6 tag is-pulled-right ${status.label === "ใกล้หมด" ? "is-danger" : status.label === "ปานกลาง" ? "is-warning" : "is-success"}`}>
+              <div style={{ color: "#000000" }} className={`mt-2 subtitle text-black is-6 tag is-pulled-right ${status.label === "ใกล้หมด" ? "is-danger" : status.label === "ปานกลาง" ? "is-warning" : "is-success"}`}>
                 {status.label}
               </div>
             )}
@@ -471,10 +469,7 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <div className='flex items-center justify-center w-full h-full'>
-                    <Button
-                      style={{ color: "#ffffff" }}
-                      className='flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-2 text-white font-semibold rounded-md'
-                      disabled={!ingredientItem?.ingredient_id}>
+                    <Button style={{ color: "#ffffff" }} className='flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-2 text-white font-semibold rounded-md' disabled={!ingredientItem?.ingredient_id}>
                       Edit
                     </Button>
                   </div>

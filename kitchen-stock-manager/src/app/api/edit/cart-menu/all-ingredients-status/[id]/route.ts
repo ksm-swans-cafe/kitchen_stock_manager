@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from "next/server";
-// import sql from "@app/database/connect";
 import prisma from "@/lib/prisma";
 
 interface Ingredient {
@@ -27,7 +26,6 @@ export async function PATCH(
     id,
     isChecked,
   });
-  // ตรวจสอบข้อมูลที่จำเป็น
   if (!id || isChecked == null) {
     console.warn("Missing fields:", { id, isChecked });
     return NextResponse.json(
@@ -37,12 +35,6 @@ export async function PATCH(
   }
 
   try {
-    // ดึงข้อมูลตะกร้า
-    // const [cart] = await sql`
-    //   SELECT cart_id, cart_menu_items
-    //   FROM cart
-    //   WHERE cart_id = ${id};
-    // `;
     const [cart] = await prisma.cart.findMany({
       where: { cart_id: id },
       select: {
@@ -59,7 +51,6 @@ export async function PATCH(
       );
     }
 
-    // จัดการ cart_menu_items
     let menuItems: MenuItem[] = [];
     if (typeof cart.cart_menu_items === "string") {
       try {
@@ -84,7 +75,6 @@ export async function PATCH(
       );
     }
 
-    // อัปเดต ingredient_status สำหรับทุก ingredient
     const updatedMenuItems = menuItems.map((item) => ({
       ...item,
       menu_ingredients: item.menu_ingredients.map((ing) => ({
@@ -95,13 +85,6 @@ export async function PATCH(
 
     console.log("Updated menuItems:", updatedMenuItems);
 
-    // อัปเดตฐานข้อมูล
-    // const [result] = await sql`
-    //   UPDATE cart
-    //   SET cart_menu_items = ${JSON.stringify(updatedMenuItems)}
-    //   WHERE cart_id = ${id}
-    //   RETURNING *;
-    // `;
     const result = await prisma.cart.update({
       where: { cart_id: id },
       data: {

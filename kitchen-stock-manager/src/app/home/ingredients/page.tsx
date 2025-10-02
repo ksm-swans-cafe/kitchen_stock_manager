@@ -6,7 +6,7 @@ import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { Badge } from "@/share/ui/badge";
 import SearchBox from "@/share/order/SearchBox_v2";
-import { ingredient } from "@/models/menu_card/MenuCard-model";
+import { DetailIngredient } from "@/models/menu_card/MenuCard";
 // import { Employee } from "@/models/employee/employee-model";
 import MenuCard from "@/share/order/MenuCard";
 import {
@@ -70,13 +70,13 @@ export default function IngredientManagement() {
     error,
     isLoading,
     mutate,
-  } = useSWR<ingredient[]>("/api/get/ingredients", fetcher, {
+  } = useSWR<DetailIngredient[]>("/api/get/ingredients", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     refreshInterval: 30000,
   });
 
-  const [ingredient, setingredient] = useState<ingredient>({
+  const [ingredient, setingredient] = useState<DetailIngredient>({
     ingredient_name: "",
     ingredient_total: 0,
     ingredient_unit: "",
@@ -169,7 +169,7 @@ export default function IngredientManagement() {
         ingredient_unit: "",
         ingredient_image: "",
         ingredient_total_alert: 0,
-        ingredient_status: "",
+        ingredient_status_value: "",
         ingredient_price: 0,
       });
       setImageFile(null);
@@ -181,7 +181,7 @@ export default function IngredientManagement() {
     }
   };
 
-  const getStockStatus = (ingredient: ingredient): { label: string; color: string } => {
+  const getStockStatus = (ingredient: DetailIngredient): { label: string; color: string } => {
     const total = Number(ingredient.ingredient_total ?? 0);
     const alert = Number(ingredient.ingredient_total_alert ?? 0);
     if (total >= alert * 2) return { label: "เพียงพอ", color: "success" };

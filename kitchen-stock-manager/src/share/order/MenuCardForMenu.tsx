@@ -1,5 +1,5 @@
 "use client";
-import { MenuItem, ingredient } from "@/models/menu_card/MenuCard-model";
+import { MenuItem, DetailIngredient } from "@/models/menu_card/MenuCard";
 import { useState, useEffect } from "react";
 import { useCartStore } from "@/stores/store";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,7 +10,7 @@ type Mode = "menu" | "ingredient";
 
 interface MenuCardProps {
   mode: Mode;
-  item: MenuItem | ingredient;
+  item: MenuItem | DetailIngredient;
   onImageClick?: () => void;
 }
 
@@ -22,8 +22,8 @@ interface MenuListItem {
 
 export default function MenuCard({ mode, item }: MenuCardProps) {
   const addItem = useCartStore((state) => state.addItem);
-  const removeItem = useCartStore((state) => state.removeItem);
-  const setItemQuantity = useCartStore((state) => state.setItemQuantity);
+  // const removeItem = useCartStore((state) => state.removeItem);
+  // const setItemQuantity = useCartStore((state) => state.setItemQuantity);
 
   const [showPopup, setShowPopup] = useState(false);
   const [filteredMenuList, setFilteredMenuList] = useState<MenuListItem[]>([]);
@@ -47,12 +47,11 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
           const filtered = data.filter((menu) => menu.menu_subname === title);
           setFilteredMenuList(filtered);
 
-          // รีเซต quantities และ descriptions เป็น 0 และ empty string เสมอ
           const initialQuantities: { [key: string]: number } = {};
           const initialDescriptions: { [key: string]: string } = {};
           filtered.forEach((menu) => {
-            initialQuantities[menu.menu_id] = 0; // รีเซตเป็น 0 เสมอ
-            initialDescriptions[menu.menu_id] = ""; // รีเซตเป็น empty string เสมอ
+            initialQuantities[menu.menu_id] = 0; 
+            initialDescriptions[menu.menu_id] = ""; 
           });
           setQuantities(initialQuantities);
           setDescriptions(initialDescriptions);
@@ -71,14 +70,12 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
   const handleAddClick = () => setShowPopup(true);
 
   const handleCancel = () => {
-    // รีเซต quantities และ descriptions เมื่อยกเลิก
     setQuantities({});
     setDescriptions({});
     setShowPopup(false);
   };
 
   const handleConfirm = async () => {
-    // อัปเดต description ใน database สำหรับเมนูที่มีจำนวน > 0
     const updatePromises = filteredMenuList.map(async (menu) => {
       const qty = quantities[menu.menu_id] ?? 0;
       const description = descriptions[menu.menu_id] ?? "";
@@ -98,16 +95,13 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
       }
     });
 
-    // รอให้การอัปเดต description เสร็จสิ้น
     await Promise.all(updatePromises);
 
-    // เพิ่มเมนูลงใน cart
     filteredMenuList.forEach((menu) => {
       const qty = quantities[menu.menu_id] ?? 0;
       const description = descriptions[menu.menu_id] ?? "";
 
       if (qty > 0) {
-        // ใช้ addItem และส่ง description เป็น parameter ที่ 2
         for (let i = 0; i < qty; i++) {
           addItem(
             {
@@ -116,12 +110,11 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
               menu_description: description,
             },
             description
-          ); // ส่ง description เป็น parameter ที่ 2
+          ); 
         }
       }
     });
 
-    // รีเซต quantities และ descriptions หลังจากยืนยัน
     setQuantities({});
     setDescriptions({});
     setShowPopup(false);
@@ -162,10 +155,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
         {mode === "menu" && <div className='p-4 text-lg font-bold border-b bg-black text-white text-center'>{title}</div>}
         {mode === "menu" && (
           <div className='mt-auto p-4 bg-gray-100 text-center'>
-            <button
-              style={{ backgroundColor: "#16a34a", color: "#FFFF" }}
-              onClick={handleAddClick}
-              className='w-full text-xl px-4 py-3 rounded bg-green-600 text-white font-bold hover:bg-green-700 transition'>
+            <button style={{ backgroundColor: "#16a34a", color: "#FFFF" }} onClick={handleAddClick} className='w-full text-xl px-4 py-3 rounded bg-green-600 text-white font-bold hover:bg-green-700 transition'>
               เพิ่มรายการ
             </button>
           </div>
@@ -212,14 +202,7 @@ export default function MenuCard({ mode, item }: MenuCardProps) {
                       </div>
                     </div>
                     <div className='mt-2'>
-                      <textarea
-                        value={descriptions[menu.menu_id] ?? ""}
-                        onChange={(e) => handleChangeDescription(menu.menu_id, e.target.value)}
-                        placeholder='คำอธิบายเพิ่มเติม (ถ้ามี)'
-                        className='w-full border rounded px-2 py-1 text-sm resize-none'
-                        rows={2}
-                        maxLength={100}
-                      />
+                      <textarea value={descriptions[menu.menu_id] ?? ""} onChange={(e) => handleChangeDescription(menu.menu_id, e.target.value)} placeholder='คำอธิบายเพิ่มเติม (ถ้ามี)' className='w-full border rounded px-2 py-1 text-sm resize-none' rows={2} maxLength={100} />
                     </div>
                   </li>
                 ))}

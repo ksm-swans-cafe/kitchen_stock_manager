@@ -2,7 +2,11 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { Ingredient, StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
+import useSWR from "swr";
+import Swal from "sweetalert2";
+import axios from "axios";
+
+import { StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
 
 const statusOptions: StatusOption[] = [
   { label: "รอมัดจำ", value: "pending" },
@@ -22,24 +26,20 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
     try {
       setIsSubmitting(true);
 
-      // ถ้าเลือก completed → จัดการ ingredients ก่อน
       if (selectedStatus === "completed") {
         for (const menu of allIngredients) {
           for (const ingredient of menu.ingredients) {
             if (!ingredient.ingredient_id) continue;
 
-            // GET ปริมาณคงเหลือ
-            const res = await fetch(`/api/get/ingredients/${ingredient.ingredient_id}`);
-            if (!res.ok) {
+            const res = await axios.get(`/api/get/ingredients/${ingredient.ingredient_id}`);
+            if (res.status !== 200) {
               throw new Error(`Failed to get ingredient ${ingredient.ingredient_id}`);
             }
-            const data = await res.json();
+            const data = res.data;
             const currentTotal = data.ingredient_total;
 
-            // ลบออกตาม calculatedTotal
             const remaining = currentTotal - (ingredient.calculatedTotal || 0);
 
-            // ถ้าติดลบหรือหมด → ยืนยัน
             if (remaining <= 0) {
               const confirmUpdate = window.confirm(`วัตถุดิบ ${ingredient.ingredient_name} ไม่เพียงพอ (เหลือ ${remaining})\nคุณต้องการยืนยันหรือไม่?`);
               if (!confirmUpdate) {
@@ -48,37 +48,27 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
               }
             }
 
-            // PATCH กลับไปเก็บคงเหลือใหม่
             const formData = new FormData();
             formData.append("ingredient_total", String(remaining));
-            const updateRes = await fetch(`/api/edit/ingredients/${ingredient.ingredient_id}`, {
-              method: "PATCH",
-              body: formData,
-            });
-            if (!updateRes.ok) {
+            const updateRes = await axios.patch(`/api/edit/ingredients/${ingredient.ingredient_id}`, formData,);
+            if (updateRes.status !== 200) {
               throw new Error(`Failed to update ingredient ${ingredient.ingredient_id}`);
             }
           }
         }
       }
 
-      // PATCH cart status ทุกกรณี
       const formData = new FormData();
       formData.append("cart_status", selectedStatus);
       formData.append("cart_last_update", userName ?? "unknown");
 
-      const res = await fetch(`/api/edit/cart_status/${cartId}`, {
-        // แก้ไขตรงนี้
-        method: "PATCH",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
+      const res = await axios.patch(`/api/edit/cart_status/${cartId}`, formData);
+     
+      if (res.status !== 200) {
+        const errorData = res.data;
         throw new Error(errorData.error || "Failed to update status");
       }
 
-      // Lock ปุ่มถ้า success หรือ cancelled
       if (selectedStatus === "success" || selectedStatus === "cancelled") {
         setIsLocked(true);
       }
