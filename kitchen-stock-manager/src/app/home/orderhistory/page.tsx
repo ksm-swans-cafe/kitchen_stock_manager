@@ -850,6 +850,7 @@ const OrderHistory = () => {
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
+          <div className='flex flex-center justify-self-end text-red-400'>
            <Button
               onClick={() => {
                         setSearchTerm("");
@@ -858,13 +859,15 @@ const OrderHistory = () => {
                         setFilterCreator("ทั้งหมด");
                         setFilterStatus("ทั้งหมด");
                         setCarts(allCarts);
-                        }} className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>ล้างทั้งหมด</Button>
+                        }} className='h-12 w-35 text-sm'>[ X ] ล้างฟิลเตอร์</Button>
+                        {/* rounded-lg border border-slate-300 shadow-sm  */}
+          </div>
           <div className='flex flex-center'>
             <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> CSV
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> CSV
             </Button>
             <Button onClick={handleExportPDF} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> PDF
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> PDF
             </Button>
           </div>
         </div>
@@ -989,7 +992,7 @@ const OrderHistory = () => {
                                   <Wallet className='w-4 h-4 text-green-400' />
                                   <span className='text-sm sm:text-base font-normal'>ราคาทั้งหมด {cart.price.toLocaleString()} บาท</span>
                                   <Container className='w-4 h-4 text-blue-500' />
-                                  <span className='font-medium text-blue-600'>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
+                                  <span className='font-medium'>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
