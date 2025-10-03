@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { MenuItem } from "@/models/menu_card/MenuCard-model";
+import { MenuItem } from "@/models/menu_card/MenuCard";
 
 export interface CartItem extends MenuItem {
   menu_total: number;
   menu_description: string;
-  cart_item_id: string; // เพิ่ม unique ID สำหรับแต่ละ item ในตะกร้า
+  cart_item_id: string;
 }
 
 interface CartState {
@@ -17,30 +17,15 @@ interface CartState {
   cart_export_time: string;
   cart_receive_time: string;
   cart_shipping_cost: string;
-
-  addItem: (item: MenuItem, description?: string) => void; // เปลี่ยนเป็น optional parameter
+  addItem: (item: MenuItem, description?: string) => void;
   removeItem: (cartItemId: string) => void;
   setItemQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
-  setCustomerInfo: (info: {
-    name?: string;
-    tel?: string;
-    location?: string;
-    deliveryDate?: string;
-    exportTime?: string;
-    receiveTime?: string;
-    cart_shipping_cost?: string;
-  }) => void;
+  setCustomerInfo: (info: { name?: string; tel?: string; location?: string; deliveryDate?: string; exportTime?: string; receiveTime?: string; cart_shipping_cost?: string }) => void;
 }
 
-// ฟังก์ชันสร้าง unique ID สำหรับ cart item
-const generateCartItemId = (
-  menuId: string | undefined,
-  description: string
-) => {
-  return `${menuId || "no-id"}_${Date.now()}_${Math.random()
-    .toString(36)
-    .substr(2, 9)}_${description.replace(/\s+/g, "_")}`;
+const generateCartItemId = (menuId: string | undefined, description: string) => {
+  return `${menuId || "no-id"}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${description.replace(/\s+/g, "_")}`;
 };
 
 export const useCartStore = create<CartState>()(
@@ -57,31 +42,16 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item, description = "") => {
         const { items } = get();
-        // ใช้ description จาก parameter หรือจาก item.menu_description
         const finalDescription = description || item.menu_description || "";
-        const cartItemId = generateCartItemId(
-          item.menu_id || "",
-          finalDescription
-        );
+        const cartItemId = generateCartItemId(item.menu_id || "", finalDescription);
 
-        // ตรวจสอบว่ามีรายการที่มี menu_id และ description เหมือนกันหรือไม่
-        const existingIndex = items.findIndex(
-          (i) =>
-            i.menu_id === item.menu_id &&
-            i.menu_description === finalDescription
-        );
+        const existingIndex = items.findIndex((i) => i.menu_id === item.menu_id && i.menu_description === finalDescription);
 
         if (existingIndex !== -1) {
-          // ถ้ามีรายการเดียวกัน ให้เพิ่มจำนวน
           set({
-            items: items.map((i, index) =>
-              index === existingIndex
-                ? { ...i, menu_total: i.menu_total + 1 }
-                : i
-            ),
+            items: items.map((i, index) => (index === existingIndex ? { ...i, menu_total: i.menu_total + 1 } : i)),
           });
         } else {
-          // ถ้าไม่มี ให้เพิ่มรายการใหม่
           set({
             items: [
               ...items,
@@ -98,19 +68,13 @@ export const useCartStore = create<CartState>()(
 
       removeItem: (cartItemId) => {
         const { items } = get();
-        const existingIndex = items.findIndex(
-          (i) => i.cart_item_id === cartItemId
-        );
+        const existingIndex = items.findIndex((i) => i.cart_item_id === cartItemId);
 
         if (existingIndex !== -1) {
           const existing = items[existingIndex];
           if (existing.menu_total > 1) {
             set({
-              items: items.map((i, index) =>
-                index === existingIndex
-                  ? { ...i, menu_total: i.menu_total - 1 }
-                  : i
-              ),
+              items: items.map((i, index) => (index === existingIndex ? { ...i, menu_total: i.menu_total - 1 } : i)),
             });
           } else {
             set({
@@ -123,9 +87,7 @@ export const useCartStore = create<CartState>()(
       setItemQuantity: (cartItemId, quantity) => {
         const { items } = get();
         set({
-          items: items.map((i) =>
-            i.cart_item_id === cartItemId ? { ...i, menu_total: quantity } : i
-          ),
+          items: items.map((i) => (i.cart_item_id === cartItemId ? { ...i, menu_total: quantity } : i)),
         });
       },
 

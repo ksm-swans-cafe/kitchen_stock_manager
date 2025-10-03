@@ -2,17 +2,10 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
-type EmployeeRole = "admin" | "employee" | "customer";
-
-type AuthContextType = {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  userRole: EmployeeRole | null;
-  userName: string | null;
-  checkAuth: (preventRedirect?: boolean) => Promise<boolean>;
-  logout: () => Promise<void>;
-};
+import { EmployeeRole, AuthContextType } from "@/models/common";
+import api from "@/lib/axios";
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
@@ -34,7 +27,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/auth/check", {
-        method: "GET",
         credentials: "include",
       });
 
@@ -69,12 +61,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      const response = await fetch("/api/post/logout", {
-        method: "POST",
-        credentials: "include",
+      const response = await axios.post("/api/post/logout", {
+        withCredentials: true,
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         setIsAuthenticated(false);
         setUserRole(null);
         setUserName(null);

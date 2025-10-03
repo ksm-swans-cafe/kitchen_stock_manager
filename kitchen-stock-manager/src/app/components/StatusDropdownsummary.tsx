@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import useSWR from "swr";
-import { StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
 import Swal from "sweetalert2";
+import axios from "axios";
 
-// Fetcher function สำหรับ SWR
+import { StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
+
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
@@ -39,7 +40,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
     try {
       setIsSubmitting(true);
 
-      // ตรวจสอบเงื่อนไขสำหรับสถานะ "success"
       if (statusToUpdate === "success") {
         const allIngredientsChecked = allIngredients.every((menu) => menu.ingredients.every((ing) => ing.isChecked));
 
@@ -74,30 +74,22 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
         }
       }
 
-      // อัปเดตสถานะในฐานข้อมูล
       const formData = new FormData();
       formData.append("cart_status", statusToUpdate);
       formData.append("cart_last_update", userName ?? "unknown");
 
-      const res = await fetch(`/api/edit/cart_status/${cartId}`, {
-        method: "PATCH",
-        body: formData,
-      });
+      const res = await axios.patch(`/api/edit/cart_status/${cartId}`, formData);
 
-      if (!res.ok) {
-        const errorData = await res.json();
+      if (res.status !== 200) {
+        const errorData = res.data;
         throw new Error(errorData.error || "Failed to update status");
       }
 
-      // เรียก mutate เพื่อรีเฟรชข้อมูลหลังจาก API สำเร็จ
       await Promise.all([mutateCarts(), mutateIngredients()]);
       onUpdated?.();
 
-      if (statusToUpdate === "success" || statusToUpdate === "cancelled") {
-        setIsLocked(true);
-      }
+      if (statusToUpdate === "success" || statusToUpdate === "cancelled") setIsLocked(true);
 
-      // แสดงข้อความสำเร็จ (ถ้ายังไม่ได้แสดงในที่อื่น)
       Swal.fire({
         icon: "success",
         title: "อัปเดตสถานะสำเร็จ",
@@ -138,7 +130,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
       }).then(async (result) => {
         if (result.isConfirmed) {
           const success = await handleSubmit(newStatus);
-          // setSelectedStatus(newStatus); // ไม่ต้อง set ตรงนี้ ให้ set ใน handleSubmit หลังสำเร็จ
         }
       });
     }
