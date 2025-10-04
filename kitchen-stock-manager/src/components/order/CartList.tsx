@@ -1,507 +1,366 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Package, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
-import useSWR from "swr";
-import axios from "axios";
 
-import { Card } from "@/share/ui/card";
-import { Button } from "@/share/ui/button";
-import { Input } from "@/share/ui/input";
-import { Label } from "@/share/ui/label";
-import { Badge } from "@/share/ui/badge";
-import SearchBox from "@/share/order/SearchBox_v2";
-import MenuCard from "@/share/order/MenuCard";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/share/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
-
+import React, { useEffect, useState } from "react";
+import { useCartStore } from "@/stores/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { useRouter } from "next/navigation";
 
-import { DetailIngredient } from "@/models/menu_card/MenuCard";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import { th } from "date-fns/locale/th";
+import Flatpickr from "react-flatpickr";
+import "flatpickr/dist/themes/material_blue.css";
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch ingredients list");
-  return res.json();
-};
+registerLocale("th", th);
 
-const normalizeThaiVowel = (text: string): string => {
-  if (!text) return "";
-  return text.replace(/เเ/g, "แ").normalize("NFC");
-};
-
-export default function IngredientManagement() {
-  const chunkSize = 1000;
-  const [visibleCount, setVisibleCount] = useState(chunkSize);
-  const [loading, setLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>("ทั้งหมด");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const { userName } = useAuth();
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 640);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedImage(null);
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, []);
+export default function CartList() {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const [deliveryTime, setDeliveryTime] = useState<Date | undefined>(midnight);
+  const [pickupTime, setPickupTime] = useState<Date | undefined>(midnight);
+  const formatTime = (date?: Date) => {
+    return date
+      ? date.toLocaleTimeString("th-TH", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+      : "";
+  };
 
   const {
-    data: allIngredient,
-    error,
-    isLoading,
-    mutate,
-  } = useSWR<DetailIngredient[]>("/api/get/ingredients", fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 60000,
-    refreshInterval: 30000,
-  });
+    items,
+    addItem,
+    removeItem,
+    clearCart,
+    setItemQuantity,
+    cart_customer_name,
+    cart_customer_tel,
+    cart_location_send,
+    cart_delivery_date,
+    cart_export_time,
+    cart_receive_time,
+    cart_shipping_cost,
+    setCustomerInfo,
+  } = useCartStore();
 
-  const [ingredient, setingredient] = useState<DetailIngredient>({
-    ingredient_name: "",
-    ingredient_total: 0,
-    ingredient_unit: "",
-    ingredient_image: "",
-    ingredient_total_alert: 0,
-    ingredient_status: "",
-    ingredient_price: 0,
-  });
-
-  const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) return "1";
-
-    // else if (["กิโลกรัม", "ลิตร"].includes(unit)) {
-    //   return "0.01";
-    // }
-    return "";
-  };
-
-  const formatNumber = (value: number, unit: string): number => {
-    if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
-      return Math.floor(value);
-    }
-    // else if (["กิโลกรัม", "ลิตร", "ถุง"].includes(unit)) {
-    //   return Math.round(value * 100) / 100;
-    // }
-    return value;
-  };
-
-  const handleAddIngredient = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsAddDialogOpen(true);
-    try {
-      const trimmedName = normalizeThaiVowel(ingredient.ingredient_name?.trim() || "");
-      let total = Number(ingredient.ingredient_total);
-      let alert = Number(ingredient.ingredient_total_alert);
-
-      total = formatNumber(total, ingredient.ingredient_unit ?? "");
-      alert = formatNumber(alert, ingredient.ingredient_unit ?? "");
-
-      if (!trimmedName || !ingredient.ingredient_unit?.trim() || isNaN(total) || total <= 0 || isNaN(alert) || alert <= 0) {
-        throw new Error("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
-      }
-
-      const formDataIngredient = new FormData();
-      formDataIngredient.append("ingredient_name", trimmedName);
-      formDataIngredient.append("ingredient_total", String(total));
-      formDataIngredient.append("ingredient_unit", ingredient.ingredient_unit.trim());
-      formDataIngredient.append("ingredient_total_alert", String(alert));
-      formDataIngredient.append("ingredient_price", String(ingredient.ingredient_price ?? 0).trim());
-      if (imageFile) formDataIngredient.append("ingredient_image", imageFile);
-      const res = await axios.post("/api/post/ingredients", formDataIngredient);
-
-      const result = res.data;
-
-      if (res.status !== 201) {
-        if (res.status === 400) throw new Error("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
-        if (res.status === 409) throw new Error("ชื่อวัตถุดิบนี้มีอยู่แล้วในระบบ");
-        throw new Error(result.error || "Failed to add ingredient");
-      }
-
-      const addedIngredient = result.ingredient[0] ?? result.data ?? result;
-      if (!addedIngredient) throw new Error("Invalid response format: No ingredient data");
-
-      const type = "add";
-      const formDataTransaction = new FormData();
-      formDataTransaction.append("transaction_from_username", userName ?? "");
-      formDataTransaction.append("transaction_total_price", String(ingredient.ingredient_price ?? 0));
-      formDataTransaction.append("transaction_quantity", String(total));
-      formDataTransaction.append("transaction_units", ingredient.ingredient_unit.trim());
-
-      const encodedIngredientName = encodeURIComponent(trimmedName);
-      const resTran = await axios.post(`/api/post/${type}/stock/${encodedIngredientName}`, formDataTransaction);
-
-      if (resTran.status !== 201) {
-        const tranError = resTran.data;
-        throw new Error(tranError.error || "เกิดข้อผิดพลาดในการเพิ่มรายการธุรกรรม");
-      }
-
-      const transactionResult = resTran.data;
-      if (!transactionResult.transaction_type) {
-        throw new Error("Invalid transaction response format");
-      }
-
-      mutate(allIngredient ? [...allIngredient, addedIngredient] : [addedIngredient], false);
-
-      setingredient({
-        ingredient_name: "",
-        ingredient_total: 0,
-        ingredient_unit: "",
-        ingredient_image: "",
-        ingredient_total_alert: 0,
-        ingredient_status: "",
-        ingredient_price: 0,
-      });
-      setImageFile(null);
-      setIsAddDialogOpen(false);
-      toast.success("เพิ่มวัตถุดิบและบันทึกธุรกรรมสำเร็จ");
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเพิ่มวัตถุดิบหรือธุรกรรม";
-      toast.error(errorMessage);
-    }
-  };
-
-  const getStockStatus = (ingredient: DetailIngredient): { label: string; color: string } => {
-    const total = Number(ingredient.ingredient_total ?? 0);
-    const alert = Number(ingredient.ingredient_total_alert ?? 0);
-    if (total >= alert * 2) return { label: "เพียงพอ", color: "success" };
-    else if (total >= 1.5 * alert && total < 2 * alert) return { label: "ปานกลาง", color: "warning" };
-    else return { label: "ใกล้หมด", color: "destructive" };
-  };
-
-  const filteredIngredient = useMemo(
-    () =>
-      (allIngredient || []).filter((ingredient) => {
-        const normalizedIngredientName = normalizeThaiVowel(ingredient.ingredient_name || "");
-        const normalizedSearchQuery = normalizeThaiVowel(searchQuery);
-        const matchesSearch = normalizedIngredientName.toLowerCase().includes(normalizedSearchQuery.toLowerCase());
-        const matchesStatus = selectedStatus === "ทั้งหมด" || getStockStatus(ingredient).label === selectedStatus;
-        return matchesSearch && matchesStatus;
-      }),
-    [allIngredient, searchQuery, selectedStatus]
-  );
-
-  const visibleIngredients = useMemo(
-    () =>
-      filteredIngredient.slice(0, visibleCount).sort((a, b) => {
-        const aStatus = getStockStatus(a).label;
-        const bStatus = getStockStatus(b).label;
-        const isALow = aStatus === "ใกล้หมด";
-        const isBLow = bStatus === "ใกล้หมด";
-
-        if (isALow && !isBLow) return -1;
-        if (!isALow && isBLow) return 1;
-        if (isALow && isBLow) return (a.ingredient_total ?? 0) - (b.ingredient_total ?? 0);
-
-        return 0;
-      }),
-    [filteredIngredient, visibleCount]
-  );
-
-  const lowStockIngredients = useMemo(
-    () =>
-      (allIngredient || []).filter((ingredient) => {
-        const total = Number(ingredient.ingredient_total) || 0;
-        const alert = Number(ingredient.ingredient_total_alert) || 0;
-        return total <= alert;
-      }),
-    [allIngredient]
-  );
-
-  const ingredients = (allIngredient || []).map((ingredient) => normalizeThaiVowel(ingredient.ingredient_name || "")).filter((ingredient_name): ingredient_name is string => typeof ingredient_name === "string");
-
-  const loadMore = useCallback(() => {
-    setVisibleCount((prev) => Math.min(prev + chunkSize, filteredIngredient.length));
-  }, [filteredIngredient.length]);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [success, setSuccess] = useState(false);
+  const [rawDate, setRawDate] = useState<string>("");
+  const { userName, userRole } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting) loadMore();
-      },
-      {
-        root: null,
-        rootMargin: "0px",
-        threshold: 1.0,
+    if (cart_delivery_date) {
+      const parts = cart_delivery_date.split("/");
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10) - 543;
+        const d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) setRawDate(d.toISOString());
       }
-    );
+    } else {
+      setRawDate("");
+    }
+  }, [cart_delivery_date]);
 
-    const currentRef = loadMoreRef.current;
-    if (currentRef) observer.observe(currentRef);
+  useEffect(() => {
+    if (cart_export_time) {
+      const [hour, minute] = cart_export_time.split(":").map(Number);
+      const d = new Date();
+      d.setHours(hour, minute, 0, 0);
+      setDeliveryTime(d);
+    }
 
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-      observer.disconnect();
-    };
-  }, [loadMore]);
+    if (cart_receive_time) {
+      const [hour, minute] = cart_receive_time.split(":").map(Number);
+      const d = new Date();
+      d.setHours(hour, minute, 0, 0);
+      setPickupTime(d);
+    }
+  }, []);
 
-  const handleImageClick = (imageUrl: string) => {
-    setSelectedImage(imageUrl);
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+
+    if (value.length > 3 && value.length <= 6) {
+      value = `${value.slice(0, 3)}-${value.slice(3)}`;
+    } else if (value.length > 6) {
+      value = `${value.slice(0, 3)}-${value.slice(3, 6)}-${value.slice(6, 10)}`;
+    }
+    setCustomerInfo({ tel: value });
+  };
+
+  const handleShippingCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = e.target.value.replace(/[^\d]/g, "");
+    if (!numericValue) {
+      setCustomerInfo({ cart_shipping_cost: "" });
+      return;
+    }
+    
+    const formattedValue = Number(numericValue).toLocaleString("th-TH");
+    setCustomerInfo({ cart_shipping_cost: formattedValue });
+  };
+
+  const validateInputs = (): boolean => {
+    const newErrors: string[] = [];
+
+    if (!cart_customer_name.trim()) newErrors.push("กรุณากรอกชื่อลูกค้า");
+    if (!cart_customer_tel.trim()) {
+      newErrors.push("กรุณากรอกเบอร์โทรลูกค้า");
+    } else if (!/^\d{3}-\d{3}-\d{4}$/.test(cart_customer_tel)) {
+      newErrors.push("เบอร์โทรต้องอยู่ในรูปแบบ 081-234-5678");
+    }
+    if (!cart_location_send.trim()) newErrors.push("กรุณากรอกสถานที่จัดส่ง");
+    if (!cart_delivery_date.trim()) newErrors.push("กรุณาเลือกวันที่จัดส่ง");
+    if (!cart_export_time.trim()) newErrors.push("กรุณาเลือกเวลาส่งอาหาร");
+    if (!cart_receive_time.trim()) newErrors.push("กรุณาเลือกเวลารับอาหาร");
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
+  const confirmOrder = async () => {
+    if (!validateInputs()) return;
+
+    setLoading(true);
+    setErrors([]);
+    try {
+      const response = await fetch("/api/post/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cart_username: userName,
+          cart_customer_name,
+          cart_customer_tel,
+          cart_location_send,
+          cart_delivery_date,
+          cart_export_time,
+          cart_receive_time,
+          cart_shipping_cost,
+          cart_menu_items: items.map((item, index) => ({
+            menu_name: item.menu_name,
+            menu_total: item.menu_total,
+            menu_ingredients: item.menu_ingredients,
+            menu_description: item.menu_description,
+            menu_order_id: index + 1, 
+          })),
+        }),
+      });
+
+      if (!response.ok) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
+      setSuccess(true);
+    } catch (err: unknown) {
+      setErrors([err instanceof Error ? err.message : "เกิดข้อผิดพลาดไม่ทราบสาเหตุ"]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDone = () => {
+    clearCart();
+    router.push("/home/summarylist");
+  };
+
+  const handleChangeQuantity = (cartItemId: string, quantity: number) => {
+    if (quantity >= 1) setItemQuantity(cartItemId, quantity);
   };
 
   return (
-    <div className='flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto'>
-      <div className='container'>
-        {isLoading && <p>Loading...</p>}
-        {error && <p className='text-red-500'>{error.message}</p>}
+    <main className='min-h-screen text-black'>
+      <div className='p-4 max-w-md mx-auto'>
+        <h1 className='text-2xl font-bold mb-4'>🛒 รายการในตะกร้า</h1>
 
-        {allIngredient && lowStockIngredients.length > 0 && (
-          <Card className='p-4 border-red-200 bg-red-50 dark:bg-red-900/20 mt-2'>
-            <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3'>
-              <div className='flex items-center gap-2'>
-                <AlertTriangle className='w-5 h-5 text-red-500' />
-                <h3 className='font-semibold text-red-800 dark:text-red-200'>แจ้งเตือน: วัตถุดิบใกล้หมด ({lowStockIngredients.length} รายการ)</h3>
-              </div>
-              <div className='flex flex-wrap items-center gap-2'>
-                {lowStockIngredients.slice(0, 2).map((ingredient) => (
-                  <Badge key={ingredient.ingredient_id} variant='destructive' className='whitespace-nowrap'>
-                    {ingredient.ingredient_name} ({ingredient.ingredient_total} / {ingredient.ingredient_total_alert})
-                  </Badge>
-                ))}
-                {lowStockIngredients.length > 2 && (
-                  <Badge variant='destructive' className='whitespace-nowrap'>
-                    ...
-                  </Badge>
-                )}
-                <div className='px-2 text-sm py-0.5 w-fit text-black shadow bg-red-400 rounded-md hover:bg-red-600 hover:text-white border'>
-                  <button onClick={() => setSelectedStatus("ใกล้หมด")}>แสดงวัตถุดิบ</button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        <div className='flex flex-row  items-center gap-2 w-full mb-2'>
-          <div className='relative flex-1 min-w-[120px] padding-right-10 mt-2'>
-            <SearchBox
-              dataSource={ingredients}
-              onSelect={(val) => setSearchQuery(val)}
-              onChangeQuery={(val) => {
-                setSearchQuery(val);
-                setVisibleCount(chunkSize);
-              }}
-              minLength={1}
-            />
+        <div className='grid grid-cols-2 gap-4 mb-4'>
+          <div className='flex flex-col gap-1'>
+            <label className='font-medium'>ชื่อลูกค้า</label>
+            <input type='text' value={cart_customer_name} onChange={(e) => setCustomerInfo({ name: e.target.value })} placeholder='ชื่อลูกค้า' className='border rounded px-3 py-2' />
           </div>
-          <div style={{ color: "#000000" }} className='flex flex-row justify-center sm:justify-end gap-2 w-full sm:w-auto'>
-            <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400 transition-colors duration-200'>
-              <Select
-                value={selectedStatus}
-                onValueChange={(value) => {
-                  setSelectedStatus(value);
-                }}>
-                <SelectTrigger className='inline-flex min-w-fit px-3' style={{ zIndex: 1000 }}>
-                  <SelectValue placeholder='เลือกสถานะ' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='ทั้งหมด'>ทั้งหมด</SelectItem>
-                  <SelectItem value='เพียงพอ'>เพียงพอ</SelectItem>
-                  <SelectItem value='ปานกลาง'>ปานกลาง</SelectItem>
-                  <SelectItem value='ใกล้หมด'>ใกล้หมด</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400 transition-colors duration-200'>
-                  <Button>เพิ่ม</Button>
-                </div>
-              </DialogTrigger>
-              <DialogContent>
-                <form onSubmit={handleAddIngredient}>
-                  <DialogTitle style={{ color: "#000000" }}>เพิ่มวัตถุดิบใหม่</DialogTitle>
+          <div className='flex flex-col gap-1'>
+            <label className='font-medium'>เบอร์โทรลูกค้า</label>
+            <input type='text' value={cart_customer_tel} onChange={handlePhoneChange} placeholder='081-234-5678' className='border rounded px-3 py-2' />
+          </div>
 
-                  <div style={{ color: "#000000" }} className='space-y-4'>
-                    <div>
-                      <Label htmlFor='name'>ชื่อวัตถุดิบ</Label>
-                      <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400'>
-                        <Input
-                          id='name'
-                          name='name'
-                          value={ingredient.ingredient_name ?? ""}
-                          onChange={(e) =>
-                            setingredient({
-                              ...ingredient,
-                              ingredient_name: e.target.value,
-                            })
-                          }
-                          placeholder='เช่น ข้าวสวย, ไข่ไก่'
-                          required
-                        />
-                      </div>
+          <div className='col-span-2 flex flex-col gap-1'>
+            <label className='font-medium'>สถานที่จัดส่ง</label>
+            <input type='text' value={cart_location_send} onChange={(e) => setCustomerInfo({ location: e.target.value })} placeholder='สถานที่จัดส่ง' className='w-full border rounded px-3 py-2' />
+          </div>
+
+          <div className='col-span-2 flex flex-col gap-1'>
+            <label className='font-medium'>วันที่จัดส่ง</label>
+            <DatePicker
+              selected={rawDate ? new Date(rawDate) : null}
+              onChange={(date: Date | null) => {
+                if (date) {
+                  setRawDate(date.toISOString());
+                  const buddhistYear = date.getFullYear() + 543;
+                  const month = String(date.getMonth() + 1).padStart(2, "0");
+                  const day = String(date.getDate()).padStart(2, "0");
+                  setCustomerInfo({
+                    deliveryDate: `${day}/${month}/${buddhistYear}`,
+                  });
+                } else {
+                  setRawDate("");
+                  setCustomerInfo({ deliveryDate: "" });
+                }
+              }}
+              dateFormat='dd/MM/yyyy'
+              minDate={userRole === "admin" ? undefined : new Date()}
+              locale='th'
+              placeholderText='วัน/เดือน/ปี (พ.ศ.)'
+              className='w-full border rounded px-3 py-2'
+              renderCustomHeader={({ date, changeYear, changeMonth, decreaseMonth, increaseMonth, prevMonthButtonDisabled, nextMonthButtonDisabled }) => {
+                const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
+                const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+
+                return (
+                  <div className='flex justify-between items-center mb-2 px-2'>
+                    <button onClick={decreaseMonth} disabled={prevMonthButtonDisabled}>
+                      {"<"}
+                    </button>
+
+                    <div className='flex items-center gap-2'>
+                      <select value={date.getFullYear()} onChange={({ target: { value } }) => changeYear(Number(value))} className='border rounded px-1 py-0.5'>
+                        {years.map((year) => (
+                          <option key={year} value={year}>
+                            {year + 543}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select value={date.getMonth()} onChange={({ target: { value } }) => changeMonth(Number(value))} className='border rounded px-1 py-0.5'>
+                        {months.map((month, index) => (
+                          <option key={index} value={index}>
+                            {month}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
-                    <div>
-                      <Label htmlFor='unit'>หน่วย</Label>
-                      <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-200 hover:bg-gray-300 border border-gray-400'>
-                        <Select
-                          value={ingredient.ingredient_unit ?? ""}
-                          onValueChange={(value) =>
-                            setingredient({
-                              ...ingredient,
-                              ingredient_unit: value,
-                              ingredient_total: 0,
-                              ingredient_total_alert: 0,
-                            })
-                          }
-                          required>
-                          <SelectTrigger>
-                            <SelectValue placeholder='เลือกหน่วย' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value='กรัม'>กรัม</SelectItem>
-                            <SelectItem value='กิโลกรัม'>กิโลกรัม</SelectItem>
-                            <SelectItem value='มิลลิลิตร'>มิลลิลิตร</SelectItem>
-                            <SelectItem value='ลิตร'>ลิตร</SelectItem>
-                            <SelectItem value='ชิ้น'>ชิ้น</SelectItem>
-                            <SelectItem value='ตัว'>ตัว</SelectItem>
-                            <SelectItem value='ซอง'>ซอง</SelectItem>
-                            <SelectItem value='ใบ'>ใบ</SelectItem>
-                            <SelectItem value='ถ้วย'>ถ้วย</SelectItem>
-                            <SelectItem value='กระป๋อง'>กระป๋อง</SelectItem>
-                            <SelectItem value='ขวด'>ขวด</SelectItem>
-                            <SelectItem value='ก้อน'>ก้อน</SelectItem>
-                            <SelectItem value='ฟอง'>ฟอง</SelectItem>
-                            <SelectItem value='ลูก'>ลูก</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor='currentStock'>จำนวนปัจจุบัน</Label>
-                      <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400'>
-                        <Input
-                          id='currentStock'
-                          type='number'
-                          value={ingredient.ingredient_total ?? ""}
-                          onChange={(e) => {
-                            let value = Number(e.target.value);
-                            if (["กรัม", "ฟอง", "ชิ้น"].includes(ingredient.ingredient_unit ?? "")) {
-                              value = Math.floor(value);
-                            }
-                            setingredient({
-                              ...ingredient,
-                              ingredient_total: value,
-                            });
-                          }}
-                          min='0'
-                          max='1000'
-                          step={getStepValue(ingredient.ingredient_unit ?? "")}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor='threshold'>ระดับแจ้งเตือน</Label>
-                      <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400'>
-                        <Input
-                          id='threshold'
-                          type='number'
-                          value={ingredient.ingredient_total_alert ?? ""}
-                          onChange={(e) => {
-                            let value = Number(e.target.value);
-                            if (["กรัม", "ฟอง", "ชิ้น"].includes(ingredient.ingredient_unit ?? "")) {
-                              value = Math.floor(value);
-                            }
-                            setingredient({
-                              ...ingredient,
-                              ingredient_total_alert: value,
-                            });
-                          }}
-                          min='0'
-                          max='1000'
-                          step={getStepValue(ingredient.ingredient_unit ?? "")}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor='threshold'>ราคา (บาท) </Label>
-                      <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400'>
-                        <Input
-                          id='threshold'
-                          type='number'
-                          value={ingredient.ingredient_price ?? ""}
-                          onChange={(e) => {
-                            setingredient({
-                              ...ingredient,
-                              ingredient_price: Number(e.target.value),
-                            });
-                          }}
-                          min='0'
-                          max='100000'
-                          step='0.01'
-                          required
-                        />
-                      </div>
-                    </div>
-                    <Button type='submit' className='w-full' disabled={loading}>
-                      {loading ? "กำลังเพิ่ม..." : "เพิ่มวัตถุดิบ"}
-                    </Button>
-                    {error && <p className='text-red-500 text-sm'>{error}</p>}
+                    <button onClick={increaseMonth} disabled={nextMonthButtonDisabled}>
+                      {">"}
+                    </button>
                   </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                );
+              }}
+            />
+            {cart_delivery_date && <p className='text-sm text-gray-500 mt-1'>วันที่จัดส่ง: {cart_delivery_date}</p>}
+          </div>
+
+          <div className='col-span-2 flex flex-col gap-1'>
+            <label htmlFor='food-delivery-time' className='font-medium'>
+              เวลาส่งอาหาร
+            </label>
+            <Flatpickr
+              id='food-delivery-time'
+              options={{
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+              }}
+              value={deliveryTime}
+              onChange={([time]) => {
+                setDeliveryTime(time);
+                setCustomerInfo({ exportTime: formatTime(time) });
+              }}
+              className='border border-gray-300 rounded px-3 py-2'
+            />
+            <p className='text-sm text-gray-500'>เวลาที่เลือก: {formatTime(deliveryTime)}</p>
+          </div>
+
+          <div className='col-span-2 flex flex-col gap-1'>
+            <label htmlFor='food-pickup-time' className='font-medium'>
+              เวลารับอาหาร
+            </label>
+            <Flatpickr
+              id='food-pickup-time'
+              options={{
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+              }}
+              value={pickupTime}
+              onChange={([time]) => {
+                setPickupTime(time);
+                setCustomerInfo({ receiveTime: formatTime(time) });
+              }}
+              className='border border-gray-300 rounded px-3 py-2'
+            />
+            <p className='text-sm text-gray-500'>เวลาที่เลือก: {formatTime(pickupTime)}</p>
+          </div>
+
+          <div className='col-span-2 flex flex-col gap-1'>
+            <label className='font-medium'>ค่าจัดส่ง</label>
+            <input type='text' value={cart_shipping_cost} onChange={(e) => setCustomerInfo({ cart_shipping_cost: e.target.value })} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
           </div>
         </div>
 
-        {allIngredient && (
-          <div className='justify-center columns grid is-multiline'>
-            {visibleIngredients.map((ingredient) => (
-              <MenuCard mode='ingredient' key={ingredient.ingredient_id} item={ingredient} onImageClick={() => ingredient.ingredient_image && handleImageClick(ingredient.ingredient_image)} />
+        <ul className='space-y-4 mb-4'>
+          {items.map((item) =>
+            item.cart_item_id ? (
+              <li key={item.cart_item_id} className='border p-4 rounded flex justify-between items-start'>
+                <div className='flex-1'>
+                  <div className='font-medium'>{item.menu_name}</div>
+                  <div className='text-gray-500'>{item.menu_price} ฿</div>
+                  {item.menu_description && <div className='text-sm text-gray-600 mt-1 italic'>หมายเหตุ: {item.menu_description}</div>}
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <button onClick={() => removeItem(item.cart_item_id!)} className='px-3 py-1 bg-red-500 text-white rounded'>
+                    −
+                  </button>
+                  <input type='number' value={item.menu_total} onChange={(e) => handleChangeQuantity(item.cart_item_id!, Number(e.target.value))} className='w-16 text-center border rounded' />
+                  <button onClick={() => addItem(item, item.menu_description || "")} className='px-3 py-1 bg-green-500 text-white rounded'>
+                    +
+                  </button>
+                </div>
+              </li>
+            ) : null
+          )}
+
+          <div className='border p-4 rounded'>
+            <button onClick={() => router.push("/home/order/menu")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>
+              ➕ เพิ่มเมนู
+            </button>
+          </div>
+        </ul>
+
+        <button
+          onClick={confirmOrder}
+          disabled={loading}
+          style={{
+            backgroundColor: loading ? "#a0aec0" : errors.length === 0 ? "#38a169" : "#e53e3e",
+            cursor: loading ? "not-allowed" : "pointer",
+            color: "white",
+          }}
+          className='w-full py-2 rounded font-bold transition'>
+          {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
+        </button>
+
+        {errors.length > 0 && (
+          <ul className='mt-4 text-red-500 space-y-1 list-disc list-inside text-sm'>
+            {errors.map((err, i) => (
+              <li key={i}>{err}</li>
             ))}
-          </div>
-        )}
-
-        {allIngredient && visibleCount < filteredIngredient.length && <div ref={loadMoreRef} style={{ height: "20px" }} />}
-
-        {allIngredient && filteredIngredient.length === 0 && (
-          <Card className='p-8 text-center'>
-            <Package className='w-12 h-12 mx-auto text-gray-400 mb-4' />
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>ไม่พบวัตถุดิบ</h3>
-            <p className='text-gray-500'>ลองค้นหาด้วยคำอื่น หรือเพิ่มวัตถุดิบใหม่</p>
-          </Card>
-        )}
-
-        {selectedImage && (
-          <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50' onClick={() => setSelectedImage(null)} role='dialog' aria-label='Image popup'>
-            <div className={`relative ${isMobile ? "w-[95vw] h-[80vh]" : "max-w-[90vw] max-h-[90vh]"}`} onClick={(e) => e.stopPropagation()}>
-              <img
-                src={selectedImage}
-                alt='Ingredient'
-                className='w-full h-full object-contain rounded-lg'
-                onError={(e) => {
-                  e.currentTarget.src = "https://bulma.io/assets/images/placeholders/1280x960.png";
-                }}
-              />
-              {isMobile && (
-                <button className='absolute top-2 right-2 bg-white text-black rounded-full p-2' onClick={() => setSelectedImage(null)} aria-label='Close'>
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
+          </ul>
         )}
       </div>
-    </div>
+
+      {success && (
+        <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
+          <div className='bg-white p-6 rounded max-w-sm text-center space-y-4'>
+            <h2 className='text-xl font-bold'>สั่งซื้อสำเร็จ</h2>
+            <p>คำสั่งซื้อของคุณถูกบันทึกเรียบร้อยแล้ว</p>
+            <button onClick={handleDone} className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' style={{ backgroundColor: "#16a34a", color: "#ffffff" }}>
+              ตกลง
+            </button>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
