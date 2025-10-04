@@ -20,12 +20,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.16.2
- * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
+ * Prisma Client JS version: 6.16.3
+ * Query Engine version: bb420e667c1820a8c05a38023385f6cc7ef8e83a
  */
 Prisma.prismaVersion = {
-  client: "6.16.2",
-  engine: "1c57fdcd7e44b29b9313256c76699e91c3ac3c43"
+  client: "6.16.3",
+  engine: "bb420e667c1820a8c05a38023385f6cc7ef8e83a"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -113,73 +113,68 @@ Prisma.NullTypes = {
  * Enums
  */
 
-exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
-  ReadUncommitted: 'ReadUncommitted',
-  ReadCommitted: 'ReadCommitted',
-  RepeatableRead: 'RepeatableRead',
-  Serializable: 'Serializable'
-});
-
 exports.Prisma.CartScalarFieldEnum = {
-  cart_id: 'cart_id',
-  cart_username: 'cart_username',
-  cart_menu_items: 'cart_menu_items',
+  id: 'id',
   cart_create_date: 'cart_create_date',
-  cart_status: 'cart_status',
-  cart_order_number: 'cart_order_number',
-  cart_last_update: 'cart_last_update',
   cart_customer_name: 'cart_customer_name',
   cart_customer_tel: 'cart_customer_tel',
-  cart_location_send: 'cart_location_send',
   cart_delivery_date: 'cart_delivery_date',
   cart_export_time: 'cart_export_time',
+  cart_id: 'cart_id',
+  cart_last_update: 'cart_last_update',
+  cart_location_send: 'cart_location_send',
+  cart_order_number: 'cart_order_number',
   cart_receive_time: 'cart_receive_time',
-  cart_shipping_cost: 'cart_shipping_cost'
+  cart_shipping_cost: 'cart_shipping_cost',
+  cart_status: 'cart_status',
+  cart_username: 'cart_username'
 };
 
 exports.Prisma.EmployeeScalarFieldEnum = {
-  employee_id: 'employee_id',
-  employee_username: 'employee_username',
+  id: 'id',
   employee_firstname: 'employee_firstname',
+  employee_id: 'employee_id',
   employee_lastname: 'employee_lastname',
   employee_pin: 'employee_pin',
-  employee_role: 'employee_role'
+  employee_role: 'employee_role',
+  employee_username: 'employee_username'
 };
 
-exports.Prisma.Ingredient_transactionsScalarFieldEnum = {
-  transaction_id: 'transaction_id',
+exports.Prisma.Ingredient_transactionScalarFieldEnum = {
+  id: 'id',
+  ingredient_name: 'ingredient_name',
   transaction_date: 'transaction_date',
   transaction_from_username: 'transaction_from_username',
-  transaction_type: 'transaction_type',
-  ingredient_name: 'ingredient_name',
-  transaction_total_price: 'transaction_total_price',
+  transaction_id: 'transaction_id',
   transaction_quantity: 'transaction_quantity',
+  transaction_total_price: 'transaction_total_price',
+  transaction_type: 'transaction_type',
   transaction_units: 'transaction_units'
 };
 
 exports.Prisma.IngredientsScalarFieldEnum = {
-  ingredient_id: 'ingredient_id',
-  ingredient_name: 'ingredient_name',
-  ingredient_total: 'ingredient_total',
-  ingredient_unit: 'ingredient_unit',
-  ingredient_lastupdate: 'ingredient_lastupdate',
-  ingredient_image: 'ingredient_image',
-  ingredient_total_alert: 'ingredient_total_alert',
+  id: 'id',
   ingredient_category: 'ingredient_category',
-  ingredient_sub_category: 'ingredient_sub_category',
+  ingredient_id: 'ingredient_id',
+  ingredient_image: 'ingredient_image',
+  ingredient_lastupdate: 'ingredient_lastupdate',
+  ingredient_name: 'ingredient_name',
   ingredient_price: 'ingredient_price',
-  ingredient_price_per_unit: 'ingredient_price_per_unit'
+  ingredient_price_per_unit: 'ingredient_price_per_unit',
+  ingredient_sub_category: 'ingredient_sub_category',
+  ingredient_total: 'ingredient_total',
+  ingredient_total_alert: 'ingredient_total_alert',
+  ingredient_unit: 'ingredient_unit'
 };
 
 exports.Prisma.MenuScalarFieldEnum = {
+  id: 'id',
+  menu_category: 'menu_category',
   menu_id: 'menu_id',
-  menu_name: 'menu_name',
-  menu_ingredients: 'menu_ingredients',
-  menu_total: 'menu_total',
   menu_image: 'menu_image',
+  menu_name: 'menu_name',
   menu_subname: 'menu_subname',
-  menu_catagory: 'menu_catagory',
-  menu_description: 'menu_description'
+  menu_total: 'menu_total'
 };
 
 exports.Prisma.SortOrder = {
@@ -187,31 +182,16 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.JsonNullValueInput = {
-  JsonNull: Prisma.JsonNull
-};
-
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
-};
-
-exports.Prisma.JsonNullValueFilter = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull,
-  AnyNull: Prisma.AnyNull
-};
-
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
 };
 
 
 exports.Prisma.ModelName = {
   cart: 'cart',
   employee: 'employee',
-  ingredient_transactions: 'ingredient_transactions',
+  ingredient_transaction: 'ingredient_transaction',
   ingredients: 'ingredients',
   menu: 'menu'
 };

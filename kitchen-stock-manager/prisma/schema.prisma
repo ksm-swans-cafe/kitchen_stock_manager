@@ -4,69 +4,109 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
+type CartCartMenuItems {
+  menu_description String?
+  menu_ingredients CartCartMenuItemsMenuIngredients[]
+  menu_catagory    String
+  menu_subname     String
+  menu_name        String
+  menu_notes       CartCartMenuItemsMenuNotes[]
+  menu_order_id    Int?
+  menu_total       Int
+}
+
+type CartCartMenuItemsMenuIngredients {
+  ingredient_name   String
+  ingredient_status Boolean?
+  useItem           Int
+}
+
+type CartCartMenuItemsMenuNotes {
+  note String
+  qty  Int
+}
+
+type MenuMenuIngredients {
+  ingredient_name String
+  useItem         Int
+}
+
 model cart {
-  cart_id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cart_username      String    @db.VarChar(100)
-  cart_menu_items    Json
-  cart_create_date   DateTime? @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
-  cart_status        String?   @default("pending") @db.VarChar
-  cart_order_number  String?   @db.VarChar(3)
-  cart_last_update   String?   @db.VarChar(100)
-  cart_customer_name String?   @db.VarChar(300)
-  cart_customer_tel  String?   @db.VarChar(12)
-  cart_location_send String?   @db.VarChar(100)
-  cart_delivery_date String?   @db.VarChar(10)
-  cart_export_time   String?   @db.VarChar(10)
-  cart_receive_time  String?   @db.VarChar(10)
-  cart_shipping_cost Decimal?  @default(0) @db.Decimal(4, 0)
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  cart_create_date   String
+  cart_customer_name String
+  cart_customer_tel  String
+  cart_delivery_date String
+  cart_export_time   String
+  cart_id            String
+  cart_lunch_box_name String
+  cart_lunch_box_set String
+  cart_last_update   String?
+  cart_location_send String
+  cart_menu_items    CartCartMenuItems[]
+  cart_order_number  String
+  cart_receive_time  String
+  cart_shipping_cost String
+  cart_status        String
+  cart_username      String
 }
 
 model employee {
-  employee_id        String   @id(map: "employee_new_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  employee_username  String?  @db.VarChar(30)
-  employee_firstname String?  @db.VarChar(50)
-  employee_lastname  String?  @db.VarChar(50)
-  employee_pin       Decimal? @db.Decimal(4, 0)
-  employee_role      String?  @default("employee") @db.VarChar(20)
+  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  employee_firstname String
+  employee_id        String
+  employee_lastname  String
+  employee_pin       String
+  employee_role      String
+  employee_username  String
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model ingredient_transactions {
-  transaction_id            Int      @id @default(autoincrement())
-  transaction_date          DateTime @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
-  transaction_from_username String   @db.VarChar(100)
-  transaction_type          String?  @db.VarChar(7)
-  ingredient_name           String   @db.VarChar(100)
-  transaction_total_price   Decimal  @db.Decimal(10, 2)
-  transaction_quantity      Decimal  @db.Decimal(10, 2)
-  transaction_units         String   @db.VarChar(50)
+model ingredient_transaction {
+  id                        String @id @default(auto()) @map("_id") @db.ObjectId
+  ingredient_name           String
+  transaction_date          String
+  transaction_from_username String
+  transaction_id            Int
+  transaction_quantity      String
+  transaction_total_price   String
+  transaction_type          String
+  transaction_units         String
 }
 
 model ingredients {
-  ingredient_id             Int       @id @default(autoincrement())
-  ingredient_name           String    @db.VarChar(30)
-  ingredient_total          Decimal?  @default(0) @db.Decimal(10, 2)
-  ingredient_unit           String    @db.VarChar(20)
-  ingredient_lastupdate     DateTime? @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
-  ingredient_image          String?   @db.VarChar(300)
-  ingredient_total_alert    Decimal?  @db.Decimal(10, 2)
-  ingredient_category       String?   @db.VarChar(30)
-  ingredient_sub_category   String?   @db.VarChar(30)
-  ingredient_price          Decimal?  @default(0) @db.Decimal(10, 2)
-  ingredient_price_per_unit Decimal?  @default(0) @db.Decimal(10, 2)
+  id                        String @id @default(auto()) @map("_id") @db.ObjectId
+  ingredient_category       String
+  ingredient_id             Int
+  ingredient_image          String
+  ingredient_lastupdate     String
+  ingredient_name           String
+  ingredient_price          String
+  ingredient_price_per_unit String
+  ingredient_sub_category   String
+  ingredient_total          String
+  ingredient_total_alert    String
+  ingredient_unit           String
 }
 
 model menu {
-  menu_id          Int      @id @default(autoincrement())
-  menu_name        String   @db.VarChar(100)
-  menu_ingredients Json
-  menu_total       Decimal? @db.Decimal(7, 0)
-  menu_image       String?  @db.VarChar(999)
-  menu_subname     String?  @db.VarChar(100)
-  menu_catagory    String?  @db.VarChar(100)
-  menu_description String?  @db.VarChar(100)
+  id               String                @id @default(auto()) @map("_id") @db.ObjectId
+  menu_category    String
+  menu_id          Int
+  menu_image       String
+  menu_ingredients MenuMenuIngredients[]
+  menu_name        String
+  menu_subname     String
+  menu_total       Int
+}
+
+model lunchbox {
+  id               String              @id @default(auto()) @map("_id") @db.ObjectId
+  lunchbox_id      Int
+  lunchbox_name    String
+  lunchbox_set     String
+  lunchbox_limit   Int                
 }
