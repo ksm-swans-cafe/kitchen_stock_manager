@@ -1,34 +1,32 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import useSWR from "swr";
+import { BsCashStack } from "react-icons/bs";
+import { FaWallet } from "react-icons/fa";
+import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map as MapIcon, Download, Users, Edit2, Container } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import Swal from "sweetalert2";
+
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { formatDate, EventInput } from "@fullcalendar/core";
-import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
+
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
-import { BsCashStack } from "react-icons/bs";
-import { FaWallet } from "react-icons/fa";
-import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map as MapIcon, Download, Users, Edit2 } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/share/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
-import PaginationComponent from "@/components/ui/Totalpage";
 import { Input } from "@/share/ui/input";
-import ResponsiveOrderId from "./ResponsiveOrderId";
-import StatusDropdown from "./StatusDropdown";
-import {
-  Ingredient,
-  MenuItem,
-  Cart,
-  CartItem,
-  RawCart,
-} from "@/types/interface_summary_orderhistory";
-import Swal from "sweetalert2";
+
+import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
+import PaginationComponent from "@/components/ui/Totalpage";
+import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
+import StatusDropdown from "@/app/components/StatusOrderhistory";
+
+import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
+
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
@@ -36,7 +34,6 @@ const fetcher = async (url: string) => {
 };
 
 const OrderHistory = () => {
-  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
@@ -80,7 +77,7 @@ const OrderHistory = () => {
       console.error("Failed to parse JSON:", e);
       return [];
     }
-};
+  };
 
   useEffect(() => {
     if (!cartsData || !ingredientData) return;
@@ -103,12 +100,7 @@ const OrderHistory = () => {
           const formattedDateISO = date.toISOString().split("T")[0];
           const formattedTime = cart.cart_create_date.split("T")[1].split(".")[0].slice(0, 5);
 
-          const menuItems: MenuItem[] =
-            typeof cart.cart_menu_items === "string" && cart.cart_menu_items
-              ? safeParseJSON(cart.cart_menu_items)
-              : Array.isArray(cart.cart_menu_items)
-              ? cart.cart_menu_items.filter((item) => item && typeof item.menu_total === "number")
-              : [];
+          const menuItems: MenuItem[] = typeof cart.cart_menu_items === "string" && cart.cart_menu_items ? safeParseJSON(cart.cart_menu_items) : Array.isArray(cart.cart_menu_items) ? cart.cart_menu_items.filter((item) => item && typeof item.menu_total === "number") : [];
 
           const totalSets = menuItems.filter((item) => item && typeof item === "object" && typeof item.menu_total === "number").reduce((sum, item) => sum + (item.menu_total || 0), 0);
 
@@ -153,6 +145,7 @@ const OrderHistory = () => {
             cart_customer_tel: cart.cart_customer_tel,
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
+            cart_shipping_cost: cart.cart_shipping_cost,
           };
         });
 
@@ -220,6 +213,11 @@ const OrderHistory = () => {
     const buddhistYear = parseInt(year, 10);
     const christianYear = buddhistYear - 543;
     return `${christianYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  };
+
+  const handleDatePicker = (action: string) => {
+    if (action === "open") return setIsDatePickerOpen(true);
+    else if (action === "close") return setIsDatePickerOpen(false);
   };
 
   const handleDateClick = (info: { dateStr: string }) => {
@@ -356,87 +354,6 @@ const OrderHistory = () => {
     }
   };
 
-  const handleToggleIngredientCheck = async (cartId: string, menuName: string, ingredientName: string) => {
-    const previousCarts = [...carts];
-    const currentCart = carts.find((cart) => cart.id === cartId);
-    const currentIngredient = currentCart?.allIngredients.find((group) => group.menuName === menuName)?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
-
-    const newCheckedStatus = !currentIngredient?.isChecked;
-
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {...cart,allIngredients: cart.allIngredients.map((group) =>group.menuName === menuName? {...group,ingredients: group.ingredients.map((ing) =>ing.ingredient_name === ingredientName? {...ing,isChecked: newCheckedStatus,ingredient_status: newCheckedStatus,}: ing),ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),}: group ),}: cart));
-
-    try {
-      const response = await fetch(`/api/edit/cart-menu/ingredient-status/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menuName,
-          ingredientName,
-          isChecked: newCheckedStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update ingredient status");
-      }
-
-      mutateCarts();
-    } catch (err) {
-      console.error("Error updating ingredient status:", err);
-      setError(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบ: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบ");
-      setCarts(previousCarts);
-    }
-  };
-
-  const handleCheckAllIngredients = async (cartId: string) => {
-    const previousCarts = [...carts];
-    setIsSaving(cartId);
-
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) => ({
-                ...group,
-                ingredients: group.ingredients.map((ing) => ({
-                  ...ing,
-                  isChecked: true,
-                  ingredient_status: true,
-                })),
-                ingredient_status: true,
-              })),
-            }
-          : cart
-      )
-    );
-
-    try {
-      const response = await fetch(`/api/edit/cart-menu/all-ingredients-status/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isChecked: true }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update all ingredients status");
-      }
-
-      mutateCarts();
-    } catch (err) {
-      console.error("Error updating all ingredients status:", err);
-      setError(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด");
-      setCarts(previousCarts);
-    } finally {
-      setIsSaving(null);
-    }
-  };
-
   const handleCheckAllIngredientsForDate = async (date: string) => {
     const previousCarts = [...carts];
     setIsSaving("all");
@@ -529,7 +446,8 @@ const OrderHistory = () => {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((order) => [ order.name, order.id,  order.createdBy, order.cart_customer_tel,order.cart_customer_name,order.order_number,order.cart_location_send].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));}
+      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy, order.cart_customer_tel, order.cart_customer_name, order.order_number, order.cart_location_send].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
+    }
     if (filterStatus !== "ทั้งหมด") {
       filtered = filtered.filter((order) => getStatusText(order.status) === filterStatus);
     }
@@ -590,7 +508,6 @@ const OrderHistory = () => {
     return [...currentDateGroup, ...sortedOtherDates];
   }, [filteredAndSortedOrders, sortOrder]);
 
-
   const summarizeIngredients = (date: string) => {
     const ingredientSummary: {
       [key: string]: { checked: number; total: number; unit: string };
@@ -614,32 +531,41 @@ const OrderHistory = () => {
     return {
       summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({name,checked,total,unit,})),allIngredientsChecked,};};
 
-
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
-  const paginatedGroupedOrders = groupedOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleExportCSV = () => {
-    const headers = ["เลขที่ออร์เดอร์","ชื่อเมนู","คำอธิบายเมนู","วันที่","เวลา","จำนวน Set","ราคา","สถานะ","ผู้สร้าง",];
+    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
     const csvContent = [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) => {
-        const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
-        return [cart.id,`"${cart.name.replace(/"/g, '""')}"`,`"${menuDescriptions.replace(/"/g, '""')}"`,cart.date,cart.time,cart.sets,cart.price,getStatusText(cart.status),cart.createdBy,].join(",");}),].join("\n");
+        const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
+        return [
+          cart.id,
+          `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
+          `"${menuDescriptions.replace(/"/g, '""')}"`, // ป้องกัน comma ในคำอธิบายเมนู
+          cart.date,
+          cart.time,
+          cart.sets,
+          cart.price,
+          getStatusText(cart.status),
+          cart.createdBy,
+        ].join(",");
+      }),
+    ].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "order_history.csv";
-  link.target = "_blank";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "order_history.csv";
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  // ...existing code...
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -649,7 +575,7 @@ const OrderHistory = () => {
 
     const tableColumn = ["Order ID", "Menu", "Menu Description", "Date", "Time", "Sets", "Price", "Status", "Created By"];
     const tableRows = filteredAndSortedOrders.map((cart) => {
-      const menuDescriptions = cart.menuItems.map(item => item.menu_description || "").join("; ");
+      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
       return [cart.id, cart.name, menuDescriptions, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy];
     });
 
@@ -692,17 +618,13 @@ const OrderHistory = () => {
           <div className='col-span-full xl:col-span-2'>
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
-              <Input
-                placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
+              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
               />
             </div>
           </div>
 
           <div>
-            <Button onClick={() => setIsDatePickerOpen(true)} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
+            <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
                     year: "numeric",
@@ -714,7 +636,7 @@ const OrderHistory = () => {
 
             <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
               <DialogContent className='max-w-4xl'>
-                <DialogTitle className='sr-only'>Calendar View</DialogTitle>
+                <DialogTitle className='sr-only'>เลือกวันที่จัดส่ง</DialogTitle>
                 <FullCalendar
                   plugins={[dayGridPlugin, interactionPlugin]}
                   initialView='dayGridMonth'
@@ -722,9 +644,34 @@ const OrderHistory = () => {
                   events={calendarEvents}
                   dateClick={handleDateClick}
                   height='auto'
+                  contentHeight='auto'
                   locale='th'
-                  buttonText={{today: "วันนี้",month: "เดือน",week: "สัปดาห์",day: "วัน",}}
-                  headerToolbar={{left: "prev,next today",center: "title",right: "dayGridMonth,dayGridWeek,dayGridDay",}}
+                  buttonText={{
+                    today: "วันนี้",
+                    month: "เดือน",
+                    week: "สัปดาห์",
+                    day: "วัน",
+                  }}
+                  headerToolbar={{
+                    left: "prev,next today",
+                    center: "title",
+                    right: "dayGridMonth,dayGridWeek,dayGridDay",
+                  }}
+                  footerToolbar={{
+                    start: "",
+                    center: "",
+                    end: "custom1",
+                  }}
+                  customButtons={{
+                    custom1: {
+                      text: "ล้างวันที่",
+                      click: function () {
+                        setSelectedDate(null);
+                        setCarts(allCarts);
+                        handleDatePicker("close");
+                      },
+                    },
+                  }}
                 />
               </DialogContent>
             </Dialog>
@@ -776,17 +723,23 @@ const OrderHistory = () => {
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
-          <Button
-            onClick={() => {setSelectedDate(null);setCarts(allCarts);}}
-            className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>
-            ล้างวันที่
-          </Button>
+          <div className='flex flex-center justify-self-end text-red-400'>
+           <Button
+              onClick={() => {
+                        setSearchTerm("");
+                        setSortOrder("asc");
+                        setSelectedDate(null);
+                        setFilterCreator("ทั้งหมด");
+                        setFilterStatus("ทั้งหมด");
+                        setCarts(allCarts);
+                        }} className='h-12 w-35 text-sm'>[ X ] ล้างฟิลเตอร์</Button>
+          </div>
           <div className='flex flex-center'>
             <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> CSV
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> CSV
             </Button>
             <Button onClick={handleExportPDF} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> PDF
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> PDF
             </Button>
           </div>
         </div>
@@ -893,6 +846,8 @@ const OrderHistory = () => {
                                   <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
                                   <Wallet className='w-4 h-4 text-green-400' />
                                   <span className='text-sm sm:text-base font-normal'>ราคาทั้งหมด {cart.price.toLocaleString()} บาท</span>
+                                  <Container className='w-4 h-4 text-blue-500' />
+                                  <span className='font-medium'>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
@@ -925,15 +880,7 @@ const OrderHistory = () => {
                             </div>
                           </AccordionTrigger>
                           <div className='flex justify-center mt-2'>
-                            <StatusDropdown
-                              cartId={cart.id}
-                              allIngredients={cart.allIngredients}
-                              defaultStatus={cart.status}
-                              cart_receive_time={formatToHHMM(cart.cart_receive_time)}
-                              cart_export_time={formatToHHMM(cart.cart_export_time)}
-                              cart={cart}
-                              onUpdated={() => handleUpdateWithCheck(cart)}
-                            />
+                            <StatusDropdown cartId={cart.id} allIngredients={cart.allIngredients} defaultStatus={cart.status} cart_receive_time={formatToHHMM(cart.cart_receive_time)} cart_export_time={formatToHHMM(cart.cart_export_time)} cart={cart} onUpdated={() => handleUpdateWithCheck(cart)} />
                           </div>
                           <AccordionContent className='mt-4'>
                             <div className='grid md:grid-cols-2 gap-6'>
@@ -948,18 +895,13 @@ const OrderHistory = () => {
                                     const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
 
                                     return (
-                                      <AccordionItem
-                                        key={groupIdx}
-                                        value={`menu-${groupIdx}`}
-                                        className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                      <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
                                           <div className='flex flex-col items-start'>
                                             <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
                                             {(() => {
                                               const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                              return menuItem?.menu_description ? (
-                                                <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span>
-                                              ) : null;
+                                              return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
                                             })()}
                                           </div>
                                           <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
@@ -967,49 +909,24 @@ const OrderHistory = () => {
                                         <AccordionContent className='pt-3 space-y-2'>
                                           {isEditingThisMenu ? (
                                             <div className='flex items-center gap-2 mb-3'>
-                                              <Input
-                                                type='number'
-                                                value={editTotalBox}
-                                                onChange={(e) => setEditTotalBox(Number(e.target.value))}
-                                                className='w-20 h-8 text-sm rounded-md border-gray-300'
-                                                min='0'
-                                                aria-label='Edit box quantity'
-                                              />
-                                              <Button
-                                                variant='ghost'
-                                                size='sm'
-                                                onClick={() => handleSaveTotalBox(cart.id, menuGroup.menuName)}
-                                                className='h-8 px-2 text-blue-600 hover:bg-blue-50'
-                                                aria-label='Save box quantity'
-                                                disabled={isSaving === cart.id}>
+                                              <Input type='number' value={editTotalBox} onChange={(e) => setEditTotalBox(Number(e.target.value))} className='w-20 h-8 text-sm rounded-md border-gray-300' min='0' aria-label='Edit box quantity' />
+                                              <Button variant='ghost' size='sm' onClick={() => handleSaveTotalBox(cart.id, menuGroup.menuName)} className='h-8 px-2 text-blue-600 hover:bg-blue-50' aria-label='Save box quantity' disabled={isSaving === cart.id}>
                                                 {isSaving === cart.id ? "Saving..." : "Save"}
                                               </Button>
-                                              <Button
-                                                variant='ghost'
-                                                size='sm'
-                                                onClick={() => setEditingMenu(null)}
-                                                className='h-8 px-2 text-gray-600 hover:bg-gray-50'
-                                                aria-label='Cancel edit'
-                                                disabled={isSaving === cart.id}>
+                                              <Button variant='ghost' size='sm' onClick={() => setEditingMenu(null)} className='h-8 px-2 text-gray-600 hover:bg-gray-50' aria-label='Cancel edit' disabled={isSaving === cart.id}>
                                                 Cancel
                                               </Button>
                                             </div>
                                           ) : (
                                             <div className='flex items-center gap-2 mb-3'>
-                                              <Button
-                                                variant='ghost'
-                                                size='sm'
-                                                onClick={() => handleEditTotalBox(cart.id, menuGroup.menuName, totalBox)}
-                                                className='h-8 px-2 text-blue-600 hover:bg-blue-100'>
+                                              <Button variant='ghost' size='sm' onClick={() => handleEditTotalBox
+                                                  (cart.id, menuGroup.menuName, totalBox)} className='h-8 px-2 text-blue-600 hover:bg-blue-100'>
+                                                {/* <Edit2 className="w-4 h-4" /> */}
                                               </Button>
                                             </div>
                                           )}
                                           {menuGroup.ingredients.map((ing, idx) => (
-                                            <div
-                                              key={idx}
-                                              className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                                ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
-                                              } text-sm`}>
+                                            <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
                                               <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
                                               <div className='flex items-center gap-4'>
                                                 <span className='text-gray-600'>
@@ -1082,10 +999,7 @@ const OrderHistory = () => {
                         ))}
                       </div>
                       <div style={{ color: "#000000", background: "#5cfa6c" }}>
-                        <Button
-                          onClick={() => handleCheckAllIngredientsForDate(selectedDateForSummary)}
-                          className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg'
-                          disabled={isSaving === "all" || allIngredientsChecked}>
+                        <Button onClick={() => handleCheckAllIngredientsForDate(selectedDateForSummary)} className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg' disabled={isSaving === "all" || allIngredientsChecked}>
                           {isSaving === "all" ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
                         </Button>
                       </div>

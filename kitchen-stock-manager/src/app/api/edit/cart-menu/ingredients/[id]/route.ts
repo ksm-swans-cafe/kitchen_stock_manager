@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-// import sql from "@app/database/connect";
 import prisma from "@/lib/prisma";
 
 interface Ingredient {
@@ -8,49 +7,26 @@ interface Ingredient {
   ingredient_status: boolean;
 }
 
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const { id } = params;
-  console.log("Received id from params:", id); // Log เพื่อตรวจสอบ
 
   let body;
   try {
     body = await request.json();
   } catch (error) {
     console.error("Failed to parse JSON:", error);
-    return NextResponse.json(
-      { error: "Invalid JSON format in request body" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid JSON format in request body" }, { status: 400 });
   }
 
   const { menuName, ingredients } = body;
   console.log("Received data:", { id, menuName, ingredients });
 
-  if (
-    !id ||
-    !menuName ||
-    !Array.isArray(ingredients) ||
-    ingredients.some(
-      (ing: Ingredient) => !ing.ingredient_name || ing.useItem < 0
-    )
-  ) {
-    return NextResponse.json(
-      { error: "กรุณาระบุ id, menuName และ ingredients ที่ถูกต้อง" },
-      { status: 400 }
-    );
+  if (!id || !menuName || !Array.isArray(ingredients) || ingredients.some((ing: Ingredient) => !ing.ingredient_name || ing.useItem < 0)) {
+    return NextResponse.json({ error: "กรุณาระบุ id, menuName และ ingredients ที่ถูกต้อง" }, { status: 400 });
   }
 
   try {
-    // ค้นหา cart
-    // const [cart] = await sql`
-    //   SELECT cart_id, cart_menu_items
-    //   FROM cart
-    //   WHERE cart_id = ${id};
-    // `;
     const [cart] = await prisma.cart.findMany({
       where: { cart_id: id },
       select: {
@@ -60,33 +36,19 @@ export async function PATCH(
     });
 
     if (!cart) {
-      return NextResponse.json(
-        { error: "ไม่พบตะกร้าที่ระบุ" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    // ตรวจสอบว่าเมนูมีอยู่ในระบบ
-    // const [menuCheck] = await sql`
-    //   SELECT menu_name FROM menu WHERE menu_name = ${menuName};
-    // `;
     const [menuCheck] = await prisma.menu.findMany({
       where: { menu_name: menuName },
       select: { menu_name: true },
     });
     if (!menuCheck) {
-      return NextResponse.json(
-        { error: `เมนู ${menuName} ไม่มีอยู่ในระบบ` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `เมนู ${menuName} ไม่มีอยู่ในระบบ` }, { status: 400 });
     }
 
-    // ตรวจสอบว่า ingredient_name มีอยู่ในตาราง ingredients
     const invalidIngredients = await Promise.all(
       ingredients.map(async (ing: Ingredient) => {
-        // const [ingredientCheck] = await sql`
-        //   SELECT ingredient_name FROM ingredients WHERE ingredient_name = ${ing.ingredient_name};
-        // `;
         const [ingredientCheck] = await prisma.ingredients.findMany({
           where: { ingredient_name: ing.ingredient_name },
           select: { ingredient_name: true },
@@ -98,15 +60,12 @@ export async function PATCH(
     if (invalidIngredients.length > 0) {
       return NextResponse.json(
         {
-          error: `วัตถุดิบต่อไปนี้ไม่มีอยู่ในระบบ: ${invalidIngredients.join(
-            ", "
-          )}`,
+          error: `วัตถุดิบต่อไปนี้ไม่มีอยู่ในระบบ: ${invalidIngredients.join(", ")}`,
         },
         { status: 400 }
       );
     }
 
-    // แปลง cart_menu_items
     let existingMenuItems: {
       menu_name: string;
       menu_total: number;
@@ -117,15 +76,11 @@ export async function PATCH(
         if (typeof cart.cart_menu_items === "string") {
           existingMenuItems = JSON.parse(cart.cart_menu_items);
         } else {
-          console.warn(
-            "cart_menu_items is not a string, resetting to empty array"
-          );
+          console.warn("cart_menu_items is not a string, resetting to empty array");
           existingMenuItems = [];
         }
         if (!Array.isArray(existingMenuItems)) {
-          console.warn(
-            "cart_menu_items is not an array, resetting to empty array"
-          );
+          console.warn("cart_menu_items is not an array, resetting to empty array");
           existingMenuItems = [];
         }
       } catch (parseError) {
@@ -134,7 +89,6 @@ export async function PATCH(
       }
     }
 
-    // อัปเดตเฉพาะวัตถุดิบของเมนูที่ระบุ
     const updatedMenuItems = existingMenuItems.map((item) =>
       item.menu_name === menuName
         ? {
@@ -148,7 +102,6 @@ export async function PATCH(
         : item
     );
 
-    // ถ้าเมนูที่ระบุไม่อยู่ใน existingMenuItems ให้เพิ่มใหม่
     if (!existingMenuItems.some((item) => item.menu_name === menuName)) {
       updatedMenuItems.push({
         menu_name: menuName,
@@ -161,14 +114,6 @@ export async function PATCH(
       });
     }
 
-    // อัปเดต cart ในฐานข้อมูล
-    // const result = await sql`
-    //   UPDATE cart
-    //   SET cart_menu_items = ${JSON.stringify(updatedMenuItems)},
-    //       cart_last_update = CURRENT_TIMESTAMP
-    //   WHERE cart_id = ${id}
-    //   RETURNING *;
-    // `;
     const result = await prisma.cart.update({
       where: { cart_id: id },
       data: {
@@ -177,12 +122,8 @@ export async function PATCH(
       },
     });
 
-
     if (!result) {
-      return NextResponse.json(
-        { error: "ไม่สามารถอัปเดตตะกร้าได้" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "ไม่สามารถอัปเดตตะกร้าได้" }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -195,9 +136,6 @@ export async function PATCH(
       stack: (error as Error)?.stack,
       id,
     });
-    return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดในการอัปเดทข้อมูล" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "เกิดข้อผิดพลาดในการอัปเดทข้อมูล" }, { status: 500 });
   }
 }

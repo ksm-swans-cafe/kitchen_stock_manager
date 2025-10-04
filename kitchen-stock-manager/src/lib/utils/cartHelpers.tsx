@@ -1,7 +1,7 @@
 // ยังไม่ได้ใช้ทำอะไร
 
 import { Dispatch, SetStateAction } from "react";
-import { MenuItem } from "@/models/menu_card/MenuCard-model";
+import { MenuItem } from "@/models/menu_card/MenuCard";
 
 export interface CartItem extends MenuItem {
   menu_total: number;

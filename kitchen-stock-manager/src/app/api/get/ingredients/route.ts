@@ -6,19 +6,10 @@ export async function GET() {
     const result = await prisma.ingredients.findMany({
       orderBy: { ingredient_id: "asc" },
     });
-    if (result.length === 0) {
-      return NextResponse.json(
-        { message: "No ingredients found" },
-        { status: 404 }
-      );
-    }
-
+    if (result.length === 0) return NextResponse.json({ message: "No ingredients found" }, { status: 404 });
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error("Error fetching ingredients:", error);
-    return NextResponse.json(
-      { message: "Error fetching ingredients" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Error fetching ingredients" }, { status: 500 });
   }
 }

@@ -1,14 +1,17 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
-import { Input } from "@/share/ui/input";
-import { Label } from "@/share/ui/label";
-import { Employee } from "@/models/employee/employee-model";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/share/ui/card";
-import { Alert, AlertDescription } from "@/share/ui/alert";
-import { cn } from "@/lib/utils";
-import { useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+
+import { Input } from "@/share/ui/input";
+import { Label } from "@/share/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/share/ui/card";
+import { Alert, AlertDescription } from "@/share/ui/alert";
+
+import { Employee } from "@/models/employee/Employee";
+
+import { cn } from "@/lib/utils";
+
 import "./style.css";
 
 const Login: React.FC = () => {
@@ -77,17 +80,14 @@ const Login: React.FC = () => {
         if (loginResponse.status === 200) {
           router.push("/home");
           router.refresh();
-        } else {
-          throw new Error("Failed to set login cookie");
-        }
+        } else throw new Error("Failed to set login cookie");
       } else {
         setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
         setPin(["", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-      console.log(error);
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ " + error);
     } finally {
       setLoading(false);
     }
@@ -95,14 +95,10 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     const pinComplete = pin.join("").length === 4 && pin.every((p) => p !== "");
-    if (pinComplete) {
-      handleLogin();
-    }
+    if (pinComplete) handleLogin();
 
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        handleLogin();
-      }
+      if (e.key === "Enter") handleLogin();
     };
 
     window.addEventListener("keydown", handleKeyPress);
@@ -111,7 +107,6 @@ const Login: React.FC = () => {
 
   return (
     <div className='min-h-screen h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4 relative overflow-hidden'>
-      {/* Background decoration */}
       <div className='absolute inset-0 bg-grid-small-black/[0.02] bg-grid-small' />
       <div className='absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-pulse' />
       <div className='absolute bottom-1/4 right-1/4 w-64 h-64 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-1000' />
@@ -128,11 +123,7 @@ const Login: React.FC = () => {
 
         <CardHeader className='space-y-2 text-center pb-4'>
           <div className='mx-auto flex items-center justify-center mb-3'>
-            <img
-              src='https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/logo/S__3842055-Pzp1LBEQErI3yqCqwKiiCxobjW6Y8K.jpg'
-              className='custom-logo-img cursor-pointer border border-gray-300 rounded-full transition-transform duration-200 transform hover:scale-110 inline-block'
-              alt='Logo'
-            />
+            <img src='https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/logo/S__3842055-Pzp1LBEQErI3yqCqwKiiCxobjW6Y8K.jpg' className='custom-logo-img cursor-pointer border border-gray-300 rounded-full transition-transform duration-200 transform hover:scale-110 inline-block' alt='Logo' />
           </div>
 
           <CardTitle className='text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text'>เข้าสู่ระบบ</CardTitle>
@@ -150,15 +141,7 @@ const Login: React.FC = () => {
             <Label htmlFor='username' className='text-lg font-semibold text-foreground'>
               ชื่อ
             </Label>
-            <Input
-              id='username'
-              type='text'
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder='กรอกชื่อพนักงาน'
-              className='h-12 text-lg transition-all duration-200 focus:ring-2 focus:ring-primary/20 border-border/60 hover:border-primary/30'
-              disabled={loading}
-            />
+            <Input id='username' type='text' value={username} onChange={(e) => setUsername(e.target.value)} placeholder='กรอกชื่อพนักงาน' className='h-12 text-lg transition-all duration-200 focus:ring-2 focus:ring-primary/20 border-border/60 hover:border-primary/30' disabled={loading} />
           </div>
 
           <div className='space-y-3'>

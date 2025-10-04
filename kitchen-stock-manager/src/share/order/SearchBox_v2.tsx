@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { SearchBoxProps } from "@/models/order/search-model";
 
-export default function SearchBox({ apiUrl, dataSource, minLength = 0, onSelect, onChangeQuery }: SearchBoxProps) {
+export default function SearchBox({ apiUrl='', dataSource, minLength = 0, onSelect, onChangeQuery }: SearchBoxProps) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);

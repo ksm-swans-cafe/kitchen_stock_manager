@@ -4,22 +4,9 @@ import prisma from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      cart_username,
-      cart_menu_items,
-      cart_customer_name,
-      cart_customer_tel,
-      cart_delivery_date,
-      cart_location_send,
-      cart_export_time,
-      cart_receive_time,
-      cart_shipping_cost,
-    } = body;
+    const { cart_username, cart_menu_items, cart_customer_name, cart_customer_tel, cart_delivery_date, cart_location_send, cart_export_time, cart_receive_time, cart_shipping_cost } = body;
     if (!cart_username || !cart_menu_items) {
-      return NextResponse.json(
-        { error: "Username and menu items are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Username and menu items are required" }, { status: 400 });
     }
 
     const menuItemsJson = JSON.stringify(cart_menu_items);
@@ -57,12 +44,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(
-      { message: "Cart created successfully", cart: result },
-      { status: 201 }
-    );
-  } catch (error: any) {
-    console.error("Error creating cart:", error.message); 
+    return NextResponse.json({ message: "Cart created successfully", cart: result }, { status: 201 });
+  } catch (error: string | unknown) {
+    console.error("Error creating cart:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(
       {
         error: "Failed to create cart",

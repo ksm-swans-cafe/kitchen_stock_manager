@@ -1,31 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import axios from "axios";
+
 import PaginationComponent from "@/components/ui/Totalpage";
 
-interface Ingredient {
-  useItem: number;
-  ingredient_name: string;
-}
+import { Ingredient, IngredientOption, MenuItem, IngredientUnit } from "@/models/menu_list/MenuList";
 
-interface IngredientOption {
-  ingredient_id: number;
-  ingredient_name: string;
-  ingredient_unit: string;
-}
-
-interface MenuItem {
-  menu_id: string;
-  menu_name: string;
-  menu_ingredients: string | Ingredient[];
-  menu_subname: string;
-  menu_description?: string;
-}
-
-interface IngredientUnit {
-  ingredient_name: string;
-  ingredient_unit: string;
-}
 
 export default function Page() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -40,7 +21,7 @@ export default function Page() {
     { useItem: 0, ingredient_name: "" },
   ]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1); // เพิ่ม state สำหรับ totalPages
+  const [totalPages, setTotalPages] = useState(1); 
   const [menuSubName, setMenuSubName] = useState("เมนู");
   const [menuDescription, setMenuDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +29,6 @@ export default function Page() {
   const [dialog, setDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editMenuId, setEditMenuId] = useState<string | null>(null);
-
   const itemsPerPage = 30;
 
   useEffect(() => {
@@ -56,15 +36,15 @@ export default function Page() {
       setIsLoading(true);
       try {
         const [menuRes, ingOptRes] = await Promise.all([
-          fetch(`/api/get/menu/page?page=${currentPage}&limit=${itemsPerPage}`),
-          fetch("/api/get/ingredients"),
+          axios.get(`/api/get/menu/page?page=${currentPage}&limit=${itemsPerPage}`),
+          axios.get("/api/get/ingredients"),
         ]);
 
-        if (!menuRes.ok || !ingOptRes.ok) throw new Error("โหลดข้อมูลล้มเหลว");
+        if (!menuRes.data || !ingOptRes.data) throw new Error("โหลดข้อมูลล้มเหลว");
 
-        const { data: menuData, pagination } = await menuRes.json();
+        const { data: menuData, pagination } = await menuRes.data;
         console.log("Data: ", menuData);
-        const ingredientOptions: IngredientOption[] = await ingOptRes.json();
+        const ingredientOptions: IngredientOption[] = await ingOptRes.data;
         setIngredientOptions(ingredientOptions);
         setTotalPages(pagination.totalPages);
 
@@ -82,12 +62,12 @@ export default function Page() {
           } catch { }
         });
 
-        const res = await fetch(
+        const res = await axios.get(
           `/api/get/ingredients/list?names=${encodeURIComponent(
             [...uniqueIngredients].join(",")
           )}`
         );
-        const units: IngredientUnit[] = await res.json();
+        const units: IngredientUnit[] = await res.data;
 
         const unitMap: Record<string, string> = {};
         units.forEach((unit) => {
@@ -141,15 +121,13 @@ export default function Page() {
       formData.append("menu_subname", menuSubName);
       formData.append("menu_description", menuDescription);
 
-      const res = await fetch(
-        editMenuId ? `/api/edit/menu/${editMenuId}` : "/api/post/menu",
-        {
-          method: editMenuId ? "PATCH" : "POST",
-          body: formData,
-        }
-      );
+      const res = await axios({
+        method: editMenuId ? "patch" : "post",
+        url: editMenuId ? `/api/edit/menu/${editMenuId}` : "/api/post/menu",
+        data: formData,
+      });
 
-      if (!res.ok)
+      if (res.status !== 200)
         throw new Error(
           editMenuId ? "ไม่สามารถแก้ไขเมนูได้" : "ไม่สามารถเพิ่มเมนูได้"
         );
@@ -173,11 +151,9 @@ export default function Page() {
     setIsSubmitting(true);
   
     try {
-      const res = await fetch(`/api/delete/menu/${menuId}`, {
-        method: "DELETE",
-      });
+      const res = await axios.delete(`/api/delete/menu/${menuId}`);
       
-      if (!res.ok) throw new Error("ไม่สามารถลบเมนูได้");
+      if (res.status !== 200) throw new Error("ไม่สามารถลบเมนูได้");
       
       location.reload();
     } catch (err) {
@@ -190,7 +166,7 @@ export default function Page() {
   const openEditDialog = (item: MenuItem) => {
     setMenuName(item.menu_name);
     setMenuSubName(item.menu_subname);
-    setMenuDescription((item as any).menu_description || "");
+    setMenuDescription((item as MenuItem).menu_description || "");
     setIngredients(
       typeof item.menu_ingredients === "string"
         ? JSON.parse(item.menu_ingredients)
