@@ -131,7 +131,35 @@ const SummaryList: React.FC = () => {
         });
 
         const formattedOrders: Cart[] = cartsData.map((cart: RawCart) => {
-          const [rawDate] = cart.cart_create_date.split("T");
+          // ตรวจสอบและให้ค่าเริ่มต้น
+          if (!cart.cart_create_date) {
+            console.warn(`Cart ${cart.cart_id} has no cart_create_date`);
+            return {
+              id: cart.cart_id || "no-id",
+              orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
+              name: "ไม่มีข้อมูลวันที่",
+              date: "ไม่ระบุ",
+              dateISO: "",
+              time: "ไม่ระบุ",
+              sets: 0,
+              price: cart.cart_total_price || 0,
+              status: cart.cart_status,
+              createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
+              menuItems: [],
+              allIngredients: [],
+              order_number: cart.cart_order_number,
+              cart_delivery_date: cart.cart_delivery_date,
+              cart_receive_time: cart.cart_receive_time,
+              cart_export_time: cart.cart_export_time,
+              cart_customer_tel: cart.cart_customer_tel,
+              cart_customer_name: cart.cart_customer_name,
+              cart_location_send: cart.cart_location_send,
+              cart_shipping_cost: cart.cart_shipping_cost,
+            };
+          }
+
+          // แก้ไขการแยกวันที่และเวลา - ใช้ space แทน T
+          const [rawDate, timePart] = cart.cart_create_date.split(" ");
           const [year, month, day] = rawDate.split("-");
           const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
           const formattedDate = dateObjectForLocale
@@ -144,7 +172,10 @@ const SummaryList: React.FC = () => {
 
           const date = new Date(cart.cart_create_date);
           const formattedDateISO = date.toISOString().split("T")[0];
-          const formattedTime = cart.cart_create_date.split("T")[1].split(".")[0].slice(0, 5);
+
+          // แก้ไขการแยกเวลา - ใช้ space และตัดส่วน timezone
+          const timeOnly = timePart ? timePart.split("+")[0] : "";
+          const formattedTime = timeOnly ? timeOnly.slice(0, 5) : "ไม่ระบุ";
 
           const menuItems: MenuItem[] = typeof cart.cart_menu_items === "string" && cart.cart_menu_items ? safeParseJSON(cart.cart_menu_items) : Array.isArray(cart.cart_menu_items) ? cart.cart_menu_items.filter((item) => item && typeof item.menu_total === "number") : [];
 

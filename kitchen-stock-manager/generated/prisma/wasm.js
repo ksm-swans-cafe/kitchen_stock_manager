@@ -35,12 +35,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.16.2
- * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
+ * Prisma Client JS version: 6.16.3
+ * Query Engine version: bb420e667c1820a8c05a38023385f6cc7ef8e83a
  */
 Prisma.prismaVersion = {
-  client: "6.16.2",
-  engine: "1c57fdcd7e44b29b9313256c76699e91c3ac3c43"
+  client: "6.16.3",
+  engine: "bb420e667c1820a8c05a38023385f6cc7ef8e83a"
 }
 
 Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
@@ -85,73 +85,68 @@ Prisma.NullTypes = {
 /**
  * Enums
  */
-exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
-  ReadUncommitted: 'ReadUncommitted',
-  ReadCommitted: 'ReadCommitted',
-  RepeatableRead: 'RepeatableRead',
-  Serializable: 'Serializable'
-});
-
 exports.Prisma.CartScalarFieldEnum = {
-  cart_id: 'cart_id',
-  cart_username: 'cart_username',
-  cart_menu_items: 'cart_menu_items',
+  id: 'id',
   cart_create_date: 'cart_create_date',
-  cart_status: 'cart_status',
-  cart_order_number: 'cart_order_number',
-  cart_last_update: 'cart_last_update',
   cart_customer_name: 'cart_customer_name',
   cart_customer_tel: 'cart_customer_tel',
-  cart_location_send: 'cart_location_send',
   cart_delivery_date: 'cart_delivery_date',
   cart_export_time: 'cart_export_time',
+  cart_id: 'cart_id',
+  cart_last_update: 'cart_last_update',
+  cart_location_send: 'cart_location_send',
+  cart_order_number: 'cart_order_number',
   cart_receive_time: 'cart_receive_time',
-  cart_shipping_cost: 'cart_shipping_cost'
+  cart_shipping_cost: 'cart_shipping_cost',
+  cart_status: 'cart_status',
+  cart_username: 'cart_username'
 };
 
 exports.Prisma.EmployeeScalarFieldEnum = {
-  employee_id: 'employee_id',
-  employee_username: 'employee_username',
+  id: 'id',
   employee_firstname: 'employee_firstname',
+  employee_id: 'employee_id',
   employee_lastname: 'employee_lastname',
   employee_pin: 'employee_pin',
-  employee_role: 'employee_role'
+  employee_role: 'employee_role',
+  employee_username: 'employee_username'
 };
 
-exports.Prisma.Ingredient_transactionsScalarFieldEnum = {
-  transaction_id: 'transaction_id',
+exports.Prisma.Ingredient_transactionScalarFieldEnum = {
+  id: 'id',
+  ingredient_name: 'ingredient_name',
   transaction_date: 'transaction_date',
   transaction_from_username: 'transaction_from_username',
-  transaction_type: 'transaction_type',
-  ingredient_name: 'ingredient_name',
-  transaction_total_price: 'transaction_total_price',
+  transaction_id: 'transaction_id',
   transaction_quantity: 'transaction_quantity',
+  transaction_total_price: 'transaction_total_price',
+  transaction_type: 'transaction_type',
   transaction_units: 'transaction_units'
 };
 
 exports.Prisma.IngredientsScalarFieldEnum = {
-  ingredient_id: 'ingredient_id',
-  ingredient_name: 'ingredient_name',
-  ingredient_total: 'ingredient_total',
-  ingredient_unit: 'ingredient_unit',
-  ingredient_lastupdate: 'ingredient_lastupdate',
-  ingredient_image: 'ingredient_image',
-  ingredient_total_alert: 'ingredient_total_alert',
+  id: 'id',
   ingredient_category: 'ingredient_category',
-  ingredient_sub_category: 'ingredient_sub_category',
+  ingredient_id: 'ingredient_id',
+  ingredient_image: 'ingredient_image',
+  ingredient_lastupdate: 'ingredient_lastupdate',
+  ingredient_name: 'ingredient_name',
   ingredient_price: 'ingredient_price',
-  ingredient_price_per_unit: 'ingredient_price_per_unit'
+  ingredient_price_per_unit: 'ingredient_price_per_unit',
+  ingredient_sub_category: 'ingredient_sub_category',
+  ingredient_total: 'ingredient_total',
+  ingredient_total_alert: 'ingredient_total_alert',
+  ingredient_unit: 'ingredient_unit'
 };
 
 exports.Prisma.MenuScalarFieldEnum = {
+  id: 'id',
+  menu_category: 'menu_category',
   menu_id: 'menu_id',
-  menu_name: 'menu_name',
-  menu_ingredients: 'menu_ingredients',
-  menu_total: 'menu_total',
   menu_image: 'menu_image',
+  menu_name: 'menu_name',
   menu_subname: 'menu_subname',
-  menu_catagory: 'menu_catagory',
-  menu_description: 'menu_description'
+  menu_total: 'menu_total'
 };
 
 exports.Prisma.SortOrder = {
@@ -159,31 +154,16 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.JsonNullValueInput = {
-  JsonNull: Prisma.JsonNull
-};
-
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
-};
-
-exports.Prisma.JsonNullValueFilter = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull,
-  AnyNull: Prisma.AnyNull
-};
-
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
 };
 
 
 exports.Prisma.ModelName = {
   cart: 'cart',
   employee: 'employee',
-  ingredient_transactions: 'ingredient_transactions',
+  ingredient_transaction: 'ingredient_transaction',
   ingredients: 'ingredients',
   menu: 'menu'
 };
@@ -198,7 +178,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\boomh\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\generated\\prisma",
+      "value": "C:\\Users\\sskjj\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -212,7 +192,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\boomh\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\sskjj\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -220,12 +200,12 @@ const config = {
     "schemaEnvPath": "../../.env"
   },
   "relativePath": "../../prisma",
-  "clientVersion": "6.16.2",
-  "engineVersion": "1c57fdcd7e44b29b9313256c76699e91c3ac3c43",
+  "clientVersion": "6.16.3",
+  "engineVersion": "bb420e667c1820a8c05a38023385f6cc7ef8e83a",
   "datasourceNames": [
     "db"
   ],
-  "activeProvider": "postgresql",
+  "activeProvider": "mongodb",
   "postinstall": false,
   "inlineDatasources": {
     "db": {
@@ -235,13 +215,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel cart {\n  cart_id            String    @id @default(dbgenerated(\"gen_random_uuid()\")) @db.Uuid\n  cart_username      String    @db.VarChar(100)\n  cart_menu_items    Json\n  cart_create_date   DateTime? @default(dbgenerated(\"(now() AT TIME ZONE 'Asia/Bangkok'::text)\")) @db.Timestamptz(6)\n  cart_status        String?   @default(\"pending\") @db.VarChar\n  cart_order_number  String?   @db.VarChar(3)\n  cart_last_update   String?   @db.VarChar(100)\n  cart_customer_name String?   @db.VarChar(300)\n  cart_customer_tel  String?   @db.VarChar(12)\n  cart_location_send String?   @db.VarChar(100)\n  cart_delivery_date String?   @db.VarChar(10)\n  cart_export_time   String?   @db.VarChar(10)\n  cart_receive_time  String?   @db.VarChar(10)\n  cart_shipping_cost Decimal?  @default(0) @db.Decimal(4, 0)\n}\n\nmodel employee {\n  employee_id        String   @id(map: \"employee_new_pkey\") @default(dbgenerated(\"gen_random_uuid()\")) @db.Uuid\n  employee_username  String?  @db.VarChar(30)\n  employee_firstname String?  @db.VarChar(50)\n  employee_lastname  String?  @db.VarChar(50)\n  employee_pin       Decimal? @db.Decimal(4, 0)\n  employee_role      String?  @default(\"employee\") @db.VarChar(20)\n}\n\n/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.\nmodel ingredient_transactions {\n  transaction_id            Int      @id @default(autoincrement())\n  transaction_date          DateTime @default(dbgenerated(\"(now() AT TIME ZONE 'Asia/Bangkok'::text)\")) @db.Timestamptz(6)\n  transaction_from_username String   @db.VarChar(100)\n  transaction_type          String?  @db.VarChar(7)\n  ingredient_name           String   @db.VarChar(100)\n  transaction_total_price   Decimal  @db.Decimal(10, 2)\n  transaction_quantity      Decimal  @db.Decimal(10, 2)\n  transaction_units         String   @db.VarChar(50)\n}\n\nmodel ingredients {\n  ingredient_id             Int       @id @default(autoincrement())\n  ingredient_name           String    @db.VarChar(30)\n  ingredient_total          Decimal?  @default(0) @db.Decimal(10, 2)\n  ingredient_unit           String    @db.VarChar(20)\n  ingredient_lastupdate     DateTime? @default(dbgenerated(\"(now() AT TIME ZONE 'Asia/Bangkok'::text)\")) @db.Timestamptz(6)\n  ingredient_image          String?   @db.VarChar(300)\n  ingredient_total_alert    Decimal?  @db.Decimal(10, 2)\n  ingredient_category       String?   @db.VarChar(30)\n  ingredient_sub_category   String?   @db.VarChar(30)\n  ingredient_price          Decimal?  @default(0) @db.Decimal(10, 2)\n  ingredient_price_per_unit Decimal?  @default(0) @db.Decimal(10, 2)\n}\n\nmodel menu {\n  menu_id          Int      @id @default(autoincrement())\n  menu_name        String   @db.VarChar(100)\n  menu_ingredients Json\n  menu_total       Decimal? @db.Decimal(7, 0)\n  menu_image       String?  @db.VarChar(999)\n  menu_subname     String?  @db.VarChar(100)\n  menu_catagory    String?  @db.VarChar(100)\n  menu_description String?  @db.VarChar(100)\n}\n",
-  "inlineSchemaHash": "c20e13098a86e6212538af4faf803995fa2fd02d56bf47dc15fda0be88ed83b8",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mongodb\"\n  url      = env(\"DATABASE_URL\")\n}\n\ntype CartCartMenuItems {\n  menu_description String?\n  menu_ingredients CartCartMenuItemsMenuIngredients[]\n  menu_name        String\n  menu_notes       CartCartMenuItemsMenuNotes[]\n  menu_order_id    Int?\n  menu_total       Int\n}\n\ntype CartCartMenuItemsMenuIngredients {\n  ingredient_name   String\n  ingredient_status Boolean?\n  useItem           Int\n}\n\ntype CartCartMenuItemsMenuNotes {\n  note String\n  qty  Int\n}\n\ntype MenuMenuIngredients {\n  ingredient_name String\n  useItem         Int\n}\n\nmodel cart {\n  id                 String              @id @default(auto()) @map(\"_id\") @db.ObjectId\n  cart_create_date   String\n  cart_customer_name String\n  cart_customer_tel  String\n  cart_delivery_date String\n  cart_export_time   String\n  cart_id            String\n  cart_last_update   String?\n  cart_location_send String\n  cart_menu_items    CartCartMenuItems[]\n  cart_order_number  String\n  cart_receive_time  String\n  cart_shipping_cost String\n  cart_status        String\n  cart_username      String\n}\n\nmodel employee {\n  id                 String @id @default(auto()) @map(\"_id\") @db.ObjectId\n  employee_firstname String\n  employee_id        String\n  employee_lastname  String\n  employee_pin       String\n  employee_role      String\n  employee_username  String\n}\n\nmodel ingredient_transaction {\n  id                        String @id @default(auto()) @map(\"_id\") @db.ObjectId\n  ingredient_name           String\n  transaction_date          String\n  transaction_from_username String\n  transaction_id            Int\n  transaction_quantity      String\n  transaction_total_price   String\n  transaction_type          String\n  transaction_units         String\n}\n\nmodel ingredients {\n  id                        String @id @default(auto()) @map(\"_id\") @db.ObjectId\n  ingredient_category       String\n  ingredient_id             Int\n  ingredient_image          String\n  ingredient_lastupdate     String\n  ingredient_name           String\n  ingredient_price          String\n  ingredient_price_per_unit String\n  ingredient_sub_category   String\n  ingredient_total          String\n  ingredient_total_alert    String\n  ingredient_unit           String\n}\n\nmodel menu {\n  id               String                @id @default(auto()) @map(\"_id\") @db.ObjectId\n  menu_category    String\n  menu_id          Int\n  menu_image       String\n  menu_ingredients MenuMenuIngredients[]\n  menu_name        String\n  menu_subname     String\n  menu_total       Int\n}\n",
+  "inlineSchemaHash": "86499c9440682f28f38a5adf25cec763e8884e7550420d2410a8b1a9e300d2b1",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"cart\":{\"fields\":[{\"name\":\"cart_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_menu_items\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"cart_create_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"cart_status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_order_number\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_last_update\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_customer_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_customer_tel\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_location_send\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_delivery_date\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_export_time\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_receive_time\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_shipping_cost\",\"kind\":\"scalar\",\"type\":\"Decimal\"}],\"dbName\":null},\"employee\":{\"fields\":[{\"name\":\"employee_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_firstname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_lastname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_pin\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"employee_role\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ingredient_transactions\":{\"fields\":[{\"name\":\"transaction_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"transaction_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"transaction_from_username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_total_price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"transaction_quantity\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"transaction_units\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ingredients\":{\"fields\":[{\"name\":\"ingredient_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"ingredient_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_total\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"ingredient_unit\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_lastupdate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"ingredient_image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_total_alert\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"ingredient_category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_sub_category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"ingredient_price_per_unit\",\"kind\":\"scalar\",\"type\":\"Decimal\"}],\"dbName\":null},\"menu\":{\"fields\":[{\"name\":\"menu_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"menu_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_ingredients\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"menu_total\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"menu_image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_subname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_catagory\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_description\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"cart\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"_id\"},{\"name\":\"cart_create_date\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_customer_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_customer_tel\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_delivery_date\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_export_time\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_last_update\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_location_send\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_menu_items\",\"kind\":\"object\",\"type\":\"CartCartMenuItems\"},{\"name\":\"cart_order_number\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_receive_time\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_shipping_cost\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cart_username\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"employee\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"_id\"},{\"name\":\"employee_firstname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_lastname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_pin\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_role\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"employee_username\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ingredient_transaction\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"_id\"},{\"name\":\"ingredient_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_date\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_from_username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"transaction_quantity\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_total_price\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"transaction_units\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ingredients\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"_id\"},{\"name\":\"ingredient_category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"ingredient_image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_lastupdate\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_price\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_price_per_unit\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_sub_category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_total\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_total_alert\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredient_unit\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"menu\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"_id\"},{\"name\":\"menu_category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"menu_image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_ingredients\",\"kind\":\"object\",\"type\":\"MenuMenuIngredients\"},{\"name\":\"menu_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_subname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"menu_total\",\"kind\":\"scalar\",\"type\":\"Int\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

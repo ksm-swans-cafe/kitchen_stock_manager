@@ -100,7 +100,6 @@ export default function CartList() {
       setCustomerInfo({ cart_shipping_cost: "" });
       return;
     }
-    
     const formattedValue = Number(numericValue).toLocaleString("th-TH");
     setCustomerInfo({ cart_shipping_cost: formattedValue });
   };
@@ -139,7 +138,7 @@ export default function CartList() {
           cart_delivery_date,
           cart_export_time,
           cart_receive_time,
-          cart_shipping_cost,
+          cart_shipping_cost: cart_shipping_cost.replace(/[^\d]/g, ""),
           cart_menu_items: items.map((item, index) => ({
             menu_name: item.menu_name,
             menu_total: item.menu_total,
@@ -296,7 +295,7 @@ export default function CartList() {
 
           <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-medium'>ค่าจัดส่ง</label>
-            <input type='text' value={cart_shipping_cost} onChange={(e) => setCustomerInfo({ cart_shipping_cost: e.target.value })} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
+            <input type='text' value={cart_shipping_cost} onChange={handleShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
           </div>
         </div>
 

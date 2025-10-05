@@ -14,6 +14,26 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
 
 /**
+ * Model CartCartMenuItems
+ * 
+ */
+export type CartCartMenuItems = $Result.DefaultSelection<Prisma.$CartCartMenuItemsPayload>
+/**
+ * Model CartCartMenuItemsMenuIngredients
+ * 
+ */
+export type CartCartMenuItemsMenuIngredients = $Result.DefaultSelection<Prisma.$CartCartMenuItemsMenuIngredientsPayload>
+/**
+ * Model CartCartMenuItemsMenuNotes
+ * 
+ */
+export type CartCartMenuItemsMenuNotes = $Result.DefaultSelection<Prisma.$CartCartMenuItemsMenuNotesPayload>
+/**
+ * Model MenuMenuIngredients
+ * 
+ */
+export type MenuMenuIngredients = $Result.DefaultSelection<Prisma.$MenuMenuIngredientsPayload>
+/**
  * Model cart
  * 
  */
@@ -24,10 +44,10 @@ export type cart = $Result.DefaultSelection<Prisma.$cartPayload>
  */
 export type employee = $Result.DefaultSelection<Prisma.$employeePayload>
 /**
- * Model ingredient_transactions
- * This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+ * Model ingredient_transaction
+ * 
  */
-export type ingredient_transactions = $Result.DefaultSelection<Prisma.$ingredient_transactionsPayload>
+export type ingredient_transaction = $Result.DefaultSelection<Prisma.$ingredient_transactionPayload>
 /**
  * Model ingredients
  * 
@@ -89,53 +109,6 @@ export class PrismaClient<
   $disconnect(): $Utils.JsPromise<void>;
 
 /**
-   * Executes a prepared raw query and returns the number of affected rows.
-   * @example
-   * ```
-   * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
-   * ```
-   *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
-   */
-  $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
-
-  /**
-   * Executes a raw query and returns the number of affected rows.
-   * Susceptible to SQL injections, see documentation.
-   * @example
-   * ```
-   * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
-   * ```
-   *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
-   */
-  $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
-
-  /**
-   * Performs a prepared raw query and returns the `SELECT` data.
-   * @example
-   * ```
-   * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
-   * ```
-   *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
-   */
-  $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
-
-  /**
-   * Performs a raw query and returns the `SELECT` data.
-   * Susceptible to SQL injections, see documentation.
-   * @example
-   * ```
-   * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
-   * ```
-   *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
-   */
-  $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
-
-
-  /**
    * Allows the running of a sequence of read/write operations that are guaranteed to either succeed or fail as a whole.
    * @example
    * ```
@@ -148,10 +121,24 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
    */
-  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P]): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
 
-  $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<R>
+  $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number }): $Utils.JsPromise<R>
 
+  /**
+   * Executes a raw MongoDB command and returns the result of it.
+   * @example
+   * ```
+   * const user = await prisma.$runCommandRaw({
+   *   aggregate: 'User',
+   *   pipeline: [{ $match: { name: 'Bob' } }, { $project: { email: true, _id: false } }],
+   *   explain: false,
+   * })
+   * ```
+   * 
+   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   */
+  $runCommandRaw(command: Prisma.InputJsonObject): Prisma.PrismaPromise<Prisma.JsonObject>
 
   $extends: $Extensions.ExtendsHook<"extends", Prisma.TypeMapCb<ClientOptions>, ExtArgs, $Utils.Call<Prisma.TypeMapCb<ClientOptions>, {
     extArgs: ExtArgs
@@ -178,14 +165,14 @@ export class PrismaClient<
   get employee(): Prisma.employeeDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.ingredient_transactions`: Exposes CRUD operations for the **ingredient_transactions** model.
+   * `prisma.ingredient_transaction`: Exposes CRUD operations for the **ingredient_transaction** model.
     * Example usage:
     * ```ts
     * // Fetch zero or more Ingredient_transactions
-    * const ingredient_transactions = await prisma.ingredient_transactions.findMany()
+    * const ingredient_transactions = await prisma.ingredient_transaction.findMany()
     * ```
     */
-  get ingredient_transactions(): Prisma.ingredient_transactionsDelegate<ExtArgs, ClientOptions>;
+  get ingredient_transaction(): Prisma.ingredient_transactionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.ingredients`: Exposes CRUD operations for the **ingredients** model.
@@ -264,8 +251,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.16.2
-   * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
+   * Prisma Client JS version: 6.16.3
+   * Query Engine version: bb420e667c1820a8c05a38023385f6cc7ef8e83a
    */
   export type PrismaVersion = {
     client: string
@@ -648,7 +635,7 @@ export namespace Prisma {
   export const ModelName: {
     cart: 'cart',
     employee: 'employee',
-    ingredient_transactions: 'ingredient_transactions',
+    ingredient_transaction: 'ingredient_transaction',
     ingredients: 'ingredients',
     menu: 'menu'
   };
@@ -669,8 +656,8 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "cart" | "employee" | "ingredient_transactions" | "ingredients" | "menu"
-      txIsolationLevel: Prisma.TransactionIsolationLevel
+      modelProps: "cart" | "employee" | "ingredient_transaction" | "ingredients" | "menu"
+      txIsolationLevel: never
     }
     model: {
       cart: {
@@ -705,10 +692,6 @@ export namespace Prisma {
             args: Prisma.cartCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          createManyAndReturn: {
-            args: Prisma.cartCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$cartPayload>[]
-          }
           delete: {
             args: Prisma.cartDeleteArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$cartPayload>
@@ -725,10 +708,6 @@ export namespace Prisma {
             args: Prisma.cartUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          updateManyAndReturn: {
-            args: Prisma.cartUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$cartPayload>[]
-          }
           upsert: {
             args: Prisma.cartUpsertArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$cartPayload>
@@ -740,6 +719,14 @@ export namespace Prisma {
           groupBy: {
             args: Prisma.cartGroupByArgs<ExtArgs>
             result: $Utils.Optional<CartGroupByOutputType>[]
+          }
+          findRaw: {
+            args: Prisma.cartFindRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          aggregateRaw: {
+            args: Prisma.cartAggregateRawArgs<ExtArgs>
+            result: JsonObject
           }
           count: {
             args: Prisma.cartCountArgs<ExtArgs>
@@ -779,10 +766,6 @@ export namespace Prisma {
             args: Prisma.employeeCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          createManyAndReturn: {
-            args: Prisma.employeeCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$employeePayload>[]
-          }
           delete: {
             args: Prisma.employeeDeleteArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$employeePayload>
@@ -799,10 +782,6 @@ export namespace Prisma {
             args: Prisma.employeeUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          updateManyAndReturn: {
-            args: Prisma.employeeUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$employeePayload>[]
-          }
           upsert: {
             args: Prisma.employeeUpsertArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$employeePayload>
@@ -815,83 +794,91 @@ export namespace Prisma {
             args: Prisma.employeeGroupByArgs<ExtArgs>
             result: $Utils.Optional<EmployeeGroupByOutputType>[]
           }
+          findRaw: {
+            args: Prisma.employeeFindRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          aggregateRaw: {
+            args: Prisma.employeeAggregateRawArgs<ExtArgs>
+            result: JsonObject
+          }
           count: {
             args: Prisma.employeeCountArgs<ExtArgs>
             result: $Utils.Optional<EmployeeCountAggregateOutputType> | number
           }
         }
       }
-      ingredient_transactions: {
-        payload: Prisma.$ingredient_transactionsPayload<ExtArgs>
-        fields: Prisma.ingredient_transactionsFieldRefs
+      ingredient_transaction: {
+        payload: Prisma.$ingredient_transactionPayload<ExtArgs>
+        fields: Prisma.ingredient_transactionFieldRefs
         operations: {
           findUnique: {
-            args: Prisma.ingredient_transactionsFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload> | null
+            args: Prisma.ingredient_transactionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload> | null
           }
           findUniqueOrThrow: {
-            args: Prisma.ingredient_transactionsFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>
+            args: Prisma.ingredient_transactionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload>
           }
           findFirst: {
-            args: Prisma.ingredient_transactionsFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload> | null
+            args: Prisma.ingredient_transactionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload> | null
           }
           findFirstOrThrow: {
-            args: Prisma.ingredient_transactionsFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>
+            args: Prisma.ingredient_transactionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload>
           }
           findMany: {
-            args: Prisma.ingredient_transactionsFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>[]
+            args: Prisma.ingredient_transactionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload>[]
           }
           create: {
-            args: Prisma.ingredient_transactionsCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>
+            args: Prisma.ingredient_transactionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload>
           }
           createMany: {
-            args: Prisma.ingredient_transactionsCreateManyArgs<ExtArgs>
+            args: Prisma.ingredient_transactionCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          createManyAndReturn: {
-            args: Prisma.ingredient_transactionsCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>[]
-          }
           delete: {
-            args: Prisma.ingredient_transactionsDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>
+            args: Prisma.ingredient_transactionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload>
           }
           update: {
-            args: Prisma.ingredient_transactionsUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>
+            args: Prisma.ingredient_transactionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload>
           }
           deleteMany: {
-            args: Prisma.ingredient_transactionsDeleteManyArgs<ExtArgs>
+            args: Prisma.ingredient_transactionDeleteManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateMany: {
-            args: Prisma.ingredient_transactionsUpdateManyArgs<ExtArgs>
+            args: Prisma.ingredient_transactionUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          updateManyAndReturn: {
-            args: Prisma.ingredient_transactionsUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>[]
-          }
           upsert: {
-            args: Prisma.ingredient_transactionsUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionsPayload>
+            args: Prisma.ingredient_transactionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ingredient_transactionPayload>
           }
           aggregate: {
-            args: Prisma.Ingredient_transactionsAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateIngredient_transactions>
+            args: Prisma.Ingredient_transactionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateIngredient_transaction>
           }
           groupBy: {
-            args: Prisma.ingredient_transactionsGroupByArgs<ExtArgs>
-            result: $Utils.Optional<Ingredient_transactionsGroupByOutputType>[]
+            args: Prisma.ingredient_transactionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<Ingredient_transactionGroupByOutputType>[]
+          }
+          findRaw: {
+            args: Prisma.ingredient_transactionFindRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          aggregateRaw: {
+            args: Prisma.ingredient_transactionAggregateRawArgs<ExtArgs>
+            result: JsonObject
           }
           count: {
-            args: Prisma.ingredient_transactionsCountArgs<ExtArgs>
-            result: $Utils.Optional<Ingredient_transactionsCountAggregateOutputType> | number
+            args: Prisma.ingredient_transactionCountArgs<ExtArgs>
+            result: $Utils.Optional<Ingredient_transactionCountAggregateOutputType> | number
           }
         }
       }
@@ -927,10 +914,6 @@ export namespace Prisma {
             args: Prisma.ingredientsCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          createManyAndReturn: {
-            args: Prisma.ingredientsCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredientsPayload>[]
-          }
           delete: {
             args: Prisma.ingredientsDeleteArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$ingredientsPayload>
@@ -947,10 +930,6 @@ export namespace Prisma {
             args: Prisma.ingredientsUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          updateManyAndReturn: {
-            args: Prisma.ingredientsUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$ingredientsPayload>[]
-          }
           upsert: {
             args: Prisma.ingredientsUpsertArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$ingredientsPayload>
@@ -962,6 +941,14 @@ export namespace Prisma {
           groupBy: {
             args: Prisma.ingredientsGroupByArgs<ExtArgs>
             result: $Utils.Optional<IngredientsGroupByOutputType>[]
+          }
+          findRaw: {
+            args: Prisma.ingredientsFindRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          aggregateRaw: {
+            args: Prisma.ingredientsAggregateRawArgs<ExtArgs>
+            result: JsonObject
           }
           count: {
             args: Prisma.ingredientsCountArgs<ExtArgs>
@@ -1001,10 +988,6 @@ export namespace Prisma {
             args: Prisma.menuCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          createManyAndReturn: {
-            args: Prisma.menuCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$menuPayload>[]
-          }
           delete: {
             args: Prisma.menuDeleteArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$menuPayload>
@@ -1021,10 +1004,6 @@ export namespace Prisma {
             args: Prisma.menuUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
-          updateManyAndReturn: {
-            args: Prisma.menuUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$menuPayload>[]
-          }
           upsert: {
             args: Prisma.menuUpsertArgs<ExtArgs>
             result: $Utils.PayloadToResult<Prisma.$menuPayload>
@@ -1037,6 +1016,14 @@ export namespace Prisma {
             args: Prisma.menuGroupByArgs<ExtArgs>
             result: $Utils.Optional<MenuGroupByOutputType>[]
           }
+          findRaw: {
+            args: Prisma.menuFindRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          aggregateRaw: {
+            args: Prisma.menuAggregateRawArgs<ExtArgs>
+            result: JsonObject
+          }
           count: {
             args: Prisma.menuCountArgs<ExtArgs>
             result: $Utils.Optional<MenuCountAggregateOutputType> | number
@@ -1048,21 +1035,9 @@ export namespace Prisma {
     other: {
       payload: any
       operations: {
-        $executeRaw: {
-          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
-          result: any
-        }
-        $executeRawUnsafe: {
-          args: [query: string, ...values: any[]],
-          result: any
-        }
-        $queryRaw: {
-          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
-          result: any
-        }
-        $queryRawUnsafe: {
-          args: [query: string, ...values: any[]],
-          result: any
+        $runCommandRaw: {
+          args: Prisma.InputJsonObject,
+          result: Prisma.JsonObject
         }
       }
     }
@@ -1116,12 +1091,7 @@ export namespace Prisma {
     transactionOptions?: {
       maxWait?: number
       timeout?: number
-      isolationLevel?: Prisma.TransactionIsolationLevel
     }
-    /**
-     * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
-     */
-    adapter?: runtime.SqlDriverAdapterFactory | null
     /**
      * Global configuration for omitting model fields by default.
      * 
@@ -1141,7 +1111,7 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     cart?: cartOmit
     employee?: employeeOmit
-    ingredient_transactions?: ingredient_transactionsOmit
+    ingredient_transaction?: ingredient_transactionOmit
     ingredients?: ingredientsOmit
     menu?: menuOmit
   }
@@ -1225,131 +1195,391 @@ export namespace Prisma {
    */
 
   /**
+   * Model CartCartMenuItems
+   */
+
+
+
+
+
+  export type CartCartMenuItemsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    menu_description?: boolean
+    menu_ingredients?: boolean | CartCartMenuItemsMenuIngredientsDefaultArgs<ExtArgs>
+    menu_name?: boolean
+    menu_notes?: boolean | CartCartMenuItemsMenuNotesDefaultArgs<ExtArgs>
+    menu_order_id?: boolean
+    menu_total?: boolean
+  }, ExtArgs["result"]["cartCartMenuItems"]>
+
+
+
+  export type CartCartMenuItemsSelectScalar = {
+    menu_description?: boolean
+    menu_name?: boolean
+    menu_order_id?: boolean
+    menu_total?: boolean
+  }
+
+  export type CartCartMenuItemsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_description" | "menu_ingredients" | "menu_name" | "menu_notes" | "menu_order_id" | "menu_total", ExtArgs["result"]["cartCartMenuItems"]>
+  export type CartCartMenuItemsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $CartCartMenuItemsPayload = {
+    name: "CartCartMenuItems"
+    objects: {}
+    scalars: {
+      menu_description: string | null
+      menu_name: string
+      menu_order_id: number | null
+      menu_total: number
+    }
+    composites: {
+      menu_ingredients: Prisma.$CartCartMenuItemsMenuIngredientsPayload[]
+      menu_notes: Prisma.$CartCartMenuItemsMenuNotesPayload[]
+    }
+  }
+
+  type CartCartMenuItemsGetPayload<S extends boolean | null | undefined | CartCartMenuItemsDefaultArgs> = $Result.GetResult<Prisma.$CartCartMenuItemsPayload, S>
+
+
+
+
+
+  /**
+   * Fields of the CartCartMenuItems model
+   */
+  interface CartCartMenuItemsFieldRefs {
+    readonly menu_description: FieldRef<"CartCartMenuItems", 'String'>
+    readonly menu_name: FieldRef<"CartCartMenuItems", 'String'>
+    readonly menu_order_id: FieldRef<"CartCartMenuItems", 'Int'>
+    readonly menu_total: FieldRef<"CartCartMenuItems", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CartCartMenuItems without action
+   */
+  export type CartCartMenuItemsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CartCartMenuItems
+     */
+    select?: CartCartMenuItemsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CartCartMenuItems
+     */
+    omit?: CartCartMenuItemsOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CartCartMenuItemsInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CartCartMenuItemsMenuIngredients
+   */
+
+
+
+
+
+  export type CartCartMenuItemsMenuIngredientsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    ingredient_name?: boolean
+    ingredient_status?: boolean
+    useItem?: boolean
+  }, ExtArgs["result"]["cartCartMenuItemsMenuIngredients"]>
+
+
+
+  export type CartCartMenuItemsMenuIngredientsSelectScalar = {
+    ingredient_name?: boolean
+    ingredient_status?: boolean
+    useItem?: boolean
+  }
+
+  export type CartCartMenuItemsMenuIngredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_name" | "ingredient_status" | "useItem", ExtArgs["result"]["cartCartMenuItemsMenuIngredients"]>
+
+  export type $CartCartMenuItemsMenuIngredientsPayload = {
+    name: "CartCartMenuItemsMenuIngredients"
+    objects: {}
+    scalars: {
+      ingredient_name: string
+      ingredient_status: boolean | null
+      useItem: number
+    }
+    composites: {}
+  }
+
+  type CartCartMenuItemsMenuIngredientsGetPayload<S extends boolean | null | undefined | CartCartMenuItemsMenuIngredientsDefaultArgs> = $Result.GetResult<Prisma.$CartCartMenuItemsMenuIngredientsPayload, S>
+
+
+
+
+
+  /**
+   * Fields of the CartCartMenuItemsMenuIngredients model
+   */
+  interface CartCartMenuItemsMenuIngredientsFieldRefs {
+    readonly ingredient_name: FieldRef<"CartCartMenuItemsMenuIngredients", 'String'>
+    readonly ingredient_status: FieldRef<"CartCartMenuItemsMenuIngredients", 'Boolean'>
+    readonly useItem: FieldRef<"CartCartMenuItemsMenuIngredients", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CartCartMenuItemsMenuIngredients without action
+   */
+  export type CartCartMenuItemsMenuIngredientsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CartCartMenuItemsMenuIngredients
+     */
+    select?: CartCartMenuItemsMenuIngredientsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CartCartMenuItemsMenuIngredients
+     */
+    omit?: CartCartMenuItemsMenuIngredientsOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CartCartMenuItemsMenuNotes
+   */
+
+
+
+
+
+  export type CartCartMenuItemsMenuNotesSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    note?: boolean
+    qty?: boolean
+  }, ExtArgs["result"]["cartCartMenuItemsMenuNotes"]>
+
+
+
+  export type CartCartMenuItemsMenuNotesSelectScalar = {
+    note?: boolean
+    qty?: boolean
+  }
+
+  export type CartCartMenuItemsMenuNotesOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"note" | "qty", ExtArgs["result"]["cartCartMenuItemsMenuNotes"]>
+
+  export type $CartCartMenuItemsMenuNotesPayload = {
+    name: "CartCartMenuItemsMenuNotes"
+    objects: {}
+    scalars: {
+      note: string
+      qty: number
+    }
+    composites: {}
+  }
+
+  type CartCartMenuItemsMenuNotesGetPayload<S extends boolean | null | undefined | CartCartMenuItemsMenuNotesDefaultArgs> = $Result.GetResult<Prisma.$CartCartMenuItemsMenuNotesPayload, S>
+
+
+
+
+
+  /**
+   * Fields of the CartCartMenuItemsMenuNotes model
+   */
+  interface CartCartMenuItemsMenuNotesFieldRefs {
+    readonly note: FieldRef<"CartCartMenuItemsMenuNotes", 'String'>
+    readonly qty: FieldRef<"CartCartMenuItemsMenuNotes", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CartCartMenuItemsMenuNotes without action
+   */
+  export type CartCartMenuItemsMenuNotesDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CartCartMenuItemsMenuNotes
+     */
+    select?: CartCartMenuItemsMenuNotesSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CartCartMenuItemsMenuNotes
+     */
+    omit?: CartCartMenuItemsMenuNotesOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model MenuMenuIngredients
+   */
+
+
+
+
+
+  export type MenuMenuIngredientsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    ingredient_name?: boolean
+    useItem?: boolean
+  }, ExtArgs["result"]["menuMenuIngredients"]>
+
+
+
+  export type MenuMenuIngredientsSelectScalar = {
+    ingredient_name?: boolean
+    useItem?: boolean
+  }
+
+  export type MenuMenuIngredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_name" | "useItem", ExtArgs["result"]["menuMenuIngredients"]>
+
+  export type $MenuMenuIngredientsPayload = {
+    name: "MenuMenuIngredients"
+    objects: {}
+    scalars: {
+      ingredient_name: string
+      useItem: number
+    }
+    composites: {}
+  }
+
+  type MenuMenuIngredientsGetPayload<S extends boolean | null | undefined | MenuMenuIngredientsDefaultArgs> = $Result.GetResult<Prisma.$MenuMenuIngredientsPayload, S>
+
+
+
+
+
+  /**
+   * Fields of the MenuMenuIngredients model
+   */
+  interface MenuMenuIngredientsFieldRefs {
+    readonly ingredient_name: FieldRef<"MenuMenuIngredients", 'String'>
+    readonly useItem: FieldRef<"MenuMenuIngredients", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MenuMenuIngredients without action
+   */
+  export type MenuMenuIngredientsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuMenuIngredients
+     */
+    select?: MenuMenuIngredientsSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuMenuIngredients
+     */
+    omit?: MenuMenuIngredientsOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model cart
    */
 
   export type AggregateCart = {
     _count: CartCountAggregateOutputType | null
-    _avg: CartAvgAggregateOutputType | null
-    _sum: CartSumAggregateOutputType | null
     _min: CartMinAggregateOutputType | null
     _max: CartMaxAggregateOutputType | null
   }
 
-  export type CartAvgAggregateOutputType = {
-    cart_shipping_cost: Decimal | null
-  }
-
-  export type CartSumAggregateOutputType = {
-    cart_shipping_cost: Decimal | null
-  }
-
   export type CartMinAggregateOutputType = {
-    cart_id: string | null
-    cart_username: string | null
-    cart_create_date: Date | null
-    cart_status: string | null
-    cart_order_number: string | null
-    cart_last_update: string | null
+    id: string | null
+    cart_create_date: string | null
     cart_customer_name: string | null
     cart_customer_tel: string | null
-    cart_location_send: string | null
     cart_delivery_date: string | null
     cart_export_time: string | null
+    cart_id: string | null
+    cart_last_update: string | null
+    cart_location_send: string | null
+    cart_order_number: string | null
     cart_receive_time: string | null
-    cart_shipping_cost: Decimal | null
+    cart_shipping_cost: string | null
+    cart_status: string | null
+    cart_username: string | null
   }
 
   export type CartMaxAggregateOutputType = {
-    cart_id: string | null
-    cart_username: string | null
-    cart_create_date: Date | null
-    cart_status: string | null
-    cart_order_number: string | null
-    cart_last_update: string | null
+    id: string | null
+    cart_create_date: string | null
     cart_customer_name: string | null
     cart_customer_tel: string | null
-    cart_location_send: string | null
     cart_delivery_date: string | null
     cart_export_time: string | null
+    cart_id: string | null
+    cart_last_update: string | null
+    cart_location_send: string | null
+    cart_order_number: string | null
     cart_receive_time: string | null
-    cart_shipping_cost: Decimal | null
+    cart_shipping_cost: string | null
+    cart_status: string | null
+    cart_username: string | null
   }
 
   export type CartCountAggregateOutputType = {
-    cart_id: number
-    cart_username: number
-    cart_menu_items: number
+    id: number
     cart_create_date: number
-    cart_status: number
-    cart_order_number: number
-    cart_last_update: number
     cart_customer_name: number
     cart_customer_tel: number
-    cart_location_send: number
     cart_delivery_date: number
     cart_export_time: number
+    cart_id: number
+    cart_last_update: number
+    cart_location_send: number
+    cart_order_number: number
     cart_receive_time: number
     cart_shipping_cost: number
+    cart_status: number
+    cart_username: number
     _all: number
   }
 
 
-  export type CartAvgAggregateInputType = {
-    cart_shipping_cost?: true
-  }
-
-  export type CartSumAggregateInputType = {
-    cart_shipping_cost?: true
-  }
-
   export type CartMinAggregateInputType = {
-    cart_id?: true
-    cart_username?: true
+    id?: true
     cart_create_date?: true
-    cart_status?: true
-    cart_order_number?: true
-    cart_last_update?: true
     cart_customer_name?: true
     cart_customer_tel?: true
-    cart_location_send?: true
     cart_delivery_date?: true
     cart_export_time?: true
+    cart_id?: true
+    cart_last_update?: true
+    cart_location_send?: true
+    cart_order_number?: true
     cart_receive_time?: true
     cart_shipping_cost?: true
+    cart_status?: true
+    cart_username?: true
   }
 
   export type CartMaxAggregateInputType = {
-    cart_id?: true
-    cart_username?: true
+    id?: true
     cart_create_date?: true
-    cart_status?: true
-    cart_order_number?: true
-    cart_last_update?: true
     cart_customer_name?: true
     cart_customer_tel?: true
-    cart_location_send?: true
     cart_delivery_date?: true
     cart_export_time?: true
+    cart_id?: true
+    cart_last_update?: true
+    cart_location_send?: true
+    cart_order_number?: true
     cart_receive_time?: true
     cart_shipping_cost?: true
+    cart_status?: true
+    cart_username?: true
   }
 
   export type CartCountAggregateInputType = {
-    cart_id?: true
-    cart_username?: true
-    cart_menu_items?: true
+    id?: true
     cart_create_date?: true
-    cart_status?: true
-    cart_order_number?: true
-    cart_last_update?: true
     cart_customer_name?: true
     cart_customer_tel?: true
-    cart_location_send?: true
     cart_delivery_date?: true
     cart_export_time?: true
+    cart_id?: true
+    cart_last_update?: true
+    cart_location_send?: true
+    cart_order_number?: true
     cart_receive_time?: true
     cart_shipping_cost?: true
+    cart_status?: true
+    cart_username?: true
     _all?: true
   }
 
@@ -1391,18 +1621,6 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Select which fields to average
-    **/
-    _avg?: CartAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: CartSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
      * Select which fields to find the minimum value
     **/
     _min?: CartMinAggregateInputType
@@ -1433,30 +1651,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: CartCountAggregateInputType | true
-    _avg?: CartAvgAggregateInputType
-    _sum?: CartSumAggregateInputType
     _min?: CartMinAggregateInputType
     _max?: CartMaxAggregateInputType
   }
 
   export type CartGroupByOutputType = {
+    id: string
+    cart_create_date: string
+    cart_customer_name: string
+    cart_customer_tel: string
+    cart_delivery_date: string
+    cart_export_time: string
     cart_id: string
-    cart_username: string
-    cart_menu_items: JsonValue
-    cart_create_date: Date | null
-    cart_status: string | null
-    cart_order_number: string | null
     cart_last_update: string | null
-    cart_customer_name: string | null
-    cart_customer_tel: string | null
-    cart_location_send: string | null
-    cart_delivery_date: string | null
-    cart_export_time: string | null
-    cart_receive_time: string | null
-    cart_shipping_cost: Decimal | null
+    cart_location_send: string
+    cart_order_number: string
+    cart_receive_time: string
+    cart_shipping_cost: string
+    cart_status: string
+    cart_username: string
     _count: CartCountAggregateOutputType | null
-    _avg: CartAvgAggregateOutputType | null
-    _sum: CartSumAggregateOutputType | null
     _min: CartMinAggregateOutputType | null
     _max: CartMaxAggregateOutputType | null
   }
@@ -1476,95 +1690,67 @@ export namespace Prisma {
 
 
   export type cartSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    cart_id?: boolean
-    cart_username?: boolean
-    cart_menu_items?: boolean
+    id?: boolean
     cart_create_date?: boolean
-    cart_status?: boolean
-    cart_order_number?: boolean
-    cart_last_update?: boolean
     cart_customer_name?: boolean
     cart_customer_tel?: boolean
-    cart_location_send?: boolean
     cart_delivery_date?: boolean
     cart_export_time?: boolean
+    cart_id?: boolean
+    cart_last_update?: boolean
+    cart_location_send?: boolean
+    cart_menu_items?: boolean | CartCartMenuItemsDefaultArgs<ExtArgs>
+    cart_order_number?: boolean
     cart_receive_time?: boolean
     cart_shipping_cost?: boolean
+    cart_status?: boolean
+    cart_username?: boolean
   }, ExtArgs["result"]["cart"]>
 
-  export type cartSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    cart_id?: boolean
-    cart_username?: boolean
-    cart_menu_items?: boolean
-    cart_create_date?: boolean
-    cart_status?: boolean
-    cart_order_number?: boolean
-    cart_last_update?: boolean
-    cart_customer_name?: boolean
-    cart_customer_tel?: boolean
-    cart_location_send?: boolean
-    cart_delivery_date?: boolean
-    cart_export_time?: boolean
-    cart_receive_time?: boolean
-    cart_shipping_cost?: boolean
-  }, ExtArgs["result"]["cart"]>
 
-  export type cartSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    cart_id?: boolean
-    cart_username?: boolean
-    cart_menu_items?: boolean
-    cart_create_date?: boolean
-    cart_status?: boolean
-    cart_order_number?: boolean
-    cart_last_update?: boolean
-    cart_customer_name?: boolean
-    cart_customer_tel?: boolean
-    cart_location_send?: boolean
-    cart_delivery_date?: boolean
-    cart_export_time?: boolean
-    cart_receive_time?: boolean
-    cart_shipping_cost?: boolean
-  }, ExtArgs["result"]["cart"]>
 
   export type cartSelectScalar = {
-    cart_id?: boolean
-    cart_username?: boolean
-    cart_menu_items?: boolean
+    id?: boolean
     cart_create_date?: boolean
-    cart_status?: boolean
-    cart_order_number?: boolean
-    cart_last_update?: boolean
     cart_customer_name?: boolean
     cart_customer_tel?: boolean
-    cart_location_send?: boolean
     cart_delivery_date?: boolean
     cart_export_time?: boolean
+    cart_id?: boolean
+    cart_last_update?: boolean
+    cart_location_send?: boolean
+    cart_order_number?: boolean
     cart_receive_time?: boolean
     cart_shipping_cost?: boolean
+    cart_status?: boolean
+    cart_username?: boolean
   }
 
-  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"cart_id" | "cart_username" | "cart_menu_items" | "cart_create_date" | "cart_status" | "cart_order_number" | "cart_last_update" | "cart_customer_name" | "cart_customer_tel" | "cart_location_send" | "cart_delivery_date" | "cart_export_time" | "cart_receive_time" | "cart_shipping_cost", ExtArgs["result"]["cart"]>
+  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_menu_items" | "cart_order_number" | "cart_receive_time" | "cart_shipping_cost" | "cart_status" | "cart_username", ExtArgs["result"]["cart"]>
+  export type cartInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $cartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "cart"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
+      id: string
+      cart_create_date: string
+      cart_customer_name: string
+      cart_customer_tel: string
+      cart_delivery_date: string
+      cart_export_time: string
       cart_id: string
-      cart_username: string
-      cart_menu_items: Prisma.JsonValue
-      cart_create_date: Date | null
-      cart_status: string | null
-      cart_order_number: string | null
       cart_last_update: string | null
-      cart_customer_name: string | null
-      cart_customer_tel: string | null
-      cart_location_send: string | null
-      cart_delivery_date: string | null
-      cart_export_time: string | null
-      cart_receive_time: string | null
-      cart_shipping_cost: Prisma.Decimal | null
+      cart_location_send: string
+      cart_order_number: string
+      cart_receive_time: string
+      cart_shipping_cost: string
+      cart_status: string
+      cart_username: string
     }, ExtArgs["result"]["cart"]>
-    composites: {}
+    composites: {
+      cart_menu_items: Prisma.$CartCartMenuItemsPayload[]
+    }
   }
 
   type cartGetPayload<S extends boolean | null | undefined | cartDefaultArgs> = $Result.GetResult<Prisma.$cartPayload, S>
@@ -1646,8 +1832,8 @@ export namespace Prisma {
      * // Get first 10 Carts
      * const carts = await prisma.cart.findMany({ take: 10 })
      * 
-     * // Only select the `cart_id`
-     * const cartWithCart_idOnly = await prisma.cart.findMany({ select: { cart_id: true } })
+     * // Only select the `id`
+     * const cartWithIdOnly = await prisma.cart.findMany({ select: { id: true } })
      * 
      */
     findMany<T extends cartFindManyArgs>(args?: SelectSubset<T, cartFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$cartPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -1679,30 +1865,6 @@ export namespace Prisma {
      *     
      */
     createMany<T extends cartCreateManyArgs>(args?: SelectSubset<T, cartCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Carts and returns the data saved in the database.
-     * @param {cartCreateManyAndReturnArgs} args - Arguments to create many Carts.
-     * @example
-     * // Create many Carts
-     * const cart = await prisma.cart.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Carts and only return the `cart_id`
-     * const cartWithCart_idOnly = await prisma.cart.createManyAndReturn({
-     *   select: { cart_id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends cartCreateManyAndReturnArgs>(args?: SelectSubset<T, cartCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$cartPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
      * Delete a Cart.
@@ -1769,36 +1931,6 @@ export namespace Prisma {
     updateMany<T extends cartUpdateManyArgs>(args: SelectSubset<T, cartUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Carts and returns the data updated in the database.
-     * @param {cartUpdateManyAndReturnArgs} args - Arguments to update many Carts.
-     * @example
-     * // Update many Carts
-     * const cart = await prisma.cart.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Carts and only return the `cart_id`
-     * const cartWithCart_idOnly = await prisma.cart.updateManyAndReturn({
-     *   select: { cart_id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends cartUpdateManyAndReturnArgs>(args: SelectSubset<T, cartUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$cartPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
      * Create or update one Cart.
      * @param {cartUpsertArgs} args - Arguments to update or create a Cart.
      * @example
@@ -1816,6 +1948,29 @@ export namespace Prisma {
      * })
      */
     upsert<T extends cartUpsertArgs>(args: SelectSubset<T, cartUpsertArgs<ExtArgs>>): Prisma__cartClient<$Result.GetResult<Prisma.$cartPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Carts that matches the filter.
+     * @param {cartFindRawArgs} args - Select which filters you would like to apply.
+     * @example
+     * const cart = await prisma.cart.findRaw({
+     *   filter: { age: { $gt: 25 } }
+     * })
+     */
+    findRaw(args?: cartFindRawArgs): Prisma.PrismaPromise<JsonObject>
+
+    /**
+     * Perform aggregation operations on a Cart.
+     * @param {cartAggregateRawArgs} args - Select which aggregations you would like to apply.
+     * @example
+     * const cart = await prisma.cart.aggregateRaw({
+     *   pipeline: [
+     *     { $match: { status: "registered" } },
+     *     { $group: { _id: "$country", total: { $sum: 1 } } }
+     *   ]
+     * })
+     */
+    aggregateRaw(args?: cartAggregateRawArgs): Prisma.PrismaPromise<JsonObject>
 
 
     /**
@@ -1986,20 +2141,20 @@ export namespace Prisma {
    * Fields of the cart model
    */
   interface cartFieldRefs {
-    readonly cart_id: FieldRef<"cart", 'String'>
-    readonly cart_username: FieldRef<"cart", 'String'>
-    readonly cart_menu_items: FieldRef<"cart", 'Json'>
-    readonly cart_create_date: FieldRef<"cart", 'DateTime'>
-    readonly cart_status: FieldRef<"cart", 'String'>
-    readonly cart_order_number: FieldRef<"cart", 'String'>
-    readonly cart_last_update: FieldRef<"cart", 'String'>
+    readonly id: FieldRef<"cart", 'String'>
+    readonly cart_create_date: FieldRef<"cart", 'String'>
     readonly cart_customer_name: FieldRef<"cart", 'String'>
     readonly cart_customer_tel: FieldRef<"cart", 'String'>
-    readonly cart_location_send: FieldRef<"cart", 'String'>
     readonly cart_delivery_date: FieldRef<"cart", 'String'>
     readonly cart_export_time: FieldRef<"cart", 'String'>
+    readonly cart_id: FieldRef<"cart", 'String'>
+    readonly cart_last_update: FieldRef<"cart", 'String'>
+    readonly cart_location_send: FieldRef<"cart", 'String'>
+    readonly cart_order_number: FieldRef<"cart", 'String'>
     readonly cart_receive_time: FieldRef<"cart", 'String'>
-    readonly cart_shipping_cost: FieldRef<"cart", 'Decimal'>
+    readonly cart_shipping_cost: FieldRef<"cart", 'String'>
+    readonly cart_status: FieldRef<"cart", 'String'>
+    readonly cart_username: FieldRef<"cart", 'String'>
   }
     
 
@@ -2016,6 +2171,10 @@ export namespace Prisma {
      * Omit specific fields from the cart
      */
     omit?: cartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
     /**
      * Filter, which cart to fetch.
      */
@@ -2035,6 +2194,10 @@ export namespace Prisma {
      */
     omit?: cartOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
+    /**
      * Filter, which cart to fetch.
      */
     where: cartWhereUniqueInput
@@ -2052,6 +2215,10 @@ export namespace Prisma {
      * Omit specific fields from the cart
      */
     omit?: cartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
     /**
      * Filter, which cart to fetch.
      */
@@ -2101,6 +2268,10 @@ export namespace Prisma {
      */
     omit?: cartOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
+    /**
      * Filter, which cart to fetch.
      */
     where?: cartWhereInput
@@ -2149,6 +2320,10 @@ export namespace Prisma {
      */
     omit?: cartOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
+    /**
      * Filter, which carts to fetch.
      */
     where?: cartWhereInput
@@ -2192,6 +2367,10 @@ export namespace Prisma {
      */
     omit?: cartOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
+    /**
      * The data needed to create a cart.
      */
     data: XOR<cartCreateInput, cartUncheckedCreateInput>
@@ -2205,26 +2384,6 @@ export namespace Prisma {
      * The data used to create many carts.
      */
     data: cartCreateManyInput | cartCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * cart createManyAndReturn
-   */
-  export type cartCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the cart
-     */
-    select?: cartSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the cart
-     */
-    omit?: cartOmit<ExtArgs> | null
-    /**
-     * The data used to create many carts.
-     */
-    data: cartCreateManyInput | cartCreateManyInput[]
-    skipDuplicates?: boolean
   }
 
   /**
@@ -2239,6 +2398,10 @@ export namespace Prisma {
      * Omit specific fields from the cart
      */
     omit?: cartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
     /**
      * The data needed to update a cart.
      */
@@ -2268,32 +2431,6 @@ export namespace Prisma {
   }
 
   /**
-   * cart updateManyAndReturn
-   */
-  export type cartUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the cart
-     */
-    select?: cartSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the cart
-     */
-    omit?: cartOmit<ExtArgs> | null
-    /**
-     * The data used to update carts.
-     */
-    data: XOR<cartUpdateManyMutationInput, cartUncheckedUpdateManyInput>
-    /**
-     * Filter which carts to update
-     */
-    where?: cartWhereInput
-    /**
-     * Limit how many carts to update.
-     */
-    limit?: number
-  }
-
-  /**
    * cart upsert
    */
   export type cartUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2305,6 +2442,10 @@ export namespace Prisma {
      * Omit specific fields from the cart
      */
     omit?: cartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
     /**
      * The filter to search for the cart to update in case it exists.
      */
@@ -2332,6 +2473,10 @@ export namespace Prisma {
      */
     omit?: cartOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
+    /**
      * Filter which cart to delete.
      */
     where: cartWhereUniqueInput
@@ -2352,6 +2497,34 @@ export namespace Prisma {
   }
 
   /**
+   * cart findRaw
+   */
+  export type cartFindRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The query predicate filter. If unspecified, then all documents in the collection will match the predicate. ${@link https://docs.mongodb.com/manual/reference/operator/query MongoDB Docs}.
+     */
+    filter?: InputJsonValue
+    /**
+     * Additional options to pass to the `find` command ${@link https://docs.mongodb.com/manual/reference/command/find/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * cart aggregateRaw
+   */
+  export type cartAggregateRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * An array of aggregation stages to process and transform the document stream via the aggregation pipeline. ${@link https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline MongoDB Docs}.
+     */
+    pipeline?: InputJsonValue[]
+    /**
+     * Additional options to pass to the `aggregate` command ${@link https://docs.mongodb.com/manual/reference/command/aggregate/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
    * cart without action
    */
   export type cartDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2363,6 +2536,10 @@ export namespace Prisma {
      * Omit specific fields from the cart
      */
     omit?: cartOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: cartInclude<ExtArgs> | null
   }
 
 
@@ -2372,82 +2549,70 @@ export namespace Prisma {
 
   export type AggregateEmployee = {
     _count: EmployeeCountAggregateOutputType | null
-    _avg: EmployeeAvgAggregateOutputType | null
-    _sum: EmployeeSumAggregateOutputType | null
     _min: EmployeeMinAggregateOutputType | null
     _max: EmployeeMaxAggregateOutputType | null
   }
 
-  export type EmployeeAvgAggregateOutputType = {
-    employee_pin: Decimal | null
-  }
-
-  export type EmployeeSumAggregateOutputType = {
-    employee_pin: Decimal | null
-  }
-
   export type EmployeeMinAggregateOutputType = {
-    employee_id: string | null
-    employee_username: string | null
+    id: string | null
     employee_firstname: string | null
+    employee_id: string | null
     employee_lastname: string | null
-    employee_pin: Decimal | null
+    employee_pin: string | null
     employee_role: string | null
+    employee_username: string | null
   }
 
   export type EmployeeMaxAggregateOutputType = {
-    employee_id: string | null
-    employee_username: string | null
+    id: string | null
     employee_firstname: string | null
+    employee_id: string | null
     employee_lastname: string | null
-    employee_pin: Decimal | null
+    employee_pin: string | null
     employee_role: string | null
+    employee_username: string | null
   }
 
   export type EmployeeCountAggregateOutputType = {
-    employee_id: number
-    employee_username: number
+    id: number
     employee_firstname: number
+    employee_id: number
     employee_lastname: number
     employee_pin: number
     employee_role: number
+    employee_username: number
     _all: number
   }
 
 
-  export type EmployeeAvgAggregateInputType = {
-    employee_pin?: true
-  }
-
-  export type EmployeeSumAggregateInputType = {
-    employee_pin?: true
-  }
-
   export type EmployeeMinAggregateInputType = {
-    employee_id?: true
-    employee_username?: true
+    id?: true
     employee_firstname?: true
+    employee_id?: true
     employee_lastname?: true
     employee_pin?: true
     employee_role?: true
+    employee_username?: true
   }
 
   export type EmployeeMaxAggregateInputType = {
-    employee_id?: true
-    employee_username?: true
+    id?: true
     employee_firstname?: true
+    employee_id?: true
     employee_lastname?: true
     employee_pin?: true
     employee_role?: true
+    employee_username?: true
   }
 
   export type EmployeeCountAggregateInputType = {
-    employee_id?: true
-    employee_username?: true
+    id?: true
     employee_firstname?: true
+    employee_id?: true
     employee_lastname?: true
     employee_pin?: true
     employee_role?: true
+    employee_username?: true
     _all?: true
   }
 
@@ -2489,18 +2654,6 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Select which fields to average
-    **/
-    _avg?: EmployeeAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: EmployeeSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
      * Select which fields to find the minimum value
     **/
     _min?: EmployeeMinAggregateInputType
@@ -2531,22 +2684,19 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: EmployeeCountAggregateInputType | true
-    _avg?: EmployeeAvgAggregateInputType
-    _sum?: EmployeeSumAggregateInputType
     _min?: EmployeeMinAggregateInputType
     _max?: EmployeeMaxAggregateInputType
   }
 
   export type EmployeeGroupByOutputType = {
+    id: string
+    employee_firstname: string
     employee_id: string
-    employee_username: string | null
-    employee_firstname: string | null
-    employee_lastname: string | null
-    employee_pin: Decimal | null
-    employee_role: string | null
+    employee_lastname: string
+    employee_pin: string
+    employee_role: string
+    employee_username: string
     _count: EmployeeCountAggregateOutputType | null
-    _avg: EmployeeAvgAggregateOutputType | null
-    _sum: EmployeeSumAggregateOutputType | null
     _min: EmployeeMinAggregateOutputType | null
     _max: EmployeeMaxAggregateOutputType | null
   }
@@ -2566,53 +2716,40 @@ export namespace Prisma {
 
 
   export type employeeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    employee_id?: boolean
-    employee_username?: boolean
+    id?: boolean
     employee_firstname?: boolean
+    employee_id?: boolean
     employee_lastname?: boolean
     employee_pin?: boolean
     employee_role?: boolean
+    employee_username?: boolean
   }, ExtArgs["result"]["employee"]>
 
-  export type employeeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    employee_id?: boolean
-    employee_username?: boolean
-    employee_firstname?: boolean
-    employee_lastname?: boolean
-    employee_pin?: boolean
-    employee_role?: boolean
-  }, ExtArgs["result"]["employee"]>
 
-  export type employeeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    employee_id?: boolean
-    employee_username?: boolean
-    employee_firstname?: boolean
-    employee_lastname?: boolean
-    employee_pin?: boolean
-    employee_role?: boolean
-  }, ExtArgs["result"]["employee"]>
 
   export type employeeSelectScalar = {
-    employee_id?: boolean
-    employee_username?: boolean
+    id?: boolean
     employee_firstname?: boolean
+    employee_id?: boolean
     employee_lastname?: boolean
     employee_pin?: boolean
     employee_role?: boolean
+    employee_username?: boolean
   }
 
-  export type employeeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"employee_id" | "employee_username" | "employee_firstname" | "employee_lastname" | "employee_pin" | "employee_role", ExtArgs["result"]["employee"]>
+  export type employeeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "employee_firstname" | "employee_id" | "employee_lastname" | "employee_pin" | "employee_role" | "employee_username", ExtArgs["result"]["employee"]>
 
   export type $employeePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "employee"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
+      id: string
+      employee_firstname: string
       employee_id: string
-      employee_username: string | null
-      employee_firstname: string | null
-      employee_lastname: string | null
-      employee_pin: Prisma.Decimal | null
-      employee_role: string | null
+      employee_lastname: string
+      employee_pin: string
+      employee_role: string
+      employee_username: string
     }, ExtArgs["result"]["employee"]>
     composites: {}
   }
@@ -2696,8 +2833,8 @@ export namespace Prisma {
      * // Get first 10 Employees
      * const employees = await prisma.employee.findMany({ take: 10 })
      * 
-     * // Only select the `employee_id`
-     * const employeeWithEmployee_idOnly = await prisma.employee.findMany({ select: { employee_id: true } })
+     * // Only select the `id`
+     * const employeeWithIdOnly = await prisma.employee.findMany({ select: { id: true } })
      * 
      */
     findMany<T extends employeeFindManyArgs>(args?: SelectSubset<T, employeeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$employeePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -2729,30 +2866,6 @@ export namespace Prisma {
      *     
      */
     createMany<T extends employeeCreateManyArgs>(args?: SelectSubset<T, employeeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Employees and returns the data saved in the database.
-     * @param {employeeCreateManyAndReturnArgs} args - Arguments to create many Employees.
-     * @example
-     * // Create many Employees
-     * const employee = await prisma.employee.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Employees and only return the `employee_id`
-     * const employeeWithEmployee_idOnly = await prisma.employee.createManyAndReturn({
-     *   select: { employee_id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends employeeCreateManyAndReturnArgs>(args?: SelectSubset<T, employeeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$employeePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
      * Delete a Employee.
@@ -2819,36 +2932,6 @@ export namespace Prisma {
     updateMany<T extends employeeUpdateManyArgs>(args: SelectSubset<T, employeeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Employees and returns the data updated in the database.
-     * @param {employeeUpdateManyAndReturnArgs} args - Arguments to update many Employees.
-     * @example
-     * // Update many Employees
-     * const employee = await prisma.employee.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Employees and only return the `employee_id`
-     * const employeeWithEmployee_idOnly = await prisma.employee.updateManyAndReturn({
-     *   select: { employee_id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends employeeUpdateManyAndReturnArgs>(args: SelectSubset<T, employeeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$employeePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
      * Create or update one Employee.
      * @param {employeeUpsertArgs} args - Arguments to update or create a Employee.
      * @example
@@ -2866,6 +2949,29 @@ export namespace Prisma {
      * })
      */
     upsert<T extends employeeUpsertArgs>(args: SelectSubset<T, employeeUpsertArgs<ExtArgs>>): Prisma__employeeClient<$Result.GetResult<Prisma.$employeePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Employees that matches the filter.
+     * @param {employeeFindRawArgs} args - Select which filters you would like to apply.
+     * @example
+     * const employee = await prisma.employee.findRaw({
+     *   filter: { age: { $gt: 25 } }
+     * })
+     */
+    findRaw(args?: employeeFindRawArgs): Prisma.PrismaPromise<JsonObject>
+
+    /**
+     * Perform aggregation operations on a Employee.
+     * @param {employeeAggregateRawArgs} args - Select which aggregations you would like to apply.
+     * @example
+     * const employee = await prisma.employee.aggregateRaw({
+     *   pipeline: [
+     *     { $match: { status: "registered" } },
+     *     { $group: { _id: "$country", total: { $sum: 1 } } }
+     *   ]
+     * })
+     */
+    aggregateRaw(args?: employeeAggregateRawArgs): Prisma.PrismaPromise<JsonObject>
 
 
     /**
@@ -3036,12 +3142,13 @@ export namespace Prisma {
    * Fields of the employee model
    */
   interface employeeFieldRefs {
-    readonly employee_id: FieldRef<"employee", 'String'>
-    readonly employee_username: FieldRef<"employee", 'String'>
+    readonly id: FieldRef<"employee", 'String'>
     readonly employee_firstname: FieldRef<"employee", 'String'>
+    readonly employee_id: FieldRef<"employee", 'String'>
     readonly employee_lastname: FieldRef<"employee", 'String'>
-    readonly employee_pin: FieldRef<"employee", 'Decimal'>
+    readonly employee_pin: FieldRef<"employee", 'String'>
     readonly employee_role: FieldRef<"employee", 'String'>
+    readonly employee_username: FieldRef<"employee", 'String'>
   }
     
 
@@ -3236,7 +3343,7 @@ export namespace Prisma {
     /**
      * The data needed to create a employee.
      */
-    data?: XOR<employeeCreateInput, employeeUncheckedCreateInput>
+    data: XOR<employeeCreateInput, employeeUncheckedCreateInput>
   }
 
   /**
@@ -3247,26 +3354,6 @@ export namespace Prisma {
      * The data used to create many employees.
      */
     data: employeeCreateManyInput | employeeCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * employee createManyAndReturn
-   */
-  export type employeeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the employee
-     */
-    select?: employeeSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the employee
-     */
-    omit?: employeeOmit<ExtArgs> | null
-    /**
-     * The data used to create many employees.
-     */
-    data: employeeCreateManyInput | employeeCreateManyInput[]
-    skipDuplicates?: boolean
   }
 
   /**
@@ -3295,32 +3382,6 @@ export namespace Prisma {
    * employee updateMany
    */
   export type employeeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update employees.
-     */
-    data: XOR<employeeUpdateManyMutationInput, employeeUncheckedUpdateManyInput>
-    /**
-     * Filter which employees to update
-     */
-    where?: employeeWhereInput
-    /**
-     * Limit how many employees to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * employee updateManyAndReturn
-   */
-  export type employeeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the employee
-     */
-    select?: employeeSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the employee
-     */
-    omit?: employeeOmit<ExtArgs> | null
     /**
      * The data used to update employees.
      */
@@ -3394,6 +3455,34 @@ export namespace Prisma {
   }
 
   /**
+   * employee findRaw
+   */
+  export type employeeFindRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The query predicate filter. If unspecified, then all documents in the collection will match the predicate. ${@link https://docs.mongodb.com/manual/reference/operator/query MongoDB Docs}.
+     */
+    filter?: InputJsonValue
+    /**
+     * Additional options to pass to the `find` command ${@link https://docs.mongodb.com/manual/reference/command/find/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * employee aggregateRaw
+   */
+  export type employeeAggregateRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * An array of aggregation stages to process and transform the document stream via the aggregation pipeline. ${@link https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline MongoDB Docs}.
+     */
+    pipeline?: InputJsonValue[]
+    /**
+     * Additional options to pass to the `aggregate` command ${@link https://docs.mongodb.com/manual/reference/command/aggregate/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
    * employee without action
    */
   export type employeeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3409,127 +3498,125 @@ export namespace Prisma {
 
 
   /**
-   * Model ingredient_transactions
+   * Model ingredient_transaction
    */
 
-  export type AggregateIngredient_transactions = {
-    _count: Ingredient_transactionsCountAggregateOutputType | null
-    _avg: Ingredient_transactionsAvgAggregateOutputType | null
-    _sum: Ingredient_transactionsSumAggregateOutputType | null
-    _min: Ingredient_transactionsMinAggregateOutputType | null
-    _max: Ingredient_transactionsMaxAggregateOutputType | null
+  export type AggregateIngredient_transaction = {
+    _count: Ingredient_transactionCountAggregateOutputType | null
+    _avg: Ingredient_transactionAvgAggregateOutputType | null
+    _sum: Ingredient_transactionSumAggregateOutputType | null
+    _min: Ingredient_transactionMinAggregateOutputType | null
+    _max: Ingredient_transactionMaxAggregateOutputType | null
   }
 
-  export type Ingredient_transactionsAvgAggregateOutputType = {
+  export type Ingredient_transactionAvgAggregateOutputType = {
     transaction_id: number | null
-    transaction_total_price: Decimal | null
-    transaction_quantity: Decimal | null
   }
 
-  export type Ingredient_transactionsSumAggregateOutputType = {
+  export type Ingredient_transactionSumAggregateOutputType = {
     transaction_id: number | null
-    transaction_total_price: Decimal | null
-    transaction_quantity: Decimal | null
   }
 
-  export type Ingredient_transactionsMinAggregateOutputType = {
-    transaction_id: number | null
-    transaction_date: Date | null
-    transaction_from_username: string | null
-    transaction_type: string | null
+  export type Ingredient_transactionMinAggregateOutputType = {
+    id: string | null
     ingredient_name: string | null
-    transaction_total_price: Decimal | null
-    transaction_quantity: Decimal | null
+    transaction_date: string | null
+    transaction_from_username: string | null
+    transaction_id: number | null
+    transaction_quantity: string | null
+    transaction_total_price: string | null
+    transaction_type: string | null
     transaction_units: string | null
   }
 
-  export type Ingredient_transactionsMaxAggregateOutputType = {
-    transaction_id: number | null
-    transaction_date: Date | null
-    transaction_from_username: string | null
-    transaction_type: string | null
+  export type Ingredient_transactionMaxAggregateOutputType = {
+    id: string | null
     ingredient_name: string | null
-    transaction_total_price: Decimal | null
-    transaction_quantity: Decimal | null
+    transaction_date: string | null
+    transaction_from_username: string | null
+    transaction_id: number | null
+    transaction_quantity: string | null
+    transaction_total_price: string | null
+    transaction_type: string | null
     transaction_units: string | null
   }
 
-  export type Ingredient_transactionsCountAggregateOutputType = {
-    transaction_id: number
+  export type Ingredient_transactionCountAggregateOutputType = {
+    id: number
+    ingredient_name: number
     transaction_date: number
     transaction_from_username: number
-    transaction_type: number
-    ingredient_name: number
-    transaction_total_price: number
+    transaction_id: number
     transaction_quantity: number
+    transaction_total_price: number
+    transaction_type: number
     transaction_units: number
     _all: number
   }
 
 
-  export type Ingredient_transactionsAvgAggregateInputType = {
+  export type Ingredient_transactionAvgAggregateInputType = {
     transaction_id?: true
-    transaction_total_price?: true
-    transaction_quantity?: true
   }
 
-  export type Ingredient_transactionsSumAggregateInputType = {
+  export type Ingredient_transactionSumAggregateInputType = {
     transaction_id?: true
-    transaction_total_price?: true
-    transaction_quantity?: true
   }
 
-  export type Ingredient_transactionsMinAggregateInputType = {
-    transaction_id?: true
+  export type Ingredient_transactionMinAggregateInputType = {
+    id?: true
+    ingredient_name?: true
     transaction_date?: true
     transaction_from_username?: true
-    transaction_type?: true
-    ingredient_name?: true
-    transaction_total_price?: true
+    transaction_id?: true
     transaction_quantity?: true
+    transaction_total_price?: true
+    transaction_type?: true
     transaction_units?: true
   }
 
-  export type Ingredient_transactionsMaxAggregateInputType = {
-    transaction_id?: true
+  export type Ingredient_transactionMaxAggregateInputType = {
+    id?: true
+    ingredient_name?: true
     transaction_date?: true
     transaction_from_username?: true
-    transaction_type?: true
-    ingredient_name?: true
-    transaction_total_price?: true
+    transaction_id?: true
     transaction_quantity?: true
+    transaction_total_price?: true
+    transaction_type?: true
     transaction_units?: true
   }
 
-  export type Ingredient_transactionsCountAggregateInputType = {
-    transaction_id?: true
+  export type Ingredient_transactionCountAggregateInputType = {
+    id?: true
+    ingredient_name?: true
     transaction_date?: true
     transaction_from_username?: true
-    transaction_type?: true
-    ingredient_name?: true
-    transaction_total_price?: true
+    transaction_id?: true
     transaction_quantity?: true
+    transaction_total_price?: true
+    transaction_type?: true
     transaction_units?: true
     _all?: true
   }
 
-  export type Ingredient_transactionsAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Ingredient_transactionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which ingredient_transactions to aggregate.
+     * Filter which ingredient_transaction to aggregate.
      */
-    where?: ingredient_transactionsWhereInput
+    where?: ingredient_transactionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of ingredient_transactions to fetch.
      */
-    orderBy?: ingredient_transactionsOrderByWithRelationInput | ingredient_transactionsOrderByWithRelationInput[]
+    orderBy?: ingredient_transactionOrderByWithRelationInput | ingredient_transactionOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
      */
-    cursor?: ingredient_transactionsWhereUniqueInput
+    cursor?: ingredient_transactionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -3547,307 +3634,267 @@ export namespace Prisma {
      * 
      * Count returned ingredient_transactions
     **/
-    _count?: true | Ingredient_transactionsCountAggregateInputType
+    _count?: true | Ingredient_transactionCountAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to average
     **/
-    _avg?: Ingredient_transactionsAvgAggregateInputType
+    _avg?: Ingredient_transactionAvgAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to sum
     **/
-    _sum?: Ingredient_transactionsSumAggregateInputType
+    _sum?: Ingredient_transactionSumAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the minimum value
     **/
-    _min?: Ingredient_transactionsMinAggregateInputType
+    _min?: Ingredient_transactionMinAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the maximum value
     **/
-    _max?: Ingredient_transactionsMaxAggregateInputType
+    _max?: Ingredient_transactionMaxAggregateInputType
   }
 
-  export type GetIngredient_transactionsAggregateType<T extends Ingredient_transactionsAggregateArgs> = {
-        [P in keyof T & keyof AggregateIngredient_transactions]: P extends '_count' | 'count'
+  export type GetIngredient_transactionAggregateType<T extends Ingredient_transactionAggregateArgs> = {
+        [P in keyof T & keyof AggregateIngredient_transaction]: P extends '_count' | 'count'
       ? T[P] extends true
         ? number
-        : GetScalarType<T[P], AggregateIngredient_transactions[P]>
-      : GetScalarType<T[P], AggregateIngredient_transactions[P]>
+        : GetScalarType<T[P], AggregateIngredient_transaction[P]>
+      : GetScalarType<T[P], AggregateIngredient_transaction[P]>
   }
 
 
 
 
-  export type ingredient_transactionsGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: ingredient_transactionsWhereInput
-    orderBy?: ingredient_transactionsOrderByWithAggregationInput | ingredient_transactionsOrderByWithAggregationInput[]
-    by: Ingredient_transactionsScalarFieldEnum[] | Ingredient_transactionsScalarFieldEnum
-    having?: ingredient_transactionsScalarWhereWithAggregatesInput
+  export type ingredient_transactionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ingredient_transactionWhereInput
+    orderBy?: ingredient_transactionOrderByWithAggregationInput | ingredient_transactionOrderByWithAggregationInput[]
+    by: Ingredient_transactionScalarFieldEnum[] | Ingredient_transactionScalarFieldEnum
+    having?: ingredient_transactionScalarWhereWithAggregatesInput
     take?: number
     skip?: number
-    _count?: Ingredient_transactionsCountAggregateInputType | true
-    _avg?: Ingredient_transactionsAvgAggregateInputType
-    _sum?: Ingredient_transactionsSumAggregateInputType
-    _min?: Ingredient_transactionsMinAggregateInputType
-    _max?: Ingredient_transactionsMaxAggregateInputType
+    _count?: Ingredient_transactionCountAggregateInputType | true
+    _avg?: Ingredient_transactionAvgAggregateInputType
+    _sum?: Ingredient_transactionSumAggregateInputType
+    _min?: Ingredient_transactionMinAggregateInputType
+    _max?: Ingredient_transactionMaxAggregateInputType
   }
 
-  export type Ingredient_transactionsGroupByOutputType = {
-    transaction_id: number
-    transaction_date: Date
-    transaction_from_username: string
-    transaction_type: string | null
+  export type Ingredient_transactionGroupByOutputType = {
+    id: string
     ingredient_name: string
-    transaction_total_price: Decimal
-    transaction_quantity: Decimal
+    transaction_date: string
+    transaction_from_username: string
+    transaction_id: number
+    transaction_quantity: string
+    transaction_total_price: string
+    transaction_type: string
     transaction_units: string
-    _count: Ingredient_transactionsCountAggregateOutputType | null
-    _avg: Ingredient_transactionsAvgAggregateOutputType | null
-    _sum: Ingredient_transactionsSumAggregateOutputType | null
-    _min: Ingredient_transactionsMinAggregateOutputType | null
-    _max: Ingredient_transactionsMaxAggregateOutputType | null
+    _count: Ingredient_transactionCountAggregateOutputType | null
+    _avg: Ingredient_transactionAvgAggregateOutputType | null
+    _sum: Ingredient_transactionSumAggregateOutputType | null
+    _min: Ingredient_transactionMinAggregateOutputType | null
+    _max: Ingredient_transactionMaxAggregateOutputType | null
   }
 
-  type GetIngredient_transactionsGroupByPayload<T extends ingredient_transactionsGroupByArgs> = Prisma.PrismaPromise<
+  type GetIngredient_transactionGroupByPayload<T extends ingredient_transactionGroupByArgs> = Prisma.PrismaPromise<
     Array<
-      PickEnumerable<Ingredient_transactionsGroupByOutputType, T['by']> &
+      PickEnumerable<Ingredient_transactionGroupByOutputType, T['by']> &
         {
-          [P in ((keyof T) & (keyof Ingredient_transactionsGroupByOutputType))]: P extends '_count'
+          [P in ((keyof T) & (keyof Ingredient_transactionGroupByOutputType))]: P extends '_count'
             ? T[P] extends boolean
               ? number
-              : GetScalarType<T[P], Ingredient_transactionsGroupByOutputType[P]>
-            : GetScalarType<T[P], Ingredient_transactionsGroupByOutputType[P]>
+              : GetScalarType<T[P], Ingredient_transactionGroupByOutputType[P]>
+            : GetScalarType<T[P], Ingredient_transactionGroupByOutputType[P]>
         }
       >
     >
 
 
-  export type ingredient_transactionsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    transaction_id?: boolean
+  export type ingredient_transactionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ingredient_name?: boolean
     transaction_date?: boolean
     transaction_from_username?: boolean
-    transaction_type?: boolean
-    ingredient_name?: boolean
-    transaction_total_price?: boolean
+    transaction_id?: boolean
     transaction_quantity?: boolean
+    transaction_total_price?: boolean
+    transaction_type?: boolean
     transaction_units?: boolean
-  }, ExtArgs["result"]["ingredient_transactions"]>
+  }, ExtArgs["result"]["ingredient_transaction"]>
 
-  export type ingredient_transactionsSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    transaction_id?: boolean
+
+
+  export type ingredient_transactionSelectScalar = {
+    id?: boolean
+    ingredient_name?: boolean
     transaction_date?: boolean
     transaction_from_username?: boolean
-    transaction_type?: boolean
-    ingredient_name?: boolean
-    transaction_total_price?: boolean
-    transaction_quantity?: boolean
-    transaction_units?: boolean
-  }, ExtArgs["result"]["ingredient_transactions"]>
-
-  export type ingredient_transactionsSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     transaction_id?: boolean
-    transaction_date?: boolean
-    transaction_from_username?: boolean
-    transaction_type?: boolean
-    ingredient_name?: boolean
-    transaction_total_price?: boolean
     transaction_quantity?: boolean
-    transaction_units?: boolean
-  }, ExtArgs["result"]["ingredient_transactions"]>
-
-  export type ingredient_transactionsSelectScalar = {
-    transaction_id?: boolean
-    transaction_date?: boolean
-    transaction_from_username?: boolean
-    transaction_type?: boolean
-    ingredient_name?: boolean
     transaction_total_price?: boolean
-    transaction_quantity?: boolean
+    transaction_type?: boolean
     transaction_units?: boolean
   }
 
-  export type ingredient_transactionsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"transaction_id" | "transaction_date" | "transaction_from_username" | "transaction_type" | "ingredient_name" | "transaction_total_price" | "transaction_quantity" | "transaction_units", ExtArgs["result"]["ingredient_transactions"]>
+  export type ingredient_transactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ingredient_name" | "transaction_date" | "transaction_from_username" | "transaction_id" | "transaction_quantity" | "transaction_total_price" | "transaction_type" | "transaction_units", ExtArgs["result"]["ingredient_transaction"]>
 
-  export type $ingredient_transactionsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "ingredient_transactions"
+  export type $ingredient_transactionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ingredient_transaction"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
-      transaction_id: number
-      transaction_date: Date
-      transaction_from_username: string
-      transaction_type: string | null
+      id: string
       ingredient_name: string
-      transaction_total_price: Prisma.Decimal
-      transaction_quantity: Prisma.Decimal
+      transaction_date: string
+      transaction_from_username: string
+      transaction_id: number
+      transaction_quantity: string
+      transaction_total_price: string
+      transaction_type: string
       transaction_units: string
-    }, ExtArgs["result"]["ingredient_transactions"]>
+    }, ExtArgs["result"]["ingredient_transaction"]>
     composites: {}
   }
 
-  type ingredient_transactionsGetPayload<S extends boolean | null | undefined | ingredient_transactionsDefaultArgs> = $Result.GetResult<Prisma.$ingredient_transactionsPayload, S>
+  type ingredient_transactionGetPayload<S extends boolean | null | undefined | ingredient_transactionDefaultArgs> = $Result.GetResult<Prisma.$ingredient_transactionPayload, S>
 
-  type ingredient_transactionsCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<ingredient_transactionsFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: Ingredient_transactionsCountAggregateInputType | true
+  type ingredient_transactionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ingredient_transactionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: Ingredient_transactionCountAggregateInputType | true
     }
 
-  export interface ingredient_transactionsDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ingredient_transactions'], meta: { name: 'ingredient_transactions' } }
+  export interface ingredient_transactionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ingredient_transaction'], meta: { name: 'ingredient_transaction' } }
     /**
-     * Find zero or one Ingredient_transactions that matches the filter.
-     * @param {ingredient_transactionsFindUniqueArgs} args - Arguments to find a Ingredient_transactions
+     * Find zero or one Ingredient_transaction that matches the filter.
+     * @param {ingredient_transactionFindUniqueArgs} args - Arguments to find a Ingredient_transaction
      * @example
-     * // Get one Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.findUnique({
+     * // Get one Ingredient_transaction
+     * const ingredient_transaction = await prisma.ingredient_transaction.findUnique({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUnique<T extends ingredient_transactionsFindUniqueArgs>(args: SelectSubset<T, ingredient_transactionsFindUniqueArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findUnique<T extends ingredient_transactionFindUniqueArgs>(args: SelectSubset<T, ingredient_transactionFindUniqueArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find one Ingredient_transactions that matches the filter or throw an error with `error.code='P2025'`
+     * Find one Ingredient_transaction that matches the filter or throw an error with `error.code='P2025'`
      * if no matches were found.
-     * @param {ingredient_transactionsFindUniqueOrThrowArgs} args - Arguments to find a Ingredient_transactions
+     * @param {ingredient_transactionFindUniqueOrThrowArgs} args - Arguments to find a Ingredient_transaction
      * @example
-     * // Get one Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.findUniqueOrThrow({
+     * // Get one Ingredient_transaction
+     * const ingredient_transaction = await prisma.ingredient_transaction.findUniqueOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUniqueOrThrow<T extends ingredient_transactionsFindUniqueOrThrowArgs>(args: SelectSubset<T, ingredient_transactionsFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findUniqueOrThrow<T extends ingredient_transactionFindUniqueOrThrowArgs>(args: SelectSubset<T, ingredient_transactionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Ingredient_transactions that matches the filter.
+     * Find the first Ingredient_transaction that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {ingredient_transactionsFindFirstArgs} args - Arguments to find a Ingredient_transactions
+     * @param {ingredient_transactionFindFirstArgs} args - Arguments to find a Ingredient_transaction
      * @example
-     * // Get one Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.findFirst({
+     * // Get one Ingredient_transaction
+     * const ingredient_transaction = await prisma.ingredient_transaction.findFirst({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirst<T extends ingredient_transactionsFindFirstArgs>(args?: SelectSubset<T, ingredient_transactionsFindFirstArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findFirst<T extends ingredient_transactionFindFirstArgs>(args?: SelectSubset<T, ingredient_transactionFindFirstArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Ingredient_transactions that matches the filter or
+     * Find the first Ingredient_transaction that matches the filter or
      * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {ingredient_transactionsFindFirstOrThrowArgs} args - Arguments to find a Ingredient_transactions
+     * @param {ingredient_transactionFindFirstOrThrowArgs} args - Arguments to find a Ingredient_transaction
      * @example
-     * // Get one Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.findFirstOrThrow({
+     * // Get one Ingredient_transaction
+     * const ingredient_transaction = await prisma.ingredient_transaction.findFirstOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirstOrThrow<T extends ingredient_transactionsFindFirstOrThrowArgs>(args?: SelectSubset<T, ingredient_transactionsFindFirstOrThrowArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findFirstOrThrow<T extends ingredient_transactionFindFirstOrThrowArgs>(args?: SelectSubset<T, ingredient_transactionFindFirstOrThrowArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
      * Find zero or more Ingredient_transactions that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {ingredient_transactionsFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @param {ingredient_transactionFindManyArgs} args - Arguments to filter and select certain fields only.
      * @example
      * // Get all Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.findMany()
+     * const ingredient_transactions = await prisma.ingredient_transaction.findMany()
      * 
      * // Get first 10 Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.findMany({ take: 10 })
+     * const ingredient_transactions = await prisma.ingredient_transaction.findMany({ take: 10 })
      * 
-     * // Only select the `transaction_id`
-     * const ingredient_transactionsWithTransaction_idOnly = await prisma.ingredient_transactions.findMany({ select: { transaction_id: true } })
+     * // Only select the `id`
+     * const ingredient_transactionWithIdOnly = await prisma.ingredient_transaction.findMany({ select: { id: true } })
      * 
      */
-    findMany<T extends ingredient_transactionsFindManyArgs>(args?: SelectSubset<T, ingredient_transactionsFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+    findMany<T extends ingredient_transactionFindManyArgs>(args?: SelectSubset<T, ingredient_transactionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
 
     /**
-     * Create a Ingredient_transactions.
-     * @param {ingredient_transactionsCreateArgs} args - Arguments to create a Ingredient_transactions.
+     * Create a Ingredient_transaction.
+     * @param {ingredient_transactionCreateArgs} args - Arguments to create a Ingredient_transaction.
      * @example
-     * // Create one Ingredient_transactions
-     * const Ingredient_transactions = await prisma.ingredient_transactions.create({
+     * // Create one Ingredient_transaction
+     * const Ingredient_transaction = await prisma.ingredient_transaction.create({
      *   data: {
-     *     // ... data to create a Ingredient_transactions
+     *     // ... data to create a Ingredient_transaction
      *   }
      * })
      * 
      */
-    create<T extends ingredient_transactionsCreateArgs>(args: SelectSubset<T, ingredient_transactionsCreateArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    create<T extends ingredient_transactionCreateArgs>(args: SelectSubset<T, ingredient_transactionCreateArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
      * Create many Ingredient_transactions.
-     * @param {ingredient_transactionsCreateManyArgs} args - Arguments to create many Ingredient_transactions.
+     * @param {ingredient_transactionCreateManyArgs} args - Arguments to create many Ingredient_transactions.
      * @example
      * // Create many Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.createMany({
+     * const ingredient_transaction = await prisma.ingredient_transaction.createMany({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      *     
      */
-    createMany<T extends ingredient_transactionsCreateManyArgs>(args?: SelectSubset<T, ingredient_transactionsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    createMany<T extends ingredient_transactionCreateManyArgs>(args?: SelectSubset<T, ingredient_transactionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Create many Ingredient_transactions and returns the data saved in the database.
-     * @param {ingredient_transactionsCreateManyAndReturnArgs} args - Arguments to create many Ingredient_transactions.
+     * Delete a Ingredient_transaction.
+     * @param {ingredient_transactionDeleteArgs} args - Arguments to delete one Ingredient_transaction.
      * @example
-     * // Create many Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Ingredient_transactions and only return the `transaction_id`
-     * const ingredient_transactionsWithTransaction_idOnly = await prisma.ingredient_transactions.createManyAndReturn({
-     *   select: { transaction_id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends ingredient_transactionsCreateManyAndReturnArgs>(args?: SelectSubset<T, ingredient_transactionsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a Ingredient_transactions.
-     * @param {ingredient_transactionsDeleteArgs} args - Arguments to delete one Ingredient_transactions.
-     * @example
-     * // Delete one Ingredient_transactions
-     * const Ingredient_transactions = await prisma.ingredient_transactions.delete({
+     * // Delete one Ingredient_transaction
+     * const Ingredient_transaction = await prisma.ingredient_transaction.delete({
      *   where: {
-     *     // ... filter to delete one Ingredient_transactions
+     *     // ... filter to delete one Ingredient_transaction
      *   }
      * })
      * 
      */
-    delete<T extends ingredient_transactionsDeleteArgs>(args: SelectSubset<T, ingredient_transactionsDeleteArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    delete<T extends ingredient_transactionDeleteArgs>(args: SelectSubset<T, ingredient_transactionDeleteArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Update one Ingredient_transactions.
-     * @param {ingredient_transactionsUpdateArgs} args - Arguments to update one Ingredient_transactions.
+     * Update one Ingredient_transaction.
+     * @param {ingredient_transactionUpdateArgs} args - Arguments to update one Ingredient_transaction.
      * @example
-     * // Update one Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.update({
+     * // Update one Ingredient_transaction
+     * const ingredient_transaction = await prisma.ingredient_transaction.update({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -3857,30 +3904,30 @@ export namespace Prisma {
      * })
      * 
      */
-    update<T extends ingredient_transactionsUpdateArgs>(args: SelectSubset<T, ingredient_transactionsUpdateArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    update<T extends ingredient_transactionUpdateArgs>(args: SelectSubset<T, ingredient_transactionUpdateArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
      * Delete zero or more Ingredient_transactions.
-     * @param {ingredient_transactionsDeleteManyArgs} args - Arguments to filter Ingredient_transactions to delete.
+     * @param {ingredient_transactionDeleteManyArgs} args - Arguments to filter Ingredient_transactions to delete.
      * @example
      * // Delete a few Ingredient_transactions
-     * const { count } = await prisma.ingredient_transactions.deleteMany({
+     * const { count } = await prisma.ingredient_transaction.deleteMany({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      * 
      */
-    deleteMany<T extends ingredient_transactionsDeleteManyArgs>(args?: SelectSubset<T, ingredient_transactionsDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    deleteMany<T extends ingredient_transactionDeleteManyArgs>(args?: SelectSubset<T, ingredient_transactionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more Ingredient_transactions.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {ingredient_transactionsUpdateManyArgs} args - Arguments to update one or more rows.
+     * @param {ingredient_transactionUpdateManyArgs} args - Arguments to update one or more rows.
      * @example
      * // Update many Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.updateMany({
+     * const ingredient_transaction = await prisma.ingredient_transaction.updateMany({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -3890,86 +3937,79 @@ export namespace Prisma {
      * })
      * 
      */
-    updateMany<T extends ingredient_transactionsUpdateManyArgs>(args: SelectSubset<T, ingredient_transactionsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    updateMany<T extends ingredient_transactionUpdateManyArgs>(args: SelectSubset<T, ingredient_transactionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Ingredient_transactions and returns the data updated in the database.
-     * @param {ingredient_transactionsUpdateManyAndReturnArgs} args - Arguments to update many Ingredient_transactions.
+     * Create or update one Ingredient_transaction.
+     * @param {ingredient_transactionUpsertArgs} args - Arguments to update or create a Ingredient_transaction.
      * @example
-     * // Update many Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Ingredient_transactions and only return the `transaction_id`
-     * const ingredient_transactionsWithTransaction_idOnly = await prisma.ingredient_transactions.updateManyAndReturn({
-     *   select: { transaction_id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends ingredient_transactionsUpdateManyAndReturnArgs>(args: SelectSubset<T, ingredient_transactionsUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one Ingredient_transactions.
-     * @param {ingredient_transactionsUpsertArgs} args - Arguments to update or create a Ingredient_transactions.
-     * @example
-     * // Update or create a Ingredient_transactions
-     * const ingredient_transactions = await prisma.ingredient_transactions.upsert({
+     * // Update or create a Ingredient_transaction
+     * const ingredient_transaction = await prisma.ingredient_transaction.upsert({
      *   create: {
-     *     // ... data to create a Ingredient_transactions
+     *     // ... data to create a Ingredient_transaction
      *   },
      *   update: {
      *     // ... in case it already exists, update
      *   },
      *   where: {
-     *     // ... the filter for the Ingredient_transactions we want to update
+     *     // ... the filter for the Ingredient_transaction we want to update
      *   }
      * })
      */
-    upsert<T extends ingredient_transactionsUpsertArgs>(args: SelectSubset<T, ingredient_transactionsUpsertArgs<ExtArgs>>): Prisma__ingredient_transactionsClient<$Result.GetResult<Prisma.$ingredient_transactionsPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    upsert<T extends ingredient_transactionUpsertArgs>(args: SelectSubset<T, ingredient_transactionUpsertArgs<ExtArgs>>): Prisma__ingredient_transactionClient<$Result.GetResult<Prisma.$ingredient_transactionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Ingredient_transactions that matches the filter.
+     * @param {ingredient_transactionFindRawArgs} args - Select which filters you would like to apply.
+     * @example
+     * const ingredient_transaction = await prisma.ingredient_transaction.findRaw({
+     *   filter: { age: { $gt: 25 } }
+     * })
+     */
+    findRaw(args?: ingredient_transactionFindRawArgs): Prisma.PrismaPromise<JsonObject>
+
+    /**
+     * Perform aggregation operations on a Ingredient_transaction.
+     * @param {ingredient_transactionAggregateRawArgs} args - Select which aggregations you would like to apply.
+     * @example
+     * const ingredient_transaction = await prisma.ingredient_transaction.aggregateRaw({
+     *   pipeline: [
+     *     { $match: { status: "registered" } },
+     *     { $group: { _id: "$country", total: { $sum: 1 } } }
+     *   ]
+     * })
+     */
+    aggregateRaw(args?: ingredient_transactionAggregateRawArgs): Prisma.PrismaPromise<JsonObject>
 
 
     /**
      * Count the number of Ingredient_transactions.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {ingredient_transactionsCountArgs} args - Arguments to filter Ingredient_transactions to count.
+     * @param {ingredient_transactionCountArgs} args - Arguments to filter Ingredient_transactions to count.
      * @example
      * // Count the number of Ingredient_transactions
-     * const count = await prisma.ingredient_transactions.count({
+     * const count = await prisma.ingredient_transaction.count({
      *   where: {
      *     // ... the filter for the Ingredient_transactions we want to count
      *   }
      * })
     **/
-    count<T extends ingredient_transactionsCountArgs>(
-      args?: Subset<T, ingredient_transactionsCountArgs>,
+    count<T extends ingredient_transactionCountArgs>(
+      args?: Subset<T, ingredient_transactionCountArgs>,
     ): Prisma.PrismaPromise<
       T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
-          : GetScalarType<T['select'], Ingredient_transactionsCountAggregateOutputType>
+          : GetScalarType<T['select'], Ingredient_transactionCountAggregateOutputType>
         : number
     >
 
     /**
-     * Allows you to perform aggregations operations on a Ingredient_transactions.
+     * Allows you to perform aggregations operations on a Ingredient_transaction.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {Ingredient_transactionsAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @param {Ingredient_transactionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
      * @example
      * // Ordered by age ascending
      * // Where email contains prisma.io
@@ -3989,13 +4029,13 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends Ingredient_transactionsAggregateArgs>(args: Subset<T, Ingredient_transactionsAggregateArgs>): Prisma.PrismaPromise<GetIngredient_transactionsAggregateType<T>>
+    aggregate<T extends Ingredient_transactionAggregateArgs>(args: Subset<T, Ingredient_transactionAggregateArgs>): Prisma.PrismaPromise<GetIngredient_transactionAggregateType<T>>
 
     /**
-     * Group by Ingredient_transactions.
+     * Group by Ingredient_transaction.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {ingredient_transactionsGroupByArgs} args - Group by arguments.
+     * @param {ingredient_transactionGroupByArgs} args - Group by arguments.
      * @example
      * // Group by city, order by createdAt, get count
      * const result = await prisma.user.groupBy({
@@ -4010,14 +4050,14 @@ export namespace Prisma {
      * 
     **/
     groupBy<
-      T extends ingredient_transactionsGroupByArgs,
+      T extends ingredient_transactionGroupByArgs,
       HasSelectOrTake extends Or<
         Extends<'skip', Keys<T>>,
         Extends<'take', Keys<T>>
       >,
       OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: ingredient_transactionsGroupByArgs['orderBy'] }
-        : { orderBy?: ingredient_transactionsGroupByArgs['orderBy'] },
+        ? { orderBy: ingredient_transactionGroupByArgs['orderBy'] }
+        : { orderBy?: ingredient_transactionGroupByArgs['orderBy'] },
       OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
       ByFields extends MaybeTupleToUnion<T['by']>,
       ByValid extends Has<ByFields, OrderFields>,
@@ -4066,20 +4106,20 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, ingredient_transactionsGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIngredient_transactionsGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, ingredient_transactionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIngredient_transactionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
   /**
-   * Fields of the ingredient_transactions model
+   * Fields of the ingredient_transaction model
    */
-  readonly fields: ingredient_transactionsFieldRefs;
+  readonly fields: ingredient_transactionFieldRefs;
   }
 
   /**
-   * The delegate class that acts as a "Promise-like" for ingredient_transactions.
+   * The delegate class that acts as a "Promise-like" for ingredient_transaction.
    * Why is this prefixed with `Prisma__`?
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export interface Prisma__ingredient_transactionsClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+  export interface Prisma__ingredient_transactionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4107,85 +4147,86 @@ export namespace Prisma {
 
 
   /**
-   * Fields of the ingredient_transactions model
+   * Fields of the ingredient_transaction model
    */
-  interface ingredient_transactionsFieldRefs {
-    readonly transaction_id: FieldRef<"ingredient_transactions", 'Int'>
-    readonly transaction_date: FieldRef<"ingredient_transactions", 'DateTime'>
-    readonly transaction_from_username: FieldRef<"ingredient_transactions", 'String'>
-    readonly transaction_type: FieldRef<"ingredient_transactions", 'String'>
-    readonly ingredient_name: FieldRef<"ingredient_transactions", 'String'>
-    readonly transaction_total_price: FieldRef<"ingredient_transactions", 'Decimal'>
-    readonly transaction_quantity: FieldRef<"ingredient_transactions", 'Decimal'>
-    readonly transaction_units: FieldRef<"ingredient_transactions", 'String'>
+  interface ingredient_transactionFieldRefs {
+    readonly id: FieldRef<"ingredient_transaction", 'String'>
+    readonly ingredient_name: FieldRef<"ingredient_transaction", 'String'>
+    readonly transaction_date: FieldRef<"ingredient_transaction", 'String'>
+    readonly transaction_from_username: FieldRef<"ingredient_transaction", 'String'>
+    readonly transaction_id: FieldRef<"ingredient_transaction", 'Int'>
+    readonly transaction_quantity: FieldRef<"ingredient_transaction", 'String'>
+    readonly transaction_total_price: FieldRef<"ingredient_transaction", 'String'>
+    readonly transaction_type: FieldRef<"ingredient_transaction", 'String'>
+    readonly transaction_units: FieldRef<"ingredient_transaction", 'String'>
   }
     
 
   // Custom InputTypes
   /**
-   * ingredient_transactions findUnique
+   * ingredient_transaction findUnique
    */
-  export type ingredient_transactionsFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * Filter, which ingredient_transactions to fetch.
+     * Filter, which ingredient_transaction to fetch.
      */
-    where: ingredient_transactionsWhereUniqueInput
+    where: ingredient_transactionWhereUniqueInput
   }
 
   /**
-   * ingredient_transactions findUniqueOrThrow
+   * ingredient_transaction findUniqueOrThrow
    */
-  export type ingredient_transactionsFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * Filter, which ingredient_transactions to fetch.
+     * Filter, which ingredient_transaction to fetch.
      */
-    where: ingredient_transactionsWhereUniqueInput
+    where: ingredient_transactionWhereUniqueInput
   }
 
   /**
-   * ingredient_transactions findFirst
+   * ingredient_transaction findFirst
    */
-  export type ingredient_transactionsFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * Filter, which ingredient_transactions to fetch.
+     * Filter, which ingredient_transaction to fetch.
      */
-    where?: ingredient_transactionsWhereInput
+    where?: ingredient_transactionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of ingredient_transactions to fetch.
      */
-    orderBy?: ingredient_transactionsOrderByWithRelationInput | ingredient_transactionsOrderByWithRelationInput[]
+    orderBy?: ingredient_transactionOrderByWithRelationInput | ingredient_transactionOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for ingredient_transactions.
      */
-    cursor?: ingredient_transactionsWhereUniqueInput
+    cursor?: ingredient_transactionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -4203,37 +4244,37 @@ export namespace Prisma {
      * 
      * Filter by unique combinations of ingredient_transactions.
      */
-    distinct?: Ingredient_transactionsScalarFieldEnum | Ingredient_transactionsScalarFieldEnum[]
+    distinct?: Ingredient_transactionScalarFieldEnum | Ingredient_transactionScalarFieldEnum[]
   }
 
   /**
-   * ingredient_transactions findFirstOrThrow
+   * ingredient_transaction findFirstOrThrow
    */
-  export type ingredient_transactionsFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * Filter, which ingredient_transactions to fetch.
+     * Filter, which ingredient_transaction to fetch.
      */
-    where?: ingredient_transactionsWhereInput
+    where?: ingredient_transactionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of ingredient_transactions to fetch.
      */
-    orderBy?: ingredient_transactionsOrderByWithRelationInput | ingredient_transactionsOrderByWithRelationInput[]
+    orderBy?: ingredient_transactionOrderByWithRelationInput | ingredient_transactionOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for ingredient_transactions.
      */
-    cursor?: ingredient_transactionsWhereUniqueInput
+    cursor?: ingredient_transactionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -4251,37 +4292,37 @@ export namespace Prisma {
      * 
      * Filter by unique combinations of ingredient_transactions.
      */
-    distinct?: Ingredient_transactionsScalarFieldEnum | Ingredient_transactionsScalarFieldEnum[]
+    distinct?: Ingredient_transactionScalarFieldEnum | Ingredient_transactionScalarFieldEnum[]
   }
 
   /**
-   * ingredient_transactions findMany
+   * ingredient_transaction findMany
    */
-  export type ingredient_transactionsFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
      * Filter, which ingredient_transactions to fetch.
      */
-    where?: ingredient_transactionsWhereInput
+    where?: ingredient_transactionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of ingredient_transactions to fetch.
      */
-    orderBy?: ingredient_transactionsOrderByWithRelationInput | ingredient_transactionsOrderByWithRelationInput[]
+    orderBy?: ingredient_transactionOrderByWithRelationInput | ingredient_transactionOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing ingredient_transactions.
      */
-    cursor?: ingredient_transactionsWhereUniqueInput
+    cursor?: ingredient_transactionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -4294,91 +4335,71 @@ export namespace Prisma {
      * Skip the first `n` ingredient_transactions.
      */
     skip?: number
-    distinct?: Ingredient_transactionsScalarFieldEnum | Ingredient_transactionsScalarFieldEnum[]
+    distinct?: Ingredient_transactionScalarFieldEnum | Ingredient_transactionScalarFieldEnum[]
   }
 
   /**
-   * ingredient_transactions create
+   * ingredient_transaction create
    */
-  export type ingredient_transactionsCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * The data needed to create a ingredient_transactions.
+     * The data needed to create a ingredient_transaction.
      */
-    data: XOR<ingredient_transactionsCreateInput, ingredient_transactionsUncheckedCreateInput>
+    data: XOR<ingredient_transactionCreateInput, ingredient_transactionUncheckedCreateInput>
   }
 
   /**
-   * ingredient_transactions createMany
+   * ingredient_transaction createMany
    */
-  export type ingredient_transactionsCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many ingredient_transactions.
      */
-    data: ingredient_transactionsCreateManyInput | ingredient_transactionsCreateManyInput[]
-    skipDuplicates?: boolean
+    data: ingredient_transactionCreateManyInput | ingredient_transactionCreateManyInput[]
   }
 
   /**
-   * ingredient_transactions createManyAndReturn
+   * ingredient_transaction update
    */
-  export type ingredient_transactionsCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelectCreateManyAndReturn<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * The data used to create many ingredient_transactions.
+     * The data needed to update a ingredient_transaction.
      */
-    data: ingredient_transactionsCreateManyInput | ingredient_transactionsCreateManyInput[]
-    skipDuplicates?: boolean
+    data: XOR<ingredient_transactionUpdateInput, ingredient_transactionUncheckedUpdateInput>
+    /**
+     * Choose, which ingredient_transaction to update.
+     */
+    where: ingredient_transactionWhereUniqueInput
   }
 
   /**
-   * ingredient_transactions update
+   * ingredient_transaction updateMany
    */
-  export type ingredient_transactionsUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ingredient_transactions
-     */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the ingredient_transactions
-     */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
-    /**
-     * The data needed to update a ingredient_transactions.
-     */
-    data: XOR<ingredient_transactionsUpdateInput, ingredient_transactionsUncheckedUpdateInput>
-    /**
-     * Choose, which ingredient_transactions to update.
-     */
-    where: ingredient_transactionsWhereUniqueInput
-  }
-
-  /**
-   * ingredient_transactions updateMany
-   */
-  export type ingredient_transactionsUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * The data used to update ingredient_transactions.
      */
-    data: XOR<ingredient_transactionsUpdateManyMutationInput, ingredient_transactionsUncheckedUpdateManyInput>
+    data: XOR<ingredient_transactionUpdateManyMutationInput, ingredient_transactionUncheckedUpdateManyInput>
     /**
      * Filter which ingredient_transactions to update
      */
-    where?: ingredient_transactionsWhereInput
+    where?: ingredient_transactionWhereInput
     /**
      * Limit how many ingredient_transactions to update.
      */
@@ -4386,83 +4407,57 @@ export namespace Prisma {
   }
 
   /**
-   * ingredient_transactions updateManyAndReturn
+   * ingredient_transaction upsert
    */
-  export type ingredient_transactionsUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelectUpdateManyAndReturn<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * The data used to update ingredient_transactions.
+     * The filter to search for the ingredient_transaction to update in case it exists.
      */
-    data: XOR<ingredient_transactionsUpdateManyMutationInput, ingredient_transactionsUncheckedUpdateManyInput>
+    where: ingredient_transactionWhereUniqueInput
     /**
-     * Filter which ingredient_transactions to update
+     * In case the ingredient_transaction found by the `where` argument doesn't exist, create a new ingredient_transaction with this data.
      */
-    where?: ingredient_transactionsWhereInput
+    create: XOR<ingredient_transactionCreateInput, ingredient_transactionUncheckedCreateInput>
     /**
-     * Limit how many ingredient_transactions to update.
+     * In case the ingredient_transaction was found with the provided `where` argument, update it with this data.
      */
-    limit?: number
+    update: XOR<ingredient_transactionUpdateInput, ingredient_transactionUncheckedUpdateInput>
   }
 
   /**
-   * ingredient_transactions upsert
+   * ingredient_transaction delete
    */
-  export type ingredient_transactionsUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * Select specific fields to fetch from the ingredient_transaction
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    select?: ingredient_transactionSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Omit specific fields from the ingredient_transaction
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    omit?: ingredient_transactionOmit<ExtArgs> | null
     /**
-     * The filter to search for the ingredient_transactions to update in case it exists.
+     * Filter which ingredient_transaction to delete.
      */
-    where: ingredient_transactionsWhereUniqueInput
-    /**
-     * In case the ingredient_transactions found by the `where` argument doesn't exist, create a new ingredient_transactions with this data.
-     */
-    create: XOR<ingredient_transactionsCreateInput, ingredient_transactionsUncheckedCreateInput>
-    /**
-     * In case the ingredient_transactions was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<ingredient_transactionsUpdateInput, ingredient_transactionsUncheckedUpdateInput>
+    where: ingredient_transactionWhereUniqueInput
   }
 
   /**
-   * ingredient_transactions delete
+   * ingredient_transaction deleteMany
    */
-  export type ingredient_transactionsDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ingredient_transactions
-     */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the ingredient_transactions
-     */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
-    /**
-     * Filter which ingredient_transactions to delete.
-     */
-    where: ingredient_transactionsWhereUniqueInput
-  }
-
-  /**
-   * ingredient_transactions deleteMany
-   */
-  export type ingredient_transactionsDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * Filter which ingredient_transactions to delete
      */
-    where?: ingredient_transactionsWhereInput
+    where?: ingredient_transactionWhereInput
     /**
      * Limit how many ingredient_transactions to delete.
      */
@@ -4470,17 +4465,45 @@ export namespace Prisma {
   }
 
   /**
-   * ingredient_transactions without action
+   * ingredient_transaction findRaw
    */
-  export type ingredient_transactionsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type ingredient_transactionFindRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ingredient_transactions
+     * The query predicate filter. If unspecified, then all documents in the collection will match the predicate. ${@link https://docs.mongodb.com/manual/reference/operator/query MongoDB Docs}.
      */
-    select?: ingredient_transactionsSelect<ExtArgs> | null
+    filter?: InputJsonValue
     /**
-     * Omit specific fields from the ingredient_transactions
+     * Additional options to pass to the `find` command ${@link https://docs.mongodb.com/manual/reference/command/find/#command-fields MongoDB Docs}.
      */
-    omit?: ingredient_transactionsOmit<ExtArgs> | null
+    options?: InputJsonValue
+  }
+
+  /**
+   * ingredient_transaction aggregateRaw
+   */
+  export type ingredient_transactionAggregateRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * An array of aggregation stages to process and transform the document stream via the aggregation pipeline. ${@link https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline MongoDB Docs}.
+     */
+    pipeline?: InputJsonValue[]
+    /**
+     * Additional options to pass to the `aggregate` command ${@link https://docs.mongodb.com/manual/reference/command/aggregate/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * ingredient_transaction without action
+   */
+  export type ingredient_transactionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ingredient_transaction
+     */
+    select?: ingredient_transactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ingredient_transaction
+     */
+    omit?: ingredient_transactionOmit<ExtArgs> | null
   }
 
 
@@ -4498,120 +4521,110 @@ export namespace Prisma {
 
   export type IngredientsAvgAggregateOutputType = {
     ingredient_id: number | null
-    ingredient_total: Decimal | null
-    ingredient_total_alert: Decimal | null
-    ingredient_price: Decimal | null
-    ingredient_price_per_unit: Decimal | null
   }
 
   export type IngredientsSumAggregateOutputType = {
     ingredient_id: number | null
-    ingredient_total: Decimal | null
-    ingredient_total_alert: Decimal | null
-    ingredient_price: Decimal | null
-    ingredient_price_per_unit: Decimal | null
   }
 
   export type IngredientsMinAggregateOutputType = {
-    ingredient_id: number | null
-    ingredient_name: string | null
-    ingredient_total: Decimal | null
-    ingredient_unit: string | null
-    ingredient_lastupdate: Date | null
-    ingredient_image: string | null
-    ingredient_total_alert: Decimal | null
+    id: string | null
     ingredient_category: string | null
+    ingredient_id: number | null
+    ingredient_image: string | null
+    ingredient_lastupdate: string | null
+    ingredient_name: string | null
+    ingredient_price: string | null
+    ingredient_price_per_unit: string | null
     ingredient_sub_category: string | null
-    ingredient_price: Decimal | null
-    ingredient_price_per_unit: Decimal | null
+    ingredient_total: string | null
+    ingredient_total_alert: string | null
+    ingredient_unit: string | null
   }
 
   export type IngredientsMaxAggregateOutputType = {
-    ingredient_id: number | null
-    ingredient_name: string | null
-    ingredient_total: Decimal | null
-    ingredient_unit: string | null
-    ingredient_lastupdate: Date | null
-    ingredient_image: string | null
-    ingredient_total_alert: Decimal | null
+    id: string | null
     ingredient_category: string | null
+    ingredient_id: number | null
+    ingredient_image: string | null
+    ingredient_lastupdate: string | null
+    ingredient_name: string | null
+    ingredient_price: string | null
+    ingredient_price_per_unit: string | null
     ingredient_sub_category: string | null
-    ingredient_price: Decimal | null
-    ingredient_price_per_unit: Decimal | null
+    ingredient_total: string | null
+    ingredient_total_alert: string | null
+    ingredient_unit: string | null
   }
 
   export type IngredientsCountAggregateOutputType = {
-    ingredient_id: number
-    ingredient_name: number
-    ingredient_total: number
-    ingredient_unit: number
-    ingredient_lastupdate: number
-    ingredient_image: number
-    ingredient_total_alert: number
+    id: number
     ingredient_category: number
-    ingredient_sub_category: number
+    ingredient_id: number
+    ingredient_image: number
+    ingredient_lastupdate: number
+    ingredient_name: number
     ingredient_price: number
     ingredient_price_per_unit: number
+    ingredient_sub_category: number
+    ingredient_total: number
+    ingredient_total_alert: number
+    ingredient_unit: number
     _all: number
   }
 
 
   export type IngredientsAvgAggregateInputType = {
     ingredient_id?: true
-    ingredient_total?: true
-    ingredient_total_alert?: true
-    ingredient_price?: true
-    ingredient_price_per_unit?: true
   }
 
   export type IngredientsSumAggregateInputType = {
     ingredient_id?: true
-    ingredient_total?: true
-    ingredient_total_alert?: true
-    ingredient_price?: true
-    ingredient_price_per_unit?: true
   }
 
   export type IngredientsMinAggregateInputType = {
-    ingredient_id?: true
-    ingredient_name?: true
-    ingredient_total?: true
-    ingredient_unit?: true
-    ingredient_lastupdate?: true
-    ingredient_image?: true
-    ingredient_total_alert?: true
+    id?: true
     ingredient_category?: true
-    ingredient_sub_category?: true
+    ingredient_id?: true
+    ingredient_image?: true
+    ingredient_lastupdate?: true
+    ingredient_name?: true
     ingredient_price?: true
     ingredient_price_per_unit?: true
+    ingredient_sub_category?: true
+    ingredient_total?: true
+    ingredient_total_alert?: true
+    ingredient_unit?: true
   }
 
   export type IngredientsMaxAggregateInputType = {
-    ingredient_id?: true
-    ingredient_name?: true
-    ingredient_total?: true
-    ingredient_unit?: true
-    ingredient_lastupdate?: true
-    ingredient_image?: true
-    ingredient_total_alert?: true
+    id?: true
     ingredient_category?: true
-    ingredient_sub_category?: true
+    ingredient_id?: true
+    ingredient_image?: true
+    ingredient_lastupdate?: true
+    ingredient_name?: true
     ingredient_price?: true
     ingredient_price_per_unit?: true
+    ingredient_sub_category?: true
+    ingredient_total?: true
+    ingredient_total_alert?: true
+    ingredient_unit?: true
   }
 
   export type IngredientsCountAggregateInputType = {
-    ingredient_id?: true
-    ingredient_name?: true
-    ingredient_total?: true
-    ingredient_unit?: true
-    ingredient_lastupdate?: true
-    ingredient_image?: true
-    ingredient_total_alert?: true
+    id?: true
     ingredient_category?: true
-    ingredient_sub_category?: true
+    ingredient_id?: true
+    ingredient_image?: true
+    ingredient_lastupdate?: true
+    ingredient_name?: true
     ingredient_price?: true
     ingredient_price_per_unit?: true
+    ingredient_sub_category?: true
+    ingredient_total?: true
+    ingredient_total_alert?: true
+    ingredient_unit?: true
     _all?: true
   }
 
@@ -4702,17 +4715,18 @@ export namespace Prisma {
   }
 
   export type IngredientsGroupByOutputType = {
+    id: string
+    ingredient_category: string
     ingredient_id: number
+    ingredient_image: string
+    ingredient_lastupdate: string
     ingredient_name: string
-    ingredient_total: Decimal | null
+    ingredient_price: string
+    ingredient_price_per_unit: string
+    ingredient_sub_category: string
+    ingredient_total: string
+    ingredient_total_alert: string
     ingredient_unit: string
-    ingredient_lastupdate: Date | null
-    ingredient_image: string | null
-    ingredient_total_alert: Decimal | null
-    ingredient_category: string | null
-    ingredient_sub_category: string | null
-    ingredient_price: Decimal | null
-    ingredient_price_per_unit: Decimal | null
     _count: IngredientsCountAggregateOutputType | null
     _avg: IngredientsAvgAggregateOutputType | null
     _sum: IngredientsSumAggregateOutputType | null
@@ -4735,78 +4749,55 @@ export namespace Prisma {
 
 
   export type ingredientsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    ingredient_id?: boolean
-    ingredient_name?: boolean
-    ingredient_total?: boolean
-    ingredient_unit?: boolean
-    ingredient_lastupdate?: boolean
-    ingredient_image?: boolean
-    ingredient_total_alert?: boolean
+    id?: boolean
     ingredient_category?: boolean
-    ingredient_sub_category?: boolean
+    ingredient_id?: boolean
+    ingredient_image?: boolean
+    ingredient_lastupdate?: boolean
+    ingredient_name?: boolean
     ingredient_price?: boolean
     ingredient_price_per_unit?: boolean
+    ingredient_sub_category?: boolean
+    ingredient_total?: boolean
+    ingredient_total_alert?: boolean
+    ingredient_unit?: boolean
   }, ExtArgs["result"]["ingredients"]>
 
-  export type ingredientsSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    ingredient_id?: boolean
-    ingredient_name?: boolean
-    ingredient_total?: boolean
-    ingredient_unit?: boolean
-    ingredient_lastupdate?: boolean
-    ingredient_image?: boolean
-    ingredient_total_alert?: boolean
-    ingredient_category?: boolean
-    ingredient_sub_category?: boolean
-    ingredient_price?: boolean
-    ingredient_price_per_unit?: boolean
-  }, ExtArgs["result"]["ingredients"]>
 
-  export type ingredientsSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    ingredient_id?: boolean
-    ingredient_name?: boolean
-    ingredient_total?: boolean
-    ingredient_unit?: boolean
-    ingredient_lastupdate?: boolean
-    ingredient_image?: boolean
-    ingredient_total_alert?: boolean
-    ingredient_category?: boolean
-    ingredient_sub_category?: boolean
-    ingredient_price?: boolean
-    ingredient_price_per_unit?: boolean
-  }, ExtArgs["result"]["ingredients"]>
 
   export type ingredientsSelectScalar = {
-    ingredient_id?: boolean
-    ingredient_name?: boolean
-    ingredient_total?: boolean
-    ingredient_unit?: boolean
-    ingredient_lastupdate?: boolean
-    ingredient_image?: boolean
-    ingredient_total_alert?: boolean
+    id?: boolean
     ingredient_category?: boolean
-    ingredient_sub_category?: boolean
+    ingredient_id?: boolean
+    ingredient_image?: boolean
+    ingredient_lastupdate?: boolean
+    ingredient_name?: boolean
     ingredient_price?: boolean
     ingredient_price_per_unit?: boolean
+    ingredient_sub_category?: boolean
+    ingredient_total?: boolean
+    ingredient_total_alert?: boolean
+    ingredient_unit?: boolean
   }
 
-  export type ingredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_id" | "ingredient_name" | "ingredient_total" | "ingredient_unit" | "ingredient_lastupdate" | "ingredient_image" | "ingredient_total_alert" | "ingredient_category" | "ingredient_sub_category" | "ingredient_price" | "ingredient_price_per_unit", ExtArgs["result"]["ingredients"]>
+  export type ingredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ingredient_category" | "ingredient_id" | "ingredient_image" | "ingredient_lastupdate" | "ingredient_name" | "ingredient_price" | "ingredient_price_per_unit" | "ingredient_sub_category" | "ingredient_total" | "ingredient_total_alert" | "ingredient_unit", ExtArgs["result"]["ingredients"]>
 
   export type $ingredientsPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "ingredients"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
+      id: string
+      ingredient_category: string
       ingredient_id: number
+      ingredient_image: string
+      ingredient_lastupdate: string
       ingredient_name: string
-      ingredient_total: Prisma.Decimal | null
+      ingredient_price: string
+      ingredient_price_per_unit: string
+      ingredient_sub_category: string
+      ingredient_total: string
+      ingredient_total_alert: string
       ingredient_unit: string
-      ingredient_lastupdate: Date | null
-      ingredient_image: string | null
-      ingredient_total_alert: Prisma.Decimal | null
-      ingredient_category: string | null
-      ingredient_sub_category: string | null
-      ingredient_price: Prisma.Decimal | null
-      ingredient_price_per_unit: Prisma.Decimal | null
     }, ExtArgs["result"]["ingredients"]>
     composites: {}
   }
@@ -4890,8 +4881,8 @@ export namespace Prisma {
      * // Get first 10 Ingredients
      * const ingredients = await prisma.ingredients.findMany({ take: 10 })
      * 
-     * // Only select the `ingredient_id`
-     * const ingredientsWithIngredient_idOnly = await prisma.ingredients.findMany({ select: { ingredient_id: true } })
+     * // Only select the `id`
+     * const ingredientsWithIdOnly = await prisma.ingredients.findMany({ select: { id: true } })
      * 
      */
     findMany<T extends ingredientsFindManyArgs>(args?: SelectSubset<T, ingredientsFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ingredientsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -4923,30 +4914,6 @@ export namespace Prisma {
      *     
      */
     createMany<T extends ingredientsCreateManyArgs>(args?: SelectSubset<T, ingredientsCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Ingredients and returns the data saved in the database.
-     * @param {ingredientsCreateManyAndReturnArgs} args - Arguments to create many Ingredients.
-     * @example
-     * // Create many Ingredients
-     * const ingredients = await prisma.ingredients.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Ingredients and only return the `ingredient_id`
-     * const ingredientsWithIngredient_idOnly = await prisma.ingredients.createManyAndReturn({
-     *   select: { ingredient_id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends ingredientsCreateManyAndReturnArgs>(args?: SelectSubset<T, ingredientsCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ingredientsPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
      * Delete a Ingredients.
@@ -5013,36 +4980,6 @@ export namespace Prisma {
     updateMany<T extends ingredientsUpdateManyArgs>(args: SelectSubset<T, ingredientsUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Ingredients and returns the data updated in the database.
-     * @param {ingredientsUpdateManyAndReturnArgs} args - Arguments to update many Ingredients.
-     * @example
-     * // Update many Ingredients
-     * const ingredients = await prisma.ingredients.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Ingredients and only return the `ingredient_id`
-     * const ingredientsWithIngredient_idOnly = await prisma.ingredients.updateManyAndReturn({
-     *   select: { ingredient_id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends ingredientsUpdateManyAndReturnArgs>(args: SelectSubset<T, ingredientsUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ingredientsPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
      * Create or update one Ingredients.
      * @param {ingredientsUpsertArgs} args - Arguments to update or create a Ingredients.
      * @example
@@ -5060,6 +4997,29 @@ export namespace Prisma {
      * })
      */
     upsert<T extends ingredientsUpsertArgs>(args: SelectSubset<T, ingredientsUpsertArgs<ExtArgs>>): Prisma__ingredientsClient<$Result.GetResult<Prisma.$ingredientsPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Ingredients that matches the filter.
+     * @param {ingredientsFindRawArgs} args - Select which filters you would like to apply.
+     * @example
+     * const ingredients = await prisma.ingredients.findRaw({
+     *   filter: { age: { $gt: 25 } }
+     * })
+     */
+    findRaw(args?: ingredientsFindRawArgs): Prisma.PrismaPromise<JsonObject>
+
+    /**
+     * Perform aggregation operations on a Ingredients.
+     * @param {ingredientsAggregateRawArgs} args - Select which aggregations you would like to apply.
+     * @example
+     * const ingredients = await prisma.ingredients.aggregateRaw({
+     *   pipeline: [
+     *     { $match: { status: "registered" } },
+     *     { $group: { _id: "$country", total: { $sum: 1 } } }
+     *   ]
+     * })
+     */
+    aggregateRaw(args?: ingredientsAggregateRawArgs): Prisma.PrismaPromise<JsonObject>
 
 
     /**
@@ -5230,17 +5190,18 @@ export namespace Prisma {
    * Fields of the ingredients model
    */
   interface ingredientsFieldRefs {
-    readonly ingredient_id: FieldRef<"ingredients", 'Int'>
-    readonly ingredient_name: FieldRef<"ingredients", 'String'>
-    readonly ingredient_total: FieldRef<"ingredients", 'Decimal'>
-    readonly ingredient_unit: FieldRef<"ingredients", 'String'>
-    readonly ingredient_lastupdate: FieldRef<"ingredients", 'DateTime'>
-    readonly ingredient_image: FieldRef<"ingredients", 'String'>
-    readonly ingredient_total_alert: FieldRef<"ingredients", 'Decimal'>
+    readonly id: FieldRef<"ingredients", 'String'>
     readonly ingredient_category: FieldRef<"ingredients", 'String'>
+    readonly ingredient_id: FieldRef<"ingredients", 'Int'>
+    readonly ingredient_image: FieldRef<"ingredients", 'String'>
+    readonly ingredient_lastupdate: FieldRef<"ingredients", 'String'>
+    readonly ingredient_name: FieldRef<"ingredients", 'String'>
+    readonly ingredient_price: FieldRef<"ingredients", 'String'>
+    readonly ingredient_price_per_unit: FieldRef<"ingredients", 'String'>
     readonly ingredient_sub_category: FieldRef<"ingredients", 'String'>
-    readonly ingredient_price: FieldRef<"ingredients", 'Decimal'>
-    readonly ingredient_price_per_unit: FieldRef<"ingredients", 'Decimal'>
+    readonly ingredient_total: FieldRef<"ingredients", 'String'>
+    readonly ingredient_total_alert: FieldRef<"ingredients", 'String'>
+    readonly ingredient_unit: FieldRef<"ingredients", 'String'>
   }
     
 
@@ -5446,26 +5407,6 @@ export namespace Prisma {
      * The data used to create many ingredients.
      */
     data: ingredientsCreateManyInput | ingredientsCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * ingredients createManyAndReturn
-   */
-  export type ingredientsCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ingredients
-     */
-    select?: ingredientsSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the ingredients
-     */
-    omit?: ingredientsOmit<ExtArgs> | null
-    /**
-     * The data used to create many ingredients.
-     */
-    data: ingredientsCreateManyInput | ingredientsCreateManyInput[]
-    skipDuplicates?: boolean
   }
 
   /**
@@ -5494,32 +5435,6 @@ export namespace Prisma {
    * ingredients updateMany
    */
   export type ingredientsUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update ingredients.
-     */
-    data: XOR<ingredientsUpdateManyMutationInput, ingredientsUncheckedUpdateManyInput>
-    /**
-     * Filter which ingredients to update
-     */
-    where?: ingredientsWhereInput
-    /**
-     * Limit how many ingredients to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * ingredients updateManyAndReturn
-   */
-  export type ingredientsUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ingredients
-     */
-    select?: ingredientsSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the ingredients
-     */
-    omit?: ingredientsOmit<ExtArgs> | null
     /**
      * The data used to update ingredients.
      */
@@ -5593,6 +5508,34 @@ export namespace Prisma {
   }
 
   /**
+   * ingredients findRaw
+   */
+  export type ingredientsFindRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The query predicate filter. If unspecified, then all documents in the collection will match the predicate. ${@link https://docs.mongodb.com/manual/reference/operator/query MongoDB Docs}.
+     */
+    filter?: InputJsonValue
+    /**
+     * Additional options to pass to the `find` command ${@link https://docs.mongodb.com/manual/reference/command/find/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * ingredients aggregateRaw
+   */
+  export type ingredientsAggregateRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * An array of aggregation stages to process and transform the document stream via the aggregation pipeline. ${@link https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline MongoDB Docs}.
+     */
+    pipeline?: InputJsonValue[]
+    /**
+     * Additional options to pass to the `aggregate` command ${@link https://docs.mongodb.com/manual/reference/command/aggregate/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
    * ingredients without action
    */
   export type ingredientsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5621,43 +5564,42 @@ export namespace Prisma {
 
   export type MenuAvgAggregateOutputType = {
     menu_id: number | null
-    menu_total: Decimal | null
+    menu_total: number | null
   }
 
   export type MenuSumAggregateOutputType = {
     menu_id: number | null
-    menu_total: Decimal | null
+    menu_total: number | null
   }
 
   export type MenuMinAggregateOutputType = {
+    id: string | null
+    menu_category: string | null
     menu_id: number | null
-    menu_name: string | null
-    menu_total: Decimal | null
     menu_image: string | null
+    menu_name: string | null
     menu_subname: string | null
-    menu_catagory: string | null
-    menu_description: string | null
+    menu_total: number | null
   }
 
   export type MenuMaxAggregateOutputType = {
+    id: string | null
+    menu_category: string | null
     menu_id: number | null
-    menu_name: string | null
-    menu_total: Decimal | null
     menu_image: string | null
+    menu_name: string | null
     menu_subname: string | null
-    menu_catagory: string | null
-    menu_description: string | null
+    menu_total: number | null
   }
 
   export type MenuCountAggregateOutputType = {
+    id: number
+    menu_category: number
     menu_id: number
-    menu_name: number
-    menu_ingredients: number
-    menu_total: number
     menu_image: number
+    menu_name: number
     menu_subname: number
-    menu_catagory: number
-    menu_description: number
+    menu_total: number
     _all: number
   }
 
@@ -5673,34 +5615,33 @@ export namespace Prisma {
   }
 
   export type MenuMinAggregateInputType = {
+    id?: true
+    menu_category?: true
     menu_id?: true
-    menu_name?: true
-    menu_total?: true
     menu_image?: true
+    menu_name?: true
     menu_subname?: true
-    menu_catagory?: true
-    menu_description?: true
+    menu_total?: true
   }
 
   export type MenuMaxAggregateInputType = {
+    id?: true
+    menu_category?: true
     menu_id?: true
-    menu_name?: true
-    menu_total?: true
     menu_image?: true
+    menu_name?: true
     menu_subname?: true
-    menu_catagory?: true
-    menu_description?: true
+    menu_total?: true
   }
 
   export type MenuCountAggregateInputType = {
+    id?: true
+    menu_category?: true
     menu_id?: true
-    menu_name?: true
-    menu_ingredients?: true
-    menu_total?: true
     menu_image?: true
+    menu_name?: true
     menu_subname?: true
-    menu_catagory?: true
-    menu_description?: true
+    menu_total?: true
     _all?: true
   }
 
@@ -5791,14 +5732,13 @@ export namespace Prisma {
   }
 
   export type MenuGroupByOutputType = {
+    id: string
+    menu_category: string
     menu_id: number
+    menu_image: string
     menu_name: string
-    menu_ingredients: JsonValue
-    menu_total: Decimal | null
-    menu_image: string | null
-    menu_subname: string | null
-    menu_catagory: string | null
-    menu_description: string | null
+    menu_subname: string
+    menu_total: number
     _count: MenuCountAggregateOutputType | null
     _avg: MenuAvgAggregateOutputType | null
     _sum: MenuSumAggregateOutputType | null
@@ -5821,65 +5761,46 @@ export namespace Prisma {
 
 
   export type menuSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    menu_category?: boolean
     menu_id?: boolean
-    menu_name?: boolean
-    menu_ingredients?: boolean
-    menu_total?: boolean
     menu_image?: boolean
+    menu_ingredients?: boolean | MenuMenuIngredientsDefaultArgs<ExtArgs>
+    menu_name?: boolean
     menu_subname?: boolean
-    menu_catagory?: boolean
-    menu_description?: boolean
+    menu_total?: boolean
   }, ExtArgs["result"]["menu"]>
 
-  export type menuSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    menu_id?: boolean
-    menu_name?: boolean
-    menu_ingredients?: boolean
-    menu_total?: boolean
-    menu_image?: boolean
-    menu_subname?: boolean
-    menu_catagory?: boolean
-    menu_description?: boolean
-  }, ExtArgs["result"]["menu"]>
 
-  export type menuSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    menu_id?: boolean
-    menu_name?: boolean
-    menu_ingredients?: boolean
-    menu_total?: boolean
-    menu_image?: boolean
-    menu_subname?: boolean
-    menu_catagory?: boolean
-    menu_description?: boolean
-  }, ExtArgs["result"]["menu"]>
 
   export type menuSelectScalar = {
+    id?: boolean
+    menu_category?: boolean
     menu_id?: boolean
-    menu_name?: boolean
-    menu_ingredients?: boolean
-    menu_total?: boolean
     menu_image?: boolean
+    menu_name?: boolean
     menu_subname?: boolean
-    menu_catagory?: boolean
-    menu_description?: boolean
+    menu_total?: boolean
   }
 
-  export type menuOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_id" | "menu_name" | "menu_ingredients" | "menu_total" | "menu_image" | "menu_subname" | "menu_catagory" | "menu_description", ExtArgs["result"]["menu"]>
+  export type menuOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "menu_category" | "menu_id" | "menu_image" | "menu_ingredients" | "menu_name" | "menu_subname" | "menu_total", ExtArgs["result"]["menu"]>
+  export type menuInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $menuPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "menu"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
+      id: string
+      menu_category: string
       menu_id: number
+      menu_image: string
       menu_name: string
-      menu_ingredients: Prisma.JsonValue
-      menu_total: Prisma.Decimal | null
-      menu_image: string | null
-      menu_subname: string | null
-      menu_catagory: string | null
-      menu_description: string | null
+      menu_subname: string
+      menu_total: number
     }, ExtArgs["result"]["menu"]>
-    composites: {}
+    composites: {
+      menu_ingredients: Prisma.$MenuMenuIngredientsPayload[]
+    }
   }
 
   type menuGetPayload<S extends boolean | null | undefined | menuDefaultArgs> = $Result.GetResult<Prisma.$menuPayload, S>
@@ -5961,8 +5882,8 @@ export namespace Prisma {
      * // Get first 10 Menus
      * const menus = await prisma.menu.findMany({ take: 10 })
      * 
-     * // Only select the `menu_id`
-     * const menuWithMenu_idOnly = await prisma.menu.findMany({ select: { menu_id: true } })
+     * // Only select the `id`
+     * const menuWithIdOnly = await prisma.menu.findMany({ select: { id: true } })
      * 
      */
     findMany<T extends menuFindManyArgs>(args?: SelectSubset<T, menuFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$menuPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -5994,30 +5915,6 @@ export namespace Prisma {
      *     
      */
     createMany<T extends menuCreateManyArgs>(args?: SelectSubset<T, menuCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Menus and returns the data saved in the database.
-     * @param {menuCreateManyAndReturnArgs} args - Arguments to create many Menus.
-     * @example
-     * // Create many Menus
-     * const menu = await prisma.menu.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Menus and only return the `menu_id`
-     * const menuWithMenu_idOnly = await prisma.menu.createManyAndReturn({
-     *   select: { menu_id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends menuCreateManyAndReturnArgs>(args?: SelectSubset<T, menuCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$menuPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
      * Delete a Menu.
@@ -6084,36 +5981,6 @@ export namespace Prisma {
     updateMany<T extends menuUpdateManyArgs>(args: SelectSubset<T, menuUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Menus and returns the data updated in the database.
-     * @param {menuUpdateManyAndReturnArgs} args - Arguments to update many Menus.
-     * @example
-     * // Update many Menus
-     * const menu = await prisma.menu.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Menus and only return the `menu_id`
-     * const menuWithMenu_idOnly = await prisma.menu.updateManyAndReturn({
-     *   select: { menu_id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends menuUpdateManyAndReturnArgs>(args: SelectSubset<T, menuUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$menuPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
      * Create or update one Menu.
      * @param {menuUpsertArgs} args - Arguments to update or create a Menu.
      * @example
@@ -6131,6 +5998,29 @@ export namespace Prisma {
      * })
      */
     upsert<T extends menuUpsertArgs>(args: SelectSubset<T, menuUpsertArgs<ExtArgs>>): Prisma__menuClient<$Result.GetResult<Prisma.$menuPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Menus that matches the filter.
+     * @param {menuFindRawArgs} args - Select which filters you would like to apply.
+     * @example
+     * const menu = await prisma.menu.findRaw({
+     *   filter: { age: { $gt: 25 } }
+     * })
+     */
+    findRaw(args?: menuFindRawArgs): Prisma.PrismaPromise<JsonObject>
+
+    /**
+     * Perform aggregation operations on a Menu.
+     * @param {menuAggregateRawArgs} args - Select which aggregations you would like to apply.
+     * @example
+     * const menu = await prisma.menu.aggregateRaw({
+     *   pipeline: [
+     *     { $match: { status: "registered" } },
+     *     { $group: { _id: "$country", total: { $sum: 1 } } }
+     *   ]
+     * })
+     */
+    aggregateRaw(args?: menuAggregateRawArgs): Prisma.PrismaPromise<JsonObject>
 
 
     /**
@@ -6301,14 +6191,13 @@ export namespace Prisma {
    * Fields of the menu model
    */
   interface menuFieldRefs {
+    readonly id: FieldRef<"menu", 'String'>
+    readonly menu_category: FieldRef<"menu", 'String'>
     readonly menu_id: FieldRef<"menu", 'Int'>
-    readonly menu_name: FieldRef<"menu", 'String'>
-    readonly menu_ingredients: FieldRef<"menu", 'Json'>
-    readonly menu_total: FieldRef<"menu", 'Decimal'>
     readonly menu_image: FieldRef<"menu", 'String'>
+    readonly menu_name: FieldRef<"menu", 'String'>
     readonly menu_subname: FieldRef<"menu", 'String'>
-    readonly menu_catagory: FieldRef<"menu", 'String'>
-    readonly menu_description: FieldRef<"menu", 'String'>
+    readonly menu_total: FieldRef<"menu", 'Int'>
   }
     
 
@@ -6325,6 +6214,10 @@ export namespace Prisma {
      * Omit specific fields from the menu
      */
     omit?: menuOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
     /**
      * Filter, which menu to fetch.
      */
@@ -6344,6 +6237,10 @@ export namespace Prisma {
      */
     omit?: menuOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
+    /**
      * Filter, which menu to fetch.
      */
     where: menuWhereUniqueInput
@@ -6361,6 +6258,10 @@ export namespace Prisma {
      * Omit specific fields from the menu
      */
     omit?: menuOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
     /**
      * Filter, which menu to fetch.
      */
@@ -6410,6 +6311,10 @@ export namespace Prisma {
      */
     omit?: menuOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
+    /**
      * Filter, which menu to fetch.
      */
     where?: menuWhereInput
@@ -6458,6 +6363,10 @@ export namespace Prisma {
      */
     omit?: menuOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
+    /**
      * Filter, which menus to fetch.
      */
     where?: menuWhereInput
@@ -6501,6 +6410,10 @@ export namespace Prisma {
      */
     omit?: menuOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
+    /**
      * The data needed to create a menu.
      */
     data: XOR<menuCreateInput, menuUncheckedCreateInput>
@@ -6514,26 +6427,6 @@ export namespace Prisma {
      * The data used to create many menus.
      */
     data: menuCreateManyInput | menuCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * menu createManyAndReturn
-   */
-  export type menuCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the menu
-     */
-    select?: menuSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the menu
-     */
-    omit?: menuOmit<ExtArgs> | null
-    /**
-     * The data used to create many menus.
-     */
-    data: menuCreateManyInput | menuCreateManyInput[]
-    skipDuplicates?: boolean
   }
 
   /**
@@ -6548,6 +6441,10 @@ export namespace Prisma {
      * Omit specific fields from the menu
      */
     omit?: menuOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
     /**
      * The data needed to update a menu.
      */
@@ -6577,32 +6474,6 @@ export namespace Prisma {
   }
 
   /**
-   * menu updateManyAndReturn
-   */
-  export type menuUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the menu
-     */
-    select?: menuSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the menu
-     */
-    omit?: menuOmit<ExtArgs> | null
-    /**
-     * The data used to update menus.
-     */
-    data: XOR<menuUpdateManyMutationInput, menuUncheckedUpdateManyInput>
-    /**
-     * Filter which menus to update
-     */
-    where?: menuWhereInput
-    /**
-     * Limit how many menus to update.
-     */
-    limit?: number
-  }
-
-  /**
    * menu upsert
    */
   export type menuUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6614,6 +6485,10 @@ export namespace Prisma {
      * Omit specific fields from the menu
      */
     omit?: menuOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
     /**
      * The filter to search for the menu to update in case it exists.
      */
@@ -6641,6 +6516,10 @@ export namespace Prisma {
      */
     omit?: menuOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
+    /**
      * Filter which menu to delete.
      */
     where: menuWhereUniqueInput
@@ -6661,6 +6540,34 @@ export namespace Prisma {
   }
 
   /**
+   * menu findRaw
+   */
+  export type menuFindRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The query predicate filter. If unspecified, then all documents in the collection will match the predicate. ${@link https://docs.mongodb.com/manual/reference/operator/query MongoDB Docs}.
+     */
+    filter?: InputJsonValue
+    /**
+     * Additional options to pass to the `find` command ${@link https://docs.mongodb.com/manual/reference/command/find/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * menu aggregateRaw
+   */
+  export type menuAggregateRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * An array of aggregation stages to process and transform the document stream via the aggregation pipeline. ${@link https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline MongoDB Docs}.
+     */
+    pipeline?: InputJsonValue[]
+    /**
+     * Additional options to pass to the `aggregate` command ${@link https://docs.mongodb.com/manual/reference/command/aggregate/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
    * menu without action
    */
   export type menuDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6672,6 +6579,10 @@ export namespace Prisma {
      * Omit specific fields from the menu
      */
     omit?: menuOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: menuInclude<ExtArgs> | null
   }
 
 
@@ -6679,88 +6590,80 @@ export namespace Prisma {
    * Enums
    */
 
-  export const TransactionIsolationLevel: {
-    ReadUncommitted: 'ReadUncommitted',
-    ReadCommitted: 'ReadCommitted',
-    RepeatableRead: 'RepeatableRead',
-    Serializable: 'Serializable'
-  };
-
-  export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
-
-
   export const CartScalarFieldEnum: {
-    cart_id: 'cart_id',
-    cart_username: 'cart_username',
-    cart_menu_items: 'cart_menu_items',
+    id: 'id',
     cart_create_date: 'cart_create_date',
-    cart_status: 'cart_status',
-    cart_order_number: 'cart_order_number',
-    cart_last_update: 'cart_last_update',
     cart_customer_name: 'cart_customer_name',
     cart_customer_tel: 'cart_customer_tel',
-    cart_location_send: 'cart_location_send',
     cart_delivery_date: 'cart_delivery_date',
     cart_export_time: 'cart_export_time',
+    cart_id: 'cart_id',
+    cart_last_update: 'cart_last_update',
+    cart_location_send: 'cart_location_send',
+    cart_order_number: 'cart_order_number',
     cart_receive_time: 'cart_receive_time',
-    cart_shipping_cost: 'cart_shipping_cost'
+    cart_shipping_cost: 'cart_shipping_cost',
+    cart_status: 'cart_status',
+    cart_username: 'cart_username'
   };
 
   export type CartScalarFieldEnum = (typeof CartScalarFieldEnum)[keyof typeof CartScalarFieldEnum]
 
 
   export const EmployeeScalarFieldEnum: {
-    employee_id: 'employee_id',
-    employee_username: 'employee_username',
+    id: 'id',
     employee_firstname: 'employee_firstname',
+    employee_id: 'employee_id',
     employee_lastname: 'employee_lastname',
     employee_pin: 'employee_pin',
-    employee_role: 'employee_role'
+    employee_role: 'employee_role',
+    employee_username: 'employee_username'
   };
 
   export type EmployeeScalarFieldEnum = (typeof EmployeeScalarFieldEnum)[keyof typeof EmployeeScalarFieldEnum]
 
 
-  export const Ingredient_transactionsScalarFieldEnum: {
-    transaction_id: 'transaction_id',
+  export const Ingredient_transactionScalarFieldEnum: {
+    id: 'id',
+    ingredient_name: 'ingredient_name',
     transaction_date: 'transaction_date',
     transaction_from_username: 'transaction_from_username',
-    transaction_type: 'transaction_type',
-    ingredient_name: 'ingredient_name',
-    transaction_total_price: 'transaction_total_price',
+    transaction_id: 'transaction_id',
     transaction_quantity: 'transaction_quantity',
+    transaction_total_price: 'transaction_total_price',
+    transaction_type: 'transaction_type',
     transaction_units: 'transaction_units'
   };
 
-  export type Ingredient_transactionsScalarFieldEnum = (typeof Ingredient_transactionsScalarFieldEnum)[keyof typeof Ingredient_transactionsScalarFieldEnum]
+  export type Ingredient_transactionScalarFieldEnum = (typeof Ingredient_transactionScalarFieldEnum)[keyof typeof Ingredient_transactionScalarFieldEnum]
 
 
   export const IngredientsScalarFieldEnum: {
-    ingredient_id: 'ingredient_id',
-    ingredient_name: 'ingredient_name',
-    ingredient_total: 'ingredient_total',
-    ingredient_unit: 'ingredient_unit',
-    ingredient_lastupdate: 'ingredient_lastupdate',
-    ingredient_image: 'ingredient_image',
-    ingredient_total_alert: 'ingredient_total_alert',
+    id: 'id',
     ingredient_category: 'ingredient_category',
-    ingredient_sub_category: 'ingredient_sub_category',
+    ingredient_id: 'ingredient_id',
+    ingredient_image: 'ingredient_image',
+    ingredient_lastupdate: 'ingredient_lastupdate',
+    ingredient_name: 'ingredient_name',
     ingredient_price: 'ingredient_price',
-    ingredient_price_per_unit: 'ingredient_price_per_unit'
+    ingredient_price_per_unit: 'ingredient_price_per_unit',
+    ingredient_sub_category: 'ingredient_sub_category',
+    ingredient_total: 'ingredient_total',
+    ingredient_total_alert: 'ingredient_total_alert',
+    ingredient_unit: 'ingredient_unit'
   };
 
   export type IngredientsScalarFieldEnum = (typeof IngredientsScalarFieldEnum)[keyof typeof IngredientsScalarFieldEnum]
 
 
   export const MenuScalarFieldEnum: {
+    id: 'id',
+    menu_category: 'menu_category',
     menu_id: 'menu_id',
-    menu_name: 'menu_name',
-    menu_ingredients: 'menu_ingredients',
-    menu_total: 'menu_total',
     menu_image: 'menu_image',
+    menu_name: 'menu_name',
     menu_subname: 'menu_subname',
-    menu_catagory: 'menu_catagory',
-    menu_description: 'menu_description'
+    menu_total: 'menu_total'
   };
 
   export type MenuScalarFieldEnum = (typeof MenuScalarFieldEnum)[keyof typeof MenuScalarFieldEnum]
@@ -6774,36 +6677,12 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-  export const JsonNullValueInput: {
-    JsonNull: typeof JsonNull
-  };
-
-  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
-
-
   export const QueryMode: {
     default: 'default',
     insensitive: 'insensitive'
   };
 
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
-
-
-  export const JsonNullValueFilter: {
-    DbNull: typeof DbNull,
-    JsonNull: typeof JsonNull,
-    AnyNull: typeof AnyNull
-  };
-
-  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
-
-
-  export const NullsOrder: {
-    first: 'first',
-    last: 'last'
-  };
-
-  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
   /**
@@ -6822,48 +6701,6 @@ export namespace Prisma {
    * Reference to a field of type 'String[]'
    */
   export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-  /**
-   * Reference to a field of type 'QueryMode'
-   */
-  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-  /**
-   * Reference to a field of type 'DateTime'
-   */
-  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-  /**
-   * Reference to a field of type 'DateTime[]'
-   */
-  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Decimal'
-   */
-  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
-    
-
-
-  /**
-   * Reference to a field of type 'Decimal[]'
-   */
-  export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
     
 
 
@@ -6893,6 +6730,13 @@ export namespace Prisma {
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
   /**
    * Deep Input Types
    */
@@ -6902,289 +6746,302 @@ export namespace Prisma {
     AND?: cartWhereInput | cartWhereInput[]
     OR?: cartWhereInput[]
     NOT?: cartWhereInput | cartWhereInput[]
-    cart_id?: UuidFilter<"cart"> | string
-    cart_username?: StringFilter<"cart"> | string
-    cart_menu_items?: JsonFilter<"cart">
-    cart_create_date?: DateTimeNullableFilter<"cart"> | Date | string | null
-    cart_status?: StringNullableFilter<"cart"> | string | null
-    cart_order_number?: StringNullableFilter<"cart"> | string | null
+    id?: StringFilter<"cart"> | string
+    cart_create_date?: StringFilter<"cart"> | string
+    cart_customer_name?: StringFilter<"cart"> | string
+    cart_customer_tel?: StringFilter<"cart"> | string
+    cart_delivery_date?: StringFilter<"cart"> | string
+    cart_export_time?: StringFilter<"cart"> | string
+    cart_id?: StringFilter<"cart"> | string
     cart_last_update?: StringNullableFilter<"cart"> | string | null
-    cart_customer_name?: StringNullableFilter<"cart"> | string | null
-    cart_customer_tel?: StringNullableFilter<"cart"> | string | null
-    cart_location_send?: StringNullableFilter<"cart"> | string | null
-    cart_delivery_date?: StringNullableFilter<"cart"> | string | null
-    cart_export_time?: StringNullableFilter<"cart"> | string | null
-    cart_receive_time?: StringNullableFilter<"cart"> | string | null
-    cart_shipping_cost?: DecimalNullableFilter<"cart"> | Decimal | DecimalJsLike | number | string | null
+    cart_location_send?: StringFilter<"cart"> | string
+    cart_menu_items?: CartCartMenuItemsCompositeListFilter | CartCartMenuItemsObjectEqualityInput[]
+    cart_order_number?: StringFilter<"cart"> | string
+    cart_receive_time?: StringFilter<"cart"> | string
+    cart_shipping_cost?: StringFilter<"cart"> | string
+    cart_status?: StringFilter<"cart"> | string
+    cart_username?: StringFilter<"cart"> | string
   }
 
   export type cartOrderByWithRelationInput = {
+    id?: SortOrder
+    cart_create_date?: SortOrder
+    cart_customer_name?: SortOrder
+    cart_customer_tel?: SortOrder
+    cart_delivery_date?: SortOrder
+    cart_export_time?: SortOrder
     cart_id?: SortOrder
+    cart_last_update?: SortOrder
+    cart_location_send?: SortOrder
+    cart_menu_items?: CartCartMenuItemsOrderByCompositeAggregateInput
+    cart_order_number?: SortOrder
+    cart_receive_time?: SortOrder
+    cart_shipping_cost?: SortOrder
+    cart_status?: SortOrder
     cart_username?: SortOrder
-    cart_menu_items?: SortOrder
-    cart_create_date?: SortOrderInput | SortOrder
-    cart_status?: SortOrderInput | SortOrder
-    cart_order_number?: SortOrderInput | SortOrder
-    cart_last_update?: SortOrderInput | SortOrder
-    cart_customer_name?: SortOrderInput | SortOrder
-    cart_customer_tel?: SortOrderInput | SortOrder
-    cart_location_send?: SortOrderInput | SortOrder
-    cart_delivery_date?: SortOrderInput | SortOrder
-    cart_export_time?: SortOrderInput | SortOrder
-    cart_receive_time?: SortOrderInput | SortOrder
-    cart_shipping_cost?: SortOrderInput | SortOrder
   }
 
   export type cartWhereUniqueInput = Prisma.AtLeast<{
-    cart_id?: string
+    id?: string
     AND?: cartWhereInput | cartWhereInput[]
     OR?: cartWhereInput[]
     NOT?: cartWhereInput | cartWhereInput[]
-    cart_username?: StringFilter<"cart"> | string
-    cart_menu_items?: JsonFilter<"cart">
-    cart_create_date?: DateTimeNullableFilter<"cart"> | Date | string | null
-    cart_status?: StringNullableFilter<"cart"> | string | null
-    cart_order_number?: StringNullableFilter<"cart"> | string | null
+    cart_create_date?: StringFilter<"cart"> | string
+    cart_customer_name?: StringFilter<"cart"> | string
+    cart_customer_tel?: StringFilter<"cart"> | string
+    cart_delivery_date?: StringFilter<"cart"> | string
+    cart_export_time?: StringFilter<"cart"> | string
+    cart_id?: StringFilter<"cart"> | string
     cart_last_update?: StringNullableFilter<"cart"> | string | null
-    cart_customer_name?: StringNullableFilter<"cart"> | string | null
-    cart_customer_tel?: StringNullableFilter<"cart"> | string | null
-    cart_location_send?: StringNullableFilter<"cart"> | string | null
-    cart_delivery_date?: StringNullableFilter<"cart"> | string | null
-    cart_export_time?: StringNullableFilter<"cart"> | string | null
-    cart_receive_time?: StringNullableFilter<"cart"> | string | null
-    cart_shipping_cost?: DecimalNullableFilter<"cart"> | Decimal | DecimalJsLike | number | string | null
-  }, "cart_id">
+    cart_location_send?: StringFilter<"cart"> | string
+    cart_menu_items?: CartCartMenuItemsCompositeListFilter | CartCartMenuItemsObjectEqualityInput[]
+    cart_order_number?: StringFilter<"cart"> | string
+    cart_receive_time?: StringFilter<"cart"> | string
+    cart_shipping_cost?: StringFilter<"cart"> | string
+    cart_status?: StringFilter<"cart"> | string
+    cart_username?: StringFilter<"cart"> | string
+  }, "id">
 
   export type cartOrderByWithAggregationInput = {
+    id?: SortOrder
+    cart_create_date?: SortOrder
+    cart_customer_name?: SortOrder
+    cart_customer_tel?: SortOrder
+    cart_delivery_date?: SortOrder
+    cart_export_time?: SortOrder
     cart_id?: SortOrder
+    cart_last_update?: SortOrder
+    cart_location_send?: SortOrder
+    cart_order_number?: SortOrder
+    cart_receive_time?: SortOrder
+    cart_shipping_cost?: SortOrder
+    cart_status?: SortOrder
     cart_username?: SortOrder
-    cart_menu_items?: SortOrder
-    cart_create_date?: SortOrderInput | SortOrder
-    cart_status?: SortOrderInput | SortOrder
-    cart_order_number?: SortOrderInput | SortOrder
-    cart_last_update?: SortOrderInput | SortOrder
-    cart_customer_name?: SortOrderInput | SortOrder
-    cart_customer_tel?: SortOrderInput | SortOrder
-    cart_location_send?: SortOrderInput | SortOrder
-    cart_delivery_date?: SortOrderInput | SortOrder
-    cart_export_time?: SortOrderInput | SortOrder
-    cart_receive_time?: SortOrderInput | SortOrder
-    cart_shipping_cost?: SortOrderInput | SortOrder
     _count?: cartCountOrderByAggregateInput
-    _avg?: cartAvgOrderByAggregateInput
     _max?: cartMaxOrderByAggregateInput
     _min?: cartMinOrderByAggregateInput
-    _sum?: cartSumOrderByAggregateInput
   }
 
   export type cartScalarWhereWithAggregatesInput = {
     AND?: cartScalarWhereWithAggregatesInput | cartScalarWhereWithAggregatesInput[]
     OR?: cartScalarWhereWithAggregatesInput[]
     NOT?: cartScalarWhereWithAggregatesInput | cartScalarWhereWithAggregatesInput[]
-    cart_id?: UuidWithAggregatesFilter<"cart"> | string
-    cart_username?: StringWithAggregatesFilter<"cart"> | string
-    cart_menu_items?: JsonWithAggregatesFilter<"cart">
-    cart_create_date?: DateTimeNullableWithAggregatesFilter<"cart"> | Date | string | null
-    cart_status?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_order_number?: StringNullableWithAggregatesFilter<"cart"> | string | null
+    id?: StringWithAggregatesFilter<"cart"> | string
+    cart_create_date?: StringWithAggregatesFilter<"cart"> | string
+    cart_customer_name?: StringWithAggregatesFilter<"cart"> | string
+    cart_customer_tel?: StringWithAggregatesFilter<"cart"> | string
+    cart_delivery_date?: StringWithAggregatesFilter<"cart"> | string
+    cart_export_time?: StringWithAggregatesFilter<"cart"> | string
+    cart_id?: StringWithAggregatesFilter<"cart"> | string
     cart_last_update?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_customer_name?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_customer_tel?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_location_send?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_delivery_date?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_export_time?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_receive_time?: StringNullableWithAggregatesFilter<"cart"> | string | null
-    cart_shipping_cost?: DecimalNullableWithAggregatesFilter<"cart"> | Decimal | DecimalJsLike | number | string | null
+    cart_location_send?: StringWithAggregatesFilter<"cart"> | string
+    cart_order_number?: StringWithAggregatesFilter<"cart"> | string
+    cart_receive_time?: StringWithAggregatesFilter<"cart"> | string
+    cart_shipping_cost?: StringWithAggregatesFilter<"cart"> | string
+    cart_status?: StringWithAggregatesFilter<"cart"> | string
+    cart_username?: StringWithAggregatesFilter<"cart"> | string
   }
 
   export type employeeWhereInput = {
     AND?: employeeWhereInput | employeeWhereInput[]
     OR?: employeeWhereInput[]
     NOT?: employeeWhereInput | employeeWhereInput[]
-    employee_id?: UuidFilter<"employee"> | string
-    employee_username?: StringNullableFilter<"employee"> | string | null
-    employee_firstname?: StringNullableFilter<"employee"> | string | null
-    employee_lastname?: StringNullableFilter<"employee"> | string | null
-    employee_pin?: DecimalNullableFilter<"employee"> | Decimal | DecimalJsLike | number | string | null
-    employee_role?: StringNullableFilter<"employee"> | string | null
+    id?: StringFilter<"employee"> | string
+    employee_firstname?: StringFilter<"employee"> | string
+    employee_id?: StringFilter<"employee"> | string
+    employee_lastname?: StringFilter<"employee"> | string
+    employee_pin?: StringFilter<"employee"> | string
+    employee_role?: StringFilter<"employee"> | string
+    employee_username?: StringFilter<"employee"> | string
   }
 
   export type employeeOrderByWithRelationInput = {
+    id?: SortOrder
+    employee_firstname?: SortOrder
     employee_id?: SortOrder
-    employee_username?: SortOrderInput | SortOrder
-    employee_firstname?: SortOrderInput | SortOrder
-    employee_lastname?: SortOrderInput | SortOrder
-    employee_pin?: SortOrderInput | SortOrder
-    employee_role?: SortOrderInput | SortOrder
+    employee_lastname?: SortOrder
+    employee_pin?: SortOrder
+    employee_role?: SortOrder
+    employee_username?: SortOrder
   }
 
   export type employeeWhereUniqueInput = Prisma.AtLeast<{
-    employee_id?: string
+    id?: string
     AND?: employeeWhereInput | employeeWhereInput[]
     OR?: employeeWhereInput[]
     NOT?: employeeWhereInput | employeeWhereInput[]
-    employee_username?: StringNullableFilter<"employee"> | string | null
-    employee_firstname?: StringNullableFilter<"employee"> | string | null
-    employee_lastname?: StringNullableFilter<"employee"> | string | null
-    employee_pin?: DecimalNullableFilter<"employee"> | Decimal | DecimalJsLike | number | string | null
-    employee_role?: StringNullableFilter<"employee"> | string | null
-  }, "employee_id">
+    employee_firstname?: StringFilter<"employee"> | string
+    employee_id?: StringFilter<"employee"> | string
+    employee_lastname?: StringFilter<"employee"> | string
+    employee_pin?: StringFilter<"employee"> | string
+    employee_role?: StringFilter<"employee"> | string
+    employee_username?: StringFilter<"employee"> | string
+  }, "id">
 
   export type employeeOrderByWithAggregationInput = {
+    id?: SortOrder
+    employee_firstname?: SortOrder
     employee_id?: SortOrder
-    employee_username?: SortOrderInput | SortOrder
-    employee_firstname?: SortOrderInput | SortOrder
-    employee_lastname?: SortOrderInput | SortOrder
-    employee_pin?: SortOrderInput | SortOrder
-    employee_role?: SortOrderInput | SortOrder
+    employee_lastname?: SortOrder
+    employee_pin?: SortOrder
+    employee_role?: SortOrder
+    employee_username?: SortOrder
     _count?: employeeCountOrderByAggregateInput
-    _avg?: employeeAvgOrderByAggregateInput
     _max?: employeeMaxOrderByAggregateInput
     _min?: employeeMinOrderByAggregateInput
-    _sum?: employeeSumOrderByAggregateInput
   }
 
   export type employeeScalarWhereWithAggregatesInput = {
     AND?: employeeScalarWhereWithAggregatesInput | employeeScalarWhereWithAggregatesInput[]
     OR?: employeeScalarWhereWithAggregatesInput[]
     NOT?: employeeScalarWhereWithAggregatesInput | employeeScalarWhereWithAggregatesInput[]
-    employee_id?: UuidWithAggregatesFilter<"employee"> | string
-    employee_username?: StringNullableWithAggregatesFilter<"employee"> | string | null
-    employee_firstname?: StringNullableWithAggregatesFilter<"employee"> | string | null
-    employee_lastname?: StringNullableWithAggregatesFilter<"employee"> | string | null
-    employee_pin?: DecimalNullableWithAggregatesFilter<"employee"> | Decimal | DecimalJsLike | number | string | null
-    employee_role?: StringNullableWithAggregatesFilter<"employee"> | string | null
+    id?: StringWithAggregatesFilter<"employee"> | string
+    employee_firstname?: StringWithAggregatesFilter<"employee"> | string
+    employee_id?: StringWithAggregatesFilter<"employee"> | string
+    employee_lastname?: StringWithAggregatesFilter<"employee"> | string
+    employee_pin?: StringWithAggregatesFilter<"employee"> | string
+    employee_role?: StringWithAggregatesFilter<"employee"> | string
+    employee_username?: StringWithAggregatesFilter<"employee"> | string
   }
 
-  export type ingredient_transactionsWhereInput = {
-    AND?: ingredient_transactionsWhereInput | ingredient_transactionsWhereInput[]
-    OR?: ingredient_transactionsWhereInput[]
-    NOT?: ingredient_transactionsWhereInput | ingredient_transactionsWhereInput[]
-    transaction_id?: IntFilter<"ingredient_transactions"> | number
-    transaction_date?: DateTimeFilter<"ingredient_transactions"> | Date | string
-    transaction_from_username?: StringFilter<"ingredient_transactions"> | string
-    transaction_type?: StringNullableFilter<"ingredient_transactions"> | string | null
-    ingredient_name?: StringFilter<"ingredient_transactions"> | string
-    transaction_total_price?: DecimalFilter<"ingredient_transactions"> | Decimal | DecimalJsLike | number | string
-    transaction_quantity?: DecimalFilter<"ingredient_transactions"> | Decimal | DecimalJsLike | number | string
-    transaction_units?: StringFilter<"ingredient_transactions"> | string
+  export type ingredient_transactionWhereInput = {
+    AND?: ingredient_transactionWhereInput | ingredient_transactionWhereInput[]
+    OR?: ingredient_transactionWhereInput[]
+    NOT?: ingredient_transactionWhereInput | ingredient_transactionWhereInput[]
+    id?: StringFilter<"ingredient_transaction"> | string
+    ingredient_name?: StringFilter<"ingredient_transaction"> | string
+    transaction_date?: StringFilter<"ingredient_transaction"> | string
+    transaction_from_username?: StringFilter<"ingredient_transaction"> | string
+    transaction_id?: IntFilter<"ingredient_transaction"> | number
+    transaction_quantity?: StringFilter<"ingredient_transaction"> | string
+    transaction_total_price?: StringFilter<"ingredient_transaction"> | string
+    transaction_type?: StringFilter<"ingredient_transaction"> | string
+    transaction_units?: StringFilter<"ingredient_transaction"> | string
   }
 
-  export type ingredient_transactionsOrderByWithRelationInput = {
-    transaction_id?: SortOrder
+  export type ingredient_transactionOrderByWithRelationInput = {
+    id?: SortOrder
+    ingredient_name?: SortOrder
     transaction_date?: SortOrder
     transaction_from_username?: SortOrder
-    transaction_type?: SortOrderInput | SortOrder
-    ingredient_name?: SortOrder
-    transaction_total_price?: SortOrder
+    transaction_id?: SortOrder
     transaction_quantity?: SortOrder
+    transaction_total_price?: SortOrder
+    transaction_type?: SortOrder
     transaction_units?: SortOrder
   }
 
-  export type ingredient_transactionsWhereUniqueInput = Prisma.AtLeast<{
-    transaction_id?: number
-    AND?: ingredient_transactionsWhereInput | ingredient_transactionsWhereInput[]
-    OR?: ingredient_transactionsWhereInput[]
-    NOT?: ingredient_transactionsWhereInput | ingredient_transactionsWhereInput[]
-    transaction_date?: DateTimeFilter<"ingredient_transactions"> | Date | string
-    transaction_from_username?: StringFilter<"ingredient_transactions"> | string
-    transaction_type?: StringNullableFilter<"ingredient_transactions"> | string | null
-    ingredient_name?: StringFilter<"ingredient_transactions"> | string
-    transaction_total_price?: DecimalFilter<"ingredient_transactions"> | Decimal | DecimalJsLike | number | string
-    transaction_quantity?: DecimalFilter<"ingredient_transactions"> | Decimal | DecimalJsLike | number | string
-    transaction_units?: StringFilter<"ingredient_transactions"> | string
-  }, "transaction_id">
+  export type ingredient_transactionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ingredient_transactionWhereInput | ingredient_transactionWhereInput[]
+    OR?: ingredient_transactionWhereInput[]
+    NOT?: ingredient_transactionWhereInput | ingredient_transactionWhereInput[]
+    ingredient_name?: StringFilter<"ingredient_transaction"> | string
+    transaction_date?: StringFilter<"ingredient_transaction"> | string
+    transaction_from_username?: StringFilter<"ingredient_transaction"> | string
+    transaction_id?: IntFilter<"ingredient_transaction"> | number
+    transaction_quantity?: StringFilter<"ingredient_transaction"> | string
+    transaction_total_price?: StringFilter<"ingredient_transaction"> | string
+    transaction_type?: StringFilter<"ingredient_transaction"> | string
+    transaction_units?: StringFilter<"ingredient_transaction"> | string
+  }, "id">
 
-  export type ingredient_transactionsOrderByWithAggregationInput = {
-    transaction_id?: SortOrder
+  export type ingredient_transactionOrderByWithAggregationInput = {
+    id?: SortOrder
+    ingredient_name?: SortOrder
     transaction_date?: SortOrder
     transaction_from_username?: SortOrder
-    transaction_type?: SortOrderInput | SortOrder
-    ingredient_name?: SortOrder
-    transaction_total_price?: SortOrder
+    transaction_id?: SortOrder
     transaction_quantity?: SortOrder
+    transaction_total_price?: SortOrder
+    transaction_type?: SortOrder
     transaction_units?: SortOrder
-    _count?: ingredient_transactionsCountOrderByAggregateInput
-    _avg?: ingredient_transactionsAvgOrderByAggregateInput
-    _max?: ingredient_transactionsMaxOrderByAggregateInput
-    _min?: ingredient_transactionsMinOrderByAggregateInput
-    _sum?: ingredient_transactionsSumOrderByAggregateInput
+    _count?: ingredient_transactionCountOrderByAggregateInput
+    _avg?: ingredient_transactionAvgOrderByAggregateInput
+    _max?: ingredient_transactionMaxOrderByAggregateInput
+    _min?: ingredient_transactionMinOrderByAggregateInput
+    _sum?: ingredient_transactionSumOrderByAggregateInput
   }
 
-  export type ingredient_transactionsScalarWhereWithAggregatesInput = {
-    AND?: ingredient_transactionsScalarWhereWithAggregatesInput | ingredient_transactionsScalarWhereWithAggregatesInput[]
-    OR?: ingredient_transactionsScalarWhereWithAggregatesInput[]
-    NOT?: ingredient_transactionsScalarWhereWithAggregatesInput | ingredient_transactionsScalarWhereWithAggregatesInput[]
-    transaction_id?: IntWithAggregatesFilter<"ingredient_transactions"> | number
-    transaction_date?: DateTimeWithAggregatesFilter<"ingredient_transactions"> | Date | string
-    transaction_from_username?: StringWithAggregatesFilter<"ingredient_transactions"> | string
-    transaction_type?: StringNullableWithAggregatesFilter<"ingredient_transactions"> | string | null
-    ingredient_name?: StringWithAggregatesFilter<"ingredient_transactions"> | string
-    transaction_total_price?: DecimalWithAggregatesFilter<"ingredient_transactions"> | Decimal | DecimalJsLike | number | string
-    transaction_quantity?: DecimalWithAggregatesFilter<"ingredient_transactions"> | Decimal | DecimalJsLike | number | string
-    transaction_units?: StringWithAggregatesFilter<"ingredient_transactions"> | string
+  export type ingredient_transactionScalarWhereWithAggregatesInput = {
+    AND?: ingredient_transactionScalarWhereWithAggregatesInput | ingredient_transactionScalarWhereWithAggregatesInput[]
+    OR?: ingredient_transactionScalarWhereWithAggregatesInput[]
+    NOT?: ingredient_transactionScalarWhereWithAggregatesInput | ingredient_transactionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ingredient_transaction"> | string
+    ingredient_name?: StringWithAggregatesFilter<"ingredient_transaction"> | string
+    transaction_date?: StringWithAggregatesFilter<"ingredient_transaction"> | string
+    transaction_from_username?: StringWithAggregatesFilter<"ingredient_transaction"> | string
+    transaction_id?: IntWithAggregatesFilter<"ingredient_transaction"> | number
+    transaction_quantity?: StringWithAggregatesFilter<"ingredient_transaction"> | string
+    transaction_total_price?: StringWithAggregatesFilter<"ingredient_transaction"> | string
+    transaction_type?: StringWithAggregatesFilter<"ingredient_transaction"> | string
+    transaction_units?: StringWithAggregatesFilter<"ingredient_transaction"> | string
   }
 
   export type ingredientsWhereInput = {
     AND?: ingredientsWhereInput | ingredientsWhereInput[]
     OR?: ingredientsWhereInput[]
     NOT?: ingredientsWhereInput | ingredientsWhereInput[]
+    id?: StringFilter<"ingredients"> | string
+    ingredient_category?: StringFilter<"ingredients"> | string
     ingredient_id?: IntFilter<"ingredients"> | number
+    ingredient_image?: StringFilter<"ingredients"> | string
+    ingredient_lastupdate?: StringFilter<"ingredients"> | string
     ingredient_name?: StringFilter<"ingredients"> | string
-    ingredient_total?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
+    ingredient_price?: StringFilter<"ingredients"> | string
+    ingredient_price_per_unit?: StringFilter<"ingredients"> | string
+    ingredient_sub_category?: StringFilter<"ingredients"> | string
+    ingredient_total?: StringFilter<"ingredients"> | string
+    ingredient_total_alert?: StringFilter<"ingredients"> | string
     ingredient_unit?: StringFilter<"ingredients"> | string
-    ingredient_lastupdate?: DateTimeNullableFilter<"ingredients"> | Date | string | null
-    ingredient_image?: StringNullableFilter<"ingredients"> | string | null
-    ingredient_total_alert?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: StringNullableFilter<"ingredients"> | string | null
-    ingredient_sub_category?: StringNullableFilter<"ingredients"> | string | null
-    ingredient_price?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
   }
 
   export type ingredientsOrderByWithRelationInput = {
+    id?: SortOrder
+    ingredient_category?: SortOrder
     ingredient_id?: SortOrder
+    ingredient_image?: SortOrder
+    ingredient_lastupdate?: SortOrder
     ingredient_name?: SortOrder
-    ingredient_total?: SortOrderInput | SortOrder
+    ingredient_price?: SortOrder
+    ingredient_price_per_unit?: SortOrder
+    ingredient_sub_category?: SortOrder
+    ingredient_total?: SortOrder
+    ingredient_total_alert?: SortOrder
     ingredient_unit?: SortOrder
-    ingredient_lastupdate?: SortOrderInput | SortOrder
-    ingredient_image?: SortOrderInput | SortOrder
-    ingredient_total_alert?: SortOrderInput | SortOrder
-    ingredient_category?: SortOrderInput | SortOrder
-    ingredient_sub_category?: SortOrderInput | SortOrder
-    ingredient_price?: SortOrderInput | SortOrder
-    ingredient_price_per_unit?: SortOrderInput | SortOrder
   }
 
   export type ingredientsWhereUniqueInput = Prisma.AtLeast<{
-    ingredient_id?: number
+    id?: string
     AND?: ingredientsWhereInput | ingredientsWhereInput[]
     OR?: ingredientsWhereInput[]
     NOT?: ingredientsWhereInput | ingredientsWhereInput[]
+    ingredient_category?: StringFilter<"ingredients"> | string
+    ingredient_id?: IntFilter<"ingredients"> | number
+    ingredient_image?: StringFilter<"ingredients"> | string
+    ingredient_lastupdate?: StringFilter<"ingredients"> | string
     ingredient_name?: StringFilter<"ingredients"> | string
-    ingredient_total?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
+    ingredient_price?: StringFilter<"ingredients"> | string
+    ingredient_price_per_unit?: StringFilter<"ingredients"> | string
+    ingredient_sub_category?: StringFilter<"ingredients"> | string
+    ingredient_total?: StringFilter<"ingredients"> | string
+    ingredient_total_alert?: StringFilter<"ingredients"> | string
     ingredient_unit?: StringFilter<"ingredients"> | string
-    ingredient_lastupdate?: DateTimeNullableFilter<"ingredients"> | Date | string | null
-    ingredient_image?: StringNullableFilter<"ingredients"> | string | null
-    ingredient_total_alert?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: StringNullableFilter<"ingredients"> | string | null
-    ingredient_sub_category?: StringNullableFilter<"ingredients"> | string | null
-    ingredient_price?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: DecimalNullableFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
-  }, "ingredient_id">
+  }, "id">
 
   export type ingredientsOrderByWithAggregationInput = {
+    id?: SortOrder
+    ingredient_category?: SortOrder
     ingredient_id?: SortOrder
+    ingredient_image?: SortOrder
+    ingredient_lastupdate?: SortOrder
     ingredient_name?: SortOrder
-    ingredient_total?: SortOrderInput | SortOrder
+    ingredient_price?: SortOrder
+    ingredient_price_per_unit?: SortOrder
+    ingredient_sub_category?: SortOrder
+    ingredient_total?: SortOrder
+    ingredient_total_alert?: SortOrder
     ingredient_unit?: SortOrder
-    ingredient_lastupdate?: SortOrderInput | SortOrder
-    ingredient_image?: SortOrderInput | SortOrder
-    ingredient_total_alert?: SortOrderInput | SortOrder
-    ingredient_category?: SortOrderInput | SortOrder
-    ingredient_sub_category?: SortOrderInput | SortOrder
-    ingredient_price?: SortOrderInput | SortOrder
-    ingredient_price_per_unit?: SortOrderInput | SortOrder
     _count?: ingredientsCountOrderByAggregateInput
     _avg?: ingredientsAvgOrderByAggregateInput
     _max?: ingredientsMaxOrderByAggregateInput
@@ -7196,67 +7053,67 @@ export namespace Prisma {
     AND?: ingredientsScalarWhereWithAggregatesInput | ingredientsScalarWhereWithAggregatesInput[]
     OR?: ingredientsScalarWhereWithAggregatesInput[]
     NOT?: ingredientsScalarWhereWithAggregatesInput | ingredientsScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ingredients"> | string
+    ingredient_category?: StringWithAggregatesFilter<"ingredients"> | string
     ingredient_id?: IntWithAggregatesFilter<"ingredients"> | number
+    ingredient_image?: StringWithAggregatesFilter<"ingredients"> | string
+    ingredient_lastupdate?: StringWithAggregatesFilter<"ingredients"> | string
     ingredient_name?: StringWithAggregatesFilter<"ingredients"> | string
-    ingredient_total?: DecimalNullableWithAggregatesFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
+    ingredient_price?: StringWithAggregatesFilter<"ingredients"> | string
+    ingredient_price_per_unit?: StringWithAggregatesFilter<"ingredients"> | string
+    ingredient_sub_category?: StringWithAggregatesFilter<"ingredients"> | string
+    ingredient_total?: StringWithAggregatesFilter<"ingredients"> | string
+    ingredient_total_alert?: StringWithAggregatesFilter<"ingredients"> | string
     ingredient_unit?: StringWithAggregatesFilter<"ingredients"> | string
-    ingredient_lastupdate?: DateTimeNullableWithAggregatesFilter<"ingredients"> | Date | string | null
-    ingredient_image?: StringNullableWithAggregatesFilter<"ingredients"> | string | null
-    ingredient_total_alert?: DecimalNullableWithAggregatesFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: StringNullableWithAggregatesFilter<"ingredients"> | string | null
-    ingredient_sub_category?: StringNullableWithAggregatesFilter<"ingredients"> | string | null
-    ingredient_price?: DecimalNullableWithAggregatesFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: DecimalNullableWithAggregatesFilter<"ingredients"> | Decimal | DecimalJsLike | number | string | null
   }
 
   export type menuWhereInput = {
     AND?: menuWhereInput | menuWhereInput[]
     OR?: menuWhereInput[]
     NOT?: menuWhereInput | menuWhereInput[]
+    id?: StringFilter<"menu"> | string
+    menu_category?: StringFilter<"menu"> | string
     menu_id?: IntFilter<"menu"> | number
+    menu_image?: StringFilter<"menu"> | string
+    menu_ingredients?: MenuMenuIngredientsCompositeListFilter | MenuMenuIngredientsObjectEqualityInput[]
     menu_name?: StringFilter<"menu"> | string
-    menu_ingredients?: JsonFilter<"menu">
-    menu_total?: DecimalNullableFilter<"menu"> | Decimal | DecimalJsLike | number | string | null
-    menu_image?: StringNullableFilter<"menu"> | string | null
-    menu_subname?: StringNullableFilter<"menu"> | string | null
-    menu_catagory?: StringNullableFilter<"menu"> | string | null
-    menu_description?: StringNullableFilter<"menu"> | string | null
+    menu_subname?: StringFilter<"menu"> | string
+    menu_total?: IntFilter<"menu"> | number
   }
 
   export type menuOrderByWithRelationInput = {
+    id?: SortOrder
+    menu_category?: SortOrder
     menu_id?: SortOrder
+    menu_image?: SortOrder
+    menu_ingredients?: MenuMenuIngredientsOrderByCompositeAggregateInput
     menu_name?: SortOrder
-    menu_ingredients?: SortOrder
-    menu_total?: SortOrderInput | SortOrder
-    menu_image?: SortOrderInput | SortOrder
-    menu_subname?: SortOrderInput | SortOrder
-    menu_catagory?: SortOrderInput | SortOrder
-    menu_description?: SortOrderInput | SortOrder
+    menu_subname?: SortOrder
+    menu_total?: SortOrder
   }
 
   export type menuWhereUniqueInput = Prisma.AtLeast<{
-    menu_id?: number
+    id?: string
     AND?: menuWhereInput | menuWhereInput[]
     OR?: menuWhereInput[]
     NOT?: menuWhereInput | menuWhereInput[]
+    menu_category?: StringFilter<"menu"> | string
+    menu_id?: IntFilter<"menu"> | number
+    menu_image?: StringFilter<"menu"> | string
+    menu_ingredients?: MenuMenuIngredientsCompositeListFilter | MenuMenuIngredientsObjectEqualityInput[]
     menu_name?: StringFilter<"menu"> | string
-    menu_ingredients?: JsonFilter<"menu">
-    menu_total?: DecimalNullableFilter<"menu"> | Decimal | DecimalJsLike | number | string | null
-    menu_image?: StringNullableFilter<"menu"> | string | null
-    menu_subname?: StringNullableFilter<"menu"> | string | null
-    menu_catagory?: StringNullableFilter<"menu"> | string | null
-    menu_description?: StringNullableFilter<"menu"> | string | null
-  }, "menu_id">
+    menu_subname?: StringFilter<"menu"> | string
+    menu_total?: IntFilter<"menu"> | number
+  }, "id">
 
   export type menuOrderByWithAggregationInput = {
+    id?: SortOrder
+    menu_category?: SortOrder
     menu_id?: SortOrder
+    menu_image?: SortOrder
     menu_name?: SortOrder
-    menu_ingredients?: SortOrder
-    menu_total?: SortOrderInput | SortOrder
-    menu_image?: SortOrderInput | SortOrder
-    menu_subname?: SortOrderInput | SortOrder
-    menu_catagory?: SortOrderInput | SortOrder
-    menu_description?: SortOrderInput | SortOrder
+    menu_subname?: SortOrder
+    menu_total?: SortOrder
     _count?: menuCountOrderByAggregateInput
     _avg?: menuAvgOrderByAggregateInput
     _max?: menuMaxOrderByAggregateInput
@@ -7268,451 +7125,455 @@ export namespace Prisma {
     AND?: menuScalarWhereWithAggregatesInput | menuScalarWhereWithAggregatesInput[]
     OR?: menuScalarWhereWithAggregatesInput[]
     NOT?: menuScalarWhereWithAggregatesInput | menuScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"menu"> | string
+    menu_category?: StringWithAggregatesFilter<"menu"> | string
     menu_id?: IntWithAggregatesFilter<"menu"> | number
+    menu_image?: StringWithAggregatesFilter<"menu"> | string
     menu_name?: StringWithAggregatesFilter<"menu"> | string
-    menu_ingredients?: JsonWithAggregatesFilter<"menu">
-    menu_total?: DecimalNullableWithAggregatesFilter<"menu"> | Decimal | DecimalJsLike | number | string | null
-    menu_image?: StringNullableWithAggregatesFilter<"menu"> | string | null
-    menu_subname?: StringNullableWithAggregatesFilter<"menu"> | string | null
-    menu_catagory?: StringNullableWithAggregatesFilter<"menu"> | string | null
-    menu_description?: StringNullableWithAggregatesFilter<"menu"> | string | null
+    menu_subname?: StringWithAggregatesFilter<"menu"> | string
+    menu_total?: IntWithAggregatesFilter<"menu"> | number
   }
 
   export type cartCreateInput = {
-    cart_id?: string
-    cart_username: string
-    cart_menu_items: JsonNullValueInput | InputJsonValue
-    cart_create_date?: Date | string | null
-    cart_status?: string | null
-    cart_order_number?: string | null
+    id?: string
+    cart_create_date: string
+    cart_customer_name: string
+    cart_customer_tel: string
+    cart_delivery_date: string
+    cart_export_time: string
+    cart_id: string
     cart_last_update?: string | null
-    cart_customer_name?: string | null
-    cart_customer_tel?: string | null
-    cart_location_send?: string | null
-    cart_delivery_date?: string | null
-    cart_export_time?: string | null
-    cart_receive_time?: string | null
-    cart_shipping_cost?: Decimal | DecimalJsLike | number | string | null
+    cart_location_send: string
+    cart_menu_items?: XOR<CartCartMenuItemsListCreateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_order_number: string
+    cart_receive_time: string
+    cart_shipping_cost: string
+    cart_status: string
+    cart_username: string
   }
 
   export type cartUncheckedCreateInput = {
-    cart_id?: string
-    cart_username: string
-    cart_menu_items: JsonNullValueInput | InputJsonValue
-    cart_create_date?: Date | string | null
-    cart_status?: string | null
-    cart_order_number?: string | null
+    id?: string
+    cart_create_date: string
+    cart_customer_name: string
+    cart_customer_tel: string
+    cart_delivery_date: string
+    cart_export_time: string
+    cart_id: string
     cart_last_update?: string | null
-    cart_customer_name?: string | null
-    cart_customer_tel?: string | null
-    cart_location_send?: string | null
-    cart_delivery_date?: string | null
-    cart_export_time?: string | null
-    cart_receive_time?: string | null
-    cart_shipping_cost?: Decimal | DecimalJsLike | number | string | null
+    cart_location_send: string
+    cart_menu_items?: XOR<CartCartMenuItemsListCreateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_order_number: string
+    cart_receive_time: string
+    cart_shipping_cost: string
+    cart_status: string
+    cart_username: string
   }
 
   export type cartUpdateInput = {
+    cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_customer_name?: StringFieldUpdateOperationsInput | string
+    cart_customer_tel?: StringFieldUpdateOperationsInput | string
+    cart_delivery_date?: StringFieldUpdateOperationsInput | string
+    cart_export_time?: StringFieldUpdateOperationsInput | string
     cart_id?: StringFieldUpdateOperationsInput | string
-    cart_username?: StringFieldUpdateOperationsInput | string
-    cart_menu_items?: JsonNullValueInput | InputJsonValue
-    cart_create_date?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cart_status?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_order_number?: NullableStringFieldUpdateOperationsInput | string | null
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_name?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_tel?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_location_send?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cart_location_send?: StringFieldUpdateOperationsInput | string
+    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_order_number?: StringFieldUpdateOperationsInput | string
+    cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_shipping_cost?: StringFieldUpdateOperationsInput | string
+    cart_status?: StringFieldUpdateOperationsInput | string
+    cart_username?: StringFieldUpdateOperationsInput | string
   }
 
   export type cartUncheckedUpdateInput = {
+    cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_customer_name?: StringFieldUpdateOperationsInput | string
+    cart_customer_tel?: StringFieldUpdateOperationsInput | string
+    cart_delivery_date?: StringFieldUpdateOperationsInput | string
+    cart_export_time?: StringFieldUpdateOperationsInput | string
     cart_id?: StringFieldUpdateOperationsInput | string
-    cart_username?: StringFieldUpdateOperationsInput | string
-    cart_menu_items?: JsonNullValueInput | InputJsonValue
-    cart_create_date?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cart_status?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_order_number?: NullableStringFieldUpdateOperationsInput | string | null
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_name?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_tel?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_location_send?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cart_location_send?: StringFieldUpdateOperationsInput | string
+    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_order_number?: StringFieldUpdateOperationsInput | string
+    cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_shipping_cost?: StringFieldUpdateOperationsInput | string
+    cart_status?: StringFieldUpdateOperationsInput | string
+    cart_username?: StringFieldUpdateOperationsInput | string
   }
 
   export type cartCreateManyInput = {
-    cart_id?: string
-    cart_username: string
-    cart_menu_items: JsonNullValueInput | InputJsonValue
-    cart_create_date?: Date | string | null
-    cart_status?: string | null
-    cart_order_number?: string | null
+    id?: string
+    cart_create_date: string
+    cart_customer_name: string
+    cart_customer_tel: string
+    cart_delivery_date: string
+    cart_export_time: string
+    cart_id: string
     cart_last_update?: string | null
-    cart_customer_name?: string | null
-    cart_customer_tel?: string | null
-    cart_location_send?: string | null
-    cart_delivery_date?: string | null
-    cart_export_time?: string | null
-    cart_receive_time?: string | null
-    cart_shipping_cost?: Decimal | DecimalJsLike | number | string | null
+    cart_location_send: string
+    cart_menu_items?: XOR<CartCartMenuItemsListCreateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_order_number: string
+    cart_receive_time: string
+    cart_shipping_cost: string
+    cart_status: string
+    cart_username: string
   }
 
   export type cartUpdateManyMutationInput = {
+    cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_customer_name?: StringFieldUpdateOperationsInput | string
+    cart_customer_tel?: StringFieldUpdateOperationsInput | string
+    cart_delivery_date?: StringFieldUpdateOperationsInput | string
+    cart_export_time?: StringFieldUpdateOperationsInput | string
     cart_id?: StringFieldUpdateOperationsInput | string
-    cart_username?: StringFieldUpdateOperationsInput | string
-    cart_menu_items?: JsonNullValueInput | InputJsonValue
-    cart_create_date?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cart_status?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_order_number?: NullableStringFieldUpdateOperationsInput | string | null
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_name?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_tel?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_location_send?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cart_location_send?: StringFieldUpdateOperationsInput | string
+    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_order_number?: StringFieldUpdateOperationsInput | string
+    cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_shipping_cost?: StringFieldUpdateOperationsInput | string
+    cart_status?: StringFieldUpdateOperationsInput | string
+    cart_username?: StringFieldUpdateOperationsInput | string
   }
 
   export type cartUncheckedUpdateManyInput = {
+    cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_customer_name?: StringFieldUpdateOperationsInput | string
+    cart_customer_tel?: StringFieldUpdateOperationsInput | string
+    cart_delivery_date?: StringFieldUpdateOperationsInput | string
+    cart_export_time?: StringFieldUpdateOperationsInput | string
     cart_id?: StringFieldUpdateOperationsInput | string
-    cart_username?: StringFieldUpdateOperationsInput | string
-    cart_menu_items?: JsonNullValueInput | InputJsonValue
-    cart_create_date?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cart_status?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_order_number?: NullableStringFieldUpdateOperationsInput | string | null
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_name?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_customer_tel?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_location_send?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_delivery_date?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_export_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_receive_time?: NullableStringFieldUpdateOperationsInput | string | null
-    cart_shipping_cost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cart_location_send?: StringFieldUpdateOperationsInput | string
+    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_order_number?: StringFieldUpdateOperationsInput | string
+    cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_shipping_cost?: StringFieldUpdateOperationsInput | string
+    cart_status?: StringFieldUpdateOperationsInput | string
+    cart_username?: StringFieldUpdateOperationsInput | string
   }
 
   export type employeeCreateInput = {
-    employee_id?: string
-    employee_username?: string | null
-    employee_firstname?: string | null
-    employee_lastname?: string | null
-    employee_pin?: Decimal | DecimalJsLike | number | string | null
-    employee_role?: string | null
+    id?: string
+    employee_firstname: string
+    employee_id: string
+    employee_lastname: string
+    employee_pin: string
+    employee_role: string
+    employee_username: string
   }
 
   export type employeeUncheckedCreateInput = {
-    employee_id?: string
-    employee_username?: string | null
-    employee_firstname?: string | null
-    employee_lastname?: string | null
-    employee_pin?: Decimal | DecimalJsLike | number | string | null
-    employee_role?: string | null
+    id?: string
+    employee_firstname: string
+    employee_id: string
+    employee_lastname: string
+    employee_pin: string
+    employee_role: string
+    employee_username: string
   }
 
   export type employeeUpdateInput = {
+    employee_firstname?: StringFieldUpdateOperationsInput | string
     employee_id?: StringFieldUpdateOperationsInput | string
-    employee_username?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_firstname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_lastname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_pin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    employee_role?: NullableStringFieldUpdateOperationsInput | string | null
+    employee_lastname?: StringFieldUpdateOperationsInput | string
+    employee_pin?: StringFieldUpdateOperationsInput | string
+    employee_role?: StringFieldUpdateOperationsInput | string
+    employee_username?: StringFieldUpdateOperationsInput | string
   }
 
   export type employeeUncheckedUpdateInput = {
+    employee_firstname?: StringFieldUpdateOperationsInput | string
     employee_id?: StringFieldUpdateOperationsInput | string
-    employee_username?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_firstname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_lastname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_pin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    employee_role?: NullableStringFieldUpdateOperationsInput | string | null
+    employee_lastname?: StringFieldUpdateOperationsInput | string
+    employee_pin?: StringFieldUpdateOperationsInput | string
+    employee_role?: StringFieldUpdateOperationsInput | string
+    employee_username?: StringFieldUpdateOperationsInput | string
   }
 
   export type employeeCreateManyInput = {
-    employee_id?: string
-    employee_username?: string | null
-    employee_firstname?: string | null
-    employee_lastname?: string | null
-    employee_pin?: Decimal | DecimalJsLike | number | string | null
-    employee_role?: string | null
+    id?: string
+    employee_firstname: string
+    employee_id: string
+    employee_lastname: string
+    employee_pin: string
+    employee_role: string
+    employee_username: string
   }
 
   export type employeeUpdateManyMutationInput = {
+    employee_firstname?: StringFieldUpdateOperationsInput | string
     employee_id?: StringFieldUpdateOperationsInput | string
-    employee_username?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_firstname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_lastname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_pin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    employee_role?: NullableStringFieldUpdateOperationsInput | string | null
+    employee_lastname?: StringFieldUpdateOperationsInput | string
+    employee_pin?: StringFieldUpdateOperationsInput | string
+    employee_role?: StringFieldUpdateOperationsInput | string
+    employee_username?: StringFieldUpdateOperationsInput | string
   }
 
   export type employeeUncheckedUpdateManyInput = {
+    employee_firstname?: StringFieldUpdateOperationsInput | string
     employee_id?: StringFieldUpdateOperationsInput | string
-    employee_username?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_firstname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_lastname?: NullableStringFieldUpdateOperationsInput | string | null
-    employee_pin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    employee_role?: NullableStringFieldUpdateOperationsInput | string | null
+    employee_lastname?: StringFieldUpdateOperationsInput | string
+    employee_pin?: StringFieldUpdateOperationsInput | string
+    employee_role?: StringFieldUpdateOperationsInput | string
+    employee_username?: StringFieldUpdateOperationsInput | string
   }
 
-  export type ingredient_transactionsCreateInput = {
-    transaction_date?: Date | string
-    transaction_from_username: string
-    transaction_type?: string | null
+  export type ingredient_transactionCreateInput = {
+    id?: string
     ingredient_name: string
-    transaction_total_price: Decimal | DecimalJsLike | number | string
-    transaction_quantity: Decimal | DecimalJsLike | number | string
+    transaction_date: string
+    transaction_from_username: string
+    transaction_id: number
+    transaction_quantity: string
+    transaction_total_price: string
+    transaction_type: string
     transaction_units: string
   }
 
-  export type ingredient_transactionsUncheckedCreateInput = {
-    transaction_id?: number
-    transaction_date?: Date | string
-    transaction_from_username: string
-    transaction_type?: string | null
+  export type ingredient_transactionUncheckedCreateInput = {
+    id?: string
     ingredient_name: string
-    transaction_total_price: Decimal | DecimalJsLike | number | string
-    transaction_quantity: Decimal | DecimalJsLike | number | string
+    transaction_date: string
+    transaction_from_username: string
+    transaction_id: number
+    transaction_quantity: string
+    transaction_total_price: string
+    transaction_type: string
     transaction_units: string
   }
 
-  export type ingredient_transactionsUpdateInput = {
-    transaction_date?: DateTimeFieldUpdateOperationsInput | Date | string
-    transaction_from_username?: StringFieldUpdateOperationsInput | string
-    transaction_type?: NullableStringFieldUpdateOperationsInput | string | null
+  export type ingredient_transactionUpdateInput = {
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    transaction_total_price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    transaction_quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    transaction_units?: StringFieldUpdateOperationsInput | string
-  }
-
-  export type ingredient_transactionsUncheckedUpdateInput = {
+    transaction_date?: StringFieldUpdateOperationsInput | string
+    transaction_from_username?: StringFieldUpdateOperationsInput | string
     transaction_id?: IntFieldUpdateOperationsInput | number
-    transaction_date?: DateTimeFieldUpdateOperationsInput | Date | string
-    transaction_from_username?: StringFieldUpdateOperationsInput | string
-    transaction_type?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_name?: StringFieldUpdateOperationsInput | string
-    transaction_total_price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    transaction_quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    transaction_quantity?: StringFieldUpdateOperationsInput | string
+    transaction_total_price?: StringFieldUpdateOperationsInput | string
+    transaction_type?: StringFieldUpdateOperationsInput | string
     transaction_units?: StringFieldUpdateOperationsInput | string
   }
 
-  export type ingredient_transactionsCreateManyInput = {
-    transaction_id?: number
-    transaction_date?: Date | string
-    transaction_from_username: string
-    transaction_type?: string | null
+  export type ingredient_transactionUncheckedUpdateInput = {
+    ingredient_name?: StringFieldUpdateOperationsInput | string
+    transaction_date?: StringFieldUpdateOperationsInput | string
+    transaction_from_username?: StringFieldUpdateOperationsInput | string
+    transaction_id?: IntFieldUpdateOperationsInput | number
+    transaction_quantity?: StringFieldUpdateOperationsInput | string
+    transaction_total_price?: StringFieldUpdateOperationsInput | string
+    transaction_type?: StringFieldUpdateOperationsInput | string
+    transaction_units?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ingredient_transactionCreateManyInput = {
+    id?: string
     ingredient_name: string
-    transaction_total_price: Decimal | DecimalJsLike | number | string
-    transaction_quantity: Decimal | DecimalJsLike | number | string
+    transaction_date: string
+    transaction_from_username: string
+    transaction_id: number
+    transaction_quantity: string
+    transaction_total_price: string
+    transaction_type: string
     transaction_units: string
   }
 
-  export type ingredient_transactionsUpdateManyMutationInput = {
-    transaction_date?: DateTimeFieldUpdateOperationsInput | Date | string
-    transaction_from_username?: StringFieldUpdateOperationsInput | string
-    transaction_type?: NullableStringFieldUpdateOperationsInput | string | null
+  export type ingredient_transactionUpdateManyMutationInput = {
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    transaction_total_price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    transaction_quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    transaction_date?: StringFieldUpdateOperationsInput | string
+    transaction_from_username?: StringFieldUpdateOperationsInput | string
+    transaction_id?: IntFieldUpdateOperationsInput | number
+    transaction_quantity?: StringFieldUpdateOperationsInput | string
+    transaction_total_price?: StringFieldUpdateOperationsInput | string
+    transaction_type?: StringFieldUpdateOperationsInput | string
     transaction_units?: StringFieldUpdateOperationsInput | string
   }
 
-  export type ingredient_transactionsUncheckedUpdateManyInput = {
-    transaction_id?: IntFieldUpdateOperationsInput | number
-    transaction_date?: DateTimeFieldUpdateOperationsInput | Date | string
-    transaction_from_username?: StringFieldUpdateOperationsInput | string
-    transaction_type?: NullableStringFieldUpdateOperationsInput | string | null
+  export type ingredient_transactionUncheckedUpdateManyInput = {
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    transaction_total_price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    transaction_quantity?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    transaction_date?: StringFieldUpdateOperationsInput | string
+    transaction_from_username?: StringFieldUpdateOperationsInput | string
+    transaction_id?: IntFieldUpdateOperationsInput | number
+    transaction_quantity?: StringFieldUpdateOperationsInput | string
+    transaction_total_price?: StringFieldUpdateOperationsInput | string
+    transaction_type?: StringFieldUpdateOperationsInput | string
     transaction_units?: StringFieldUpdateOperationsInput | string
   }
 
   export type ingredientsCreateInput = {
+    id?: string
+    ingredient_category: string
+    ingredient_id: number
+    ingredient_image: string
+    ingredient_lastupdate: string
     ingredient_name: string
-    ingredient_total?: Decimal | DecimalJsLike | number | string | null
+    ingredient_price: string
+    ingredient_price_per_unit: string
+    ingredient_sub_category: string
+    ingredient_total: string
+    ingredient_total_alert: string
     ingredient_unit: string
-    ingredient_lastupdate?: Date | string | null
-    ingredient_image?: string | null
-    ingredient_total_alert?: Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: string | null
-    ingredient_sub_category?: string | null
-    ingredient_price?: Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type ingredientsUncheckedCreateInput = {
-    ingredient_id?: number
+    id?: string
+    ingredient_category: string
+    ingredient_id: number
+    ingredient_image: string
+    ingredient_lastupdate: string
     ingredient_name: string
-    ingredient_total?: Decimal | DecimalJsLike | number | string | null
+    ingredient_price: string
+    ingredient_price_per_unit: string
+    ingredient_sub_category: string
+    ingredient_total: string
+    ingredient_total_alert: string
     ingredient_unit: string
-    ingredient_lastupdate?: Date | string | null
-    ingredient_image?: string | null
-    ingredient_total_alert?: Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: string | null
-    ingredient_sub_category?: string | null
-    ingredient_price?: Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type ingredientsUpdateInput = {
+    ingredient_category?: StringFieldUpdateOperationsInput | string
+    ingredient_id?: IntFieldUpdateOperationsInput | number
+    ingredient_image?: StringFieldUpdateOperationsInput | string
+    ingredient_lastupdate?: StringFieldUpdateOperationsInput | string
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    ingredient_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ingredient_price?: StringFieldUpdateOperationsInput | string
+    ingredient_price_per_unit?: StringFieldUpdateOperationsInput | string
+    ingredient_sub_category?: StringFieldUpdateOperationsInput | string
+    ingredient_total?: StringFieldUpdateOperationsInput | string
+    ingredient_total_alert?: StringFieldUpdateOperationsInput | string
     ingredient_unit?: StringFieldUpdateOperationsInput | string
-    ingredient_lastupdate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    ingredient_image?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_total_alert?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_sub_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_price?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type ingredientsUncheckedUpdateInput = {
+    ingredient_category?: StringFieldUpdateOperationsInput | string
     ingredient_id?: IntFieldUpdateOperationsInput | number
+    ingredient_image?: StringFieldUpdateOperationsInput | string
+    ingredient_lastupdate?: StringFieldUpdateOperationsInput | string
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    ingredient_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ingredient_price?: StringFieldUpdateOperationsInput | string
+    ingredient_price_per_unit?: StringFieldUpdateOperationsInput | string
+    ingredient_sub_category?: StringFieldUpdateOperationsInput | string
+    ingredient_total?: StringFieldUpdateOperationsInput | string
+    ingredient_total_alert?: StringFieldUpdateOperationsInput | string
     ingredient_unit?: StringFieldUpdateOperationsInput | string
-    ingredient_lastupdate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    ingredient_image?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_total_alert?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_sub_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_price?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type ingredientsCreateManyInput = {
-    ingredient_id?: number
+    id?: string
+    ingredient_category: string
+    ingredient_id: number
+    ingredient_image: string
+    ingredient_lastupdate: string
     ingredient_name: string
-    ingredient_total?: Decimal | DecimalJsLike | number | string | null
+    ingredient_price: string
+    ingredient_price_per_unit: string
+    ingredient_sub_category: string
+    ingredient_total: string
+    ingredient_total_alert: string
     ingredient_unit: string
-    ingredient_lastupdate?: Date | string | null
-    ingredient_image?: string | null
-    ingredient_total_alert?: Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: string | null
-    ingredient_sub_category?: string | null
-    ingredient_price?: Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type ingredientsUpdateManyMutationInput = {
+    ingredient_category?: StringFieldUpdateOperationsInput | string
+    ingredient_id?: IntFieldUpdateOperationsInput | number
+    ingredient_image?: StringFieldUpdateOperationsInput | string
+    ingredient_lastupdate?: StringFieldUpdateOperationsInput | string
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    ingredient_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ingredient_price?: StringFieldUpdateOperationsInput | string
+    ingredient_price_per_unit?: StringFieldUpdateOperationsInput | string
+    ingredient_sub_category?: StringFieldUpdateOperationsInput | string
+    ingredient_total?: StringFieldUpdateOperationsInput | string
+    ingredient_total_alert?: StringFieldUpdateOperationsInput | string
     ingredient_unit?: StringFieldUpdateOperationsInput | string
-    ingredient_lastupdate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    ingredient_image?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_total_alert?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_sub_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_price?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type ingredientsUncheckedUpdateManyInput = {
+    ingredient_category?: StringFieldUpdateOperationsInput | string
     ingredient_id?: IntFieldUpdateOperationsInput | number
+    ingredient_image?: StringFieldUpdateOperationsInput | string
+    ingredient_lastupdate?: StringFieldUpdateOperationsInput | string
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    ingredient_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ingredient_price?: StringFieldUpdateOperationsInput | string
+    ingredient_price_per_unit?: StringFieldUpdateOperationsInput | string
+    ingredient_sub_category?: StringFieldUpdateOperationsInput | string
+    ingredient_total?: StringFieldUpdateOperationsInput | string
+    ingredient_total_alert?: StringFieldUpdateOperationsInput | string
     ingredient_unit?: StringFieldUpdateOperationsInput | string
-    ingredient_lastupdate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    ingredient_image?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_total_alert?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_sub_category?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_price?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    ingredient_price_per_unit?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type menuCreateInput = {
+    id?: string
+    menu_category: string
+    menu_id: number
+    menu_image: string
+    menu_ingredients?: XOR<MenuMenuIngredientsListCreateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
     menu_name: string
-    menu_ingredients: JsonNullValueInput | InputJsonValue
-    menu_total?: Decimal | DecimalJsLike | number | string | null
-    menu_image?: string | null
-    menu_subname?: string | null
-    menu_catagory?: string | null
-    menu_description?: string | null
+    menu_subname: string
+    menu_total: number
   }
 
   export type menuUncheckedCreateInput = {
-    menu_id?: number
+    id?: string
+    menu_category: string
+    menu_id: number
+    menu_image: string
+    menu_ingredients?: XOR<MenuMenuIngredientsListCreateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
     menu_name: string
-    menu_ingredients: JsonNullValueInput | InputJsonValue
-    menu_total?: Decimal | DecimalJsLike | number | string | null
-    menu_image?: string | null
-    menu_subname?: string | null
-    menu_catagory?: string | null
-    menu_description?: string | null
+    menu_subname: string
+    menu_total: number
   }
 
   export type menuUpdateInput = {
+    menu_category?: StringFieldUpdateOperationsInput | string
+    menu_id?: IntFieldUpdateOperationsInput | number
+    menu_image?: StringFieldUpdateOperationsInput | string
+    menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
     menu_name?: StringFieldUpdateOperationsInput | string
-    menu_ingredients?: JsonNullValueInput | InputJsonValue
-    menu_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    menu_image?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_subname?: StringFieldUpdateOperationsInput | string
+    menu_total?: IntFieldUpdateOperationsInput | number
   }
 
   export type menuUncheckedUpdateInput = {
+    menu_category?: StringFieldUpdateOperationsInput | string
     menu_id?: IntFieldUpdateOperationsInput | number
+    menu_image?: StringFieldUpdateOperationsInput | string
+    menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
     menu_name?: StringFieldUpdateOperationsInput | string
-    menu_ingredients?: JsonNullValueInput | InputJsonValue
-    menu_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    menu_image?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_subname?: StringFieldUpdateOperationsInput | string
+    menu_total?: IntFieldUpdateOperationsInput | number
   }
 
   export type menuCreateManyInput = {
-    menu_id?: number
+    id?: string
+    menu_category: string
+    menu_id: number
+    menu_image: string
+    menu_ingredients?: XOR<MenuMenuIngredientsListCreateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
     menu_name: string
-    menu_ingredients: JsonNullValueInput | InputJsonValue
-    menu_total?: Decimal | DecimalJsLike | number | string | null
-    menu_image?: string | null
-    menu_subname?: string | null
-    menu_catagory?: string | null
-    menu_description?: string | null
+    menu_subname: string
+    menu_total: number
   }
 
   export type menuUpdateManyMutationInput = {
+    menu_category?: StringFieldUpdateOperationsInput | string
+    menu_id?: IntFieldUpdateOperationsInput | number
+    menu_image?: StringFieldUpdateOperationsInput | string
+    menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
     menu_name?: StringFieldUpdateOperationsInput | string
-    menu_ingredients?: JsonNullValueInput | InputJsonValue
-    menu_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    menu_image?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_subname?: StringFieldUpdateOperationsInput | string
+    menu_total?: IntFieldUpdateOperationsInput | number
   }
 
   export type menuUncheckedUpdateManyInput = {
+    menu_category?: StringFieldUpdateOperationsInput | string
     menu_id?: IntFieldUpdateOperationsInput | number
+    menu_image?: StringFieldUpdateOperationsInput | string
+    menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
     menu_name?: StringFieldUpdateOperationsInput | string
-    menu_ingredients?: JsonNullValueInput | InputJsonValue
-    menu_total?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
-    menu_image?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_catagory?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type UuidFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidFilter<$PrismaModel> | string
+    menu_subname?: StringFieldUpdateOperationsInput | string
+    menu_total?: IntFieldUpdateOperationsInput | number
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -7729,40 +7590,6 @@ export namespace Prisma {
     mode?: QueryMode
     not?: NestedStringFilter<$PrismaModel> | string
   }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
-
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
 
   export type StringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
@@ -7777,94 +7604,80 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+    isSet?: boolean
   }
 
-  export type DecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  export type CartCartMenuItemsCompositeListFilter = {
+    equals?: CartCartMenuItemsObjectEqualityInput[]
+    every?: CartCartMenuItemsWhereInput
+    some?: CartCartMenuItemsWhereInput
+    none?: CartCartMenuItemsWhereInput
+    isEmpty?: boolean
+    isSet?: boolean
   }
 
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
+  export type CartCartMenuItemsObjectEqualityInput = {
+    menu_description?: string | null
+    menu_ingredients?: CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
+    menu_name: string
+    menu_notes?: CartCartMenuItemsMenuNotesObjectEqualityInput[]
+    menu_order_id?: number | null
+    menu_total: number
+  }
+
+  export type CartCartMenuItemsOrderByCompositeAggregateInput = {
+    _count?: SortOrder
   }
 
   export type cartCountOrderByAggregateInput = {
-    cart_id?: SortOrder
-    cart_username?: SortOrder
-    cart_menu_items?: SortOrder
+    id?: SortOrder
     cart_create_date?: SortOrder
-    cart_status?: SortOrder
-    cart_order_number?: SortOrder
-    cart_last_update?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
-    cart_location_send?: SortOrder
     cart_delivery_date?: SortOrder
     cart_export_time?: SortOrder
+    cart_id?: SortOrder
+    cart_last_update?: SortOrder
+    cart_location_send?: SortOrder
+    cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
     cart_shipping_cost?: SortOrder
-  }
-
-  export type cartAvgOrderByAggregateInput = {
-    cart_shipping_cost?: SortOrder
+    cart_status?: SortOrder
+    cart_username?: SortOrder
   }
 
   export type cartMaxOrderByAggregateInput = {
-    cart_id?: SortOrder
-    cart_username?: SortOrder
+    id?: SortOrder
     cart_create_date?: SortOrder
-    cart_status?: SortOrder
-    cart_order_number?: SortOrder
-    cart_last_update?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
-    cart_location_send?: SortOrder
     cart_delivery_date?: SortOrder
     cart_export_time?: SortOrder
+    cart_id?: SortOrder
+    cart_last_update?: SortOrder
+    cart_location_send?: SortOrder
+    cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
     cart_shipping_cost?: SortOrder
+    cart_status?: SortOrder
+    cart_username?: SortOrder
   }
 
   export type cartMinOrderByAggregateInput = {
-    cart_id?: SortOrder
-    cart_username?: SortOrder
+    id?: SortOrder
     cart_create_date?: SortOrder
-    cart_status?: SortOrder
-    cart_order_number?: SortOrder
-    cart_last_update?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
-    cart_location_send?: SortOrder
     cart_delivery_date?: SortOrder
     cart_export_time?: SortOrder
+    cart_id?: SortOrder
+    cart_last_update?: SortOrder
+    cart_location_send?: SortOrder
+    cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
     cart_shipping_cost?: SortOrder
-  }
-
-  export type cartSumOrderByAggregateInput = {
-    cart_shipping_cost?: SortOrder
-  }
-
-  export type UuidWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
+    cart_status?: SortOrder
+    cart_username?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -7884,46 +7697,6 @@ export namespace Prisma {
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
   }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
 
   export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
@@ -7941,57 +7714,37 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
+    isSet?: boolean
   }
 
   export type employeeCountOrderByAggregateInput = {
-    employee_id?: SortOrder
-    employee_username?: SortOrder
+    id?: SortOrder
     employee_firstname?: SortOrder
+    employee_id?: SortOrder
     employee_lastname?: SortOrder
     employee_pin?: SortOrder
     employee_role?: SortOrder
-  }
-
-  export type employeeAvgOrderByAggregateInput = {
-    employee_pin?: SortOrder
+    employee_username?: SortOrder
   }
 
   export type employeeMaxOrderByAggregateInput = {
-    employee_id?: SortOrder
-    employee_username?: SortOrder
+    id?: SortOrder
     employee_firstname?: SortOrder
+    employee_id?: SortOrder
     employee_lastname?: SortOrder
     employee_pin?: SortOrder
     employee_role?: SortOrder
+    employee_username?: SortOrder
   }
 
   export type employeeMinOrderByAggregateInput = {
-    employee_id?: SortOrder
-    employee_username?: SortOrder
+    id?: SortOrder
     employee_firstname?: SortOrder
+    employee_id?: SortOrder
     employee_lastname?: SortOrder
     employee_pin?: SortOrder
     employee_role?: SortOrder
-  }
-
-  export type employeeSumOrderByAggregateInput = {
-    employee_pin?: SortOrder
+    employee_username?: SortOrder
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -8005,71 +7758,48 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
-  export type DateTimeFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
-  }
-
-  export type DecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-  }
-
-  export type ingredient_transactionsCountOrderByAggregateInput = {
-    transaction_id?: SortOrder
+  export type ingredient_transactionCountOrderByAggregateInput = {
+    id?: SortOrder
+    ingredient_name?: SortOrder
     transaction_date?: SortOrder
     transaction_from_username?: SortOrder
-    transaction_type?: SortOrder
-    ingredient_name?: SortOrder
-    transaction_total_price?: SortOrder
+    transaction_id?: SortOrder
     transaction_quantity?: SortOrder
+    transaction_total_price?: SortOrder
+    transaction_type?: SortOrder
     transaction_units?: SortOrder
   }
 
-  export type ingredient_transactionsAvgOrderByAggregateInput = {
+  export type ingredient_transactionAvgOrderByAggregateInput = {
     transaction_id?: SortOrder
-    transaction_total_price?: SortOrder
-    transaction_quantity?: SortOrder
   }
 
-  export type ingredient_transactionsMaxOrderByAggregateInput = {
-    transaction_id?: SortOrder
+  export type ingredient_transactionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    ingredient_name?: SortOrder
     transaction_date?: SortOrder
     transaction_from_username?: SortOrder
-    transaction_type?: SortOrder
-    ingredient_name?: SortOrder
-    transaction_total_price?: SortOrder
+    transaction_id?: SortOrder
     transaction_quantity?: SortOrder
+    transaction_total_price?: SortOrder
+    transaction_type?: SortOrder
     transaction_units?: SortOrder
   }
 
-  export type ingredient_transactionsMinOrderByAggregateInput = {
-    transaction_id?: SortOrder
+  export type ingredient_transactionMinOrderByAggregateInput = {
+    id?: SortOrder
+    ingredient_name?: SortOrder
     transaction_date?: SortOrder
     transaction_from_username?: SortOrder
-    transaction_type?: SortOrder
-    ingredient_name?: SortOrder
-    transaction_total_price?: SortOrder
+    transaction_id?: SortOrder
     transaction_quantity?: SortOrder
+    transaction_total_price?: SortOrder
+    transaction_type?: SortOrder
     transaction_units?: SortOrder
   }
 
-  export type ingredient_transactionsSumOrderByAggregateInput = {
+  export type ingredient_transactionSumOrderByAggregateInput = {
     transaction_id?: SortOrder
-    transaction_total_price?: SortOrder
-    transaction_quantity?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -8088,103 +7818,85 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
-  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedDecimalFilter<$PrismaModel>
-    _sum?: NestedDecimalFilter<$PrismaModel>
-    _min?: NestedDecimalFilter<$PrismaModel>
-    _max?: NestedDecimalFilter<$PrismaModel>
-  }
-
   export type ingredientsCountOrderByAggregateInput = {
-    ingredient_id?: SortOrder
-    ingredient_name?: SortOrder
-    ingredient_total?: SortOrder
-    ingredient_unit?: SortOrder
-    ingredient_lastupdate?: SortOrder
-    ingredient_image?: SortOrder
-    ingredient_total_alert?: SortOrder
+    id?: SortOrder
     ingredient_category?: SortOrder
-    ingredient_sub_category?: SortOrder
+    ingredient_id?: SortOrder
+    ingredient_image?: SortOrder
+    ingredient_lastupdate?: SortOrder
+    ingredient_name?: SortOrder
     ingredient_price?: SortOrder
     ingredient_price_per_unit?: SortOrder
+    ingredient_sub_category?: SortOrder
+    ingredient_total?: SortOrder
+    ingredient_total_alert?: SortOrder
+    ingredient_unit?: SortOrder
   }
 
   export type ingredientsAvgOrderByAggregateInput = {
     ingredient_id?: SortOrder
-    ingredient_total?: SortOrder
-    ingredient_total_alert?: SortOrder
-    ingredient_price?: SortOrder
-    ingredient_price_per_unit?: SortOrder
   }
 
   export type ingredientsMaxOrderByAggregateInput = {
-    ingredient_id?: SortOrder
-    ingredient_name?: SortOrder
-    ingredient_total?: SortOrder
-    ingredient_unit?: SortOrder
-    ingredient_lastupdate?: SortOrder
-    ingredient_image?: SortOrder
-    ingredient_total_alert?: SortOrder
+    id?: SortOrder
     ingredient_category?: SortOrder
-    ingredient_sub_category?: SortOrder
+    ingredient_id?: SortOrder
+    ingredient_image?: SortOrder
+    ingredient_lastupdate?: SortOrder
+    ingredient_name?: SortOrder
     ingredient_price?: SortOrder
     ingredient_price_per_unit?: SortOrder
+    ingredient_sub_category?: SortOrder
+    ingredient_total?: SortOrder
+    ingredient_total_alert?: SortOrder
+    ingredient_unit?: SortOrder
   }
 
   export type ingredientsMinOrderByAggregateInput = {
-    ingredient_id?: SortOrder
-    ingredient_name?: SortOrder
-    ingredient_total?: SortOrder
-    ingredient_unit?: SortOrder
-    ingredient_lastupdate?: SortOrder
-    ingredient_image?: SortOrder
-    ingredient_total_alert?: SortOrder
+    id?: SortOrder
     ingredient_category?: SortOrder
-    ingredient_sub_category?: SortOrder
+    ingredient_id?: SortOrder
+    ingredient_image?: SortOrder
+    ingredient_lastupdate?: SortOrder
+    ingredient_name?: SortOrder
     ingredient_price?: SortOrder
     ingredient_price_per_unit?: SortOrder
+    ingredient_sub_category?: SortOrder
+    ingredient_total?: SortOrder
+    ingredient_total_alert?: SortOrder
+    ingredient_unit?: SortOrder
   }
 
   export type ingredientsSumOrderByAggregateInput = {
     ingredient_id?: SortOrder
-    ingredient_total?: SortOrder
-    ingredient_total_alert?: SortOrder
-    ingredient_price?: SortOrder
-    ingredient_price_per_unit?: SortOrder
+  }
+
+  export type MenuMenuIngredientsCompositeListFilter = {
+    equals?: MenuMenuIngredientsObjectEqualityInput[]
+    every?: MenuMenuIngredientsWhereInput
+    some?: MenuMenuIngredientsWhereInput
+    none?: MenuMenuIngredientsWhereInput
+    isEmpty?: boolean
+    isSet?: boolean
+  }
+
+  export type MenuMenuIngredientsObjectEqualityInput = {
+    ingredient_name: string
+    useItem: number
+  }
+
+  export type MenuMenuIngredientsOrderByCompositeAggregateInput = {
+    _count?: SortOrder
   }
 
   export type menuCountOrderByAggregateInput = {
+    id?: SortOrder
+    menu_category?: SortOrder
     menu_id?: SortOrder
-    menu_name?: SortOrder
-    menu_ingredients?: SortOrder
-    menu_total?: SortOrder
     menu_image?: SortOrder
+    menu_name?: SortOrder
     menu_subname?: SortOrder
-    menu_catagory?: SortOrder
-    menu_description?: SortOrder
+    menu_total?: SortOrder
   }
 
   export type menuAvgOrderByAggregateInput = {
@@ -8193,23 +7905,23 @@ export namespace Prisma {
   }
 
   export type menuMaxOrderByAggregateInput = {
+    id?: SortOrder
+    menu_category?: SortOrder
     menu_id?: SortOrder
-    menu_name?: SortOrder
-    menu_total?: SortOrder
     menu_image?: SortOrder
+    menu_name?: SortOrder
     menu_subname?: SortOrder
-    menu_catagory?: SortOrder
-    menu_description?: SortOrder
+    menu_total?: SortOrder
   }
 
   export type menuMinOrderByAggregateInput = {
+    id?: SortOrder
+    menu_category?: SortOrder
     menu_id?: SortOrder
-    menu_name?: SortOrder
-    menu_total?: SortOrder
     menu_image?: SortOrder
+    menu_name?: SortOrder
     menu_subname?: SortOrder
-    menu_catagory?: SortOrder
-    menu_description?: SortOrder
+    menu_total?: SortOrder
   }
 
   export type menuSumOrderByAggregateInput = {
@@ -8217,36 +7929,33 @@ export namespace Prisma {
     menu_total?: SortOrder
   }
 
+  export type CartCartMenuItemsListCreateEnvelopeInput = {
+    set?: CartCartMenuItemsCreateInput | CartCartMenuItemsCreateInput[]
+  }
+
+  export type CartCartMenuItemsCreateInput = {
+    menu_description?: string | null
+    menu_ingredients?: CartCartMenuItemsMenuIngredientsCreateInput | CartCartMenuItemsMenuIngredientsCreateInput[]
+    menu_name: string
+    menu_notes?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
+    menu_order_id?: number | null
+    menu_total: number
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
+    unset?: boolean
   }
 
-  export type NullableDecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string | null
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
-  }
-
-  export type DateTimeFieldUpdateOperationsInput = {
-    set?: Date | string
-  }
-
-  export type DecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
+  export type CartCartMenuItemsListUpdateEnvelopeInput = {
+    set?: CartCartMenuItemsCreateInput | CartCartMenuItemsCreateInput[]
+    push?: CartCartMenuItemsCreateInput | CartCartMenuItemsCreateInput[]
+    updateMany?: CartCartMenuItemsUpdateManyInput
+    deleteMany?: CartCartMenuItemsDeleteManyInput
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -8257,15 +7966,20 @@ export namespace Prisma {
     divide?: number
   }
 
-  export type NestedUuidFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidFilter<$PrismaModel> | string
+  export type MenuMenuIngredientsListCreateEnvelopeInput = {
+    set?: MenuMenuIngredientsCreateInput | MenuMenuIngredientsCreateInput[]
+  }
+
+  export type MenuMenuIngredientsCreateInput = {
+    ingredient_name: string
+    useItem: number
+  }
+
+  export type MenuMenuIngredientsListUpdateEnvelopeInput = {
+    set?: MenuMenuIngredientsCreateInput | MenuMenuIngredientsCreateInput[]
+    push?: MenuMenuIngredientsCreateInput | MenuMenuIngredientsCreateInput[]
+    updateMany?: MenuMenuIngredientsUpdateManyInput
+    deleteMany?: MenuMenuIngredientsDeleteManyInput
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -8282,17 +7996,6 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NestedStringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -8305,42 +8008,30 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+    isSet?: boolean
   }
 
-  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  export type CartCartMenuItemsWhereInput = {
+    AND?: CartCartMenuItemsWhereInput | CartCartMenuItemsWhereInput[]
+    OR?: CartCartMenuItemsWhereInput[]
+    NOT?: CartCartMenuItemsWhereInput | CartCartMenuItemsWhereInput[]
+    menu_description?: StringNullableFilter<"CartCartMenuItems"> | string | null
+    menu_ingredients?: CartCartMenuItemsMenuIngredientsCompositeListFilter | CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
+    menu_name?: StringFilter<"CartCartMenuItems"> | string
+    menu_notes?: CartCartMenuItemsMenuNotesCompositeListFilter | CartCartMenuItemsMenuNotesObjectEqualityInput[]
+    menu_order_id?: IntNullableFilter<"CartCartMenuItems"> | number | null
+    menu_total?: IntFilter<"CartCartMenuItems"> | number
   }
 
-  export type NestedUuidWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
+  export type CartCartMenuItemsMenuIngredientsObjectEqualityInput = {
+    ingredient_name: string
+    ingredient_status?: boolean | null
+    useItem: number
   }
 
-  export type NestedIntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
+  export type CartCartMenuItemsMenuNotesObjectEqualityInput = {
+    note: string
+    qty: number
   }
 
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
@@ -8359,53 +8050,16 @@ export namespace Prisma {
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
   }
-  export type NestedJsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
 
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+  export type NestedIntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
     lt?: number | IntFieldRefInput<$PrismaModel>
     lte?: number | IntFieldRefInput<$PrismaModel>
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+    not?: NestedIntFilter<$PrismaModel> | number
   }
 
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -8423,44 +8077,19 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+    isSet?: boolean
   }
 
-  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
-  }
-
-  export type NestedDecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+    isSet?: boolean
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -8490,34 +8119,171 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
-  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
+  export type MenuMenuIngredientsWhereInput = {
+    AND?: MenuMenuIngredientsWhereInput | MenuMenuIngredientsWhereInput[]
+    OR?: MenuMenuIngredientsWhereInput[]
+    NOT?: MenuMenuIngredientsWhereInput | MenuMenuIngredientsWhereInput[]
+    ingredient_name?: StringFilter<"MenuMenuIngredients"> | string
+    useItem?: IntFilter<"MenuMenuIngredients"> | number
   }
 
-  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedDecimalFilter<$PrismaModel>
-    _sum?: NestedDecimalFilter<$PrismaModel>
-    _min?: NestedDecimalFilter<$PrismaModel>
-    _max?: NestedDecimalFilter<$PrismaModel>
+  export type CartCartMenuItemsMenuIngredientsCreateInput = {
+    ingredient_name: string
+    ingredient_status?: boolean | null
+    useItem: number
+  }
+
+  export type CartCartMenuItemsMenuNotesCreateInput = {
+    note: string
+    qty: number
+  }
+
+  export type CartCartMenuItemsUpdateManyInput = {
+    where: CartCartMenuItemsWhereInput
+    data: CartCartMenuItemsUpdateInput
+  }
+
+  export type CartCartMenuItemsDeleteManyInput = {
+    where: CartCartMenuItemsWhereInput
+  }
+
+  export type MenuMenuIngredientsUpdateManyInput = {
+    where: MenuMenuIngredientsWhereInput
+    data: MenuMenuIngredientsUpdateInput
+  }
+
+  export type MenuMenuIngredientsDeleteManyInput = {
+    where: MenuMenuIngredientsWhereInput
+  }
+
+  export type CartCartMenuItemsMenuIngredientsCompositeListFilter = {
+    equals?: CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
+    every?: CartCartMenuItemsMenuIngredientsWhereInput
+    some?: CartCartMenuItemsMenuIngredientsWhereInput
+    none?: CartCartMenuItemsMenuIngredientsWhereInput
+    isEmpty?: boolean
+    isSet?: boolean
+  }
+
+  export type CartCartMenuItemsMenuNotesCompositeListFilter = {
+    equals?: CartCartMenuItemsMenuNotesObjectEqualityInput[]
+    every?: CartCartMenuItemsMenuNotesWhereInput
+    some?: CartCartMenuItemsMenuNotesWhereInput
+    none?: CartCartMenuItemsMenuNotesWhereInput
+    isEmpty?: boolean
+    isSet?: boolean
+  }
+
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+    isSet?: boolean
+  }
+
+  export type CartCartMenuItemsUpdateInput = {
+    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_ingredients?: XOR<CartCartMenuItemsMenuIngredientsListUpdateEnvelopeInput, CartCartMenuItemsMenuIngredientsCreateInput> | CartCartMenuItemsMenuIngredientsCreateInput[]
+    menu_name?: StringFieldUpdateOperationsInput | string
+    menu_notes?: XOR<CartCartMenuItemsMenuNotesListUpdateEnvelopeInput, CartCartMenuItemsMenuNotesCreateInput> | CartCartMenuItemsMenuNotesCreateInput[]
+    menu_order_id?: NullableIntFieldUpdateOperationsInput | number | null
+    menu_total?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type MenuMenuIngredientsUpdateInput = {
+    ingredient_name?: StringFieldUpdateOperationsInput | string
+    useItem?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type CartCartMenuItemsMenuIngredientsWhereInput = {
+    AND?: CartCartMenuItemsMenuIngredientsWhereInput | CartCartMenuItemsMenuIngredientsWhereInput[]
+    OR?: CartCartMenuItemsMenuIngredientsWhereInput[]
+    NOT?: CartCartMenuItemsMenuIngredientsWhereInput | CartCartMenuItemsMenuIngredientsWhereInput[]
+    ingredient_name?: StringFilter<"CartCartMenuItemsMenuIngredients"> | string
+    ingredient_status?: BoolNullableFilter<"CartCartMenuItemsMenuIngredients"> | boolean | null
+    useItem?: IntFilter<"CartCartMenuItemsMenuIngredients"> | number
+  }
+
+  export type CartCartMenuItemsMenuNotesWhereInput = {
+    AND?: CartCartMenuItemsMenuNotesWhereInput | CartCartMenuItemsMenuNotesWhereInput[]
+    OR?: CartCartMenuItemsMenuNotesWhereInput[]
+    NOT?: CartCartMenuItemsMenuNotesWhereInput | CartCartMenuItemsMenuNotesWhereInput[]
+    note?: StringFilter<"CartCartMenuItemsMenuNotes"> | string
+    qty?: IntFilter<"CartCartMenuItemsMenuNotes"> | number
+  }
+
+  export type CartCartMenuItemsMenuIngredientsListUpdateEnvelopeInput = {
+    set?: CartCartMenuItemsMenuIngredientsCreateInput | CartCartMenuItemsMenuIngredientsCreateInput[]
+    push?: CartCartMenuItemsMenuIngredientsCreateInput | CartCartMenuItemsMenuIngredientsCreateInput[]
+    updateMany?: CartCartMenuItemsMenuIngredientsUpdateManyInput
+    deleteMany?: CartCartMenuItemsMenuIngredientsDeleteManyInput
+  }
+
+  export type CartCartMenuItemsMenuNotesListUpdateEnvelopeInput = {
+    set?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
+    push?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
+    updateMany?: CartCartMenuItemsMenuNotesUpdateManyInput
+    deleteMany?: CartCartMenuItemsMenuNotesDeleteManyInput
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+    unset?: boolean
+  }
+
+  export type BoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+    isSet?: boolean
+  }
+
+  export type CartCartMenuItemsMenuIngredientsUpdateManyInput = {
+    where: CartCartMenuItemsMenuIngredientsWhereInput
+    data: CartCartMenuItemsMenuIngredientsUpdateInput
+  }
+
+  export type CartCartMenuItemsMenuIngredientsDeleteManyInput = {
+    where: CartCartMenuItemsMenuIngredientsWhereInput
+  }
+
+  export type CartCartMenuItemsMenuNotesUpdateManyInput = {
+    where: CartCartMenuItemsMenuNotesWhereInput
+    data: CartCartMenuItemsMenuNotesUpdateInput
+  }
+
+  export type CartCartMenuItemsMenuNotesDeleteManyInput = {
+    where: CartCartMenuItemsMenuNotesWhereInput
+  }
+
+  export type NestedBoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+    isSet?: boolean
+  }
+
+  export type CartCartMenuItemsMenuIngredientsUpdateInput = {
+    ingredient_name?: StringFieldUpdateOperationsInput | string
+    ingredient_status?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    useItem?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type CartCartMenuItemsMenuNotesUpdateInput = {
+    note?: StringFieldUpdateOperationsInput | string
+    qty?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type NullableBoolFieldUpdateOperationsInput = {
+    set?: boolean | null
+    unset?: boolean
   }
 
 
