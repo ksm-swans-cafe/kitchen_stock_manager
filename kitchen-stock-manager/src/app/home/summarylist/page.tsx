@@ -1131,7 +1131,8 @@ const SummaryList: React.FC = () => {
           <div className='col-span-full xl:col-span-2'>
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
-              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, เบอร์โทร, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm' />
+              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
+              />
             </div>
           </div>
 
@@ -1193,8 +1194,9 @@ const SummaryList: React.FC = () => {
 
           <div>
             <Select value={sortOrder} onValueChange={(val: "asc" | "desc") => setSortOrder(val)}>
-              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
-                <SelectValue placeholder='Order' />
+              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm  '>
+              <Filter className='w-4 h-4 mr-2 text-slate-500' />
+                <SelectValue placeholder='Order' className='' />
               </SelectTrigger>
               <SelectContent side='bottom' align='start' avoidCollisions={false}>
                 <SelectItem value='asc'>เรียงจากใหม่ไปเก่า</SelectItem>

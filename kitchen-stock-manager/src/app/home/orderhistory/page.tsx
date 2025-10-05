@@ -54,24 +54,19 @@ const OrderHistory = () => {
   const [selectedDateForSummary, setSelectedDateForSummary] = useState<string | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // State สำหรับการแก้ไขเวลา
   const [editingTimes, setEditingTimes] = useState<{
     cartId: string;
     exportTime: string;
     receiveTime: string;
   } | null>(null);
 
-  // ใช้ SWR เพื่อดึงข้อมูล
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher);
   const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
 
-  // รวมข้อผิดพลาดจากทุก API
   const combinedError = cartsError || menuError || ingredientError;
   const isLoading = !cartsData || !menuData || !ingredientData;
 
-  // State สำหรับ carts และ allCarts
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
 
@@ -84,7 +79,6 @@ const OrderHistory = () => {
     }
   };
 
-  // แปลงข้อมูลเมื่อข้อมูลจาก SWR พร้อม
   useEffect(() => {
     if (!cartsData || !ingredientData) return;
 
@@ -127,13 +121,8 @@ const OrderHistory = () => {
           const [year, month, day] = rawDate.split("-");
           const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
           const formattedDate = dateObjectForLocale
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
+            .toLocaleDateString("th-TH", {day: "numeric",month: "short",year: "numeric",})
             .replace(/ /g, " ");
-
           const date = new Date(cart.cart_create_date);
           const formattedDateISO = date.toISOString().split("T")[0];
 
@@ -219,8 +208,6 @@ const OrderHistory = () => {
 
     formatOrders();
   }, [cartsData, ingredientData]);
-
-  // แปลงข้อมูลสำหรับปฏิทิน
   useEffect(() => {
     if (!cartsData) return;
 
@@ -272,15 +259,7 @@ const OrderHistory = () => {
     setIsDatePickerOpen(false);
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
-      setError(
-        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          locale: "th",
-          timeZone: "Asia/Bangkok",
-        })}`
-      );
+      setError(`ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
     } else {
       setError(null);
     }
@@ -323,29 +302,8 @@ const OrderHistory = () => {
                 menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
                 allIngredients: cart.allIngredients.map((group) =>
                   group.menuName === cleanedMenuName
-                    ? {
-                        ...group,
-                        ingredients: group.ingredients.map((ing) => ({
-                          ...ing,
-                          calculatedTotal: ing.useItem * editTotalBox,
-                        })),
-                      }
-                    : group
-                ),
-                sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
-              }
-            : cart
-        )
-      );
-
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตจำนวนกล่องเรียบร้อย!",
-        text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-
+                    ? {...group,ingredients: group.ingredients.map((ing) => ({...ing,calculatedTotal: ing.useItem * editTotalBox,})),}: group),sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),}: cart));
+      Swal.fire({icon: "success",title: "อัปเดตจำนวนกล่องเรียบร้อย!",text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`, showConfirmButton: false,timer: 3000,});
       mutateCarts();
       setEditingMenu(null);
     } catch (err) {
@@ -358,12 +316,7 @@ const OrderHistory = () => {
 
   const handleEditTimes = (cartId: string, exportTime: string, receiveTime: string) => {
     const formatToThaiTime = (time: string) => (time ? time.replace(":", ".") + " น." : "00.00 น.");
-    setEditingTimes({
-      cartId,
-      exportTime: formatToThaiTime(exportTime),
-      receiveTime: formatToThaiTime(receiveTime),
-    });
-  };
+    setEditingTimes({cartId, exportTime: formatToThaiTime(exportTime),receiveTime: formatToThaiTime(receiveTime),});};
 
   const formatInputTime = (value: string): string => {
     const cleaned = value.replace(/[^0-9.]/g, "");
@@ -420,16 +373,9 @@ const OrderHistory = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to update times");
       }
-
       mutateCarts();
       setEditingTimes(null);
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตเวลาเรียบร้อย!",
-        text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`,
-        showConfirmButton: false,
-        timer: 3000,
-      });
+      Swal.fire({icon: "success",title: "อัปเดตเวลาเรียบร้อย!",text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`,showConfirmButton: false,timer: 3000,});
     } catch (err) {
       console.error("Error updating times:", err);
       setError(err instanceof Error ? `ไม่สามารถอัปเดตเวลา: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตเวลา");
@@ -549,12 +495,7 @@ const OrderHistory = () => {
     }, {} as { [key: string]: Cart[] });
 
     Object.values(groupedByDate).forEach((orders) => {
-      orders.sort((a, b) => {
-        const orderNumA = parseInt(a.order_number || "0");
-        const orderNumB = parseInt(b.order_number || "0");
-        return orderNumA - orderNumB;
-      });
-    });
+      orders.sort((a, b) => { const orderNumA = parseInt(a.order_number || "0");  const orderNumB = parseInt(b.order_number || "0");  return orderNumA - orderNumB; }); });
 
     const currentDate = new Date();
     const sortedDates = Object.keys(groupedByDate).sort((dateA, dateB) => {
@@ -573,25 +514,10 @@ const OrderHistory = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
-        : "ไม่มีวันที่จัดส่ง";
-      (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
-      return acc;
-    }, {} as { [key: string]: Cart[] });
-
+            .toLocaleDateString("th-TH", {  day: "numeric", month: "short",  year: "numeric",  })  .replace(/ /g, " "): "ไม่มีวันที่จัดส่ง";(acc[dateDisplay] = acc[dateDisplay] || []).push(cart);return acc;}, {} as { [key: string]: Cart[] });
     const currentDate = new Date();
     const currentDateDisplay = currentDate
-      .toLocaleDateString("th-TH", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      .replace(/ /g, " ");
+      .toLocaleDateString("th-TH", {  day: "numeric",  month: "short",  year: "numeric",}).replace(/ /g, " ");
 
     const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay] ? [[currentDateDisplay, grouped[currentDateDisplay]]] : [];
     const otherDateGroups = Object.entries(grouped).filter(([date]) => date !== currentDateDisplay);
@@ -623,33 +549,17 @@ const OrderHistory = () => {
       cart.allIngredients.forEach((menuGroup) => {
         menuGroup.ingredients.forEach((ing) => {
           if (!ingredientSummary[ing.ingredient_name]) {
-            ingredientSummary[ing.ingredient_name] = {
-              checked: 0,
-              total: 0,
-              unit: ing.ingredient_unit || "ไม่ระบุหน่วย",
-            };
-          }
+            ingredientSummary[ing.ingredient_name] = {  checked: 0,  total: 0,  unit: ing.ingredient_unit || "ไม่ระบุหน่วย",  };}
           const totalGrams = ing.calculatedTotal || 0;
           ingredientSummary[ing.ingredient_name].total += totalGrams;
           if (ing.isChecked) {
             ingredientSummary[ing.ingredient_name].checked += totalGrams;
-          }
-        });
-      });
-    });
+          }});});});
 
     const allIngredientsChecked = ordersOnDate.every((cart) => cart.allIngredients.every((menuGroup) => menuGroup.ingredients.every((ing) => ing.isChecked)));
 
     return {
-      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({
-        name,
-        checked,
-        total,
-        unit,
-      })),
-      allIngredientsChecked,
-    };
-  };
+      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({name,checked,total,unit,})),allIngredientsChecked,};};
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
   const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -738,7 +648,8 @@ const OrderHistory = () => {
           <div className='col-span-full xl:col-span-2'>
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
-              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, เบอร์โทร, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm' />
+              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
+              />
             </div>
           </div>
 
@@ -750,9 +661,7 @@ const OrderHistory = () => {
                     month: "short",
                     day: "numeric",
                     locale: "th",
-                    timeZone: "Asia/Bangkok",
-                  })}`
-                : "เลือกวันที่ที่ต้องการ"}
+                    timeZone: "Asia/Bangkok",})}`: "เลือกวันที่ที่ต้องการ"}
             </Button>
 
             <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
@@ -800,8 +709,9 @@ const OrderHistory = () => {
 
           <div>
             <Select value={sortOrder} onValueChange={(val: "asc" | "desc") => setSortOrder(val)}>
-              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
-                <SelectValue placeholder='Order' />
+              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm  '>
+                <Filter className='w-4 h-4 mr-2 text-slate-500' />
+                <SelectValue placeholder='Order' className='' />
               </SelectTrigger>
               <SelectContent side='bottom' align='start' avoidCollisions={false}>
                 <SelectItem value='asc'>เรียงจากใหม่ไปเก่า</SelectItem>
@@ -911,15 +821,7 @@ const OrderHistory = () => {
                                       value={editingTimes?.exportTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                exportTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
+                                        setEditingTimes((prev) => prev? {...prev,exportTime: formattedValue,}: prev);}}
                                       placeholder='14.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit export time'
@@ -932,15 +834,7 @@ const OrderHistory = () => {
                                       value={editingTimes?.receiveTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                receiveTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
+                                        setEditingTimes((prev) => prev? {...prev,receiveTime: formattedValue,}: prev);}}
                                       placeholder='19.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit receive time'
@@ -965,7 +859,6 @@ const OrderHistory = () => {
                                   <FaWallet className='w-4 h-4 ml-4' />
                                   <span>เวลารับอาหาร {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                   <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")}>
-                                    {/* <Edit2 className="w-4 h-4" /> */}
                                   </span>
                                 </div>
                               )}
@@ -1059,7 +952,8 @@ const OrderHistory = () => {
                                             </div>
                                           ) : (
                                             <div className='flex items-center gap-2 mb-3'>
-                                              <Button variant='ghost' size='sm' onClick={() => handleEditTotalBox(cart.id, menuGroup.menuName, totalBox)} className='h-8 px-2 text-blue-600 hover:bg-blue-100'>
+                                              <Button variant='ghost' size='sm' onClick={() => handleEditTotalBox
+                                                  (cart.id, menuGroup.menuName, totalBox)} className='h-8 px-2 text-blue-600 hover:bg-blue-100'>
                                                 {/* <Edit2 className="w-4 h-4" /> */}
                                               </Button>
                                             </div>
