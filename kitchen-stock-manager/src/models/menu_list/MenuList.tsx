@@ -13,6 +13,7 @@ export interface MenuItem {
   menu_id: string;
   menu_name: string;
   menu_ingredients: string | Ingredient[];
+  menu_category: string;
   menu_subname: string;
   menu_description?: string;
 }

@@ -11,8 +11,6 @@ datasource db {
 type CartCartMenuItems {
   menu_description String?
   menu_ingredients CartCartMenuItemsMenuIngredients[]
-  menu_catagory    String
-  menu_subname     String
   menu_name        String
   menu_notes       CartCartMenuItemsMenuNotes[]
   menu_order_id    Int?
@@ -35,6 +33,11 @@ type MenuMenuIngredients {
   useItem         Int
 }
 
+type MenuMenuLunchbox {
+  lunchbox_name     String
+  lunchbox_set_name String
+}
+
 model cart {
   id                 String              @id @default(auto()) @map("_id") @db.ObjectId
   cart_create_date   String
@@ -43,10 +46,10 @@ model cart {
   cart_delivery_date String
   cart_export_time   String
   cart_id            String
-  cart_lunch_box_name String
-  cart_lunch_box_set String
   cart_last_update   String?
   cart_location_send String
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  cart_lunchbox      Json?
   cart_menu_items    CartCartMenuItems[]
   cart_order_number  String
   cart_receive_time  String
@@ -92,21 +95,21 @@ model ingredients {
   ingredient_unit           String
 }
 
+model lunchbox {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  lunchbox_limit    Int
+  lunchbox_name     String
+  lunchbox_set_name String
+}
+
 model menu {
   id               String                @id @default(auto()) @map("_id") @db.ObjectId
   menu_category    String
+  menu_cost        Int
   menu_id          Int
   menu_image       String
   menu_ingredients MenuMenuIngredients[]
+  menu_lunchbox    MenuMenuLunchbox[]
   menu_name        String
   menu_subname     String
-  menu_total       Int
-}
-
-model lunchbox {
-  id               String              @id @default(auto()) @map("_id") @db.ObjectId
-  lunchbox_id      Int
-  lunchbox_name    String
-  lunchbox_set     String
-  lunchbox_limit   Int                
 }
