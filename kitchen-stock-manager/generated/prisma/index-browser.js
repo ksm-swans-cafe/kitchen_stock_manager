@@ -167,14 +167,21 @@ exports.Prisma.IngredientsScalarFieldEnum = {
   ingredient_unit: 'ingredient_unit'
 };
 
+exports.Prisma.LunchboxScalarFieldEnum = {
+  id: 'id',
+  lunchbox_limit: 'lunchbox_limit',
+  lunchbox_name: 'lunchbox_name',
+  lunchbox_set_name: 'lunchbox_set_name'
+};
+
 exports.Prisma.MenuScalarFieldEnum = {
   id: 'id',
   menu_category: 'menu_category',
+  menu_cost: 'menu_cost',
   menu_id: 'menu_id',
   menu_image: 'menu_image',
   menu_name: 'menu_name',
-  menu_subname: 'menu_subname',
-  menu_total: 'menu_total'
+  menu_subname: 'menu_subname'
 };
 
 exports.Prisma.SortOrder = {
@@ -193,6 +200,7 @@ exports.Prisma.ModelName = {
   employee: 'employee',
   ingredient_transaction: 'ingredient_transaction',
   ingredients: 'ingredients',
+  lunchbox: 'lunchbox',
   menu: 'menu'
 };
 

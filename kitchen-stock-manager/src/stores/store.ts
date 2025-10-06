@@ -8,20 +8,47 @@ export interface CartItem extends MenuItem {
   cart_item_id: string;
 }
 
+export interface LunchBox {
+  lunchbox_name: string;
+  lunchbox_set: string;
+  lunchbox_limit: number;
+  lunchbox_menu_items: MenuItem[];
+  lunchbox_total_lunchbox: number;
+  lunchbox_total_price: number;
+}
+
+interface SelectedLunchbox {
+  lunchbox_name: string;
+  lunchbox_set: string;
+  lunchbox_limit: number;
+  selected_menus: MenuItem[];
+  quantity: number;
+}
+
 interface CartState {
   items: CartItem[];
   cart_customer_name: string;
   cart_customer_tel: string;
   cart_location_send: string;
   cart_delivery_date: string;
+  cart_lunchbox: LunchBox[];
   cart_export_time: string;
   cart_receive_time: string;
   cart_shipping_cost: string;
+  // เพิ่มฟิลด์ใหม่
+  cart_lunch_box: string;
+  cart_lunch_box_set: string;
+  selected_lunchboxes: SelectedLunchbox[];
   addItem: (item: MenuItem, description?: string) => void;
   removeItem: (cartItemId: string) => void;
   setItemQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
-  setCustomerInfo: (info: { name?: string; tel?: string; location?: string; deliveryDate?: string; exportTime?: string; receiveTime?: string; cart_shipping_cost?: string }) => void;
+  setCustomerInfo: (info: { name?: string; tel?: string; location?: string; deliveryDate?: string; exportTime?: string; receiveTime?: string; cart_shipping_cost?: string; lunchbox?: string; lunchbox_set?: string }) => void;
+  // เพิ่มฟังก์ชันใหม่
+  addLunchbox: (lunchbox: SelectedLunchbox) => void;
+  removeLunchbox: (index: number) => void;
+  updateLunchboxQuantity: (index: number, quantity: number) => void;
+  updateLunchboxMenus: (index: number, menus: MenuItem[]) => void;
 }
 
 const generateCartItemId = (menuId: string | undefined, description: string) => {
@@ -36,9 +63,13 @@ export const useCartStore = create<CartState>()(
       cart_customer_tel: "",
       cart_location_send: "",
       cart_delivery_date: "",
+      cart_lunchbox: [],
       cart_export_time: "",
       cart_receive_time: "",
       cart_shipping_cost: "",
+      cart_lunch_box: "",
+      cart_lunch_box_set: "",
+      selected_lunchboxes: [],
 
       addItem: (item, description = "") => {
         const { items } = get();
@@ -98,9 +129,13 @@ export const useCartStore = create<CartState>()(
           cart_customer_tel: "",
           cart_location_send: "",
           cart_delivery_date: "",
+          cart_lunchbox: [],
           cart_export_time: "",
           cart_receive_time: "",
           cart_shipping_cost: "",
+          cart_lunch_box: "",
+          cart_lunch_box_set: "",
+          selected_lunchboxes: [],
         });
       },
 
@@ -113,6 +148,34 @@ export const useCartStore = create<CartState>()(
           cart_export_time: info.exportTime ?? state.cart_export_time,
           cart_receive_time: info.receiveTime ?? state.cart_receive_time,
           cart_shipping_cost: info.cart_shipping_cost ?? state.cart_shipping_cost,
+          cart_lunchbox: info.lunchbox ?? state.cart_lunchbox,
+          cart_lunch_box: info.lunchbox ?? state.cart_lunch_box,
+          cart_lunch_box_set: info.lunchbox_set ?? state.cart_lunch_box_set,
+        }));
+      },
+
+      // ฟังก์ชันใหม่สำหรับจัดการ lunchbox
+      addLunchbox: (lunchbox) => {
+        set((state) => ({
+          selected_lunchboxes: [...state.selected_lunchboxes, lunchbox],
+        }));
+      },
+
+      removeLunchbox: (index) => {
+        set((state) => ({
+          selected_lunchboxes: state.selected_lunchboxes.filter((_, i) => i !== index),
+        }));
+      },
+
+      updateLunchboxQuantity: (index, quantity) => {
+        set((state) => ({
+          selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, quantity } : item)),
+        }));
+      },
+
+      updateLunchboxMenus: (index, menus) => {
+        set((state) => ({
+          selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, selected_menus: menus } : item)),
         }));
       },
     }),

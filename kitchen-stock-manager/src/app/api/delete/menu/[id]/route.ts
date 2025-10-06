@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
-  if (!id) return NextResponse.json({ error: "Missing menu id" }, { status: 400 });
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
+  const { id } = params;
+
+  if (!id) {
+    return NextResponse.json({ error: "กรุณาระบุ id" }, { status: 400 });
+  }
 
   try {
-    const result = await prisma.menu.delete({
+    // ใช้ menu_id เพื่อหา record ก่อน
+    const existing = await prisma.menu.findFirst({
       where: { menu_id: Number(id) },
     });
-    if (!result) return NextResponse.json({ error: "Menu not found" }, { status: 404 });
 
-    return NextResponse.json({ message: "Menu deleted successfully" }, { status: 200 });
+    if (!existing) return NextResponse.json({ error: "ไม่พบเมนูที่ต้องการลบ" }, { status: 404 });
+
+    // ใช้ id (ObjectId) เพื่อ delete
+    await prisma.menu.delete({
+      where: { id: existing.id },
+    });
+
+    return NextResponse.json({ success: true, message: "ลบเมนูสำเร็จ" }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete menu", details: (error as Error).message }, { status: 500 });
+    console.error("Error deleting menu:", error);
+    return NextResponse.json({ error: "เกิดข้อผิดพลาดในการลบเมนู" }, { status: 500 });
   }
 }
