@@ -8,6 +8,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+type CartCartLunchbox {
+  lunchbox_limit    Int
+  lunchbox_menu     CartCartLunchboxLunchboxMenu[]
+  lunchbox_name     String
+  lunchbox_set_name String
+  lunchbox_total    Int
+}
+
+type CartCartLunchboxLunchboxMenu {
+  menu_category    String
+  menu_description String
+  menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
+  menu_name        String
+  menu_order_id    Int
+  menu_subname     String
+  menu_total       Int
+}
+
+type CartCartLunchboxLunchboxMenuMenuIngredients {
+  ingredient_name String
+  useItem         Int
+}
+
 type CartCartMenuItems {
   menu_description String?
   menu_ingredients CartCartMenuItemsMenuIngredients[]
@@ -30,7 +53,8 @@ type CartCartMenuItemsMenuNotes {
 
 type MenuMenuIngredients {
   ingredient_name String
-  useItem         Int
+  /// Multiple data types found: Int: 97.3%, BigInt: 2.7% out of 337 sampled entries
+  useItem         Json
 }
 
 type MenuMenuLunchbox {
@@ -45,11 +69,10 @@ model cart {
   cart_customer_tel  String
   cart_delivery_date String
   cart_export_time   String
-  cart_id            String
+  cart_id            String              @unique
   cart_last_update   String?
   cart_location_send String
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  cart_lunchbox      Json?
+  cart_lunchbox      CartCartLunchbox[]
   cart_menu_items    CartCartMenuItems[]
   cart_order_number  String
   cart_receive_time  String
@@ -106,7 +129,7 @@ model menu {
   id               String                @id @default(auto()) @map("_id") @db.ObjectId
   menu_category    String
   menu_cost        Int
-  menu_id          Int
+  menu_id          Int                   @unique
   menu_image       String
   menu_ingredients MenuMenuIngredients[]
   menu_lunchbox    MenuMenuLunchbox[]

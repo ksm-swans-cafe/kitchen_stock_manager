@@ -123,7 +123,6 @@ exports.Prisma.CartScalarFieldEnum = {
   cart_id: 'cart_id',
   cart_last_update: 'cart_last_update',
   cart_location_send: 'cart_location_send',
-  cart_lunchbox: 'cart_lunchbox',
   cart_order_number: 'cart_order_number',
   cart_receive_time: 'cart_receive_time',
   cart_shipping_cost: 'cart_shipping_cost',

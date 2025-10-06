@@ -9,6 +9,11 @@ export interface IngredientOption {
   ingredient_unit: string;
 }
 
+export interface MenuLunchbox {
+  lunchbox_name: string;
+  lunchbox_set_name: string;
+}
+
 export interface MenuItem {
   menu_id: string;
   menu_name: string;
@@ -16,6 +21,7 @@ export interface MenuItem {
   menu_category: string;
   menu_subname: string;
   menu_description?: string;
+  menu_lunchbox: MenuLunchbox[];
 }
 
 export interface IngredientUnit {

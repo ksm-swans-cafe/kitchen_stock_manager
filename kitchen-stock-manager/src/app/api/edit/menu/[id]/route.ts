@@ -1,61 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const { id } = params;
-  console.log(params);
 
   const formData = await request.formData();
   const menuName = formData.get("menu_name")?.toString() || "";
   const menuIngredientsRaw = formData.get("menu_ingredients")?.toString() || "";
   const menuSubname = formData.get("menu_subname")?.toString() || "";
-  const menuDescription = formData.get("menu_description")?.toString() || "";
-  const newMenuName = formData.get("newMenuName")?.toString() || "";
+  const menuCategory = formData.get("menu_category")?.toString() || "";
+  const menuCost = formData.get("menu_cost")?.toString() || "";
+  const menuLunchboxRaw = formData.get("menu_lunchbox")?.toString() || "";
+
+  console.log("Received data:", { id, menuName, menuIngredientsRaw, menuSubname, menuCategory, menuCost, menuLunchboxRaw });
 
   if (!id) {
-    return NextResponse.json(
-      {
-        error: "กรุณาระบุ id",
-      },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "กรุณาระบุ id" }, { status: 400 });
   }
 
-  if (menuDescription !== undefined && !menuName && !menuIngredientsRaw && !menuSubname) {
-    try {
-      const existing = await prisma.menu.findUnique({
-        where: { menu_id: Number(id) },
-      });
-
-      if (!existing) return NextResponse.json({ error: "ไม่พบเมนูที่ต้องการแก้ไข" }, { status: 404 });
-
-      const result = await prisma.menu.update({
-        where: { menu_id: Number(id) },
-        data: {
-          menu_description: menuDescription.trim() || null,
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        updatedMenu: result,
-      });
-    } catch (error) {
-      console.error("Server error:", error);
-      return NextResponse.json({ error: "เกิดข้อผิดพลาดในการอัปเดตคำอธิบายเมนู" }, { status: 500 });
-    }
-  }
-
-  if (!menuName || !menuIngredientsRaw || !menuSubname) {
+  if (!menuName || !menuIngredientsRaw || !menuSubname || !menuCategory || !menuCost) {
     return NextResponse.json(
       {
-        error: "กรุณาระบุ menuName, menuIngredients และ menuSubname ให้ครบถ้วน",
+        error: "กรุณาระบุข้อมูลให้ครบถ้วน",
       },
       { status: 400 }
     );
   }
 
   let menuIngredients;
+  let menuLunchbox = [];
+
   try {
     menuIngredients = JSON.parse(menuIngredientsRaw);
   } catch {
@@ -63,23 +38,31 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const existing = await prisma.menu.findUnique({
+    if (menuLunchboxRaw) {
+      menuLunchbox = JSON.parse(menuLunchboxRaw);
+    }
+  } catch {
+    return NextResponse.json({ error: "รูปแบบข้อมูลกล่องอาหารไม่ถูกต้อง" }, { status: 400 });
+  }
+
+  try {
+    // ใช้ menu_id เพื่อหา record ก่อน
+    const existing = await prisma.menu.findFirst({
       where: { menu_id: Number(id) },
     });
 
     if (!existing) return NextResponse.json({ error: "ไม่พบเมนูที่ต้องการแก้ไข" }, { status: 404 });
-    
-    const updatedName = newMenuName?.trim() || menuName.trim();
-    const updatedSubname = menuSubname.trim();
-    const updatedDescription = menuDescription.trim();
 
+    // ใช้ id (ObjectId) เพื่อ update
     const result = await prisma.menu.update({
-      where: { menu_id: Number(id) },
+      where: { id: existing.id },
       data: {
-        menu_name: updatedName,
-        menu_subname: updatedSubname,
-        menu_ingredients: JSON.stringify(menuIngredients),
-        menu_description: updatedDescription,
+        menu_name: menuName.trim(),
+        menu_subname: menuSubname.trim(),
+        menu_category: menuCategory.trim(),
+        menu_cost: parseInt(menuCost) || 0,
+        menu_ingredients: menuIngredients,
+        menu_lunchbox: menuLunchbox,
       },
     });
 
