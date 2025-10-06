@@ -9,27 +9,32 @@ datasource db {
 }
 
 type CartCartLunchbox {
-  lunchbox_limit    Int
+  /// Multiple data types found: Int: 75%, BigInt: 25% out of 4 sampled entries
+  lunchbox_limit    Json
   lunchbox_menu     CartCartLunchboxLunchboxMenu[]
   lunchbox_name     String
   lunchbox_set_name String
-  lunchbox_total    Int
+  /// Multiple data types found: Int: 75%, BigInt: 25% out of 4 sampled entries
+  lunchbox_total    Json
 }
 
 type CartCartLunchboxLunchboxMenu {
   menu_category    String
-  menu_cost        Int
+  menu_cost        BigInt?
   menu_description String
   menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String
-  menu_order_id    Int
+  /// Multiple data types found: Int: 75%, BigInt: 25% out of 8 sampled entries
+  menu_order_id    Json
   menu_subname     String
-  menu_total       Int
+  /// Multiple data types found: Int: 75%, BigInt: 25% out of 8 sampled entries
+  menu_total       Json
 }
 
 type CartCartLunchboxLunchboxMenuMenuIngredients {
   ingredient_name String
-  useItem         Int
+  /// Multiple data types found: Int: 75.9%, BigInt: 24.1% out of 29 sampled entries
+  useItem         Json
 }
 
 type CartCartMenuItems {
@@ -54,7 +59,7 @@ type CartCartMenuItemsMenuNotes {
 
 type MenuMenuIngredients {
   ingredient_name String
-  /// Multiple data types found: Int: 97.3%, BigInt: 2.7% out of 337 sampled entries
+  /// Multiple data types found: Int: 98.5%, BigInt: 1.5% out of 337 sampled entries
   useItem         Json
 }
 
@@ -70,7 +75,7 @@ model cart {
   cart_customer_tel  String
   cart_delivery_date String
   cart_export_time   String
-  cart_id            String              @unique
+  cart_id            String
   cart_last_update   String?
   cart_location_send String
   cart_lunchbox      CartCartLunchbox[]
@@ -129,7 +134,8 @@ model lunchbox {
 model menu {
   id               String                @id @default(auto()) @map("_id") @db.ObjectId
   menu_category    String
-  menu_cost        Int
+  /// Multiple data types found: Int: 99.1%, BigInt: 0.9% out of 110 sampled entries
+  menu_cost        Json
   menu_id          Int                   @unique
   menu_image       String
   menu_ingredients MenuMenuIngredients[]
