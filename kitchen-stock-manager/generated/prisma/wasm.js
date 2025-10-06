@@ -186,7 +186,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\sskjj\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\generated\\prisma",
+      "value": "C:\\Users\\boomh\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -200,7 +200,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\sskjj\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\boomh\\Documents\\GitHub\\kitchen_stock_manager\\kitchen-stock-manager\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -214,7 +214,7 @@ const config = {
     "db"
   ],
   "activeProvider": "mongodb",
-  "postinstall": false,
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {

@@ -9,7 +9,7 @@ export async function GET() {
         menu_id: true,
         menu_name: true,
         menu_ingredients: true,
-        menu_description: true,
+        // menu_description: true,
       },
     });
     if (result.length === 0) return NextResponse.json({ message: "Menu not found" }, { status: 404 });

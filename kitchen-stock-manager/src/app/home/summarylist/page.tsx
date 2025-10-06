@@ -64,6 +64,8 @@ const SummaryList: React.FC = () => {
     cartId: string;
     menuItems: {
       menu_name: string;
+      menu_category: string;
+      menu_subname: string;
       menu_total: number;
       menu_order_id: number;
       menu_description: string;
@@ -506,6 +508,93 @@ const SummaryList: React.FC = () => {
       } catch (err) {
         console.error("Error updating all ingredients for date:", err);
         setCarts(previousCarts);
+      } finally {
+        setIsSaving(null);
+      }
+    },
+    MenuViaCartApi: async (cartId: string, menuItems: MenuItem[]) => {
+      if (!cartId || !menuItems || !Array.isArray(menuItems)) {
+        Swal.fire({
+          icon: "error",
+          title: "เกิดข้อผิดพลาด",
+          text: "ข้อมูลไม่ถูกต้อง",
+          showConfirmButton: false,
+          timer: 3000,
+        });
+        return;
+      }
+
+      setIsSaving(cartId);
+      try {
+        const currentCart = carts.find((cart) => cart.id === cartId);
+        if (!currentCart) throw new Error("ไม่พบข้อมูล cart");
+
+        // ใช้เมนูจาก dialog โดยคงโครงสร้างตาม MenuItem ที่ระบบใช้
+        const normalizedMenuItems = menuItems.map((item) => ({
+          menu_name: item.menu_name,
+          menu_category: (currentCart.menuItems.find((m) => m.menu_name === item.menu_name)?.menu_category as string) ?? (item as any)?.menu_category ?? "",
+          menu_subname: (currentCart.menuItems.find((m) => m.menu_name === item.menu_name)?.menu_subname as string) ?? (item as any)?.menu_subname ?? "",
+          menu_total: item.menu_total,
+          menu_description: item.menu_description || "",
+          menu_ingredients: (item.menu_ingredients || []).map((ing: any) => ({
+            useItem: Number(ing.useItem) || 0,
+            ingredient_name: String(ing.ingredient_name || ""),
+            ingredient_status: Boolean(ing.ingredient_status),
+            ingredient_unit: ing.ingredient_unit,
+          })),
+        }));
+
+        const response = await axios.patch(`/api/edit/cart/${cartId}`, {
+          cart_menu_items: normalizedMenuItems,
+        });
+
+        if (response.status !== 200) {
+          const errorData = response.data;
+          throw new Error(errorData?.error || "Failed to update cart menu items");
+        }
+
+        // อัปเดต state ให้ตรงกับผลลัพธ์
+        setCarts((prevCarts) =>
+          prevCarts.map((cart) =>
+            cart.id === cartId
+              ? {
+                  ...cart,
+                  menuItems: normalizedMenuItems as unknown as MenuItem[],
+                  allIngredients: (normalizedMenuItems as any).map((item: any) => ({
+                    menuName: item.menu_name,
+                    ingredients: (item.menu_ingredients || []).map((ing: any) => ({
+                      ...ing,
+                      calculatedTotal: (Number(ing.useItem) || 0) * (Number(item.menu_total) || 0),
+                      isChecked: Boolean(ing.ingredient_status),
+                      ingredient_status: Boolean(ing.ingredient_status),
+                    })),
+                    ingredient_status: (item.menu_ingredients || []).every((ing: any) => Boolean(ing.ingredient_status)),
+                  })),
+                  sets: (normalizedMenuItems as any).reduce((sum: number, it: any) => sum + (Number(it.menu_total) || 0), 0),
+                }
+              : cart
+          )
+        );
+
+        Swal.fire({
+          icon: "success",
+          title: "อัปเดตเมนูผ่าน API ใหม่เรียบร้อย!",
+          showConfirmButton: false,
+          timer: 2500,
+        });
+
+        mutateCarts();
+        setEditMenuDialog(null);
+        setShouldFetchMenu(false);
+      } catch (err) {
+        console.error("Error updating menu via cart API:", err);
+        Swal.fire({
+          icon: "error",
+          title: "เกิดข้อผิดพลาด",
+          text: err instanceof Error ? err.message : "ไม่สามารถอัปเดตเมนูผ่าน API ใหม่",
+          showConfirmButton: false,
+          timer: 3000,
+        });
       } finally {
         setIsSaving(null);
       }
@@ -953,6 +1042,8 @@ const SummaryList: React.FC = () => {
 
           return {
             menu_name: item.menu_name,
+            menu_category: existingMenu?.menu_category ?? (menuData as any)?.menu_category ?? "",
+            menu_subname: existingMenu?.menu_subname ?? (menuData as any)?.menu_subname ?? "",
             menu_total: item.menu_total,
             menu_ingredients: menuIngredients,
             menu_description: item.menu_description || "",
@@ -980,7 +1071,7 @@ const SummaryList: React.FC = () => {
                   menuItems: updatedMenuItems,
                   allIngredients: updatedMenuItems.map((item) => ({
                     menuName: item.menu_name,
-                    ingredients: item.menu_ingredients.map((ing: { useItem: number; ingredient_name: string; ingredient_status: boolean }) => ({
+                    ingredients: item.menu_ingredients.map((ing: { useItem: number; ingredient_name: string; ingredient_status: boolean; ingredient_unit?: string }) => ({
                       ...ing,
                       calculatedTotal: ing.useItem * item.menu_total,
                       isChecked: ing.ingredient_status,
@@ -1509,6 +1600,8 @@ const SummaryList: React.FC = () => {
                                           cartId: cart.id,
                                           menuItems: currentCart.menuItems.map((item, idx) => ({
                                             menu_name: item.menu_name || "เมนูไม่ระบุ",
+                                            menu_category: item.menu_category || "",
+                                            menu_subname: item.menu_subname || "",
                                             menu_total: item.menu_total || 0,
                                             menu_order_id: idx,
                                             menu_description: item.menu_description || "",
@@ -1776,6 +1869,8 @@ const SummaryList: React.FC = () => {
                                                                   ...prev.menuItems,
                                                                   {
                                                                     menu_name: prev.newMenu.menu_name || "",
+                                                                    menu_category: (menuData as any)?.menu_category || "",
+                                                                    menu_subname: (menuData as any)?.menu_subname || "",
                                                                     menu_total: prev.newMenu.menu_total || 1,
                                                                     menu_description: prev.newMenu.menu_description || "",
                                                                     menu_order_id: prev.menuItems.length + 1,
@@ -1831,6 +1926,19 @@ const SummaryList: React.FC = () => {
                                           <>
                                             <span className='mr-2'>💾</span>
                                             บันทึกการแก้ไข
+                                          </>
+                                        )}
+                                      </Button>
+                                      <Button onClick={() => editMenuDialog && handleCheck.MenuViaCartApi(editMenuDialog.cartId, editMenuDialog.menuItems)} disabled={isSaving !== null || editMenuDialog?.menuItems.some((m) => m.menu_total < 0)} className='bg-emerald-600 hover:bg-emerald-700 text-white px-6'>
+                                        {isSaving ? (
+                                          <>
+                                            <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+                                            กำลังบันทึก...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <span className='mr-2'>🔄</span>
+                                            บันทึกผ่าน API ใหม่
                                           </>
                                         )}
                                       </Button>
