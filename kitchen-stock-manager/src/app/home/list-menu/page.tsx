@@ -65,21 +65,33 @@ export default function Page() {
             const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
 
             ingredients.forEach((ing: Ingredient) => {
-              uniqueIngredients.add(ing.ingredient_name.trim().toLowerCase());
+              if (ing.ingredient_name && ing.ingredient_name.trim() !== "") {
+                uniqueIngredients.add(ing.ingredient_name.trim().toLowerCase());
+              }
             });
           } catch {}
         });
 
-        const res = await axios.get(`/api/get/ingredients/list?names=${encodeURIComponent([...uniqueIngredients].join(","))}`);
+        console.log("uniqueIngredients.size:", uniqueIngredients.size);
+        console.log("uniqueIngredients:", [...uniqueIngredients]);
 
-        const units: IngredientUnit[] = res.data;
+        if (uniqueIngredients.size > 0) {
+          console.log("Calling API with names:", [...uniqueIngredients].join(","));
+          const res = await axios.get(`/api/get/ingredients/list?names=${encodeURIComponent([...uniqueIngredients].join(","))}`);
 
-        const unitMap: Record<string, string> = {};
-        units.forEach((unit) => {
-          unitMap[unit.ingredient_name.trim().toLowerCase()] = unit.ingredient_unit;
-        });
+          const units: IngredientUnit[] = res.data;
 
-        setIngredientUnits(unitMap);
+          const unitMap: Record<string, string> = {};
+          units.forEach((unit) => {
+            unitMap[unit.ingredient_name.trim().toLowerCase()] = unit.ingredient_unit;
+          });
+
+          setIngredientUnits(unitMap);
+        } else {
+          console.log("No ingredients found, setting empty unitMap");
+          setIngredientUnits({});
+        }
+
         setMenuItems(menuData);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
