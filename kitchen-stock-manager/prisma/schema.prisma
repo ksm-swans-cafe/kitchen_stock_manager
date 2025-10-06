@@ -18,6 +18,7 @@ type CartCartLunchbox {
 
 type CartCartLunchboxLunchboxMenu {
   menu_category    String
+  menu_cost        Int
   menu_description String
   menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String

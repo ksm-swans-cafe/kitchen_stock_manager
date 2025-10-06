@@ -227,7 +227,7 @@ export default function Page() {
 
   // เพิ่มฟังก์ชันสำหรับกรองชื่อที่ไม่ซ้ำกัน
   const getUniqueLunchboxNames = () => {
-    const uniqueNames = [...new Set(lunchboxOptions.map(option => option.lunchbox_name))];
+    const uniqueNames = [...new Set(lunchboxOptions.map((option) => option.lunchbox_name))];
     return uniqueNames;
   };
 
@@ -463,12 +463,7 @@ export default function Page() {
                           {/* ช่องเลือกชื่อกล่องอาหาร - แก้ไขส่วนนี้ */}
                           <div>
                             <label className='block text-xs font-medium text-gray-600 mb-1'>ชื่อกล่องอาหาร</label>
-                            <select 
-                              value={lb.lunchbox_name} 
-                              onChange={(e) => updateLunchbox(idx, "lunchbox_name", e.target.value)} 
-                              className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm' 
-                              required
-                            >
+                            <select value={lb.lunchbox_name} onChange={(e) => updateLunchbox(idx, "lunchbox_name", e.target.value)} className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm' required>
                               <option value=''>เลือกกล่องอาหาร</option>
                               {getUniqueLunchboxNames().map((name, nameIdx) => (
                                 <option key={nameIdx} value={name}>

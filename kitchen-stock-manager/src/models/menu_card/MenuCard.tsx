@@ -10,7 +10,7 @@ export interface MenuItem {
   menu_name: string;
   menu_subname: string;
   menu_category: string;
-  menu_price: number;
+  menu_cost: number;
   menu_ingredients: Ingredients[];
   menu_total: number;
   menu_description: string;

@@ -165,7 +165,7 @@ export default function CartList() {
           menu_name: menu.menu_name || "",
           menu_subname: menu.menu_subname || "",
           menu_category: menu.menu_category || "",
-          menu_price: menu.menu_cost || 0,
+          menu_cost: menu.menu_cost || 0,
           menu_ingredients: menu.menu_ingredients || [],
           menu_description: menu.menu_description || "",
         }));
@@ -237,7 +237,6 @@ export default function CartList() {
       };
 
       addLunchbox(newLunchbox);
-      // รีเซ็ตการเลือก
       setCustomerInfo({ lunchbox: "", lunchbox_set: "" });
     }
   };
@@ -307,6 +306,7 @@ export default function CartList() {
             menu_total: item.menu_total,
             menu_ingredients: item.menu_ingredients,
             menu_description: item.menu_description,
+            menu_cost: item.menu_cost,
             menu_order_id: index + 1,
           })),
           cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
@@ -320,6 +320,7 @@ export default function CartList() {
               menu_total: 1,
               menu_ingredients: menu.menu_ingredients,
               menu_description: menu.menu_description,
+              menu_cost: menu.menu_cost,
               menu_order_id: menuIndex + 1,
             })),
           })),
@@ -484,7 +485,7 @@ export default function CartList() {
               <li key={item.cart_item_id} className='border p-4 rounded flex justify-between items-start'>
                 <div className='flex-1'>
                   <div className='font-medium'>{item.menu_name}</div>
-                  <div className='text-gray-500'>{item.menu_price} ฿</div>
+                  <div className='text-gray-500'>{item.menu_cost} ฿</div>
                   {item.menu_description && <div className='text-sm text-gray-600 mt-1 italic'>หมายเหตุ: {item.menu_description}</div>}
                 </div>
                 <div className='flex items-center space-x-2'>

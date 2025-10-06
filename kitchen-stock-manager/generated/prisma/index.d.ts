@@ -1394,6 +1394,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     menu_category?: boolean
+    menu_cost?: boolean
     menu_description?: boolean
     menu_ingredients?: boolean | CartCartLunchboxLunchboxMenuMenuIngredientsDefaultArgs<ExtArgs>
     menu_name?: boolean
@@ -1406,6 +1407,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuSelectScalar = {
     menu_category?: boolean
+    menu_cost?: boolean
     menu_description?: boolean
     menu_name?: boolean
     menu_order_id?: boolean
@@ -1413,7 +1415,7 @@ export namespace Prisma {
     menu_total?: boolean
   }
 
-  export type CartCartLunchboxLunchboxMenuOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_category" | "menu_description" | "menu_ingredients" | "menu_name" | "menu_order_id" | "menu_subname" | "menu_total", ExtArgs["result"]["cartCartLunchboxLunchboxMenu"]>
+  export type CartCartLunchboxLunchboxMenuOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_category" | "menu_cost" | "menu_description" | "menu_ingredients" | "menu_name" | "menu_order_id" | "menu_subname" | "menu_total", ExtArgs["result"]["cartCartLunchboxLunchboxMenu"]>
   export type CartCartLunchboxLunchboxMenuInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $CartCartLunchboxLunchboxMenuPayload = {
@@ -1421,6 +1423,7 @@ export namespace Prisma {
     objects: {}
     scalars: {
       menu_category: string
+      menu_cost: number
       menu_description: string
       menu_name: string
       menu_order_id: number
@@ -1443,6 +1446,7 @@ export namespace Prisma {
    */
   interface CartCartLunchboxLunchboxMenuFieldRefs {
     readonly menu_category: FieldRef<"CartCartLunchboxLunchboxMenu", 'String'>
+    readonly menu_cost: FieldRef<"CartCartLunchboxLunchboxMenu", 'Int'>
     readonly menu_description: FieldRef<"CartCartLunchboxLunchboxMenu", 'String'>
     readonly menu_name: FieldRef<"CartCartLunchboxLunchboxMenu", 'String'>
     readonly menu_order_id: FieldRef<"CartCartLunchboxLunchboxMenu", 'Int'>
@@ -9623,6 +9627,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuObjectEqualityInput = {
     menu_category: string
+    menu_cost: number
     menu_description: string
     menu_ingredients?: CartCartLunchboxLunchboxMenuMenuIngredientsObjectEqualityInput[]
     menu_name: string
@@ -9757,6 +9762,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuCreateInput = {
     menu_category: string
+    menu_cost: number
     menu_description: string
     menu_ingredients?: CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput | CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput[]
     menu_name: string
@@ -9904,6 +9910,7 @@ export namespace Prisma {
     OR?: CartCartLunchboxLunchboxMenuWhereInput[]
     NOT?: CartCartLunchboxLunchboxMenuWhereInput | CartCartLunchboxLunchboxMenuWhereInput[]
     menu_category?: StringFilter<"CartCartLunchboxLunchboxMenu"> | string
+    menu_cost?: IntFilter<"CartCartLunchboxLunchboxMenu"> | number
     menu_description?: StringFilter<"CartCartLunchboxLunchboxMenu"> | string
     menu_ingredients?: CartCartLunchboxLunchboxMenuMenuIngredientsCompositeListFilter | CartCartLunchboxLunchboxMenuMenuIngredientsObjectEqualityInput[]
     menu_name?: StringFilter<"CartCartLunchboxLunchboxMenu"> | string
@@ -10017,6 +10024,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuUpdateInput = {
     menu_category?: StringFieldUpdateOperationsInput | string
+    menu_cost?: IntFieldUpdateOperationsInput | number
     menu_description?: StringFieldUpdateOperationsInput | string
     menu_ingredients?: XOR<CartCartLunchboxLunchboxMenuMenuIngredientsListUpdateEnvelopeInput, CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput> | CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput[]
     menu_name?: StringFieldUpdateOperationsInput | string
