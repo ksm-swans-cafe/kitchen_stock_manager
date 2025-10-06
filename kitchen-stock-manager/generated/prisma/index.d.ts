@@ -1319,6 +1319,7 @@ export namespace Prisma {
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
     lunchbox_total?: boolean
+    lunchbox_total_cost?: boolean
   }, ExtArgs["result"]["cartCartLunchbox"]>
 
 
@@ -1328,9 +1329,10 @@ export namespace Prisma {
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
     lunchbox_total?: boolean
+    lunchbox_total_cost?: boolean
   }
 
-  export type CartCartLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_limit" | "lunchbox_menu" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_total", ExtArgs["result"]["cartCartLunchbox"]>
+  export type CartCartLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_limit" | "lunchbox_menu" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_total" | "lunchbox_total_cost", ExtArgs["result"]["cartCartLunchbox"]>
   export type CartCartLunchboxInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $CartCartLunchboxPayload = {
@@ -1347,6 +1349,7 @@ export namespace Prisma {
        * Multiple data types found: Int: 75%, BigInt: 25% out of 4 sampled entries
        */
       lunchbox_total: Prisma.JsonValue
+      lunchbox_total_cost: number
     }
     composites: {
       lunchbox_menu: Prisma.$CartCartLunchboxLunchboxMenuPayload[]
@@ -1367,6 +1370,7 @@ export namespace Prisma {
     readonly lunchbox_name: FieldRef<"CartCartLunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"CartCartLunchbox", 'String'>
     readonly lunchbox_total: FieldRef<"CartCartLunchbox", 'Json'>
+    readonly lunchbox_total_cost: FieldRef<"CartCartLunchbox", 'Int'>
   }
     
 
@@ -9146,6 +9150,7 @@ export namespace Prisma {
     lunchbox_name: string
     lunchbox_set_name: string
     lunchbox_total: InputJsonValue
+    lunchbox_total_cost: number
   }
 
   export type CartCartMenuItemsCompositeListFilter = {
@@ -9552,6 +9557,7 @@ export namespace Prisma {
     lunchbox_name: string
     lunchbox_set_name: string
     lunchbox_total: InputJsonValue
+    lunchbox_total_cost: number
   }
 
   export type CartCartMenuItemsListCreateEnvelopeInput = {
@@ -9668,6 +9674,7 @@ export namespace Prisma {
     lunchbox_name?: StringFilter<"CartCartLunchbox"> | string
     lunchbox_set_name?: StringFilter<"CartCartLunchbox"> | string
     lunchbox_total?: JsonFilter<"CartCartLunchbox">
+    lunchbox_total_cost?: IntFilter<"CartCartLunchbox"> | number
   }
 
   export type CartCartLunchboxLunchboxMenuObjectEqualityInput = {
@@ -9929,6 +9936,7 @@ export namespace Prisma {
     lunchbox_name?: StringFieldUpdateOperationsInput | string
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
     lunchbox_total?: InputJsonValue | InputJsonValue
+    lunchbox_total_cost?: IntFieldUpdateOperationsInput | number
   }
 
   export type CartCartMenuItemsUpdateInput = {

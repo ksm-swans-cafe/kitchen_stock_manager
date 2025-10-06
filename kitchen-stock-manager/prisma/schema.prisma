@@ -16,6 +16,7 @@ type CartCartLunchbox {
   lunchbox_set_name String
   /// Multiple data types found: Int: 75%, BigInt: 25% out of 4 sampled entries
   lunchbox_total    Json
+  lunchbox_total_cost Int
 }
 
 type CartCartLunchboxLunchboxMenu {

@@ -1,6 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 
+// ฟังก์ชันแปลง BigInt เป็น Number
+function convertBigIntToNumber(obj: any): any {
+  return JSON.parse(JSON.stringify(obj, (key, value) => (typeof value === "bigint" ? Number(value) : value)));
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,37 +36,76 @@ export async function POST(request: NextRequest) {
     });
 
     const orderNumber = String(orderCount + 1).padStart(3, "0");
-
     const cartId = `CART-${orderNumber}-${Date.now()}`;
 
-    const formattedLunchboxes = cart_lunchboxes.map((lunchbox: any) => ({
-      lunchbox_name: lunchbox.lunchbox_name,
-      lunchbox_set_name: lunchbox.lunchbox_set,
-      lunchbox_limit: lunchbox.lunchbox_limit || 0, 
-      lunchbox_total: lunchbox.lunchbox_quantity || 1, 
-      lunchbox_menu: lunchbox.lunchbox_menus || [],
+    // แปลงข้อมูล lunchboxes
+    const rawLunchboxes = cart_lunchboxes.map((lunchbox: any) => ({
+      lunchbox_name: lunchbox.lunchbox_name || "",
+      lunchbox_set_name: lunchbox.lunchbox_set || "",
+      lunchbox_limit: parseInt(lunchbox.lunchbox_limit || "0"),
+      lunchbox_total: parseInt(lunchbox.lunchbox_quantity || "1"),
+      lunchbox_total_cost: parseInt((lunchbox.lunchbox_total_cost || "0").toString().replace(/[^\d]/g, "")),
+      lunchbox_menu: (lunchbox.lunchbox_menus || []).map((menu: any) => ({
+        menu_name: menu.menu_name || "",
+        menu_subname: menu.menu_subname || "",
+        menu_category: menu.menu_category || "",
+        menu_total: parseInt(menu.menu_total || "1"),
+        menu_ingredients: (menu.menu_ingredients || []).map((ingredient: any) => ({
+          ingredient_name: ingredient.ingredient_name || "",
+          useItem: parseInt(ingredient.useItem || "0"),
+        })),
+        menu_description: menu.menu_description || "",
+        menu_cost: parseInt(menu.menu_cost || "0"),
+        menu_order_id: parseInt(menu.menu_order_id || "0"),
+      })),
     }));
 
+    // แปลงข้อมูล menu items
+    const rawMenuItems = (cart_menu_items || []).map((item: any) => ({
+      menu_name: item.menu_name || "",
+      menu_subname: item.menu_subname || "",
+      menu_category: item.menu_category || "",
+      menu_total: parseInt(item.menu_total || "1"),
+      menu_ingredients: (item.menu_ingredients || []).map((ingredient: any) => ({
+        ingredient_name: ingredient.ingredient_name || "",
+        useItem: parseInt(ingredient.useItem || "0"),
+      })),
+      menu_description: item.menu_description || "",
+      menu_order_id: parseInt(item.menu_order_id || "0"),
+    }));
+
+    // แปลง BigInt ทั้งหมดเป็น Number
+    const formattedLunchboxes = convertBigIntToNumber(rawLunchboxes);
+    const formattedMenuItems = convertBigIntToNumber(rawMenuItems);
+
+    const cartData = {
+      cart_id: cartId,
+      cart_username: cart_username,
+      cart_lunchbox: formattedLunchboxes,
+      cart_menu_items: formattedMenuItems,
+      cart_create_date: cartCreateDateString,
+      cart_order_number: orderNumber,
+      cart_customer_name: cart_customer_name || "",
+      cart_customer_tel: cart_customer_tel || "",
+      cart_delivery_date: cart_delivery_date || "",
+      cart_location_send: cart_location_send || "",
+      cart_export_time: cart_export_time || "",
+      cart_receive_time: cart_receive_time || "",
+      cart_shipping_cost: cart_shipping_cost || "",
+      cart_status: "pending",
+    };
+
+    // แปลง BigInt ทั้งหมดในข้อมูลสุดท้าย
+    const finalCartData = convertBigIntToNumber(cartData);
+
     const result = await prisma.cart.create({
-      data: {
-        cart_id: cartId, 
-        cart_username,
-        cart_lunchbox: formattedLunchboxes,
-        cart_menu_items: cart_menu_items || [],
-        cart_create_date: cartCreateDateString,
-        cart_order_number: orderNumber,
-        cart_customer_name: cart_customer_name,
-        cart_customer_tel: cart_customer_tel,
-        cart_delivery_date: cart_delivery_date,
-        cart_location_send: cart_location_send,
-        cart_export_time: cart_export_time,
-        cart_receive_time: cart_receive_time,
-        cart_shipping_cost: cart_shipping_cost,
-        cart_status: "pending",
-      },
+      data: finalCartData,
     });
 
-    return NextResponse.json({ message: "Cart created successfully", cart: result }, { status: 201 });
+    // แปลง BigInt ใน result ก่อนส่งกลับ
+    const finalResult = convertBigIntToNumber(result);
+
+    return NextResponse.json({ message: "Cart created successfully", cart: finalResult }, { status: 201 });
   } catch (error: string | unknown) {
     console.error("Error creating cart:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(

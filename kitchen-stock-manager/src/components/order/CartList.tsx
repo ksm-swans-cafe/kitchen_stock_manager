@@ -16,7 +16,6 @@ import { LunchBox } from "@/stores/store";
 
 registerLocale("th", th);
 
-
 export default function CartList() {
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
@@ -54,6 +53,7 @@ export default function CartList() {
     removeLunchbox,
     updateLunchboxQuantity,
     updateLunchboxMenus,
+    updateLunchboxTotalCost, // เพิ่มฟังก์ชันใหม่
   } = useCartStore();
 
   const [loading, setLoading] = useState(false);
@@ -219,6 +219,16 @@ export default function CartList() {
     setCustomerInfo({ lunchbox: selectedLunchbox, lunchbox_set: "" });
   };
 
+  const handleLunchboxTotalCostChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = e.target.value.replace(/[^\d]/g, "");
+    if (!numericValue) {
+      updateLunchboxTotalCost(index, "");
+      return;
+    }
+    const formattedValue = Number(numericValue).toLocaleString("th-TH");
+    updateLunchboxTotalCost(index, formattedValue);
+  };
+
   const handleAddLunchbox = () => {
     if (!cart_lunch_box || !cart_lunch_box_set) {
       alert("กรุณาเลือกโปรโมชั่นและเซทอาหารก่อน");
@@ -234,6 +244,7 @@ export default function CartList() {
         lunchbox_limit: selectedLunchboxData.lunchbox_limit,
         selected_menus: [],
         quantity: 1,
+        lunchbox_total_cost: "", // เพิ่มฟิลด์ใหม่
       };
 
       addLunchbox(newLunchbox);
@@ -313,6 +324,7 @@ export default function CartList() {
             lunchbox_name: lunchbox.lunchbox_name,
             lunchbox_set: lunchbox.lunchbox_set,
             lunchbox_quantity: lunchbox.quantity,
+            lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""), // เพิ่มฟิลด์ใหม่
             lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
               menu_name: menu.menu_name,
               menu_subname: menu.menu_subname,
@@ -558,6 +570,13 @@ export default function CartList() {
                 <div className='flex items-center gap-2 mb-2'>
                   <label className='text-sm'>จำนวน:</label>
                   <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(index, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
+                </div>
+
+                {/* เพิ่มช่องกรอกราคา */}
+                <div className='flex items-center gap-2 mb-2'>
+                  <label className='text-sm'>ราคารวม:</label>
+                  <input type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
+                  <span className='text-sm text-gray-500'>฿</span>
                 </div>
 
                 <div className='mb-2'>

@@ -23,6 +23,7 @@ interface SelectedLunchbox {
   lunchbox_limit: number;
   selected_menus: MenuItem[];
   quantity: number;
+  lunchbox_total_cost: string;
 }
 
 interface CartState {
@@ -49,6 +50,7 @@ interface CartState {
   removeLunchbox: (index: number) => void;
   updateLunchboxQuantity: (index: number, quantity: number) => void;
   updateLunchboxMenus: (index: number, menus: MenuItem[]) => void;
+  updateLunchboxTotalCost: (index: number, totalCost: string) => void;
 }
 
 const generateCartItemId = (menuId: string | undefined, description: string) => {
@@ -176,6 +178,12 @@ export const useCartStore = create<CartState>()(
       updateLunchboxMenus: (index, menus) => {
         set((state) => ({
           selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, selected_menus: menus } : item)),
+        }));
+      },
+
+      updateLunchboxTotalCost: (index, totalCost) => {
+        set((state) => ({
+          selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, lunchbox_total_cost: totalCost } : item)),
         }));
       },
     }),
