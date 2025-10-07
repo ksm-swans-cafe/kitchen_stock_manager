@@ -32,7 +32,25 @@ export async function GET() {
       orderBy: {
         cart_create_date: "desc",
       },
+      select: {
+        cart_id: true,
+        cart_menu_items: true,
+        cart_create_date: true,
+        cart_status: true,
+        cart_order_number: true,
+        cart_username: true,
+        cart_customer_tel: true,
+        cart_customer_name: true,
+        cart_location_send: true,
+        cart_delivery_date: true,
+        cart_export_time: true,
+        cart_receive_time: true,
+        cart_shipping_cost: true,
+        cart_lunchbox: true, 
+      },
     });
+    
+    console.log("Fetched carts:", result);
     if (result.length === 0) return NextResponse.json({ message: "No carts found" }, { status: 404 });
 
     // Convert BigInt values to strings before sending JSON response

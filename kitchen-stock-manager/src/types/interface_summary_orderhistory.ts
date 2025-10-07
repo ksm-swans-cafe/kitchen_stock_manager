@@ -22,6 +22,26 @@ export interface MenuItem {
   order_number?: string;
 }
 
+export interface LunchboxMenu {
+  menu_name: string;
+  menu_subname: string;
+  menu_category: string;
+  menu_total: number;
+  menu_ingredients: Ingredient[];
+  menu_description: string;
+  menu_cost: number;
+  menu_order_id: number;
+}
+
+export interface Lunchbox {
+  lunchbox_name: string;
+  lunchbox_set_name: string;
+  lunchbox_limit: number;
+  lunchbox_total: number;
+  lunchbox_total_cost: number;
+  lunchbox_menu: LunchboxMenu[];
+}
+
 export interface Cart {
   id: string;
   orderNumber: string;
@@ -47,6 +67,7 @@ export interface Cart {
   cart_export_time?: string;
   cart_customer_tel?: string;
   cart_location_send?: string;
+  cart_lunchbox: Lunchbox[];
 }
 
 export interface CartItem extends MenuItem {
@@ -54,6 +75,7 @@ export interface CartItem extends MenuItem {
 }
 
 export type RawCart = {
+  _id?: string; // เพิ่ม _id field
   cart_id: string;
   cart_menu_items: string | MenuItem[];
   cart_create_date: string;
@@ -70,6 +92,7 @@ export type RawCart = {
   cart_export_time: string;
   cart_receive_time: string;
   cart_shipping_cost: string;
+  cart_lunchbox: string | Lunchbox[];
 };
 
 export type ResponsiveOrderIdProps = {

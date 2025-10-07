@@ -28,7 +28,7 @@ import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
 import StatusDropdown from "@/app/components/StatusDropdownsummary";
 import PaginationComponent from "@/components/ui/Totalpage";
 
-import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
+import { Ingredient, MenuItem, Cart, CartItem, RawCart, Lunchbox } from "@/types/interface_summary_orderhistory";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -61,7 +61,35 @@ const SummaryList: React.FC = () => {
   const [selectedCartForSummary, setSelectedCartForSummary] = useState<Cart | null>(null);
   const [shouldFetchMenu, setShouldFetchMenu] = useState(false);
   const [editMenuDialog, setEditMenuDialog] = useState<{
-    cartId: string;
+    cart_id: string;
+    cart_delivery_date: string;
+    cart_receive_time: string;
+    cart_export_time: string;
+    cart_customer_tel: string;
+    cart_customer_name: string;
+    cart_location_send: string;
+    cart_shipping_cost: number;
+    cart_lunchbox: {
+      lunchbox_name: string;
+      lunchbox_set_name: string;
+      lunchbox_limit: number;
+      lunchbox_total: number;
+      lunchbox_total_cost: number;
+      lunchbox_menu: {
+        menu_name: string;
+        menu_subname: string;
+        menu_category: string;
+        menu_total: number;
+        menu_order_id: number;
+        menu_description: string;
+        menu_ingredients: {
+          useItem: number;
+          ingredient_name: string;
+          ingredient_status: boolean;
+          ingredient_unit?: string;
+        }[];
+      }[];
+    }[];
     menuItems: {
       menu_name: string;
       menu_total: number;
@@ -96,11 +124,22 @@ const SummaryList: React.FC = () => {
   });
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher, { refreshInterval: 30000 });
+  const { data: lunchBox, error: lunchBoxError } = useSWR("/api/get/lunchbox", fetcher, { refreshInterval: 30000 });
   const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
   const error = cartsError || menuError || ingredientError;
-  const isLoading = !cartsData || !menuData || !ingredientData;
+  const isLoading = !cartsData || !menuData || !ingredientData || !lunchBox;
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
+
+  // เพิ่ม state สำหรับ dropdown
+  const [selectedLunchbox, setSelectedLunchbox] = useState<string>("");
+  const [selectedMenu, setSelectedMenu] = useState<string>("");
+  const [selectedIngredient, setSelectedIngredient] = useState<string>("");
+  const [filteredLunchboxes, setFilteredLunchboxes] = useState<any[]>([]);
+  const [filteredMenus, setFilteredMenus] = useState<any[]>([]);
+  const [filteredIngredients, setFilteredIngredients] = useState<any[]>([]);
+
+  // เพิ่ม useEffect สำหรับดึงข้อมูล dropdown
 
   const handleSummaryprice = () => {
     router.push("/home/summarylist/summaryprice");
@@ -111,12 +150,12 @@ const SummaryList: React.FC = () => {
     else if (action === "close") return setIsDatePickerOpen(false);
   };
 
-  const safeParseJSON = (jsonString: string): CartItem[] => {
+  const safeParseJSON = (jsonString: string): any => {
     try {
       return JSON.parse(jsonString);
     } catch (e) {
       console.error("Failed to parse JSON:", e);
-      return [];
+      return null;
     }
   };
 
@@ -148,6 +187,7 @@ const SummaryList: React.FC = () => {
               menuItems: [],
               allIngredients: [],
               order_number: cart.cart_order_number,
+              cart_lunchbox: [],
               cart_delivery_date: cart.cart_delivery_date,
               cart_receive_time: cart.cart_receive_time,
               cart_export_time: cart.cart_export_time,
@@ -177,25 +217,63 @@ const SummaryList: React.FC = () => {
           const timeOnly = timePart ? timePart.split("+")[0] : "";
           const formattedTime = timeOnly ? timeOnly.slice(0, 5) : "ไม่ระบุ";
 
-          const menuItems: MenuItem[] = typeof cart.cart_menu_items === "string" && cart.cart_menu_items ? safeParseJSON(cart.cart_menu_items) : Array.isArray(cart.cart_menu_items) ? cart.cart_menu_items.filter((item) => item && typeof item.menu_total === "number") : [];
+          // ประมวลผล cart_lunchbox
+          let cartLunchbox: Lunchbox[] = [];
+          if (cart.cart_lunchbox) {
+            if (typeof cart.cart_lunchbox === 'string') {
+              const parsedLunchbox = safeParseJSON(cart.cart_lunchbox);
+              if (parsedLunchbox && Array.isArray(parsedLunchbox)) {
+                cartLunchbox = parsedLunchbox;
+              }
+            } else if (Array.isArray(cart.cart_lunchbox)) {
+              cartLunchbox = cart.cart_lunchbox;
+            }
+          }
 
-          const totalSets = menuItems.filter((item) => item && typeof item === "object" && typeof item.menu_total === "number").reduce((sum, item) => sum + (item.menu_total || 0), 0);
+          // ประมวลผล menuItems จาก cart_lunchbox
+          const menuItems: MenuItem[] = [];
+          cartLunchbox.forEach((lunchbox) => {
+            lunchbox.lunchbox_menu.forEach((menu) => {
+              const menuIngredients = (menu.menu_ingredients || []).map((ing: Ingredient) => ({
+                ...ing,
+                ingredient_id: ing.ingredient_id || undefined,
+                ingredient_name: ing.ingredient_name || "ไม่พบวัตถุดิบ",
+                calculatedTotal: ing.useItem * (menu.menu_total || 0),
+                sourceMenu: menu.menu_name,
+                isChecked: ing.ingredient_status ?? false,
+                ingredient_status: ing.ingredient_status ?? false,
+                ingredient_unit: ingredientUnitMap.get(ing.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
+              }));
 
-          const menuDisplayName = menuItems.length > 0 ? menuItems.map((item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`).join(" + ") : "ไม่มีชื่อเมนู";
+              menuItems.push({
+                menu_name: menu.menu_name,
+                menu_subname: menu.menu_subname,
+                menu_category: menu.menu_category,
+                menu_total: menu.menu_total,
+                menu_ingredients: menuIngredients,
+                menu_description: menu.menu_description || "",
+                menu_order_id: menu.menu_order_id,
+              });
+            });
+          });
+
+          const totalSets = menuItems.reduce((sum, item) => sum + (item.menu_total || 0), 0);
+
+          const menuDisplayName = menuItems.length > 0 
+            ? menuItems.map((item) => `${item.menu_name} จำนวน ${item.menu_total} กล่อง`).join(" + ") 
+            : "ไม่มีชื่อเมนู";
 
           const allIngredients = menuItems.map((menu) => ({
             menuName: menu.menu_name,
-            ingredients: (menu.menu_ingredients ?? []).map((dbIng: Ingredient) => ({
-              ...dbIng,
-              ingredient_id: dbIng.ingredient_id || undefined,
-              ingredient_name: dbIng.ingredient_name || "ไม่พบวัตถุดิบ",
-              calculatedTotal: dbIng.useItem * (menu.menu_total || 0),
+            ingredients: menu.menu_ingredients.map((ing: Ingredient) => ({
+              ...ing,
+              calculatedTotal: ing.useItem * (menu.menu_total || 0),
               sourceMenu: menu.menu_name,
-              isChecked: dbIng.ingredient_status ?? false,
-              ingredient_status: dbIng.ingredient_status ?? false,
-              ingredient_unit: ingredientUnitMap.get(dbIng.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
+              isChecked: ing.ingredient_status ?? false,
+              ingredient_status: ing.ingredient_status ?? false,
+              ingredient_unit: ingredientUnitMap.get(ing.ingredient_name?.toString() || "") || "ไม่ระบุหน่วย",
             })),
-            ingredient_status: (menu.menu_ingredients ?? []).every((ing: Ingredient) => ing.ingredient_status ?? false),
+            ingredient_status: menu.menu_ingredients.every((ing: Ingredient) => ing.ingredient_status ?? false),
           }));
 
           const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
@@ -210,11 +288,7 @@ const SummaryList: React.FC = () => {
             price: cart.cart_total_price || 0,
             status: cart.cart_status,
             createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
-            menuItems: menuItems.map((item) => ({
-              ...item,
-              menu_ingredients: item.menu_ingredients || [],
-              menu_description: item.menu_description || undefined,
-            })),
+            menuItems,
             allIngredients,
             order_number: cart.cart_order_number,
             cart_delivery_date: cart.cart_delivery_date,
@@ -224,6 +298,7 @@ const SummaryList: React.FC = () => {
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
             cart_shipping_cost: cart.cart_shipping_cost,
+            cart_lunchbox: cartLunchbox,
           };
         });
 
@@ -933,6 +1008,10 @@ const SummaryList: React.FC = () => {
           ingredientUnitMap.set(ing.ingredient_name, ing.ingredient_unit);
         });
 
+        const MenusMap = new globalThis.Map<String, MenuItem>();
+        menuItems.forEach((item) => {
+          MenusMap.set(item.menu_name, item);
+        });
         const updatedMenuItems = menuItems.map((item) => {
           const existingMenu = currentCart.menuItems.find((m) => m.menu_name === item.menu_name);
           const menuData = menuListData?.find((m: { menu_name: string }) => m.menu_name === item.menu_name);
@@ -953,6 +1032,8 @@ const SummaryList: React.FC = () => {
 
           return {
             menu_name: item.menu_name,
+            menu_subname: item.menu_subname,
+            menu_category: item.menu_category,
             menu_total: item.menu_total,
             menu_ingredients: menuIngredients,
             menu_description: item.menu_description || "",
@@ -1132,7 +1213,7 @@ const SummaryList: React.FC = () => {
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
               <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
-              />
+                />
             </div>
           </div>
 
@@ -1401,7 +1482,7 @@ const SummaryList: React.FC = () => {
                                   <FaWallet className='w-4 h-4 ml-4' />
                                   <span>เวลารับอาหาร {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                   <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")}>
-                                    <Edit2 className='w-4 h-4' />
+                                    {/* <Edit2 className='w-4 h-4' /> */}
                                   </span>
                                 </div>
                               )}
@@ -1506,7 +1587,15 @@ const SummaryList: React.FC = () => {
                                           return;
                                         }
                                         setEditMenuDialog({
-                                          cartId: cart.id,
+                                          cart_id: cart.id,
+                                          cart_delivery_date: cart.cart_delivery_date || "",
+                                          cart_receive_time: cart.cart_receive_time || "",
+                                          cart_export_time: cart.cart_export_time || "",
+                                          cart_customer_tel: cart.cart_customer_tel || "",
+                                          cart_customer_name: cart.cart_customer_name || "",
+                                          cart_location_send: cart.cart_location_send || "",
+                                          cart_shipping_cost: cart.cart_shipping_cost || 0,
+                                          cart_lunchbox: cart.cart_lunchbox || [],
                                           menuItems: currentCart.menuItems.map((item, idx) => ({
                                             menu_name: item.menu_name || "เมนูไม่ระบุ",
                                             menu_total: item.menu_total || 0,
@@ -1539,440 +1628,271 @@ const SummaryList: React.FC = () => {
                                     setEditMenuDialog(null);
                                     setShouldFetchMenu(false);
                                   }}>
-                                  <DialogContent className='max-w-2xl max-h-[80vh] overflow-hidden flex flex-col'>
-                                    <DialogTitle className='text-lg font-semibold text-gray-800 border-b pb-3'>แก้ไขเมนูสำหรับ Order </DialogTitle>
-                                    <div className='flex-1 overflow-y-auto p-1'>
+                                  <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
+                                    <DialogTitle className='text-xl font-bold mb-4'>
+                                      แก้ไขเมนูสำหรับออร์เดอร์ {editMenuDialog?.cart_id}
+                                    </DialogTitle>
+                                    
+                                    {editMenuDialog && (
                                       <div className='space-y-6'>
-                                        {menuListError ? (
-                                          <div className='bg-red-50 border border-red-200 rounded-lg p-4'>
-                                            <div className='flex items-center gap-2'>
-                                              <div className='w-5 h-5 bg-red-500 rounded-full flex items-center justify-center'>
-                                                <span className='text-white text-xs'>!</span>
-                                              </div>
-                                              <span className='text-red-700 text-sm font-medium'>เกิดข้อผิดพลาดในการดึงข้อมูลเมนู</span>
+                                        {/* แสดงข้อมูลลูกค้า */}
+                                        <div className='bg-gray-50 p-4 rounded-lg'>
+                                          <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
+                                          <div className='grid grid-cols-2 gap-4 text-sm'>
+                                            <div>
+                                              <span className='font-medium'>ชื่อ:</span> {editMenuDialog.cart_customer_name}
                                             </div>
-                                            <p className='text-red-600 text-sm mt-1'>{menuListError.message}</p>
-                                          </div>
-                                        ) : !menuListData ? (
-                                          <div className='flex items-center justify-center py-8'>
-                                            <div className='flex items-center gap-3'>
-                                              <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600'></div>
-                                              <span className='text-gray-600'>กำลังโหลดข้อมูลเมนู...</span>
+                                            <div>
+                                              <span className='font-medium'>เบอร์โทร:</span> {editMenuDialog.cart_customer_tel}
+                                            </div>
+                                            <div>
+                                              <span className='font-medium'>สถานที่ส่ง:</span> {editMenuDialog.cart_location_send}
+                                            </div>
+                                            <div>
+                                              <span className='font-medium'>ค่าจัดส่ง:</span> {editMenuDialog.cart_shipping_cost} บาท
+                                            </div>
+                                            <div>
+                                              <span className='font-medium'>วันที่ส่ง:</span> {editMenuDialog.cart_delivery_date}
+                                            </div>
+                                            <div>
+                                              <span className='font-medium'>เวลาส่ง/รับ:</span> {editMenuDialog.cart_export_time} / {editMenuDialog.cart_receive_time}
                                             </div>
                                           </div>
-                                        ) : (
-                                          <>
-                                            {/* เมนูปัจจุบัน */}
-                                            <div className='space-y-3'>
-                                              <div className='flex items-center gap-2'>
-                                                <div className='w-1 h-6 bg-blue-500 rounded'></div>
-                                                <h5 className='text-base font-semibold text-gray-800'>เมนูปัจจุบัน</h5>
-                                                <span className='bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full'>{editMenuDialog?.menuItems.length || 0} รายการ</span>
-                                              </div>
+                                        </div>
 
-                                              {editMenuDialog?.menuItems.length === 0 ? (
-                                                <div className='bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-6 text-center'>
-                                                  <div className='text-gray-400 text-lg mb-2'>📋</div>
-                                                  <p className='text-gray-500 text-sm'>ไม่มีเมนูใน order นี้</p>
+                                        {/* แสดงข้อมูล cart_lunchbox */}
+                                        {editMenuDialog.cart_lunchbox && editMenuDialog.cart_lunchbox.length > 0 && (
+                                          <div className='space-y-4'>
+                                            <h3 className='font-semibold text-gray-800'>ข้อมูลกล่องอาหาร</h3>
+                                            {editMenuDialog.cart_lunchbox.map((lunchbox, lunchboxIdx) => (
+                                              <div key={lunchboxIdx} className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
+                                                <div className='flex justify-between items-start mb-3'>
+                                                  <div>
+                                                    <h4 className='font-semibold text-blue-800'>
+                                                      {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                                    </h4>
+                                                    <div className='text-sm text-blue-700 space-y-1'>
+                                                      <p>จำนวน: {lunchbox.lunchbox_total} กล่อง</p>
+                                                      <p>ราคา: {lunchbox.lunchbox_total_cost} บาท</p>
+                                                      <p>จำกัด: {lunchbox.lunchbox_limit} กล่อง</p>
+                                                    </div>
+                                                  </div>
                                                 </div>
-                                              ) : (
-                                                <div className='space-y-3'>
-                                                  {editMenuDialog?.menuItems.map((item, idx) => (
-                                                    <div key={idx} className='bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow'>
-                                                      <div className='flex items-start gap-4'>
-                                                        <div className='flex-1'>
-                                                          <h6 className='font-medium text-gray-800 mb-3'>{item.menu_name}</h6>
-
-                                                          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                                                            <div className='space-y-2'>
-                                                              <label className='text-sm font-medium text-gray-600'>จำนวนกล่อง</label>
-                                                              <Input
-                                                                type='number'
-                                                                value={item.menu_total || 0}
-                                                                onChange={(e) =>
-                                                                  setEditMenuDialog((prev) =>
-                                                                    prev
-                                                                      ? {
-                                                                          ...prev,
-                                                                          menuItems: prev.menuItems.map((m, i) =>
-                                                                            i === idx
-                                                                              ? {
-                                                                                  ...m,
-                                                                                  menu_total: Number(e.target.value) || 0,
-                                                                                }
-                                                                              : m
-                                                                          ),
-                                                                        }
-                                                                      : prev
-                                                                  )
-                                                                }
-                                                                placeholder='จำนวนกล่อง'
-                                                                min='0'
-                                                                className='h-10'
-                                                              />
+                                                
+                                                <div className='mt-3'>
+                                                  <h5 className='font-medium text-blue-800 mb-2'>เมนูในกล่อง:</h5>
+                                                  <div className='space-y-2'>
+                                                    {lunchbox.lunchbox_menu.map((menu, menuIdx) => (
+                                                      <div key={menuIdx} className='bg-white p-3 rounded border'>
+                                                        <div className='flex justify-between items-start mb-2'>
+                                                          <div>
+                                                            <div className='font-medium text-gray-800'>
+                                                              {menu.menu_name} ({menu.menu_subname})
                                                             </div>
-
-                                                            <div className='space-y-2'>
-                                                              <label className='text-sm font-medium text-gray-600'>รายละเอียด</label>
-                                                              <Input
-                                                                type='text'
-                                                                value={item.menu_description || ""}
-                                                                onChange={(e) =>
-                                                                  setEditMenuDialog((prev) =>
-                                                                    prev
-                                                                      ? {
-                                                                          ...prev,
-                                                                          menuItems: prev.menuItems.map((m, i) =>
-                                                                            i === idx
-                                                                              ? {
-                                                                                  ...m,
-                                                                                  menu_description: e.target.value || "",
-                                                                                }
-                                                                              : m
-                                                                          ),
-                                                                        }
-                                                                      : prev
-                                                                  )
-                                                                }
-                                                                placeholder='รายละเอียดเพิ่มเติม'
-                                                                className='h-10'
-                                                              />
+                                                            <div className='text-sm text-gray-600'>
+                                                              หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
                                                             </div>
+                                                            {menu.menu_description && (
+                                                              <div className='text-sm text-gray-500 mt-1'>
+                                                                {menu.menu_description}
+                                                              </div>
+                                                            )}
+                                                          </div>
+                                                          <div className='text-sm text-gray-600'>
+                                                            ID: {menu.menu_order_id}
                                                           </div>
                                                         </div>
-
-                                                        <Button
-                                                          variant='ghost'
-                                                          size='sm'
-                                                          onClick={() =>
-                                                            setEditMenuDialog((prev) =>
-                                                              prev
-                                                                ? {
-                                                                    ...prev,
-                                                                    menuItems: prev.menuItems.filter((_, i) => i !== idx),
-                                                                  }
-                                                                : prev
-                                                            )
-                                                          }
-                                                          className='text-red-600 hover:text-red-800 hover:bg-red-50 mt-1'>
-                                                          <span className='text-lg'>🗑️</span>
-                                                        </Button>
+                                                        
+                                                        {/* แสดงวัตถุดิบ */}
+                                                        <div className='mt-2'>
+                                                          <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
+                                                          <div className='grid grid-cols-2 gap-1'>
+                                                            {menu.menu_ingredients.map((ingredient, ingIdx) => (
+                                                              <div key={ingIdx} className='text-xs text-gray-600 flex justify-between'>
+                                                                <span>• {ingredient.ingredient_name}</span>
+                                                                <span>{ingredient.useItem} {ingredient.ingredient_unit || 'หน่วย'}</span>
+                                                              </div>
+                                                            ))}
+                                                          </div>
+                                                        </div>
                                                       </div>
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </div>
-
-                                            {/* เพิ่มเมนูใหม่ */}
-                                            <div className='space-y-3'>
-                                              <div className='flex items-center gap-2'>
-                                                <div className='w-1 h-6 bg-green-500 rounded'></div>
-                                                <h5 className='text-base font-semibold text-gray-800'>เพิ่มเมนูใหม่</h5>
-                                              </div>
-
-                                              <div className='bg-green-50 border border-green-200 rounded-lg p-4'>
-                                                <div className='space-y-4'>
-                                                  <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-                                                    <div className='md:col-span-2 space-y-2'>
-                                                      <label className='text-sm font-medium text-gray-600'>เลือกเมนู</label>
-                                                      <Select
-                                                        value={editMenuDialog?.newMenu.menu_name || ""}
-                                                        onValueChange={(value) =>
-                                                          setEditMenuDialog((prev) =>
-                                                            prev
-                                                              ? {
-                                                                  ...prev,
-                                                                  newMenu: {
-                                                                    ...prev.newMenu,
-                                                                    menu_name: value || "",
-                                                                  },
-                                                                }
-                                                              : prev
-                                                          )
-                                                        }>
-                                                        <SelectTrigger className='h-10'>
-                                                          <SelectValue placeholder='เลือกเมนู' />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                          {menuListData?.map((menu: { menu_name: string }) => (
-                                                            <SelectItem key={menu.menu_name} value={menu.menu_name}>
-                                                              {menu.menu_name}
-                                                            </SelectItem>
-                                                          ))}
-                                                        </SelectContent>
-                                                      </Select>
-                                                    </div>
-
-                                                    <div className='space-y-2'>
-                                                      <label className='text-sm font-medium text-gray-600'>จำนวน</label>
-                                                      <Input
-                                                        type='number'
-                                                        value={editMenuDialog?.newMenu.menu_total || 1}
-                                                        onChange={(e) =>
-                                                          setEditMenuDialog((prev) =>
-                                                            prev
-                                                              ? {
-                                                                  ...prev,
-                                                                  newMenu: {
-                                                                    ...prev.newMenu,
-                                                                    menu_total: Number(e.target.value) || 1,
-                                                                  },
-                                                                }
-                                                              : prev
-                                                          )
-                                                        }
-                                                        placeholder='จำนวน'
-                                                        min='1'
-                                                        className='h-10'
-                                                      />
-                                                    </div>
-                                                  </div>
-
-                                                  <div className='space-y-2'>
-                                                    <label className='text-sm font-medium text-gray-600'>รายละเอียดเพิ่มเติม</label>
-                                                    <Input
-                                                      type='text'
-                                                      value={editMenuDialog?.newMenu.menu_description || ""}
-                                                      onChange={(e) =>
-                                                        setEditMenuDialog((prev) =>
-                                                          prev
-                                                            ? {
-                                                                ...prev,
-                                                                newMenu: {
-                                                                  ...prev.newMenu,
-                                                                  menu_description: e.target.value || "",
-                                                                },
-                                                              }
-                                                            : prev
-                                                        )
-                                                      }
-                                                      placeholder='รายละเอียดเมนู (ไม่บังคับ)'
-                                                      className='h-10'
-                                                    />
-                                                  </div>
-
-                                                  <div className='flex justify-end'>
-                                                    <Button
-                                                      onClick={() =>
-                                                        editMenuDialog?.newMenu.menu_name &&
-                                                        editMenuDialog?.newMenu.menu_total > 0 &&
-                                                        setEditMenuDialog((prev) => {
-                                                          if (!menuListData) {
-                                                            Swal.fire({
-                                                              icon: "error",
-                                                              title: "เกิดข้อผิดพลาด",
-                                                              text: "ข้อมูลเมนูยังไม่พร้อม กรุณาลองอีกครั้ง",
-                                                              showConfirmButton: false,
-                                                              timer: 3000,
-                                                            });
-                                                            return prev;
-                                                          }
-                                                          const menuData = menuListData.find((m: { menu_name: string }) => m.menu_name === prev?.newMenu.menu_name);
-                                                          return prev
-                                                            ? {
-                                                                ...prev,
-                                                                menuItems: [
-                                                                  ...prev.menuItems,
-                                                                  {
-                                                                    menu_name: prev.newMenu.menu_name || "",
-                                                                    menu_total: prev.newMenu.menu_total || 1,
-                                                                    menu_description: prev.newMenu.menu_description || "",
-                                                                    menu_order_id: prev.menuItems.length + 1,
-                                                                    menu_ingredients:
-                                                                      menuData?.menu_ingredients?.map((ing: { useItem?: number; quantity?: number; ingredient_name?: string; name?: string }) => ({
-                                                                        useItem: ing.useItem || ing.quantity || 0,
-                                                                        ingredient_name: ing.ingredient_name || ing.name || "",
-                                                                        ingredient_status: false,
-                                                                      })) || [],
-                                                                  },
-                                                                ],
-                                                                newMenu: {
-                                                                  menu_name: "",
-                                                                  menu_total: 1,
-                                                                  menu_description: "",
-                                                                },
-                                                              }
-                                                            : prev;
-                                                        })
-                                                      }
-                                                      disabled={!editMenuDialog?.newMenu.menu_name || !editMenuDialog?.newMenu.menu_total || editMenuDialog?.newMenu.menu_total <= 0 || !menuListData}
-                                                      className='bg-green-600 hover:bg-green-700 text-white px-6'>
-                                                      <span className='mr-2'>➕</span>
-                                                      เพิ่มเมนู
-                                                    </Button>
+                                                    ))}
                                                   </div>
                                                 </div>
                                               </div>
-                                            </div>
-                                          </>
+                                            ))}
+                                          </div>
                                         )}
+
+
+                                        {/* ปุ่มควบคุม */}
+                                        <div className='flex justify-end gap-2 pt-4 border-t'>
+                                          <Button 
+                                            variant='outline' 
+                                            onClick={() => {
+                                              setEditMenuDialog(null);
+                                              setShouldFetchMenu(false);
+                                            }}
+                                          >
+                                            ยกเลิก
+                                          </Button>
+                                          <Button 
+                                            onClick={() => {
+                                              // เรียกใช้ฟังก์ชัน handleEdit.Menu
+                                              if (editMenuDialog) {
+                                                handleEdit.Menu(editMenuDialog.cart_id, editMenuDialog.menuItems);
+                                              }
+                                            }}
+                                            disabled={isSaving !== null}
+                                          >
+                                            {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+                                          </Button>
+                                        </div>
                                       </div>
-                                    </div>
-
-                                    {/* ปุ่มบันทึกและยกเลิก */}
-                                    <div className='border-t pt-4 flex justify-end gap-3'>
-                                      <Button
-                                        variant='ghost'
-                                        onClick={() => {
-                                          setEditMenuDialog(null);
-                                          setShouldFetchMenu(false);
-                                        }}
-                                        className='px-6'>
-                                        ยกเลิก
-                                      </Button>
-                                      <Button onClick={() => editMenuDialog && handleEdit.Menu(editMenuDialog.cartId, editMenuDialog.menuItems)} disabled={isSaving !== null || editMenuDialog?.menuItems.some((m) => m.menu_total < 0)} className='bg-blue-600 hover:bg-blue-700 text-white px-6'>
-                                        {isSaving ? (
-                                          <>
-                                            <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
-                                            กำลังบันทึก...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <span className='mr-2'>💾</span>
-                                            บันทึกการแก้ไข
-                                          </>
-                                        )}
-                                      </Button>
-                                    </div>
+                                    )}
                                   </DialogContent>
                                 </Dialog>
                                 <Accordion type='multiple' className='space-y-3'>
-                                  {cart.allIngredients.map((menuGroup, groupIdx) => {
-                                    const totalBox = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName)?.menu_total || 0;
-                                    const isEditingThisMenu = editingMenu?.cartId === cart.id && editingMenu?.menuName === menuGroup.menuName;
-                                    const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
-
-                                    return (
-                                      <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                  {cart.cart_lunchbox && cart.cart_lunchbox.length > 0 ? (
+                                    cart.cart_lunchbox.map((lunchbox, lunchboxIdx) => (
+                                      <AccordionItem 
+                                        key={lunchboxIdx} 
+                                        value={`lunchbox-${lunchboxIdx}`} 
+                                        className="rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50"
+                                      >
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
                                           <div className='flex flex-col items-start'>
-                                            <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
-                                            {(() => {
-                                              const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                              return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
-                                            })()}
+                                            <span className='truncate text-sm text-blue-800 font-bold'>
+                                              📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                            </span>
+                                            <span className='truncate text-xs text-blue-600 mt-1'>
+                                              จำนวน: {lunchbox.lunchbox_total} กล่อง | ราคา: {lunchbox.lunchbox_total_cost} บาท
+                                            </span>
                                           </div>
-                                          <span className='flex items-center gap-2'>
-                                            {isEditingThisMenu ? (
-                                              <>
-                                                <input
-                                                  type='number'
-                                                  value={editTotalBox}
-                                                  onChange={(e) => setEditTotalBox(Number(e.target.value))}
-                                                  className='w-20 h-8 text-sm rounded-md border-gray-300 px-2'
-                                                  min='0'
-                                                  aria-label='Edit box quantity'
-                                                  style={{
-                                                    outline: "1px solid #ccc",
-                                                  }}
-                                                />
-                                                <span
-                                                  className='cursor-pointer text-green-600 hover:text-green-800 px-1'
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleTotalBox.Save(cart.id, menuGroup.menuName);
-                                                  }}
-                                                  tabIndex={0}
-                                                  role='button'
-                                                  aria-label='บันทึกจำนวนกล่อง'>
-                                                  ✔
-                                                </span>
-                                                <span
-                                                  className='cursor-pointer text-gray-600 hover:text-gray-800 px-1'
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingMenu(null);
-                                                  }}
-                                                  tabIndex={0}
-                                                  role='button'
-                                                  aria-label='ยกเลิก'>
-                                                  ✖
-                                                </span>
-                                              </>
-                                            ) : (
-                                              <>
-                                                <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
-                                                <span
-                                                  className='cursor-pointer text-blue-600 hover:text-blue-800'
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleTotalBox.Edit(cart.id, menuGroup.menuName, totalBox);
-                                                  }}
-                                                  tabIndex={0}
-                                                  role='button'
-                                                  aria-label='แก้ไขจำนวนกล่อง'>
-                                                  <Edit2 className='w-4 h-4' />
-                                                </span>
-                                              </>
-                                            )}
-                                          </span>
                                         </AccordionTrigger>
-                                        <AccordionContent className='pt-3 space-y-2'>
-                                          <div className='flex justify-end mb-2'>
-                                            <Button onClick={() => handleEdit.Ingredients(cart.id, menuGroup.menuName, menuGroup.ingredients)} className='flex items-center gap-2'>
-                                              แก้ไขวัตถุดิบ
-                                              <Edit2 className='w-4 h-4' />
-                                            </Button>
-                                          </div>
-                                          {menuGroup.ingredients.map((ing, idx) => (
-                                            <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                              <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-
-                                              <div className='flex items-center gap-4'>
-                                                <span className='text-gray-600'>
-                                                  ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
-                                                  <strong className='text-black-600' style={{ color: "#000000" }}>
-                                                    {ing.calculatedTotal}
-                                                  </strong>{" "}
-                                                  {ing.ingredient_unit}
-                                                </span>
-
-                                                <label className='cursor-pointer'>
-                                                  <input type='checkbox' checked={ing.isChecked || false} onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)} className='hidden' />
-                                                  <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked ? "bg-green-500" : "bg-red-500"}`}>
-                                                    <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked ? "translate-x-5" : "translate-x-0.5"}`} />
-                                                  </span>
-                                                </label>
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </AccordionContent>
-                                        <AccordionContent className='pt-3 space-y-2'>
-                                          <div className='flex justify-end mb-2'>
-                                            <Button onClick={() => handleEdit.Ingredients(cart.id, menuGroup.menuName, menuGroup.ingredients)} className='flex items-center gap-2'>
-                                              แก้ไขวัตถุดิบ
-                                              <Edit2 className='w-4 h-4' />
-                                            </Button>
-                                          </div>
-                                          {menuGroup.ingredients.map((ing, idx) => (
-                                            <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                              <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-                                              <div className='flex items-center gap-4'>
-                                                <span className='text-gray-600'>
-                                                  ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
-                                                  <strong
-                                                    className='text-black-600'
-                                                    style={{
-                                                      color: "#000000",
-                                                    }}>
-                                                    {ing.calculatedTotal}
-                                                  </strong>{" "}
-                                                  {ing.ingredient_unit}
-                                                </span>
-                                                <label className='cursor-pointer'>
-                                                  <input type='checkbox' checked={ing.isChecked || false} onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)} className='hidden' />
-                                                  <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked ? "bg-green-500" : "bg-red-500"}`}>
-                                                    <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked ? "translate-x-5" : "translate-x-0.5"}`} />
-                                                  </span>
-                                                </label>
-                                              </div>
-                                            </div>
-                                          ))}
+                                        
+                                        <AccordionContent className='pt-3 space-y-3'>
+                                          {lunchbox.lunchbox_menu.map((menu, menuIdx) => {
+                                            const allIngredientsChecked = menu.menu_ingredients?.every((ing) => ing.ingredient_status) ?? false;
+                                            
+                                            return (
+                                              <AccordionItem 
+                                                key={menuIdx} 
+                                                value={`menu-${lunchboxIdx}-${menuIdx}`} 
+                                                className={`rounded-lg border border-slate-200 shadow-sm px-3 py-2 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
+                                              >
+                                                <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                                  <div className='flex flex-col items-start'>
+                                                    <span className='truncate text-sm text-gray-700 font-medium'>
+                                                      {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
+                                                    </span>
+                                                    <span className='truncate text-xs text-gray-500 mt-1'>
+                                                      หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
+                                                    </span>
+                                                    {menu.menu_description && (
+                                                      <span className='truncate text-xs text-gray-400 mt-1'>
+                                                        {menu.menu_description}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </AccordionTrigger>
+                                                
+                                                <AccordionContent className='pt-3 space-y-2'>
+                                                  {menu.menu_ingredients?.map((ing, idx) => (
+                                                    <div 
+                                                      key={idx} 
+                                                      className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.ingredient_status ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}
+                                                    >
+                                                      <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+                                                      
+                                                      <div className='flex items-center gap-4'>
+                                                        <span className='text-gray-600'>
+                                                          ใช้ {ing.useItem} {ing.ingredient_unit || 'หน่วย'} × {menu.menu_total} กล่อง ={" "}
+                                                          <strong className='text-black-600' style={{ color: "#000000" }}>
+                                                            {ing.useItem * menu.menu_total}
+                                                          </strong>{" "}
+                                                          {ing.ingredient_unit || 'หน่วย'}
+                                                        </span>
+                                                        
+                                                        <label className='cursor-pointer'>
+                                                          <input 
+                                                            type='checkbox' 
+                                                            checked={ing.ingredient_status || false} 
+                                                            onChange={() => handleToggleIngredientCheck(cart.id, menu.menu_name, ing.ingredient_name)} 
+                                                            className='hidden' 
+                                                          />
+                                                          <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.ingredient_status ? "bg-green-500" : "bg-red-500"}`}>
+                                                            <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.ingredient_status ? "translate-x-5" : "translate-x-0.5"}`} />
+                                                          </span>
+                                                        </label>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </AccordionContent>
+                                              </AccordionItem>
+                                            );
+                                          })}
                                         </AccordionContent>
                                       </AccordionItem>
-                                    );
-                                  })}
+                                    ))
+                                  ) : (
+                                    // Fallback to old structure if cart_lunchbox is not available
+                                    cart.allIngredients.map((menuGroup, groupIdx) => {
+                                      const totalBox = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName)?.menu_total || 0;
+                                      const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
+
+                                      return (
+                                        <AccordionItem 
+                                          key={groupIdx} 
+                                          value={`menu-${groupIdx}`} 
+                                          className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
+                                        >
+                                          <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                            <div className='flex flex-col items-start'>
+                                              <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                              {(() => {
+                                                const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                                return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
+                                              })()}
+                                            </div>
+                                          </AccordionTrigger>
+                                          
+                                          <AccordionContent className='pt-3 space-y-2'>
+                                            {menuGroup.ingredients.map((ing, idx) => (
+                                              <div 
+                                                key={idx} 
+                                                className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}
+                                              >
+                                                <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+                                                
+                                                <div className='flex items-center gap-4'>
+                                                  <span className='text-gray-600'>
+                                                    ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
+                                                    <strong className='text-black-600' style={{ color: "#000000" }}>
+                                                      {ing.calculatedTotal}
+                                                    </strong>{" "}
+                                                    {ing.ingredient_unit}
+                                                  </span>
+                                                  
+                                                  <label className='cursor-pointer'>
+                                                    <input 
+                                                      type='checkbox' 
+                                                      checked={ing.isChecked || false} 
+                                                      onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)} 
+                                                      className='hidden' 
+                                                    />
+                                                    <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked ? "bg-green-500" : "bg-red-500"}`}>
+                                                      <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked ? "translate-x-5" : "translate-x-0.5"}`} />
+                                                    </span>
+                                                  </label>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      );
+                                    })
+                                  )}
                                 </Accordion>
                               </div>
                             </div>
@@ -1995,178 +1915,7 @@ const SummaryList: React.FC = () => {
             ))
           )}
         </div>
-        <Dialog open={editIngredientsMenu !== null} onOpenChange={() => setEditIngredientsMenu(null)}>
-          <DialogContent className='max-w-lg max-h-[70vh] overflow-y-auto'>
-            <DialogTitle>แก้ไขวัตถุดิบสำหรับเมนู {editIngredientsMenu?.menuName}</DialogTitle>
-            <div style={{ color: "#000000" }}>
-              <div style={{ fontSize: "20px" }}>{/* Remove the duplicate DialogTitle here */}</div>
-              <div className='space-y-4'>
-                {ingredientError ? (
-                  <div className='text-red-600 text-sm'>เกิดข้อผิดพลาดในการดึงข้อมูลวัตถุดิบ: {ingredientError.message}</div>
-                ) : !ingredientData ? (
-                  <div className='text-gray-500 text-sm'>กำลังโหลดข้อมูลวัตถุดิบ...</div>
-                ) : (
-                  <>
-                    <div className='space-y-2'>
-                      <h5 className='text-sm font-semibold text-gray-700'>วัตถุดิบปัจจุบัน</h5>
-                      {editIngredientsMenu?.ingredients.length === 0 ? (
-                        <div className='text-gray-500 text-sm'>ไม่มีวัตถุดิบในเมนูนี้</div>
-                      ) : (
-                        editIngredientsMenu?.ingredients.map((ingredient, idx) => (
-                          <div key={idx} className='flex flex-col gap-2 border-b border-gray-200 py-2'>
-                            <div className='flex items-center gap-2'>
-                              <span className='flex-1 text-sm text-gray-700'>{ingredient.ingredient_name}</span>
-                              <Input
-                                type='number'
-                                value={ingredient.useItem || 0}
-                                onChange={(e) =>
-                                  setEditIngredientsMenu((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          ingredients: prev.ingredients.map((ing, i) =>
-                                            i === idx
-                                              ? {
-                                                  ...ing,
-                                                  useItem: Number(e.target.value) || 0,
-                                                }
-                                              : ing
-                                          ),
-                                        }
-                                      : prev
-                                  )
-                                }
-                                placeholder='จำนวน'
-                                min='0'
-                                className='w-20 h-8 text-sm'
-                              />
-                              <span className='text-sm'>{ingredient.ingredient_unit}</span>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() =>
-                                  setEditIngredientsMenu((prev) =>
-                                    prev
-                                      ? {
-                                          ...prev,
-                                          ingredients: prev.ingredients.filter((_, i) => i !== idx),
-                                        }
-                                      : prev
-                                  )
-                                }
-                                className='text-red-600 hover:text-red-800'>
-                                ลบ
-                              </Button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    <div className='space-y-2'>
-                      <h5 className='text-sm font-semibold text-gray-700'>เพิ่มวัตถุดิบใหม่</h5>
-                      <div className='flex items-center gap-2'>
-                        <Select
-                          value={editIngredientsMenu?.newIngredient.ingredient_name || ""}
-                          onValueChange={(value) =>
-                            setEditIngredientsMenu((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    newIngredient: {
-                                      ...prev.newIngredient,
-                                      ingredient_name: value || "",
-                                    },
-                                  }
-                                : prev
-                            )
-                          }>
-                          <SelectTrigger className='flex-1 h-8 text-sm'>
-                            <SelectValue placeholder='เลือกวัตถุดิบ' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ingredientData?.map((ing: { ingredient_name: string; ingredient_unit: string }) => (
-                              <SelectItem key={ing.ingredient_name} value={ing.ingredient_name}>
-                                {ing.ingredient_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type='number'
-                          value={editIngredientsMenu?.newIngredient.useItem || 0}
-                          onChange={(e) =>
-                            setEditIngredientsMenu((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    newIngredient: {
-                                      ...prev.newIngredient,
-                                      useItem: Number(e.target.value) || 0,
-                                    },
-                                  }
-                                : prev
-                            )
-                          }
-                          placeholder='จำนวน'
-                          min='0'
-                          className='w-20 h-8 text-sm'
-                        />
-                        <span className='text-sm'>{editIngredientsMenu?.newIngredient.ingredient_name ? ingredientData?.find((ing: { ingredient_name: string }) => ing.ingredient_name === editIngredientsMenu.newIngredient.ingredient_name)?.ingredient_unit || "ไม่ระบุหน่วย" : ""}</span>
-                        <Button
-                          size='sm'
-                          onClick={() =>
-                            setEditIngredientsMenu((prev) => {
-                              if (!prev || !prev.newIngredient.ingredient_name || prev.newIngredient.useItem < 0) {
-                                Swal.fire({
-                                  icon: "error",
-                                  title: "เกิดข้อผิดพลาด",
-                                  text: "กรุณาเลือกวัตถุดิบและระบุจำนวนที่ถูกต้อง",
-                                  showConfirmButton: false,
-                                  timer: 3000,
-                                });
-                                return prev;
-                              }
-                              const selectedIngredient = ingredientData?.find((ing: { ingredient_name: string }) => ing.ingredient_name === prev.newIngredient.ingredient_name);
-                              return {
-                                ...prev,
-                                ingredients: [
-                                  ...prev.ingredients,
-                                  {
-                                    ingredient_name: prev.newIngredient.ingredient_name || "",
-                                    useItem: prev.newIngredient.useItem || 0,
-                                    ingredient_status: false,
-                                    ingredient_unit: selectedIngredient?.ingredient_unit || "ไม่ระบุหน่วย",
-                                  },
-                                ],
-                                newIngredient: {
-                                  ingredient_name: "",
-                                  useItem: 0,
-                                },
-                              };
-                            })
-                          }
-                          disabled={!editIngredientsMenu?.newIngredient.ingredient_name || editIngredientsMenu?.newIngredient.useItem < 0 || !ingredientData}
-                          className='h-8'>
-                          เพิ่ม
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className='flex justify-end gap-2'>
-                      <Button onClick={() => editIngredientsMenu && handleSaveIngredients(editIngredientsMenu.cartId, editIngredientsMenu.menuName)} disabled={isSaving !== null}>
-                        {isSaving ? "กำลังบันทึก..." : "บันทึก"}
-                      </Button>
-                      <Button variant='ghost' onClick={() => setEditIngredientsMenu(null)}>
-                        ยกเลิก
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        
 
         <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
           <DialogContent className='max-w-md max-h-[70vh] overflow-y-auto'>
