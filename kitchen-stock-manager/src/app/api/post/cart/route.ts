@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const rawLunchboxes = cart_lunchboxes.map((lunchbox: any) => ({
       lunchbox_name: lunchbox.lunchbox_name || "",
       lunchbox_set_name: lunchbox.lunchbox_set || "",
-      lunchbox_limit: parseInt(lunchbox.lunchbox_limit || "0"),
+      lunchbox_limit: parseInt(lunchbox.lunchbox_limit?.toString() || "0"),
       lunchbox_total: parseInt(lunchbox.lunchbox_quantity || "1"),
       lunchbox_total_cost: parseInt((lunchbox.lunchbox_total_cost || "0").toString().replace(/[^\d]/g, "")),
       lunchbox_menu: (lunchbox.lunchbox_menus || []).map((menu: any) => ({

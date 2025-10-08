@@ -116,8 +116,6 @@ export default function CartList() {
     }
   }, [cart_lunch_box, lunchbox]);
 
-
-
   const handleLunchboxChange = (selectedLunchbox: string) => {
     setCustomerInfo({ lunchbox: selectedLunchbox, lunchbox_set: "" });
   };
@@ -144,10 +142,10 @@ export default function CartList() {
       const newLunchbox = {
         lunchbox_name: cart_lunch_box,
         lunchbox_set: cart_lunch_box_set,
-        lunchbox_limit: selectedLunchboxData.lunchbox_limit,
+        lunchbox_limit: selectedLunchboxData.lunchbox_limit, // ✅ เพิ่มค่า lunchbox_limit จากข้อมูลจริง
         selected_menus: [],
         quantity: 1,
-        lunchbox_total_cost: "", // เพิ่มฟิลด์ใหม่
+        lunchbox_total_cost: "",
       };
 
       addLunchbox(newLunchbox);
@@ -157,13 +155,13 @@ export default function CartList() {
 
   const handleEditLunchbox = (index: number) => {
     const lunchboxToEdit = selected_lunchboxes[index];
-    
+
     // เก็บข้อมูล lunchbox ที่จะแก้ไขใน sessionStorage
-    sessionStorage.setItem('editingLunchboxIndex', index.toString());
-    sessionStorage.setItem('editingLunchboxData', JSON.stringify(lunchboxToEdit));
-    
+    sessionStorage.setItem("editingLunchboxIndex", index.toString());
+    sessionStorage.setItem("editingLunchboxData", JSON.stringify(lunchboxToEdit));
+
     // ไปหน้า menu-picker พร้อมข้อมูลเดิม
-    router.push('/home/order/menu-picker?edit=true');
+    router.push("/home/order/menu-picker?edit=true");
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,8 +235,9 @@ export default function CartList() {
           cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
             lunchbox_name: lunchbox.lunchbox_name,
             lunchbox_set: lunchbox.lunchbox_set,
+            lunchbox_limit: lunchbox.lunchbox_limit, // ✅ เพิ่ม lunchbox_limit
             lunchbox_quantity: lunchbox.quantity,
-            lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""), // เพิ่มฟิลด์ใหม่
+            lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
             lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
               menu_name: menu.menu_name,
               menu_subname: menu.menu_subname,
@@ -270,6 +269,15 @@ export default function CartList() {
 
   const handleChangeQuantity = (cartItemId: string, quantity: number) => {
     if (quantity >= 1) setItemQuantity(cartItemId, quantity);
+  };
+
+  // เพิ่มฟังก์ชันจัดกลุ่มเมนู
+  const groupMenusByLimit = (menus: any[], limit: number) => {
+    const groups = [];
+    for (let i = 0; i < menus.length; i += limit) {
+      groups.push(menus.slice(i, i + limit));
+    }
+    return groups;
   };
 
   return (
@@ -428,70 +436,73 @@ export default function CartList() {
           )}
         </ul>
 
-
         {/* Selected Lunchboxes */}
         {selected_lunchboxes.length > 0 && (
           <div className='space-y-3 mb-4'>
             <h3 className='font-bold'>📦 ชุดอาหารที่เลือก</h3>
-            {selected_lunchboxes.map((lunchbox, index) => (
-              <div key={index} className='border p-4 rounded bg-gray-50'>
-                <div className='flex justify-between items-start mb-2'>
-                  <div>
-                    <h4 className='font-medium'>
-                      {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set}
-                    </h4>
-                    <p className='text-sm text-gray-600'>เลือกได้ {lunchbox.lunchbox_limit} อย่าง</p>
+            {selected_lunchboxes.map((lunchbox, index) => {
+              const menuGroups = groupMenusByLimit(lunchbox.selected_menus, lunchbox.lunchbox_limit);
+
+              return (
+                <div key={index} className='border p-4 rounded bg-gray-50'>
+                  <div className='flex justify-between items-start mb-2'>
+                    <div>
+                      <h4 className='font-medium'>
+                        {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set}
+                      </h4>
+                      <p className='text-sm text-gray-600'>เลือกได้ {lunchbox.lunchbox_limit} อย่าง</p>
+                    </div>
+                    <button onClick={() => removeLunchbox(index)} className='px-2 py-1 bg-red-500 text-white rounded text-sm'>
+                      ลบ
+                    </button>
                   </div>
-                  <button onClick={() => removeLunchbox(index)} className='px-2 py-1 bg-red-500 text-white rounded text-sm'>
-                    ลบ
+
+                  <div className='flex items-center gap-2 mb-2'>
+                    <label className='text-sm'>จำนวน:</label>
+                    <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(index, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
+                  </div>
+
+                  {/* เพิ่มช่องกรอกราคา */}
+                  <div className='flex items-center gap-2 mb-2'>
+                    <label className='text-sm'>ราคารวม:</label>
+                    <input type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
+                    <span className='text-sm text-gray-500'>฿</span>
+                  </div>
+
+                  <div className='mb-2'>
+                    <p className='text-sm font-medium'>เมนูที่เลือก:</p>
+                    {menuGroups.length > 0 ? (
+                      menuGroups.map((group, groupIndex) => (
+                        <div key={groupIndex} className='mb-2'>
+                          <p className='text-xs text-gray-600'>ชุดที่ {groupIndex + 1}:</p>
+                          <div className='flex flex-wrap gap-1 mt-1'>
+                            {group.map((menu, menuIndex) => (
+                              <span key={menuIndex} className='bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs'>
+                                {menu.menu_name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className='text-sm text-gray-500'>ยังไม่ได้เลือกเมนู</p>
+                    )}
+                  </div>
+
+                  {/* แสดง Note ถ้ามี */}
+                  {lunchbox.note && (
+                    <div className='mb-2'>
+                      <p className='text-sm font-medium text-green-600'>📝 หมายเหตุ:</p>
+                      <p className='text-sm text-gray-700 bg-green-50 p-2 rounded border-l-4 border-green-200'>{lunchbox.note}</p>
+                    </div>
+                  )}
+
+                  <button onClick={() => handleEditLunchbox(index)} className='w-full text-center px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm'>
+                    🔧 แก้ไขทั้งหมด
                   </button>
                 </div>
-
-                <div className='flex items-center gap-2 mb-2'>
-                  <label className='text-sm'>จำนวน:</label>
-                  <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(index, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
-                </div>
-
-                {/* เพิ่มช่องกรอกราคา */}
-                <div className='flex items-center gap-2 mb-2'>
-                  <label className='text-sm'>ราคารวม:</label>
-                  <input type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
-                  <span className='text-sm text-gray-500'>฿</span>
-                </div>
-
-                <div className='mb-2'>
-                  <p className='text-sm font-medium'>เมนูที่เลือก:</p>
-                  {lunchbox.selected_menus.length > 0 ? (
-                    <div className='flex flex-wrap gap-1 mt-1'>
-                      {lunchbox.selected_menus.map((menu, menuIndex) => (
-                        <span key={menuIndex} className='bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs'>
-                          {menu.menu_name}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className='text-sm text-gray-500'>ยังไม่ได้เลือกเมนู</p>
-                  )}
-                </div>
-
-                {/* แสดง Note ถ้ามี */}
-                {lunchbox.note && (
-                  <div className='mb-2'>
-                    <p className='text-sm font-medium text-green-600'>📝 หมายเหตุ:</p>
-                    <p className='text-sm text-gray-700 bg-green-50 p-2 rounded border-l-4 border-green-200'>
-                      {lunchbox.note}
-                    </p>
-                  </div>
-                )}
-
-                <button 
-                  onClick={() => handleEditLunchbox(index)} 
-                  className='w-full text-center px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm'
-                >
-                  🔧 แก้ไขทั้งหมด
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -507,8 +518,6 @@ export default function CartList() {
             ➕ เพิ่มชุดอาหาร
           </button>
         </div>
-
-
 
         {/* Submit Button */}
         <button
