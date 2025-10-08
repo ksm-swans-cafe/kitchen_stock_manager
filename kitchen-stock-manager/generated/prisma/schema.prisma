@@ -33,9 +33,10 @@ type CartCartLunchboxLunchboxMenu {
 }
 
 type CartCartLunchboxLunchboxMenuMenuIngredients {
-  ingredient_name String
+  ingredient_name   String
   /// Multiple data types found: Int: 92.1%, BigInt: 7.9% out of 89 sampled entries
-  useItem         Json
+  useItem           Json
+  ingredient_status Boolean?
 }
 
 type CartCartMenuItems {

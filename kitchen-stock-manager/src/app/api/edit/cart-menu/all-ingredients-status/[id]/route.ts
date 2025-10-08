@@ -1,6 +1,17 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 
+// เพิ่มฟังก์ชัน helper สำหรับจัดการ BigInt
+function safeStringify(obj: any, space?: number): string {
+  return JSON.stringify(
+    obj,
+    (key, value) => {
+      return typeof value === "bigint" ? value.toString() : value;
+    },
+    space
+  );
+}
+
 interface Ingredient {
   ingredient_name: string;
   useItem: number;
@@ -14,10 +25,7 @@ interface MenuItem {
   menu_ingredients: Ingredient[];
 }
 
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const { id } = params;
   const { isChecked } = await request.json();
@@ -28,10 +36,7 @@ export async function PATCH(
   });
   if (!id || isChecked == null) {
     console.warn("Missing fields:", { id, isChecked });
-    return NextResponse.json(
-      { error: "กรุณาระบุ cart_id และ isChecked" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "กรุณาระบุ cart_id และ isChecked" }, { status: 400 });
   }
 
   try {
@@ -46,10 +51,7 @@ export async function PATCH(
 
     if (!cart) {
       console.error("Cart not found for id:", id);
-      return NextResponse.json(
-        { error: "ไม่พบตะกร้าที่ระบุ" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
     // Parse cart_lunchbox
@@ -60,19 +62,13 @@ export async function PATCH(
         console.log("Parsed cart_lunchbox:", lunchboxes);
       } catch (e) {
         console.error("JSON parse error:", (e as Error).message);
-        return NextResponse.json(
-          { error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
       }
     } else if (Array.isArray(cart.cart_lunchbox)) {
       lunchboxes = cart.cart_lunchbox;
     } else {
       console.error("Invalid cart_lunchbox format:", cart.cart_lunchbox);
-      return NextResponse.json(
-        { error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
     }
 
     // Update all ingredients status in all menus
@@ -87,11 +83,21 @@ export async function PATCH(
       })),
     }));
 
-    console.log("Updated lunchboxes:", JSON.stringify(updatedLunchboxes, null, 2));
-    console.log("Attempting to update cart with id:", cart.id);
+    // แก้ไข: ใช้ replacer function เพื่อจัดการ BigInt
+    // console.log(
+    //   "Updated lunchboxes:",
+    //   JSON.stringify(
+    //     updatedLunchboxes,
+    //     (key, value) => {
+    //       return typeof value === "bigint" ? value.toString() : value;
+    //     },
+    //     2
+    //   )
+    // );
+    // console.log("Attempting to update cart with id:", cart.id);
 
-    const result = await prisma.cart.updateMany({
-      where: { cart_id: id },
+    const result = await prisma.cart.update({
+      where: { id: cart.id }, // เปลี่ยนจาก cart_id เป็น id
       data: {
         cart_lunchbox: updatedLunchboxes as any,
       },
@@ -99,26 +105,19 @@ export async function PATCH(
 
     console.log("Update result:", result);
 
-    if (result.count === 0) {
-      console.error("Failed to update cart for id:", id);
-      return NextResponse.json(
-        { error: "ไม่สามารถอัปเดตตะกร้าได้" },
-        { status: 500 }
-      );
-    }
-
+    // ไม่ต้องเช็ค result.count เพราะ update จะ throw error ถ้าไม่พบข้อมูล
     return NextResponse.json({
       success: true,
-      updated: result.count,
+      updated: 1, // update จะอัปเดต 1 record เสมอ
     });
   } catch (error) {
     console.error("Server error:", error);
     console.error("Error details:", error instanceof Error ? error.message : String(error));
     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     return NextResponse.json(
-      { 
+      {
         error: "เกิดข้อผิดพลาดในการอัปเดทข้อมูล",
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

@@ -1502,6 +1502,7 @@ export namespace Prisma {
   export type CartCartLunchboxLunchboxMenuMenuIngredientsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     ingredient_name?: boolean
     useItem?: boolean
+    ingredient_status?: boolean
   }, ExtArgs["result"]["cartCartLunchboxLunchboxMenuMenuIngredients"]>
 
 
@@ -1509,9 +1510,10 @@ export namespace Prisma {
   export type CartCartLunchboxLunchboxMenuMenuIngredientsSelectScalar = {
     ingredient_name?: boolean
     useItem?: boolean
+    ingredient_status?: boolean
   }
 
-  export type CartCartLunchboxLunchboxMenuMenuIngredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_name" | "useItem", ExtArgs["result"]["cartCartLunchboxLunchboxMenuMenuIngredients"]>
+  export type CartCartLunchboxLunchboxMenuMenuIngredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_name" | "useItem" | "ingredient_status", ExtArgs["result"]["cartCartLunchboxLunchboxMenuMenuIngredients"]>
 
   export type $CartCartLunchboxLunchboxMenuMenuIngredientsPayload = {
     name: "CartCartLunchboxLunchboxMenuMenuIngredients"
@@ -1522,6 +1524,7 @@ export namespace Prisma {
        * Multiple data types found: Int: 92.1%, BigInt: 7.9% out of 89 sampled entries
        */
       useItem: Prisma.JsonValue
+      ingredient_status: boolean | null
     }
     composites: {}
   }
@@ -1538,6 +1541,7 @@ export namespace Prisma {
   interface CartCartLunchboxLunchboxMenuMenuIngredientsFieldRefs {
     readonly ingredient_name: FieldRef<"CartCartLunchboxLunchboxMenuMenuIngredients", 'String'>
     readonly useItem: FieldRef<"CartCartLunchboxLunchboxMenuMenuIngredients", 'Json'>
+    readonly ingredient_status: FieldRef<"CartCartLunchboxLunchboxMenuMenuIngredients", 'Boolean'>
   }
     
 
@@ -9900,6 +9904,7 @@ export namespace Prisma {
   export type CartCartLunchboxLunchboxMenuMenuIngredientsObjectEqualityInput = {
     ingredient_name: string
     useItem: InputJsonValue
+    ingredient_status?: boolean | null
   }
 
   export type CartCartMenuItemsMenuIngredientsCompositeListFilter = {
@@ -9935,6 +9940,7 @@ export namespace Prisma {
   export type CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput = {
     ingredient_name: string
     useItem: InputJsonValue
+    ingredient_status?: boolean | null
   }
 
   export type CartCartLunchboxUpdateInput = {
@@ -10097,6 +10103,7 @@ export namespace Prisma {
     NOT?: CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput | CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput[]
     ingredient_name?: StringFilter<"CartCartLunchboxLunchboxMenuMenuIngredients"> | string
     useItem?: JsonFilter<"CartCartLunchboxLunchboxMenuMenuIngredients">
+    ingredient_status?: BoolNullableFilter<"CartCartLunchboxLunchboxMenuMenuIngredients"> | boolean | null
   }
 
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
@@ -10151,6 +10158,7 @@ export namespace Prisma {
   export type CartCartLunchboxLunchboxMenuMenuIngredientsUpdateInput = {
     ingredient_name?: StringFieldUpdateOperationsInput | string
     useItem?: InputJsonValue | InputJsonValue
+    ingredient_status?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
 

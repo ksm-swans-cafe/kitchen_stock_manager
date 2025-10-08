@@ -174,7 +174,7 @@ const SummaryList: React.FC = () => {
         const formattedOrders: Cart[] = cartsData.map((cart: RawCart) => {
           // ตรวจสอบและให้ค่าเริ่มต้น
           if (!cart.cart_create_date) {
-            console.warn(`Cart ${cart.cart_id} has no cart_create_date`);
+            // console.warn(`Cart ${cart.cart_id} has no cart_create_date`);
             return {
               id: cart.cart_id || "no-id",
               orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
@@ -990,7 +990,7 @@ const SummaryList: React.FC = () => {
         return;
       }
 
-      console.log("Sending menuItems to API:", JSON.stringify(menuItems, null, 2));
+      // console.log("Sending menuItems to API:", JSON.stringify(menuItems, null, 2));
 
       setIsSaving(cartId);
       try {
@@ -1039,10 +1039,10 @@ const SummaryList: React.FC = () => {
           };
         });
 
-        console.log("[Save] PATCH /api/edit/cart-menu/summary-list", {
-          url: `/api/edit/cart-menu/summary-list/${cartId}`,
-          body: { menuItems: updatedMenuItems },
-        });
+        // console.log("[Save] PATCH /api/edit/cart-menu/summary-list", {
+        //   url: `/api/edit/cart-menu/summary-list/${cartId}`,
+        //   body: { menuItems: updatedMenuItems },
+        // });
 
         const response = await fetch(`/api/edit/cart-menu/summary-list/${cartId}`, {
           method: "PATCH",
@@ -1075,11 +1075,11 @@ const SummaryList: React.FC = () => {
           })),
         }));
 
-        console.log("[Save] PATCH /api/edit/cart", {
-          url: `/api/edit/cart/${cartId}`,
-          body: { cart_lunchboxes },
-        });
-        console.log("[Save] Updated Menu Items with Ingredients:", JSON.stringify(updatedMenuItems, null, 2));
+        // console.log("[Save] PATCH /api/edit/cart", {
+        //   url: `/api/edit/cart/${cartId}`,
+        //   body: { cart_lunchboxes },
+        // });
+        // console.log("[Save] Updated Menu Items with Ingredients:", JSON.stringify(updatedMenuItems, null, 2));
         try {
           await fetch(`/api/edit/cart/${cartId}`, {
             method: "PATCH",
