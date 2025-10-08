@@ -122,27 +122,27 @@ export default function Page() {
     }
   };
 
-  const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
-    if (!lunchbox || !Array.isArray(lunchbox) || lunchbox.length === 0) {
-      return <span className='text-gray-500 text-sm'>-</span>;
-    }
+const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
+  if (!lunchbox || !Array.isArray(lunchbox) || lunchbox.length === 0) {
+    return <span className='text-gray-500 text-sm'>-</span>;
+  }
 
-    return (
-      <div className='flex flex-wrap gap-1'>
-        {lunchbox.map((lb, idx) => (
-          <>
-            <span key={idx} className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>
-              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>
-                {lb.lunchbox_name}
-                {lb.lunchbox_set_name && <span className='ml-1 text-purple-600'>({lb.lunchbox_set_name})</span>}
-              </span>
-              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800'>{lb.lunchbox_cost && <span className='ml-1 text-green-600'>({lb.lunchbox_cost} บาท)</span>}</span>
+  return (
+    <div className='flex flex-wrap gap-1'>
+      {lunchbox.map((lb, idx) => (
+        <React.Fragment key={idx}>
+          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>
+            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>
+              {lb.lunchbox_name}
+              {lb.lunchbox_set_name && <span className='ml-1 text-purple-600'>({lb.lunchbox_set_name})</span>}
             </span>
-          </>
-        ))}
-      </div>
-    );
-  };
+            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800'>{lb.lunchbox_cost && <span className='ml-1 text-green-600'>({lb.lunchbox_cost} บาท)</span>}</span>
+          </span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
