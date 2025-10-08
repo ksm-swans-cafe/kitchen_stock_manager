@@ -92,6 +92,8 @@ const SummaryList: React.FC = () => {
     }[];
     menuItems: {
       menu_name: string;
+      menu_category: string;
+      menu_subname: string;
       menu_total: number;
       menu_order_id: number;
       menu_description: string;
@@ -976,7 +978,7 @@ const SummaryList: React.FC = () => {
   };
 
   const handleEdit = {
-    Menu: async (cartId: string, menuItems: MenuItem[]) => {
+    Menu: async (cartId: string, menuItems: MenuItem[], updatedLunchboxes?: any[]) => {
       if (!cartId || !menuItems || !Array.isArray(menuItems) || menuItems.some((m) => !m.menu_name || m.menu_total < 0 || !Array.isArray(m.menu_ingredients) || m.menu_ingredients.some((ing) => !ing.ingredient_name || ing.useItem < 0))) {
         Swal.fire({
           icon: "error",
@@ -1013,16 +1015,13 @@ const SummaryList: React.FC = () => {
           MenusMap.set(item.menu_name, item);
         });
         const updatedMenuItems = menuItems.map((item) => {
-          const existingMenu = currentCart.menuItems.find((m) => m.menu_name === item.menu_name);
-          const menuData = menuListData?.find((m: { menu_name: string }) => m.menu_name === item.menu_name);
-
-          const menuIngredients = (existingMenu?.menu_ingredients || menuData?.menu_ingredients || []).map((ing: { useItem?: number; quantity?: number; ingredient_name?: string; name?: string; ingredient_status?: boolean }) => {
+          // Use menu_ingredients from the item that was edited by the user
+          const menuIngredients = (item.menu_ingredients || []).map((ing: { useItem?: number; quantity?: number; ingredient_name?: string; name?: string; ingredient_status?: boolean }) => {
             const ingredientName = ing.ingredient_name ?? ing.name ?? "ไม่ระบุวัตถุดิบ";
             return {
               useItem: ing.useItem ?? ing.quantity ?? 0,
               ingredient_name: ingredientName,
               ingredient_status: ing.ingredient_status ?? false,
-              ingredient_unit: ingredientUnitMap.get(ingredientName) ?? "ไม่ระบุหน่วย",
             };
           });
 
@@ -1040,7 +1039,10 @@ const SummaryList: React.FC = () => {
           };
         });
 
-        console.log("Updated menuItems to send:", JSON.stringify(updatedMenuItems, null, 2));
+        console.log("[Save] PATCH /api/edit/cart-menu/summary-list", {
+          url: `/api/edit/cart-menu/summary-list/${cartId}`,
+          body: { menuItems: updatedMenuItems },
+        });
 
         const response = await fetch(`/api/edit/cart-menu/summary-list/${cartId}`, {
           method: "PATCH",
@@ -1053,12 +1055,48 @@ const SummaryList: React.FC = () => {
           throw new Error(errorData.error || "Failed to update menu");
         }
 
+        // Sync cart document via general cart edit endpoint
+        // Build lunchbox structure from menuItems
+        const foundCart = carts.find((cart) => cart.id === cartId);
+        const lunchboxesToUse = updatedLunchboxes || foundCart?.cart_lunchbox || [];
+        const cart_lunchboxes = lunchboxesToUse.map((lunchbox: any) => ({
+          lunchbox_name: lunchbox.lunchbox_name,
+          lunchbox_set: lunchbox.lunchbox_set_name,
+          lunchbox_limit: lunchbox.lunchbox_limit || 0,
+          lunchbox_quantity: lunchbox.lunchbox_total || 0,
+          lunchbox_total_cost: lunchbox.lunchbox_total_cost || 0,
+          lunchbox_menus: updatedMenuItems.map((item) => ({
+            menu_name: item.menu_name,
+            menu_subname: item.menu_subname,
+            menu_category: item.menu_category,
+            menu_total: item.menu_total,
+            menu_description: item.menu_description,
+            menu_ingredients: item.menu_ingredients,
+          })),
+        }));
+
+        console.log("[Save] PATCH /api/edit/cart", {
+          url: `/api/edit/cart/${cartId}`,
+          body: { cart_lunchboxes },
+        });
+        console.log("[Save] Updated Menu Items with Ingredients:", JSON.stringify(updatedMenuItems, null, 2));
+        try {
+          await fetch(`/api/edit/cart/${cartId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cart_lunchboxes }),
+          });
+        } catch (syncErr) {
+          console.warn("Warning: secondary sync to /api/edit/cart failed", syncErr);
+        }
+
         setCarts((prevCarts) =>
           prevCarts.map((cart) =>
             cart.id === cartId
               ? {
                   ...cart,
                   menuItems: updatedMenuItems,
+                  cart_lunchbox: lunchboxesToUse as any,
                   allIngredients: updatedMenuItems.map((item) => ({
                     menuName: item.menu_name,
                     ingredients: item.menu_ingredients.map((ing: { useItem: number; ingredient_name: string; ingredient_status: boolean }) => ({
@@ -1576,16 +1614,39 @@ const SummaryList: React.FC = () => {
                                       onClick={() => {
                                         setShouldFetchMenu(true);
                                         const currentCart = carts.find((c) => c.id === cart.id);
-                                        if (!currentCart || !currentCart.menuItems) {
+                                        if (!currentCart) {
                                           Swal.fire({
                                             icon: "error",
                                             title: "เกิดข้อผิดพลาด",
-                                            text: "ไม่พบข้อมูลออร์เดอร์หรือเมนู",
+                                            text: "ไม่พบข้อมูลออร์เดอร์",
                                             showConfirmButton: false,
                                             timer: 3000,
                                           });
                                           return;
                                         }
+                                        
+                                        // Extract menuItems from cart_lunchbox
+                                        const menuItemsFromLunchbox: any[] = [];
+                                        (cart.cart_lunchbox || []).forEach((lunchbox: any) => {
+                                          (lunchbox.lunchbox_menu || []).forEach((menu: any) => {
+                                            menuItemsFromLunchbox.push({
+                                              menu_name: menu.menu_name || "เมนูไม่ระบุ",
+                                              menu_category: menu.menu_category || "",
+                                              menu_subname: menu.menu_subname || "",
+                                              menu_total: menu.menu_total || 0,
+                                              menu_order_id: menu.menu_order_id || 0,
+                                              menu_description: menu.menu_description || "",
+                                              menu_ingredients: Array.isArray(menu.menu_ingredients)
+                                                ? menu.menu_ingredients.map((ing: any) => ({
+                                                    useItem: ing.useItem ?? 0,
+                                                    ingredient_name: ing.ingredient_name ?? "ไม่ระบุวัตถุดิบ",
+                                                    ingredient_status: ing.ingredient_status ?? false,
+                                                  }))
+                                                : [],
+                                            });
+                                          });
+                                        });
+                                        
                                         setEditMenuDialog({
                                           cart_id: cart.id,
                                           cart_delivery_date: cart.cart_delivery_date || "",
@@ -1594,21 +1655,9 @@ const SummaryList: React.FC = () => {
                                           cart_customer_tel: cart.cart_customer_tel || "",
                                           cart_customer_name: cart.cart_customer_name || "",
                                           cart_location_send: cart.cart_location_send || "",
-                                          cart_shipping_cost: cart.cart_shipping_cost || 0,
-                                          cart_lunchbox: cart.cart_lunchbox || [],
-                                          menuItems: currentCart.menuItems.map((item, idx) => ({
-                                            menu_name: item.menu_name || "เมนูไม่ระบุ",
-                                            menu_total: item.menu_total || 0,
-                                            menu_order_id: idx,
-                                            menu_description: item.menu_description || "",
-                                            menu_ingredients: Array.isArray(item.menu_ingredients)
-                                              ? item.menu_ingredients.map((ing) => ({
-                                                  useItem: ing.useItem ?? 0,
-                                                  ingredient_name: ing.ingredient_name ?? "ไม่ระบุวัตถุดิบ",
-                                                  ingredient_status: ing.ingredient_status ?? false,
-                                                }))
-                                              : [],
-                                          })),
+                                          cart_shipping_cost: Number(cart.cart_shipping_cost) || 0,
+                                          cart_lunchbox: (cart.cart_lunchbox || []) as any,
+                                          menuItems: menuItemsFromLunchbox,
                                           newMenu: {
                                             menu_name: "",
                                             menu_total: 1,
@@ -1629,12 +1678,11 @@ const SummaryList: React.FC = () => {
                                     setShouldFetchMenu(false);
                                   }}>
                                   <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
-                                    <DialogTitle className='text-xl font-bold mb-4'>
-                                      แก้ไขเมนูสำหรับออร์เดอร์ {editMenuDialog?.cart_id}
-                                    </DialogTitle>
-                                    
                                     {editMenuDialog && (
                                       <div className='space-y-6'>
+                                        <div className='text-xl font-bold mb-4'>
+                                      แก้ไขเมนูสำหรับออร์เดอร์ {editMenuDialog?.cart_id}
+                                    </div>
                                         {/* แสดงข้อมูลลูกค้า */}
                                         <div className='bg-gray-50 p-4 rounded-lg'>
                                           <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
@@ -1667,14 +1715,79 @@ const SummaryList: React.FC = () => {
                                             {editMenuDialog.cart_lunchbox.map((lunchbox, lunchboxIdx) => (
                                               <div key={lunchboxIdx} className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
                                                 <div className='flex justify-between items-start mb-3'>
-                                                  <div>
-                                                    <h4 className='font-semibold text-blue-800'>
+                                                  <div className='flex-1'>
+                                                    <h4 className='font-semibold text-blue-800 mb-3'>
                                                       {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
                                                     </h4>
-                                                    <div className='text-sm text-blue-700 space-y-1'>
-                                                      <p>จำนวน: {lunchbox.lunchbox_total} กล่อง</p>
-                                                      <p>ราคา: {lunchbox.lunchbox_total_cost} บาท</p>
-                                                      <p>จำกัด: {lunchbox.lunchbox_limit} กล่อง</p>
+                                                    <div className='grid grid-cols-3 gap-4'>
+                                                      {/* จำนวนกล่อง */}
+                                                      <div>
+                                                        <label className='block text-xs font-medium text-blue-700 mb-1'>จำนวน (กล่อง)</label>
+                                                        <input
+                                                          type='number'
+                                                          min={0}
+                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                          value={lunchbox.lunchbox_total}
+                                                          onChange={(e) => {
+                                                            const newTotal = Number(e.target.value) || 0;
+                                                            setEditMenuDialog((prev) => {
+                                                              if (!prev) return prev;
+                                                              return {
+                                                                ...prev,
+                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
+                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_total: newTotal } : lb
+                                                                ),
+                                                              };
+                                                            });
+                                                          }}
+                                                        />
+                                                      </div>
+                                                      
+                                                      {/* ราคา */}
+                                                      <div>
+                                                        <label className='block text-xs font-medium text-blue-700 mb-1'>ราคา (บาท)</label>
+                                                        <input
+                                                          type='number'
+                                                          min={0}
+                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                          value={lunchbox.lunchbox_total_cost}
+                                                          onChange={(e) => {
+                                                            const newCost = Number(e.target.value) || 0;
+                                                            setEditMenuDialog((prev) => {
+                                                              if (!prev) return prev;
+                                                              return {
+                                                                ...prev,
+                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
+                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_total_cost: newCost } : lb
+                                                                ),
+                                                              };
+                                                            });
+                                                          }}
+                                                        />
+                                                      </div>
+                                                      
+                                                      {/* จำกัด */}
+                                                      <div>
+                                                        <label className='block text-xs font-medium text-blue-700 mb-1'>จำกัด (กล่อง)</label>
+                                                        <input
+                                                          type='number'
+                                                          min={0}
+                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                          value={lunchbox.lunchbox_limit}
+                                                          onChange={(e) => {
+                                                            const newLimit = Number(e.target.value) || 0;
+                                                            setEditMenuDialog((prev) => {
+                                                              if (!prev) return prev;
+                                                              return {
+                                                                ...prev,
+                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
+                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_limit: newLimit } : lb
+                                                                ),
+                                                              };
+                                                            });
+                                                          }}
+                                                        />
+                                                      </div>
                                                     </div>
                                                   </div>
                                                 </div>
@@ -1690,29 +1803,113 @@ const SummaryList: React.FC = () => {
                                                               {menu.menu_name} ({menu.menu_subname})
                                                             </div>
                                                             <div className='text-sm text-gray-600'>
-                                                              หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
+                                                              หมวดหมู่: {menu.menu_category}
                                                             </div>
-                                                            {menu.menu_description && (
-                                                              <div className='text-sm text-gray-500 mt-1'>
-                                                                {menu.menu_description}
-                                                              </div>
-                                                            )}
+                                                            <div className='text-sm text-gray-500 mt-2'>
+                                                              <label className='block text-xs text-gray-600 mb-1'>คำอธิบายเมนู</label>
+                                                              {(() => {
+                                                                const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
+                                                                const valueDesc = editableItem?.menu_description ?? menu.menu_description ?? "";
+                                                                return (
+                                                                  <input
+                                                                    type='text'
+                                                                    className='w-full h-8 px-2 border rounded'
+                                                                    placeholder='ระบุคำอธิบายเมนู'
+                                                                    value={valueDesc}
+                                                                    onChange={(e) => {
+                                                                      const newDesc = e.target.value;
+                                                                      setEditMenuDialog((prev) => {
+                                                                        if (!prev) return prev;
+                                                                        return {
+                                                                          ...prev,
+                                                                          menuItems: prev.menuItems.map((mi) =>
+                                                                            mi.menu_name === menu.menu_name ? { ...mi, menu_description: newDesc } : mi
+                                                                          ),
+                                                                        };
+                                                                      });
+                                                                    }}
+                                                                  />
+                                                                );
+                                                              })()}
+                                                            </div>
                                                           </div>
                                                           <div className='text-sm text-gray-600'>
                                                             ID: {menu.menu_order_id}
                                                           </div>
                                                         </div>
-                                                        
-                                                        {/* แสดงวัตถุดิบ */}
-                                                        <div className='mt-2'>
+
+                                                        {/* แก้ไขจำนวนกล่องของเมนู */}
+                                                        <div className='mt-2 flex items-center gap-2'>
+                                                          <span className='text-sm text-gray-700'>จำนวนกล่อง:</span>
+                                                          {(() => {
+                                                            const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
+                                                            const valueTotal = editableItem?.menu_total ?? menu.menu_total ?? 0;
+                                                            return (
+                                                              <input
+                                                                type='number'
+                                                                min={0}
+                                                                className='w-24 h-8 px-2 border rounded'
+                                                                value={valueTotal}
+                                                                onChange={(e) => {
+                                                                  const newVal = Number(e.target.value) || 0;
+                                                                  setEditMenuDialog((prev) => {
+                                                                    if (!prev) return prev;
+                                                                    return {
+                                                                      ...prev,
+                                                                      menuItems: prev.menuItems.map((mi) =>
+                                                                        mi.menu_name === menu.menu_name ? { ...mi, menu_total: newVal } : mi
+                                                                      ),
+                                                                    };
+                                                                  });
+                                                                }}
+                                                              />
+                                                            );
+                                                          })()}
+                                                        </div>
+
+                                                        {/* แก้ไขจำนวนวัตถุดิบ */}
+                                                        <div className='mt-3'>
                                                           <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
-                                                          <div className='grid grid-cols-2 gap-1'>
-                                                            {menu.menu_ingredients.map((ingredient, ingIdx) => (
-                                                              <div key={ingIdx} className='text-xs text-gray-600 flex justify-between'>
-                                                                <span>• {ingredient.ingredient_name}</span>
-                                                                <span>{ingredient.useItem} {ingredient.ingredient_unit || 'หน่วย'}</span>
-                                                              </div>
-                                                            ))}
+                                                          <div className='space-y-1'>
+                                                            {(() => {
+                                                              const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
+                                                              const ingredients = editableItem?.menu_ingredients ?? menu.menu_ingredients;
+                                                              return ingredients.map((ingredient, ingIdx) => (
+                                                                <div key={ingIdx} className='flex items-center justify-between text-xs text-gray-600'>
+                                                                  <span>• {ingredient.ingredient_name}</span>
+                                                                  <div className='flex items-center gap-2'>
+                                                                    <input
+                                                                      type='number'
+                                                                      min={0}
+                                                                      className='w-20 h-7 px-2 border rounded'
+                                                                      value={ingredient.useItem ?? 0}
+                                                                      onChange={(e) => {
+                                                                        const newUse = Number(e.target.value) || 0;
+                                                                        setEditMenuDialog((prev) => {
+                                                                          if (!prev) return prev;
+                                                                          return {
+                                                                            ...prev,
+                                                                            menuItems: prev.menuItems.map((mi) =>
+                                                                              mi.menu_name === menu.menu_name
+                                                                                ? {
+                                                                                    ...mi,
+                                                                                    menu_ingredients: mi.menu_ingredients.map((ing) =>
+                                                                                      ing.ingredient_name === ingredient.ingredient_name
+                                                                                        ? { ...ing, useItem: newUse }
+                                                                                        : ing
+                                                                                    ),
+                                                                                  }
+                                                                                : mi
+                                                                            ),
+                                                                          };
+                                                                        });
+                                                                      }}
+                                                                    />
+                                                                    <span>หน่วย</span>
+                                                                  </div>
+                                                                </div>
+                                                              ));
+                                                            })()}
                                                           </div>
                                                         </div>
                                                       </div>
@@ -1740,7 +1937,7 @@ const SummaryList: React.FC = () => {
                                             onClick={() => {
                                               // เรียกใช้ฟังก์ชัน handleEdit.Menu
                                               if (editMenuDialog) {
-                                                handleEdit.Menu(editMenuDialog.cart_id, editMenuDialog.menuItems);
+                                                handleEdit.Menu(editMenuDialog.cart_id, editMenuDialog.menuItems, editMenuDialog.cart_lunchbox);
                                               }
                                             }}
                                             disabled={isSaving !== null}

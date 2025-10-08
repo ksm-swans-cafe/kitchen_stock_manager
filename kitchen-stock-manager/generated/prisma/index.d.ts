@@ -1569,6 +1569,8 @@ export namespace Prisma {
     menu_description?: boolean
     menu_ingredients?: boolean | CartCartMenuItemsMenuIngredientsDefaultArgs<ExtArgs>
     menu_name?: boolean
+    menu_subname?: boolean
+    menu_category?: boolean
     menu_notes?: boolean | CartCartMenuItemsMenuNotesDefaultArgs<ExtArgs>
     menu_order_id?: boolean
     menu_total?: boolean
@@ -1579,11 +1581,13 @@ export namespace Prisma {
   export type CartCartMenuItemsSelectScalar = {
     menu_description?: boolean
     menu_name?: boolean
+    menu_subname?: boolean
+    menu_category?: boolean
     menu_order_id?: boolean
     menu_total?: boolean
   }
 
-  export type CartCartMenuItemsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_description" | "menu_ingredients" | "menu_name" | "menu_notes" | "menu_order_id" | "menu_total", ExtArgs["result"]["cartCartMenuItems"]>
+  export type CartCartMenuItemsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_description" | "menu_ingredients" | "menu_name" | "menu_subname" | "menu_category" | "menu_notes" | "menu_order_id" | "menu_total", ExtArgs["result"]["cartCartMenuItems"]>
   export type CartCartMenuItemsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $CartCartMenuItemsPayload = {
@@ -1592,6 +1596,8 @@ export namespace Prisma {
     scalars: {
       menu_description: string | null
       menu_name: string
+      menu_subname: string | null
+      menu_category: string | null
       menu_order_id: number | null
       menu_total: number
     }
@@ -1613,6 +1619,8 @@ export namespace Prisma {
   interface CartCartMenuItemsFieldRefs {
     readonly menu_description: FieldRef<"CartCartMenuItems", 'String'>
     readonly menu_name: FieldRef<"CartCartMenuItems", 'String'>
+    readonly menu_subname: FieldRef<"CartCartMenuItems", 'String'>
+    readonly menu_category: FieldRef<"CartCartMenuItems", 'String'>
     readonly menu_order_id: FieldRef<"CartCartMenuItems", 'Int'>
     readonly menu_total: FieldRef<"CartCartMenuItems", 'Int'>
   }
@@ -9168,6 +9176,8 @@ export namespace Prisma {
     menu_description?: string | null
     menu_ingredients?: CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
     menu_name: string
+    menu_subname?: string | null
+    menu_category?: string | null
     menu_notes?: CartCartMenuItemsMenuNotesObjectEqualityInput[]
     menu_order_id?: number | null
     menu_total: number
@@ -9549,6 +9559,8 @@ export namespace Prisma {
     menu_description?: string | null
     menu_ingredients?: CartCartMenuItemsMenuIngredientsCreateInput | CartCartMenuItemsMenuIngredientsCreateInput[]
     menu_name: string
+    menu_subname?: string | null
+    menu_category?: string | null
     menu_notes?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
     menu_order_id?: number | null
     menu_total: number
@@ -9676,6 +9688,8 @@ export namespace Prisma {
     menu_description?: StringNullableFilter<"CartCartMenuItems"> | string | null
     menu_ingredients?: CartCartMenuItemsMenuIngredientsCompositeListFilter | CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
     menu_name?: StringFilter<"CartCartMenuItems"> | string
+    menu_subname?: StringNullableFilter<"CartCartMenuItems"> | string | null
+    menu_category?: StringNullableFilter<"CartCartMenuItems"> | string | null
     menu_notes?: CartCartMenuItemsMenuNotesCompositeListFilter | CartCartMenuItemsMenuNotesObjectEqualityInput[]
     menu_order_id?: IntNullableFilter<"CartCartMenuItems"> | number | null
     menu_total?: IntFilter<"CartCartMenuItems"> | number
@@ -9936,6 +9950,8 @@ export namespace Prisma {
     menu_description?: NullableStringFieldUpdateOperationsInput | string | null
     menu_ingredients?: XOR<CartCartMenuItemsMenuIngredientsListUpdateEnvelopeInput, CartCartMenuItemsMenuIngredientsCreateInput> | CartCartMenuItemsMenuIngredientsCreateInput[]
     menu_name?: StringFieldUpdateOperationsInput | string
+    menu_subname?: NullableStringFieldUpdateOperationsInput | string | null
+    menu_category?: NullableStringFieldUpdateOperationsInput | string | null
     menu_notes?: XOR<CartCartMenuItemsMenuNotesListUpdateEnvelopeInput, CartCartMenuItemsMenuNotesCreateInput> | CartCartMenuItemsMenuNotesCreateInput[]
     menu_order_id?: NullableIntFieldUpdateOperationsInput | number | null
     menu_total?: IntFieldUpdateOperationsInput | number

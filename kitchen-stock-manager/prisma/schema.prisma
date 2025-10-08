@@ -42,6 +42,8 @@ type CartCartMenuItems {
   menu_description String?
   menu_ingredients CartCartMenuItemsMenuIngredients[]
   menu_name        String
+  menu_subname     String?
+  menu_category    String?
   menu_notes       CartCartMenuItemsMenuNotes[]
   menu_order_id    Int?
   menu_total       Int

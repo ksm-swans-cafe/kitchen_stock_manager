@@ -95,16 +95,16 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     console.log("Updated menuItems to save:", JSON.stringify(updatedMenuItems, null, 2));
 
-    const result = await prisma.cart.update({
+    const result = await prisma.cart.updateMany({
       where: { cart_id: id },
       data: {
-        cart_menu_items: JSON.stringify(updatedMenuItems),
+        cart_menu_items: updatedMenuItems,
         cart_last_update: new Date().toISOString(),
       },
     });
 
-    if (!result) {
-      return NextResponse.json({ error: "ไม่สามารถอัปเดตตะกร้าได้" }, { status: 500 });
+    if (result.count === 0) {
+      return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุหรือไม่สามารถอัปเดตได้" }, { status: 404 });
     }
 
     return NextResponse.json({
