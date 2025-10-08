@@ -468,11 +468,11 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
 
                   <div className='space-y-3'>
                     {menuLunchbox.map((lb, idx) => (
-                      <div key={idx} className='flex gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50'>
-                        <div className='flex-1 grid grid-cols-1 md:grid-cols-2 gap-3'>
+                      <div key={idx} className='flex gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 text-black-800'>
+                        <div className='flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 text-black-800'>
                           {/* ช่องเลือกชื่อกล่องอาหาร - แก้ไขส่วนนี้ */}
                           <div>
-                            <label className='block text-xs font-medium text-gray-600 mb-1'>ชื่อกล่องอาหาร</label>
+                            <label className='block text-xs font-medium text-gray-600 mb-1 text-black-800'>ชื่อกล่องอาหาร</label>
                             <select value={lb.lunchbox_name} onChange={(e) => updateLunchbox(idx, "lunchbox_name", e.target.value)} className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm' required>
                               <option value=''>เลือกกล่องอาหาร</option>
                               {getUniqueLunchboxNames().map((name, nameIdx) => (
@@ -485,7 +485,7 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
 
                           {/* ช่องเลือกชื่อชุดกล่องอาหาร */}
                           <div>
-                            <label className='block text-xs font-medium text-gray-600 mb-1'>ชื่อชุดกล่องอาหาร</label>
+                            <label className='block text-xs font-medium text-gray-600 mb-1 text-black-800'>ชื่อชุดกล่องอาหาร</label>
                             <select
                               value={lb.lunchbox_set_name}
                               onChange={(e) => updateLunchbox(idx, "lunchbox_set_name", e.target.value)}
