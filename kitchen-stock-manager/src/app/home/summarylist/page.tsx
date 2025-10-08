@@ -44,11 +44,6 @@ const SummaryList: React.FC = () => {
   const [filterCreator, setFilterCreator] = useState("ทั้งหมด");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [editingMenu, setEditingMenu] = useState<{
-    cartId: string;
-    menuName: string;
-  } | null>(null);
-  const [editTotalBox, setEditTotalBox] = useState<number>(0);
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -109,39 +104,12 @@ const SummaryList: React.FC = () => {
       menu_description: string;
     };
   } | null>(null);
-  const [editIngredientsMenu, setEditIngredientsMenu] = useState<{
-    cartId: string;
-    menu_order_id: number;
-    menuName: string;
-    ingredients: {
-      ingredient_name: string;
-      useItem: number;
-      ingredient_status: boolean;
-      ingredient_unit: string;
-    }[];
-    newIngredient: { ingredient_name: string; useItem: number };
-  } | null>(null);
-  const { data: menuListData, error: menuListError } = useSWR(shouldFetchMenu ? "/api/get/menu/name" : null, fetcher, {
-    refreshInterval: 30000,
-  });
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
-  const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher, { refreshInterval: 30000 });
-  const { data: lunchBox, error: lunchBoxError } = useSWR("/api/get/lunchbox", fetcher, { refreshInterval: 30000 });
   const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
-  const error = cartsError || menuError || ingredientError;
-  const isLoading = !cartsData || !menuData || !ingredientData || !lunchBox;
+  const error = cartsError || ingredientError;
+  const isLoading = !cartsData || !ingredientData;
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
-
-  // เพิ่ม state สำหรับ dropdown
-  const [selectedLunchbox, setSelectedLunchbox] = useState<string>("");
-  const [selectedMenu, setSelectedMenu] = useState<string>("");
-  const [selectedIngredient, setSelectedIngredient] = useState<string>("");
-  const [filteredLunchboxes, setFilteredLunchboxes] = useState<any[]>([]);
-  const [filteredMenus, setFilteredMenus] = useState<any[]>([]);
-  const [filteredIngredients, setFilteredIngredients] = useState<any[]>([]);
-
-  // เพิ่ม useEffect สำหรับดึงข้อมูล dropdown
 
   const handleSummaryprice = () => {
     router.push("/home/summarylist/summaryprice");
@@ -278,7 +246,7 @@ const SummaryList: React.FC = () => {
             ingredient_status: menu.menu_ingredients.every((ing: Ingredient) => ing.ingredient_status ?? false),
           }));
 
-          const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
+          const orderNumber = cart.cart_order_number || `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -629,72 +597,6 @@ const SummaryList: React.FC = () => {
         })}`
       );
     }
-  };
-
-  const handleTotalBox = {
-    Edit: (cartId: string, menuName: string, currentTotal: number) => {
-      setEditingMenu({ cartId, menuName });
-      setEditTotalBox(currentTotal);
-    },
-    Save: async (cartId: string, menuName: string) => {
-      if (editTotalBox < 0) {
-        console.error("จำนวนกล่องต้องไม่น้อยกว่า 0");
-        return;
-      }
-      if (!menuName) {
-        console.error("ชื่อเมนูไม่ถูกต้อง");
-        return;
-      }
-
-      const cleanedMenuName = menuName.trim();
-      setIsSaving(cartId);
-      try {
-        const patchResponse = await axios.patch(`/api/edit/cart-menu/${cartId}`, JSON.stringify({ menuName: menuName, menu_total: editTotalBox }));
-
-        if (patchResponse.status !== 200) {
-          const errorData = patchResponse.data;
-          throw new Error(errorData.error || "Failed to update total box");
-        }
-
-        setCarts((prevCarts) =>
-          prevCarts.map((cart) =>
-            cart.id === cartId
-              ? {
-                  ...cart,
-                  menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
-                  allIngredients: cart.allIngredients.map((group) =>
-                    group.menuName === cleanedMenuName
-                      ? {
-                          ...group,
-                          ingredients: group.ingredients.map((ing) => ({
-                            ...ing,
-                            calculatedTotal: ing.useItem * editTotalBox,
-                          })),
-                        }
-                      : group
-                  ),
-                  sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
-                }
-              : cart
-          )
-        );
-
-        Swal.fire({
-          icon: "success",
-          title: "อัปเดตจำนวนกล่องเรียบร้อย!",
-          text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`,
-          showConfirmButton: false,
-          timer: 3000,
-        });
-
-        mutateCarts();
-        setEditingMenu(null);
-      } catch (err) {
-        console.error("Error updating total box:", err);
-      } finally {
-        setIsSaving(null);
-      }
-    },
   };
 
   const getStatus = (action: string, status: string) => {
@@ -1138,104 +1040,6 @@ const SummaryList: React.FC = () => {
         setIsSaving(null);
       }
     },
-    Ingredients: async (cartId: string, menuName: string, ingredients: Ingredient[], menu_order_id?: number) => {
-      setEditIngredientsMenu({
-        cartId,
-        menu_order_id: menu_order_id ?? 0,
-        menuName,
-        ingredients: ingredients.map((ing) => ({
-          ingredient_name: ing.ingredient_name,
-          useItem: ing.useItem,
-          ingredient_status: ing.ingredient_status ?? false,
-          ingredient_unit: ing.ingredient_unit ?? "",
-        })),
-        newIngredient: { ingredient_name: "", useItem: 0 },
-      });
-    },
-  };
-
-  const handleSaveIngredients = async (cartId: string, menuName: string) => {
-    if (!editIngredientsMenu || !cartId) {
-      Swal.fire({
-        icon: "error",
-        title: "เกิดข้อผิดพลาด",
-        text: "ไม่พบรหัสตะกร้า (cartId) หรือข้อมูลการแก้ไข",
-        showConfirmButton: false,
-        timer: 3000,
-      });
-      setEditIngredientsMenu(null);
-      return;
-    }
-
-    setIsSaving(cartId);
-    try {
-      console.log("Sending request with cartId:", cartId);
-      const response = await axios.patch(
-        `/api/edit/cart-menu/ingredients/${cartId}`,
-        JSON.stringify({
-          menuName,
-          ingredients: editIngredientsMenu.ingredients,
-        })
-      );
-
-      if (response.status !== 200) {
-        const errorData = response.data;
-        throw new Error(errorData.error || "Failed to update ingredients");
-      }
-
-      setCarts((prevCarts) =>
-        prevCarts.map((cart) =>
-          cart.id === cartId
-            ? {
-                ...cart,
-                menuItems: cart.menuItems.map((item) =>
-                  item.menu_name === menuName
-                    ? {
-                        ...item,
-                        menu_ingredients: editIngredientsMenu.ingredients,
-                      }
-                    : item
-                ),
-                allIngredients: cart.allIngredients.map((group) =>
-                  group.menuName === menuName
-                    ? {
-                        ...group,
-                        ingredients: editIngredientsMenu.ingredients.map((ing) => ({
-                          ...ing,
-                          calculatedTotal: ing.useItem * (cart.menuItems.find((m) => m.menu_name === menuName)?.menu_total || 0),
-                          isChecked: ing.ingredient_status,
-                        })),
-                        ingredient_status: editIngredientsMenu.ingredients.every((ing) => ing.ingredient_status),
-                      }
-                    : group
-                ),
-              }
-            : cart
-        )
-      );
-
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตวัตถุดิบเรียบร้อย!",
-        text: `เมนู: ${menuName}`,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-
-      mutateCarts();
-      setEditIngredientsMenu(null);
-    } catch (err) {
-      console.error("Error updating ingredients:", err);
-      Swal.fire({
-        icon: "error",
-        title: "เกิดข้อผิดพลาด",
-        text: err instanceof Error ? `ไม่สามารถอัปเดตวัตถุดิบ: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตวัตถุดิบ",
-        showConfirmButton: false,
-        timer: 3000,
-      });
-    } finally {
-      setIsSaving(null);
-    }
   };
 
   return (
@@ -1583,7 +1387,7 @@ const SummaryList: React.FC = () => {
                                   <span>รับ: {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                 </div>
                               </div>
-                              <div className='hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
+                              <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
                                 <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                               </div>
                             </div>
@@ -1678,13 +1482,13 @@ const SummaryList: React.FC = () => {
                                     setShouldFetchMenu(false);
                                   }}>
                                   <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
+                                  <DialogTitle>
                                     {editMenuDialog && (
                                       <div className='space-y-6'>
-                                        <div className='text-xl font-bold mb-4'>
+                                        <div style={{ color: "#000000" }} className='text-xl font-bold mb-4'>
                                       แก้ไขเมนูสำหรับออร์เดอร์ {editMenuDialog?.cart_id}
                                     </div>
-                                        {/* แสดงข้อมูลลูกค้า */}
-                                        <div className='bg-gray-50 p-4 rounded-lg'>
+                                        <div style={{ color: "#000000" }} className='bg-gray-100 p-4 rounded-lg'>
                                           <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
                                           <div className='grid grid-cols-2 gap-4 text-sm'>
                                             <div>
@@ -1712,6 +1516,7 @@ const SummaryList: React.FC = () => {
                                         {editMenuDialog.cart_lunchbox && editMenuDialog.cart_lunchbox.length > 0 && (
                                           <div className='space-y-4'>
                                             <h3 className='font-semibold text-gray-800'>ข้อมูลกล่องอาหาร</h3>
+                                            <br />
                                             {editMenuDialog.cart_lunchbox.map((lunchbox, lunchboxIdx) => (
                                               <div key={lunchboxIdx} className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
                                                 <div className='flex justify-between items-start mb-3'>
@@ -1947,6 +1752,7 @@ const SummaryList: React.FC = () => {
                                         </div>
                                       </div>
                                     )}
+                                    </DialogTitle>
                                   </DialogContent>
                                 </Dialog>
                                 <Accordion type='multiple' className='space-y-3'>
@@ -2117,23 +1923,7 @@ const SummaryList: React.FC = () => {
         <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
           <DialogContent className='max-w-md max-h-[70vh] overflow-y-auto'>
             <DialogTitle>
-              {summaryDialogType === "order" && selectedCartForSummary && (
-                <div style={{ color: "#000000" }} className='mb-4'>
-                  สรุปวัตถุดิบของออเดอร์ {selectedCartForSummary.orderNumber} <br />
-                  (วันที่ส่ง: {selectedCartForSummary.cart_delivery_date})
-                </div>
-              )}
-              {summaryDialogType === "date" && selectedDateForSummary && (
-                <div style={{ color: "#000000" }} className='mb-4'>
-                  สรุปวัตถุดิบทั้งหมดของวันที่{" "}
-                  {new Date(selectedDateForSummary).toLocaleDateString("th-TH", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </div>
-              )}
-            </DialogTitle>
+              
             <div className='space-y-4'>
               {summaryDialogType === "order" &&
                 selectedCartForSummary &&
@@ -2142,7 +1932,8 @@ const SummaryList: React.FC = () => {
                   return (
                     <>
                       <div className='space-y-2'>
-                        <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบของออเดอร์</h5>
+                        <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบของออเดอร์: {selectedCartForSummary.orderNumber}</h5>
+                        (วันที่ส่ง: {selectedCartForSummary.cart_delivery_date})
                         {summary.map((ing, idx) => (
                           <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
                             <span className='text-gray-700'>{ing.name}</span>
@@ -2187,6 +1978,7 @@ const SummaryList: React.FC = () => {
                   );
                 })()}
             </div>
+            </DialogTitle>
           </DialogContent>
         </Dialog>
 

@@ -1014,9 +1014,9 @@ const OrderHistory = () => {
                                                       className='flex items-center justify-between text-xs text-gray-600 py-1'
                                                     >
                                                       <span>• {ing.ingredient_name}</span>
-                                                      <div className='flex items-center gap-2'>
+                                                      <div style={{ color: "#000000" }} className='flex items-center gap-2'>
                                                         <span>
-                                                          {ing.useItem} หน่วย × {menu.menu_total} กล่อง = <strong>{ing.useItem * menu.menu_total}</strong> หน่วย
+                                                          {ing.useItem} หน่วย × {menu.menu_total} กล่อง = <strong style={{ color: "#000000" }}>{ing.useItem * menu.menu_total}</strong> หน่วย
                                                         </span>
                                                       </div>
                                                     </div>
