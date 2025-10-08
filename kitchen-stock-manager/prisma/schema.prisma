@@ -36,12 +36,15 @@ type CartCartLunchboxLunchboxMenuMenuIngredients {
   ingredient_name String
   /// Multiple data types found: Int: 92.1%, BigInt: 7.9% out of 89 sampled entries
   useItem         Json
+  ingredient_status Boolean?
 }
 
 type CartCartMenuItems {
   menu_description String?
   menu_ingredients CartCartMenuItemsMenuIngredients[]
   menu_name        String
+  menu_subname     String?
+  menu_category    String?
   menu_notes       CartCartMenuItemsMenuNotes[]
   menu_order_id    Int?
   menu_total       Int

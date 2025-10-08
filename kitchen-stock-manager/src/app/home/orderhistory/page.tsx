@@ -92,6 +92,22 @@ const OrderHistory = () => {
         const formattedOrders: Cart[] = cartsData.map((cart: RawCart) => {
           if (!cart.cart_create_date) {
             console.warn(`Cart ${cart.cart_id} has no cart_create_date`);
+            
+            // Parse cart_lunchbox for fallback case
+            let cartLunchboxFallback: any[] = [];
+            if (cart.cart_lunchbox) {
+              if (typeof cart.cart_lunchbox === "string") {
+                try {
+                  cartLunchboxFallback = JSON.parse(cart.cart_lunchbox);
+                } catch (e) {
+                  console.error("Failed to parse cart_lunchbox:", e);
+                  cartLunchboxFallback = [];
+                }
+              } else if (Array.isArray(cart.cart_lunchbox)) {
+                cartLunchboxFallback = cart.cart_lunchbox;
+              }
+            }
+            
             return {
               id: cart.cart_id || "no-id",
               orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
@@ -113,6 +129,7 @@ const OrderHistory = () => {
               cart_customer_name: cart.cart_customer_name,
               cart_location_send: cart.cart_location_send,
               cart_shipping_cost: cart.cart_shipping_cost,
+              cart_lunchbox: cartLunchboxFallback,
             };
           }
 
@@ -152,6 +169,22 @@ const OrderHistory = () => {
           }));
 
           const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
+          
+          // Parse cart_lunchbox if it's a string
+          let cartLunchbox: any[] = [];
+          if (cart.cart_lunchbox) {
+            if (typeof cart.cart_lunchbox === "string") {
+              try {
+                cartLunchbox = JSON.parse(cart.cart_lunchbox);
+              } catch (e) {
+                console.error("Failed to parse cart_lunchbox:", e);
+                cartLunchbox = [];
+              }
+            } else if (Array.isArray(cart.cart_lunchbox)) {
+              cartLunchbox = cart.cart_lunchbox;
+            }
+          }
+          
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -176,6 +209,7 @@ const OrderHistory = () => {
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
             cart_shipping_cost: cart.cart_shipping_cost,
+            cart_lunchbox: cartLunchbox,
           };
         });
 
@@ -922,64 +956,120 @@ const OrderHistory = () => {
                                   <User className='w-4 h-4' /> เมนูที่สั่ง
                                 </h4>
                                 <Accordion type='multiple' className='space-y-3'>
-                                  {cart.allIngredients.map((menuGroup, groupIdx) => {
-                                    const totalBox = cart.menuItems.find((item) => item.menu_name === menuGroup.menuName)?.menu_total || 0;
-                                    const isEditingThisMenu = editingMenu?.cartId === cart.id && editingMenu?.menuName === menuGroup.menuName;
-                                    const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
-
-                                    return (
-                                      <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                  {cart.cart_lunchbox && cart.cart_lunchbox.length > 0 ? (
+                                    cart.cart_lunchbox.map((lunchbox: any, lunchboxIdx: number) => (
+                                      <AccordionItem 
+                                        key={lunchboxIdx} 
+                                        value={`lunchbox-${lunchboxIdx}`} 
+                                        className="rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50"
+                                      >
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                          <div className='flex flex-col items-start'>
-                                            <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
-                                            {(() => {
-                                              const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                              return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
-                                            })()}
-                                          </div>
-                                          <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
-                                        </AccordionTrigger>
-                                        <AccordionContent className='pt-3 space-y-2'>
-                                          {isEditingThisMenu ? (
-                                            <div className='flex items-center gap-2 mb-3'>
-                                              <Input type='number' value={editTotalBox} onChange={(e) => setEditTotalBox(Number(e.target.value))} className='w-20 h-8 text-sm rounded-md border-gray-300' min='0' aria-label='Edit box quantity' />
-                                              <Button variant='ghost' size='sm' onClick={() => handleSaveTotalBox(cart.id, menuGroup.menuName)} className='h-8 px-2 text-blue-600 hover:bg-blue-50' aria-label='Save box quantity' disabled={isSaving === cart.id}>
-                                                {isSaving === cart.id ? "Saving..." : "Save"}
-                                              </Button>
-                                              <Button variant='ghost' size='sm' onClick={() => setEditingMenu(null)} className='h-8 px-2 text-gray-600 hover:bg-gray-50' aria-label='Cancel edit' disabled={isSaving === cart.id}>
-                                                Cancel
-                                              </Button>
-                                            </div>
-                                          ) : (
-                                            <div className='flex items-center gap-2 mb-3'>
-                                              <Button variant='ghost' size='sm' onClick={() => handleEditTotalBox
-                                                  (cart.id, menuGroup.menuName, totalBox)} className='h-8 px-2 text-blue-600 hover:bg-blue-100'>
-                                                {/* <Edit2 className="w-4 h-4" /> */}
-                                              </Button>
-                                            </div>
-                                          )}
-                                          {menuGroup.ingredients.map((ing, idx) => (
-                                            <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                              <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-                                              <div className='flex items-center gap-4'>
-                                                <span className='text-gray-600'>
-                                                  ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
-                                                  <strong
-                                                    className='text-black-600'
-                                                    style={{
-                                                      color: "#000000",
-                                                    }}>
-                                                    {ing.calculatedTotal}
-                                                  </strong>{" "}
-                                                  {ing.ingredient_unit}
-                                                </span>
+                                          <div className='flex flex-col items-start flex-1'>
+                                            <span className='truncate text-sm text-blue-800 font-bold'>
+                                              📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                            </span>
+                                            <div className='grid grid-cols-3 gap-2 mt-2 w-full'>
+                                              <div className='text-xs text-blue-700'>
+                                                <span className='font-medium'>จำนวน:</span> {lunchbox.lunchbox_total} กล่อง
+                                              </div>
+                                              <div className='text-xs text-blue-700'>
+                                                <span className='font-medium'>ราคา:</span> {lunchbox.lunchbox_total_cost} บาท
+                                              </div>
+                                              <div className='text-xs text-blue-700'>
+                                                <span className='font-medium'>จำกัด:</span> {lunchbox.lunchbox_limit} กล่อง
                                               </div>
                                             </div>
-                                          ))}
+                                          </div>
+                                        </AccordionTrigger>
+                                        
+                                        <AccordionContent className='pt-3 space-y-2'>
+                                          <h5 className='font-medium text-blue-800 mb-2 text-xs'>เมนูในกล่อง:</h5>
+                                          {lunchbox.lunchbox_menu.map((menu: any, menuIdx: number) => {
+                                            const allIngredientsChecked = menu.menu_ingredients?.every((ing: any) => ing.ingredient_status) ?? false;
+                                            
+                                            return (
+                                              <div 
+                                                key={menuIdx} 
+                                                className={`rounded-lg border p-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
+                                              >
+                                                <div className='mb-2'>
+                                                  <div className='font-medium text-gray-800 text-sm'>
+                                                    {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
+                                                  </div>
+                                                  <div className='text-xs text-gray-600 mt-1'>
+                                                    หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
+                                                  </div>
+                                                  {menu.menu_description && (
+                                                    <div className='text-xs text-gray-500 mt-1'>
+                                                      {menu.menu_description}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                
+                                                <div className='space-y-1 mt-2'>
+                                                  <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
+                                                  {menu.menu_ingredients?.map((ing: any, idx: number) => (
+                                                    <div 
+                                                      key={idx} 
+                                                      className='flex items-center justify-between text-xs text-gray-600 py-1'
+                                                    >
+                                                      <span>• {ing.ingredient_name}</span>
+                                                      <div style={{ color: "#000000" }} className='flex items-center gap-2'>
+                                                        <span>
+                                                          {ing.useItem} หน่วย × {menu.menu_total} กล่อง = <strong style={{ color: "#000000" }}>{ing.useItem * menu.menu_total}</strong> หน่วย
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
                                         </AccordionContent>
                                       </AccordionItem>
-                                    );
-                                  })}
+                                    ))
+                                  ) : (
+                                    // Fallback to old structure if cart_lunchbox is not available
+                                    cart.allIngredients.map((menuGroup, groupIdx) => {
+                                      const totalBox = cart.menuItems.find((item) => item.menu_name === menuGroup.menuName)?.menu_total || 0;
+                                      const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
+
+                                      return (
+                                        <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                          <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                            <div className='flex flex-col items-start'>
+                                              <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                              {(() => {
+                                                const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                                return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
+                                              })()}
+                                            </div>
+                                            <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
+                                          </AccordionTrigger>
+                                          <AccordionContent className='pt-3 space-y-2'>
+                                            {menuGroup.ingredients.map((ing, idx) => (
+                                              <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
+                                                <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+                                                <div className='flex items-center gap-4'>
+                                                  <span className='text-gray-600'>
+                                                    ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
+                                                    <strong
+                                                      className='text-black-600'
+                                                      style={{
+                                                        color: "#000000",
+                                                      }}>
+                                                      {ing.calculatedTotal}
+                                                    </strong>{" "}
+                                                    {ing.ingredient_unit}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      );
+                                    })
+                                  )}
                                 </Accordion>
                               </div>
                             </div>

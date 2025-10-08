@@ -18,6 +18,7 @@ export interface MenuItem {
   menu_total: number;
   menu_ingredients: Ingredient[];
   menu_description?: string;
+  menu_order_id?: number;
   status?: string;
   order_number?: string;
 }
