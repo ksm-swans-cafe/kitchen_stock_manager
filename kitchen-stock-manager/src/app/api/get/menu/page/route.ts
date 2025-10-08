@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+// ฟังก์ชันแปลง BigInt เป็น Number
+function convertBigIntToNumber(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === "bigint") {
+    return Number(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertBigIntToNumber(item));
+  }
+
+  if (typeof obj === "object") {
+    const converted: any = {};
+    for (const key in obj) {
+      converted[key] = convertBigIntToNumber(obj[key]);
+    }
+    return converted;
+  }
+
+  return obj;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,9 +39,11 @@ export async function GET(request: NextRequest) {
       take: safeLimit,
     });
 
+    const convertedResult = convertBigIntToNumber(result);
+
     return NextResponse.json(
       {
-        data: result,
+        data: convertedResult,
         pagination: {
           page: safePage,
           limit: safeLimit,
