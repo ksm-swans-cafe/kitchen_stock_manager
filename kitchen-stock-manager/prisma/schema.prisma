@@ -9,12 +9,12 @@ datasource db {
 }
 
 type CartCartLunchbox {
-  /// Multiple data types found: Int: 90%, BigInt: 10% out of 10 sampled entries
+  /// Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
   lunchbox_limit      Json
   lunchbox_menu       CartCartLunchboxLunchboxMenu[]
   lunchbox_name       String
   lunchbox_set_name   String
-  /// Multiple data types found: Int: 90%, BigInt: 10% out of 10 sampled entries
+  /// Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
   lunchbox_total      Json
   lunchbox_total_cost BigInt?
 }
@@ -25,17 +25,18 @@ type CartCartLunchboxLunchboxMenu {
   menu_description String
   menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String
-  /// Multiple data types found: Int: 90%, BigInt: 10% out of 20 sampled entries
+  /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
   menu_order_id    Json
   menu_subname     String
-  /// Multiple data types found: Int: 90%, BigInt: 10% out of 20 sampled entries
+  /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
   menu_total       Json
 }
 
 type CartCartLunchboxLunchboxMenuMenuIngredients {
-  ingredient_name String
-  /// Multiple data types found: Int: 92.1%, BigInt: 7.9% out of 89 sampled entries
-  useItem         Json
+  ingredient_name   String
+  ingredient_status Boolean?
+  /// Multiple data types found: Int: 95.2%, BigInt: 4.8% out of 146 sampled entries
+  useItem           Json
 }
 
 type CartCartMenuItems {
@@ -44,13 +45,15 @@ type CartCartMenuItems {
   menu_name        String
   menu_notes       CartCartMenuItemsMenuNotes[]
   menu_order_id    Int?
-  menu_total       Int
+  /// Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 683 sampled entries
+  menu_total       Json
 }
 
 type CartCartMenuItemsMenuIngredients {
   ingredient_name   String
   ingredient_status Boolean?
-  useItem           Int
+  /// Multiple data types found: Int: 98.6%, BigInt: 1.4% out of 2659 sampled entries
+  useItem           Json
 }
 
 type CartCartMenuItemsMenuNotes {
@@ -60,10 +63,12 @@ type CartCartMenuItemsMenuNotes {
 
 type MenuMenuIngredients {
   ingredient_name String
-  useItem         Int
+  /// Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 337 sampled entries
+  useItem         Json
 }
 
 type MenuMenuLunchbox {
+  lunchbox_cost     BigInt?
   lunchbox_name     String
   lunchbox_set_name String
 }
@@ -134,7 +139,8 @@ model lunchbox {
 model menu {
   id               String                @id @default(auto()) @map("_id") @db.ObjectId
   menu_category    String
-  menu_cost        Int
+  /// Multiple data types found: Int: 99.1%, BigInt: 0.9% out of 110 sampled entries
+  menu_cost        Json
   menu_id          Int                   @unique
   menu_image       String
   menu_ingredients MenuMenuIngredients[]

@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+function convertBigIntToNumber(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === "bigint") {
+    return Number(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertBigIntToNumber(item));
+  }
+
+  if (typeof obj === "object") {
+    const converted: any = {};
+    for (const key in obj) {
+      converted[key] = convertBigIntToNumber(obj[key]);
+    }
+    return converted;
+  }
+
+  return obj;
+}
+
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const { id } = params;
@@ -66,9 +88,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       },
     });
 
+    const convertedResult = convertBigIntToNumber(result);
+
     return NextResponse.json({
       success: true,
-      updatedMenu: result,
+      updatedMenu: convertedResult,
     });
   } catch (error) {
     console.error("Server error:", error);

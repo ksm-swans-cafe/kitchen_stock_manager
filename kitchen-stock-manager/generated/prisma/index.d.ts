@@ -1340,13 +1340,13 @@ export namespace Prisma {
     objects: {}
     scalars: {
       /**
-       * Multiple data types found: Int: 90%, BigInt: 10% out of 10 sampled entries
+       * Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
        */
       lunchbox_limit: Prisma.JsonValue
       lunchbox_name: string
       lunchbox_set_name: string
       /**
-       * Multiple data types found: Int: 90%, BigInt: 10% out of 10 sampled entries
+       * Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
        */
       lunchbox_total: Prisma.JsonValue
       lunchbox_total_cost: bigint | null
@@ -1437,12 +1437,12 @@ export namespace Prisma {
       menu_description: string
       menu_name: string
       /**
-       * Multiple data types found: Int: 90%, BigInt: 10% out of 20 sampled entries
+       * Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
        */
       menu_order_id: Prisma.JsonValue
       menu_subname: string
       /**
-       * Multiple data types found: Int: 90%, BigInt: 10% out of 20 sampled entries
+       * Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
        */
       menu_total: Prisma.JsonValue
     }
@@ -1501,6 +1501,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     ingredient_name?: boolean
+    ingredient_status?: boolean
     useItem?: boolean
   }, ExtArgs["result"]["cartCartLunchboxLunchboxMenuMenuIngredients"]>
 
@@ -1508,18 +1509,20 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsSelectScalar = {
     ingredient_name?: boolean
+    ingredient_status?: boolean
     useItem?: boolean
   }
 
-  export type CartCartLunchboxLunchboxMenuMenuIngredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_name" | "useItem", ExtArgs["result"]["cartCartLunchboxLunchboxMenuMenuIngredients"]>
+  export type CartCartLunchboxLunchboxMenuMenuIngredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_name" | "ingredient_status" | "useItem", ExtArgs["result"]["cartCartLunchboxLunchboxMenuMenuIngredients"]>
 
   export type $CartCartLunchboxLunchboxMenuMenuIngredientsPayload = {
     name: "CartCartLunchboxLunchboxMenuMenuIngredients"
     objects: {}
     scalars: {
       ingredient_name: string
+      ingredient_status: boolean | null
       /**
-       * Multiple data types found: Int: 92.1%, BigInt: 7.9% out of 89 sampled entries
+       * Multiple data types found: Int: 95.2%, BigInt: 4.8% out of 146 sampled entries
        */
       useItem: Prisma.JsonValue
     }
@@ -1537,6 +1540,7 @@ export namespace Prisma {
    */
   interface CartCartLunchboxLunchboxMenuMenuIngredientsFieldRefs {
     readonly ingredient_name: FieldRef<"CartCartLunchboxLunchboxMenuMenuIngredients", 'String'>
+    readonly ingredient_status: FieldRef<"CartCartLunchboxLunchboxMenuMenuIngredients", 'Boolean'>
     readonly useItem: FieldRef<"CartCartLunchboxLunchboxMenuMenuIngredients", 'Json'>
   }
     
@@ -1593,7 +1597,10 @@ export namespace Prisma {
       menu_description: string | null
       menu_name: string
       menu_order_id: number | null
-      menu_total: number
+      /**
+       * Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 683 sampled entries
+       */
+      menu_total: Prisma.JsonValue
     }
     composites: {
       menu_ingredients: Prisma.$CartCartMenuItemsMenuIngredientsPayload[]
@@ -1614,7 +1621,7 @@ export namespace Prisma {
     readonly menu_description: FieldRef<"CartCartMenuItems", 'String'>
     readonly menu_name: FieldRef<"CartCartMenuItems", 'String'>
     readonly menu_order_id: FieldRef<"CartCartMenuItems", 'Int'>
-    readonly menu_total: FieldRef<"CartCartMenuItems", 'Int'>
+    readonly menu_total: FieldRef<"CartCartMenuItems", 'Json'>
   }
     
 
@@ -1668,7 +1675,10 @@ export namespace Prisma {
     scalars: {
       ingredient_name: string
       ingredient_status: boolean | null
-      useItem: number
+      /**
+       * Multiple data types found: Int: 98.6%, BigInt: 1.4% out of 2659 sampled entries
+       */
+      useItem: Prisma.JsonValue
     }
     composites: {}
   }
@@ -1685,7 +1695,7 @@ export namespace Prisma {
   interface CartCartMenuItemsMenuIngredientsFieldRefs {
     readonly ingredient_name: FieldRef<"CartCartMenuItemsMenuIngredients", 'String'>
     readonly ingredient_status: FieldRef<"CartCartMenuItemsMenuIngredients", 'Boolean'>
-    readonly useItem: FieldRef<"CartCartMenuItemsMenuIngredients", 'Int'>
+    readonly useItem: FieldRef<"CartCartMenuItemsMenuIngredients", 'Json'>
   }
     
 
@@ -1795,7 +1805,10 @@ export namespace Prisma {
     objects: {}
     scalars: {
       ingredient_name: string
-      useItem: number
+      /**
+       * Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 337 sampled entries
+       */
+      useItem: Prisma.JsonValue
     }
     composites: {}
   }
@@ -1811,7 +1824,7 @@ export namespace Prisma {
    */
   interface MenuMenuIngredientsFieldRefs {
     readonly ingredient_name: FieldRef<"MenuMenuIngredients", 'String'>
-    readonly useItem: FieldRef<"MenuMenuIngredients", 'Int'>
+    readonly useItem: FieldRef<"MenuMenuIngredients", 'Json'>
   }
     
 
@@ -1840,6 +1853,7 @@ export namespace Prisma {
 
 
   export type MenuMenuLunchboxSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    lunchbox_cost?: boolean
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
   }, ExtArgs["result"]["menuMenuLunchbox"]>
@@ -1847,16 +1861,18 @@ export namespace Prisma {
 
 
   export type MenuMenuLunchboxSelectScalar = {
+    lunchbox_cost?: boolean
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
   }
 
-  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_name" | "lunchbox_set_name", ExtArgs["result"]["menuMenuLunchbox"]>
+  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_cost" | "lunchbox_name" | "lunchbox_set_name", ExtArgs["result"]["menuMenuLunchbox"]>
 
   export type $MenuMenuLunchboxPayload = {
     name: "MenuMenuLunchbox"
     objects: {}
     scalars: {
+      lunchbox_cost: bigint | null
       lunchbox_name: string
       lunchbox_set_name: string
     }
@@ -1873,6 +1889,7 @@ export namespace Prisma {
    * Fields of the MenuMenuLunchbox model
    */
   interface MenuMenuLunchboxFieldRefs {
+    readonly lunchbox_cost: FieldRef<"MenuMenuLunchbox", 'BigInt'>
     readonly lunchbox_name: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"MenuMenuLunchbox", 'String'>
   }
@@ -6946,19 +6963,16 @@ export namespace Prisma {
   }
 
   export type MenuAvgAggregateOutputType = {
-    menu_cost: number | null
     menu_id: number | null
   }
 
   export type MenuSumAggregateOutputType = {
-    menu_cost: number | null
     menu_id: number | null
   }
 
   export type MenuMinAggregateOutputType = {
     id: string | null
     menu_category: string | null
-    menu_cost: number | null
     menu_id: number | null
     menu_image: string | null
     menu_name: string | null
@@ -6968,7 +6982,6 @@ export namespace Prisma {
   export type MenuMaxAggregateOutputType = {
     id: string | null
     menu_category: string | null
-    menu_cost: number | null
     menu_id: number | null
     menu_image: string | null
     menu_name: string | null
@@ -6988,19 +7001,16 @@ export namespace Prisma {
 
 
   export type MenuAvgAggregateInputType = {
-    menu_cost?: true
     menu_id?: true
   }
 
   export type MenuSumAggregateInputType = {
-    menu_cost?: true
     menu_id?: true
   }
 
   export type MenuMinAggregateInputType = {
     id?: true
     menu_category?: true
-    menu_cost?: true
     menu_id?: true
     menu_image?: true
     menu_name?: true
@@ -7010,7 +7020,6 @@ export namespace Prisma {
   export type MenuMaxAggregateInputType = {
     id?: true
     menu_category?: true
-    menu_cost?: true
     menu_id?: true
     menu_image?: true
     menu_name?: true
@@ -7117,7 +7126,7 @@ export namespace Prisma {
   export type MenuGroupByOutputType = {
     id: string
     menu_category: string
-    menu_cost: number
+    menu_cost: JsonValue
     menu_id: number
     menu_image: string
     menu_name: string
@@ -7176,7 +7185,10 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       menu_category: string
-      menu_cost: number
+      /**
+       * Multiple data types found: Int: 99.1%, BigInt: 0.9% out of 110 sampled entries
+       */
+      menu_cost: Prisma.JsonValue
       menu_id: number
       menu_image: string
       menu_name: string
@@ -7578,7 +7590,7 @@ export namespace Prisma {
   interface menuFieldRefs {
     readonly id: FieldRef<"menu", 'String'>
     readonly menu_category: FieldRef<"menu", 'String'>
-    readonly menu_cost: FieldRef<"menu", 'Int'>
+    readonly menu_cost: FieldRef<"menu", 'Json'>
     readonly menu_id: FieldRef<"menu", 'Int'>
     readonly menu_image: FieldRef<"menu", 'String'>
     readonly menu_name: FieldRef<"menu", 'String'>
@@ -8114,6 +8126,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -8124,13 +8143,6 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
@@ -8541,7 +8553,7 @@ export namespace Prisma {
     NOT?: menuWhereInput | menuWhereInput[]
     id?: StringFilter<"menu"> | string
     menu_category?: StringFilter<"menu"> | string
-    menu_cost?: IntFilter<"menu"> | number
+    menu_cost?: JsonFilter<"menu">
     menu_id?: IntFilter<"menu"> | number
     menu_image?: StringFilter<"menu"> | string
     menu_ingredients?: MenuMenuIngredientsCompositeListFilter | MenuMenuIngredientsObjectEqualityInput[]
@@ -8569,7 +8581,7 @@ export namespace Prisma {
     OR?: menuWhereInput[]
     NOT?: menuWhereInput | menuWhereInput[]
     menu_category?: StringFilter<"menu"> | string
-    menu_cost?: IntFilter<"menu"> | number
+    menu_cost?: JsonFilter<"menu">
     menu_image?: StringFilter<"menu"> | string
     menu_ingredients?: MenuMenuIngredientsCompositeListFilter | MenuMenuIngredientsObjectEqualityInput[]
     menu_lunchbox?: MenuMenuLunchboxCompositeListFilter | MenuMenuLunchboxObjectEqualityInput[]
@@ -8598,7 +8610,7 @@ export namespace Prisma {
     NOT?: menuScalarWhereWithAggregatesInput | menuScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"menu"> | string
     menu_category?: StringWithAggregatesFilter<"menu"> | string
-    menu_cost?: IntWithAggregatesFilter<"menu"> | number
+    menu_cost?: JsonWithAggregatesFilter<"menu">
     menu_id?: IntWithAggregatesFilter<"menu"> | number
     menu_image?: StringWithAggregatesFilter<"menu"> | string
     menu_name?: StringWithAggregatesFilter<"menu"> | string
@@ -9029,7 +9041,7 @@ export namespace Prisma {
   export type menuCreateInput = {
     id?: string
     menu_category: string
-    menu_cost: number
+    menu_cost: InputJsonValue
     menu_id: number
     menu_image: string
     menu_ingredients?: XOR<MenuMenuIngredientsListCreateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
@@ -9041,7 +9053,7 @@ export namespace Prisma {
   export type menuUncheckedCreateInput = {
     id?: string
     menu_category: string
-    menu_cost: number
+    menu_cost: InputJsonValue
     menu_id: number
     menu_image: string
     menu_ingredients?: XOR<MenuMenuIngredientsListCreateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
@@ -9052,7 +9064,7 @@ export namespace Prisma {
 
   export type menuUpdateInput = {
     menu_category?: StringFieldUpdateOperationsInput | string
-    menu_cost?: IntFieldUpdateOperationsInput | number
+    menu_cost?: InputJsonValue | InputJsonValue
     menu_id?: IntFieldUpdateOperationsInput | number
     menu_image?: StringFieldUpdateOperationsInput | string
     menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
@@ -9063,7 +9075,7 @@ export namespace Prisma {
 
   export type menuUncheckedUpdateInput = {
     menu_category?: StringFieldUpdateOperationsInput | string
-    menu_cost?: IntFieldUpdateOperationsInput | number
+    menu_cost?: InputJsonValue | InputJsonValue
     menu_id?: IntFieldUpdateOperationsInput | number
     menu_image?: StringFieldUpdateOperationsInput | string
     menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
@@ -9075,7 +9087,7 @@ export namespace Prisma {
   export type menuCreateManyInput = {
     id?: string
     menu_category: string
-    menu_cost: number
+    menu_cost: InputJsonValue
     menu_id: number
     menu_image: string
     menu_ingredients?: XOR<MenuMenuIngredientsListCreateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
@@ -9086,7 +9098,7 @@ export namespace Prisma {
 
   export type menuUpdateManyMutationInput = {
     menu_category?: StringFieldUpdateOperationsInput | string
-    menu_cost?: IntFieldUpdateOperationsInput | number
+    menu_cost?: InputJsonValue | InputJsonValue
     menu_id?: IntFieldUpdateOperationsInput | number
     menu_image?: StringFieldUpdateOperationsInput | string
     menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
@@ -9097,7 +9109,7 @@ export namespace Prisma {
 
   export type menuUncheckedUpdateManyInput = {
     menu_category?: StringFieldUpdateOperationsInput | string
-    menu_cost?: IntFieldUpdateOperationsInput | number
+    menu_cost?: InputJsonValue | InputJsonValue
     menu_id?: IntFieldUpdateOperationsInput | number
     menu_image?: StringFieldUpdateOperationsInput | string
     menu_ingredients?: XOR<MenuMenuIngredientsListUpdateEnvelopeInput, MenuMenuIngredientsCreateInput> | MenuMenuIngredientsCreateInput[]
@@ -9170,7 +9182,7 @@ export namespace Prisma {
     menu_name: string
     menu_notes?: CartCartMenuItemsMenuNotesObjectEqualityInput[]
     menu_order_id?: number | null
-    menu_total: number
+    menu_total: InputJsonValue
   }
 
   export type CartCartLunchboxOrderByCompositeAggregateInput = {
@@ -9451,6 +9463,17 @@ export namespace Prisma {
   export type lunchboxSumOrderByAggregateInput = {
     lunchbox_limit?: SortOrder
   }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+  }
 
   export type MenuMenuIngredientsCompositeListFilter = {
     equals?: MenuMenuIngredientsObjectEqualityInput[]
@@ -9463,7 +9486,7 @@ export namespace Prisma {
 
   export type MenuMenuIngredientsObjectEqualityInput = {
     ingredient_name: string
-    useItem: number
+    useItem: InputJsonValue
   }
 
   export type MenuMenuLunchboxCompositeListFilter = {
@@ -9476,6 +9499,7 @@ export namespace Prisma {
   }
 
   export type MenuMenuLunchboxObjectEqualityInput = {
+    lunchbox_cost?: bigint | number | null
     lunchbox_name: string
     lunchbox_set_name: string
   }
@@ -9499,14 +9523,12 @@ export namespace Prisma {
   }
 
   export type menuAvgOrderByAggregateInput = {
-    menu_cost?: SortOrder
     menu_id?: SortOrder
   }
 
   export type menuMaxOrderByAggregateInput = {
     id?: SortOrder
     menu_category?: SortOrder
-    menu_cost?: SortOrder
     menu_id?: SortOrder
     menu_image?: SortOrder
     menu_name?: SortOrder
@@ -9516,7 +9538,6 @@ export namespace Prisma {
   export type menuMinOrderByAggregateInput = {
     id?: SortOrder
     menu_category?: SortOrder
-    menu_cost?: SortOrder
     menu_id?: SortOrder
     menu_image?: SortOrder
     menu_name?: SortOrder
@@ -9524,8 +9545,21 @@ export namespace Prisma {
   }
 
   export type menuSumOrderByAggregateInput = {
-    menu_cost?: SortOrder
     menu_id?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type CartCartLunchboxListCreateEnvelopeInput = {
@@ -9551,7 +9585,7 @@ export namespace Prisma {
     menu_name: string
     menu_notes?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
     menu_order_id?: number | null
-    menu_total: number
+    menu_total: InputJsonValue
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -9591,7 +9625,7 @@ export namespace Prisma {
 
   export type MenuMenuIngredientsCreateInput = {
     ingredient_name: string
-    useItem: number
+    useItem: InputJsonValue
   }
 
   export type MenuMenuLunchboxListCreateEnvelopeInput = {
@@ -9599,6 +9633,7 @@ export namespace Prisma {
   }
 
   export type MenuMenuLunchboxCreateInput = {
+    lunchbox_cost?: bigint | number | null
     lunchbox_name: string
     lunchbox_set_name: string
   }
@@ -9678,13 +9713,13 @@ export namespace Prisma {
     menu_name?: StringFilter<"CartCartMenuItems"> | string
     menu_notes?: CartCartMenuItemsMenuNotesCompositeListFilter | CartCartMenuItemsMenuNotesObjectEqualityInput[]
     menu_order_id?: IntNullableFilter<"CartCartMenuItems"> | number | null
-    menu_total?: IntFilter<"CartCartMenuItems"> | number
+    menu_total?: JsonFilter<"CartCartMenuItems">
   }
 
   export type CartCartMenuItemsMenuIngredientsObjectEqualityInput = {
     ingredient_name: string
     ingredient_status?: boolean | null
-    useItem: number
+    useItem: InputJsonValue
   }
 
   export type CartCartMenuItemsMenuNotesObjectEqualityInput = {
@@ -9782,15 +9817,27 @@ export namespace Prisma {
     OR?: MenuMenuIngredientsWhereInput[]
     NOT?: MenuMenuIngredientsWhereInput | MenuMenuIngredientsWhereInput[]
     ingredient_name?: StringFilter<"MenuMenuIngredients"> | string
-    useItem?: IntFilter<"MenuMenuIngredients"> | number
+    useItem?: JsonFilter<"MenuMenuIngredients">
   }
 
   export type MenuMenuLunchboxWhereInput = {
     AND?: MenuMenuLunchboxWhereInput | MenuMenuLunchboxWhereInput[]
     OR?: MenuMenuLunchboxWhereInput[]
     NOT?: MenuMenuLunchboxWhereInput | MenuMenuLunchboxWhereInput[]
+    lunchbox_cost?: BigIntNullableFilter<"MenuMenuLunchbox"> | bigint | number | null
     lunchbox_name?: StringFilter<"MenuMenuLunchbox"> | string
     lunchbox_set_name?: StringFilter<"MenuMenuLunchbox"> | string
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
   }
 
   export type CartCartLunchboxLunchboxMenuCreateInput = {
@@ -9807,7 +9854,7 @@ export namespace Prisma {
   export type CartCartMenuItemsMenuIngredientsCreateInput = {
     ingredient_name: string
     ingredient_status?: boolean | null
-    useItem: number
+    useItem: InputJsonValue
   }
 
   export type CartCartMenuItemsMenuNotesCreateInput = {
@@ -9850,17 +9897,6 @@ export namespace Prisma {
   export type MenuMenuLunchboxDeleteManyInput = {
     where: MenuMenuLunchboxWhereInput
   }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-  }
 
   export type CartCartLunchboxLunchboxMenuCompositeListFilter = {
     equals?: CartCartLunchboxLunchboxMenuObjectEqualityInput[]
@@ -9885,6 +9921,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsObjectEqualityInput = {
     ingredient_name: string
+    ingredient_status?: boolean | null
     useItem: InputJsonValue
   }
 
@@ -9920,6 +9957,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput = {
     ingredient_name: string
+    ingredient_status?: boolean | null
     useItem: InputJsonValue
   }
 
@@ -9938,15 +9976,16 @@ export namespace Prisma {
     menu_name?: StringFieldUpdateOperationsInput | string
     menu_notes?: XOR<CartCartMenuItemsMenuNotesListUpdateEnvelopeInput, CartCartMenuItemsMenuNotesCreateInput> | CartCartMenuItemsMenuNotesCreateInput[]
     menu_order_id?: NullableIntFieldUpdateOperationsInput | number | null
-    menu_total?: IntFieldUpdateOperationsInput | number
+    menu_total?: InputJsonValue | InputJsonValue
   }
 
   export type MenuMenuIngredientsUpdateInput = {
     ingredient_name?: StringFieldUpdateOperationsInput | string
-    useItem?: IntFieldUpdateOperationsInput | number
+    useItem?: InputJsonValue | InputJsonValue
   }
 
   export type MenuMenuLunchboxUpdateInput = {
+    lunchbox_cost?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     lunchbox_name?: StringFieldUpdateOperationsInput | string
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
   }
@@ -9983,7 +10022,7 @@ export namespace Prisma {
     NOT?: CartCartMenuItemsMenuIngredientsWhereInput | CartCartMenuItemsMenuIngredientsWhereInput[]
     ingredient_name?: StringFilter<"CartCartMenuItemsMenuIngredients"> | string
     ingredient_status?: BoolNullableFilter<"CartCartMenuItemsMenuIngredients"> | boolean | null
-    useItem?: IntFilter<"CartCartMenuItemsMenuIngredients"> | number
+    useItem?: JsonFilter<"CartCartMenuItemsMenuIngredients">
   }
 
   export type CartCartMenuItemsMenuNotesWhereInput = {
@@ -10080,6 +10119,7 @@ export namespace Prisma {
     OR?: CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput[]
     NOT?: CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput | CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput[]
     ingredient_name?: StringFilter<"CartCartLunchboxLunchboxMenuMenuIngredients"> | string
+    ingredient_status?: BoolNullableFilter<"CartCartLunchboxLunchboxMenuMenuIngredients"> | boolean | null
     useItem?: JsonFilter<"CartCartLunchboxLunchboxMenuMenuIngredients">
   }
 
@@ -10103,7 +10143,7 @@ export namespace Prisma {
   export type CartCartMenuItemsMenuIngredientsUpdateInput = {
     ingredient_name?: StringFieldUpdateOperationsInput | string
     ingredient_status?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    useItem?: IntFieldUpdateOperationsInput | number
+    useItem?: InputJsonValue | InputJsonValue
   }
 
   export type CartCartMenuItemsMenuNotesUpdateInput = {
@@ -10134,6 +10174,7 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsUpdateInput = {
     ingredient_name?: StringFieldUpdateOperationsInput | string
+    ingredient_status?: NullableBoolFieldUpdateOperationsInput | boolean | null
     useItem?: InputJsonValue | InputJsonValue
   }
 

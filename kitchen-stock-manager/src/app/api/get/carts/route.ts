@@ -50,7 +50,7 @@ export async function GET() {
       },
     });
     
-    console.log("Fetched carts:", result);
+    // console.log("Fetched carts:", result);
     if (result.length === 0) return NextResponse.json({ message: "No carts found" }, { status: 404 });
 
     // Convert BigInt values to strings before sending JSON response

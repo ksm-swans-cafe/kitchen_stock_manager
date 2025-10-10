@@ -1,106 +1,105 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import useSWR from "swr";
 
 import PaginationComponent from "@/components/ui/Totalpage";
-
 import { Ingredient, IngredientOption, MenuItem, IngredientUnit, MenuLunchbox } from "@/models/menu_list/MenuList";
 
-// เพิ่ม interface สำหรับ lunchbox options
 interface LunchboxOption {
   lunchbox_name: string;
   lunchbox_set_name: string;
   lunchbox_limit: number;
 }
 
+const fetcher = (url: string) => axios.get(url).then((res) => res.data);
+
 export default function Page() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [ingredientUnits, setIngredientUnits] = useState<Record<string, string>>({});
-  const [ingredientOptions, setIngredientOptions] = useState<IngredientOption[]>([]);
-  const [lunchboxOptions, setLunchboxOptions] = useState<LunchboxOption[]>([]); // เพิ่ม state นี้
+  const [currentPage, setCurrentPage] = useState(1);
   const [menuName, setMenuName] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ useItem: 0, ingredient_name: "" }]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [menuSubName, setMenuSubName] = useState("เมนู");
   const [menuCategoryName, setMenuCategoryName] = useState("");
   const [menuCost, setMenuCost] = useState(0);
-  const [menuDescription, setMenuDescription] = useState("");
   const [menuLunchbox, setMenuLunchbox] = useState<MenuLunchbox[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [dialog, setDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editMenuId, setEditMenuId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 30;
 
-  // เพิ่ม state สำหรับ lunchbox_set_name
-  const [menuLunchboxSetName, setMenuLunchboxSetName] = useState("");
+  // SWR hooks
+  const {
+    data: menuData,
+    error: menuError,
+    isLoading: menuLoading,
+    mutate: mutateMenu,
+  } = useSWR(`/api/get/menu/page?page=${currentPage}&limit=${itemsPerPage}`, fetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+  });
+
+  const { data: ingredientOptions } = useSWR<IngredientOption[]>("/api/get/ingredients", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
+
+  const { data: lunchboxOptions } = useSWR<LunchboxOption[]>("/api/get/lunchbox", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
+
+  const uniqueIngredients = menuData?.data
+    ? Array.from(
+        new Set(
+          menuData.data.flatMap((item: MenuItem) => {
+            try {
+              const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
+              return ingredients.map((ing: Ingredient) => ing.ingredient_name?.trim().toLowerCase()).filter(Boolean);
+            } catch {
+              return [];
+            }
+          })
+        )
+      )
+    : [];
+
+  const { data: ingredientUnitsData } = useSWR(uniqueIngredients.length > 0 ? `/api/get/ingredients/list?names=${encodeURIComponent(uniqueIngredients.join(","))}` : null, fetcher);
+
+  // แปลงข้อมูลจาก SWR ให้ใช้งานได้
+  const menuItems = menuData?.data || [];
+  const totalPagesFromData = menuData?.pagination?.totalPages || 1;
+  const isLoadingData = menuLoading;
+  const errorData = menuError?.message || null;
+
+  // สร้าง ingredientUnits map
+  const ingredientUnits = useMemo(() => {
+    if (!ingredientUnitsData) return {};
+    const unitMap: Record<string, string> = {};
+    ingredientUnitsData.forEach((unit: IngredientUnit) => {
+      unitMap[unit.ingredient_name.trim().toLowerCase()] = unit.ingredient_unit;
+    });
+    return unitMap;
+  }, [ingredientUnitsData]);
+
+  // อัปเดต states เมื่อข้อมูลเปลี่ยน
+  useEffect(() => {
+    if (totalPagesFromData) {
+      setTotalPages(totalPagesFromData);
+    }
+  }, [totalPagesFromData]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [menuRes, ingOptRes, lunchboxRes] = await Promise.all([
-          axios.get(`/api/get/menu/page?page=${currentPage}&limit=${itemsPerPage}`),
-          axios.get("/api/get/ingredients"),
-          axios.get("/api/get/lunchbox"), // เพิ่มการดึงข้อมูล lunchbox
-        ]);
+    setIsLoading(isLoadingData);
+  }, [isLoadingData]);
 
-        if (!menuRes.data || !ingOptRes.data || !lunchboxRes.data) throw new Error("โหลดข้อมูลล้มเหลว");
-
-        const { data: menuData, pagination } = menuRes.data;
-        console.log("Data: ", menuData);
-
-        const ingredientOptions: IngredientOption[] = ingOptRes.data;
-        const lunchboxOptions: LunchboxOption[] = lunchboxRes.data; // เพิ่มบรรทัดนี้
-        setIngredientOptions(ingredientOptions);
-        setLunchboxOptions(lunchboxOptions); // เพิ่มบรรทัดนี้
-        setTotalPages(pagination.totalPages);
-
-        const uniqueIngredients = new Set<string>();
-        menuData.forEach((item: MenuItem) => {
-          try {
-            const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
-
-            ingredients.forEach((ing: Ingredient) => {
-              if (ing.ingredient_name && ing.ingredient_name.trim() !== "") {
-                uniqueIngredients.add(ing.ingredient_name.trim().toLowerCase());
-              }
-            });
-          } catch {}
-        });
-
-        console.log("uniqueIngredients.size:", uniqueIngredients.size);
-        console.log("uniqueIngredients:", [...uniqueIngredients]);
-
-        if (uniqueIngredients.size > 0) {
-          console.log("Calling API with names:", [...uniqueIngredients].join(","));
-          const res = await axios.get(`/api/get/ingredients/list?names=${encodeURIComponent([...uniqueIngredients].join(","))}`);
-
-          const units: IngredientUnit[] = res.data;
-
-          const unitMap: Record<string, string> = {};
-          units.forEach((unit) => {
-            unitMap[unit.ingredient_name.trim().toLowerCase()] = unit.ingredient_unit;
-          });
-
-          setIngredientUnits(unitMap);
-        } else {
-          console.log("No ingredients found, setting empty unitMap");
-          setIngredientUnits({});
-        }
-
-        setMenuItems(menuData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [currentPage]);
+  useEffect(() => {
+    setError(errorData);
+  }, [errorData]);
 
   const formatIngredients = (data: string | Ingredient[]) => {
     try {
@@ -123,26 +122,30 @@ export default function Page() {
     }
   };
 
-  const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
-    if (!lunchbox || !Array.isArray(lunchbox) || lunchbox.length === 0) {
-      return <span className='text-gray-500 text-sm'>-</span>;
-    }
+const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
+  if (!lunchbox || !Array.isArray(lunchbox) || lunchbox.length === 0) {
+    return <span className='text-gray-500 text-sm'>-</span>;
+  }
 
-    return (
-      <div className='flex flex-wrap gap-1'>
-        {lunchbox.map((lb, idx) => (
-          <span key={idx} className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>
-            {lb.lunchbox_name}
-            {lb.lunchbox_set_name && <span className='ml-1 text-purple-600'>({lb.lunchbox_set_name})</span>}
+  return (
+    <div className='flex flex-wrap gap-1'>
+      {lunchbox.map((lb, idx) => (
+        <React.Fragment key={idx}>
+          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>
+            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>
+              {lb.lunchbox_name}
+              {lb.lunchbox_set_name && <span className='ml-1 text-purple-600'>({lb.lunchbox_set_name})</span>}
+            </span>
+            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800'>{lb.lunchbox_cost && <span className='ml-1 text-green-600'>({lb.lunchbox_cost} บาท)</span>}</span>
           </span>
-        ))}
-      </div>
-    );
-  };
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsSubmitting(true);
 
     try {
@@ -173,9 +176,11 @@ export default function Page() {
       setMenuLunchbox([]);
       setDialog(false);
       setEditMenuId(null);
-      location.reload();
+
+      // ใช้ mutate แทน location.reload() เพื่อ refresh ข้อมูล
+      await mutateMenu();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      console.error(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -190,9 +195,10 @@ export default function Page() {
 
       if (res.status !== 200) throw new Error("ไม่สามารถลบเมนูได้");
 
-      location.reload();
+      // ใช้ mutate แทน location.reload()
+      await mutateMenu();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      console.error(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -214,9 +220,8 @@ export default function Page() {
     setIngredients(updated);
   };
 
-  // เพิ่มฟังก์ชันสำหรับจัดการ lunchbox
   const addLunchbox = () => {
-    setMenuLunchbox([...menuLunchbox, { lunchbox_name: "", lunchbox_set_name: "" }]);
+    setMenuLunchbox([...menuLunchbox, { lunchbox_name: "", lunchbox_set_name: "", lunchbox_cost: 0 }]);
   };
 
   const removeLunchbox = (index: number) => {
@@ -224,29 +229,25 @@ export default function Page() {
     setMenuLunchbox(updated);
   };
 
-  // แก้ไขฟังก์ชัน updateLunchbox
-  const updateLunchbox = (index: number, field: "lunchbox_name" | "lunchbox_set_name", value: string) => {
+  const updateLunchbox = (index: number, field: "lunchbox_name" | "lunchbox_set_name" | "lunchbox_cost", value: any) => {
     const updated = [...menuLunchbox];
-    updated[index] = { ...updated[index], [field]: value };
 
-    // ถ้าเปลี่ยน lunchbox_name ให้รีเซ็ต lunchbox_set_name
-    if (field === "lunchbox_name") {
-      updated[index].lunchbox_set_name = "";
-    }
+    if (field === "lunchbox_cost") updated[index] = { ...updated[index], [field]: Number(value) || 0 };
+    else updated[index] = { ...updated[index], [field]: value };
+
+    if (field === "lunchbox_name") updated[index].lunchbox_set_name = "";
 
     setMenuLunchbox(updated);
   };
 
-  // เพิ่มฟังก์ชันสำหรับกรองชื่อที่ไม่ซ้ำกัน
   const getUniqueLunchboxNames = () => {
-    const uniqueNames = [...new Set(lunchboxOptions.map((option) => option.lunchbox_name))];
+    const uniqueNames = [...new Set((lunchboxOptions || []).map((option) => option.lunchbox_name))];
     return uniqueNames;
   };
 
-  // แก้ไขฟังก์ชัน getLunchboxSetOptions
   const getLunchboxSetOptions = (lunchboxName: string) => {
     if (!lunchboxName) return [];
-    return lunchboxOptions.filter((option) => option.lunchbox_name === lunchboxName);
+    return (lunchboxOptions || []).filter((option) => option.lunchbox_name === lunchboxName);
   };
 
   return (
@@ -501,6 +502,19 @@ export default function Page() {
                                 </option>
                               ))}
                             </select>
+                          </div>
+
+                          <div>
+                            <label className='block text-xs font-medium text-gray-600 mb-1'>ราคาชุดกล่องอาหาร</label>
+                            <input
+                              type='number'
+                              min='0'
+                              value={lb.lunchbox_cost || 0}
+                              onChange={(e) => updateLunchbox(idx, "lunchbox_cost", Number(e.target.value) || 0)}
+                              className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm'
+                              required
+                              disabled={!lb.lunchbox_name}
+                            />
                           </div>
                         </div>
                         <button type='button' onClick={() => removeLunchbox(idx)} className='text-red-500 hover:text-red-700 p-2 transition-colors'>
