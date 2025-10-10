@@ -505,14 +505,7 @@ export default function CartList() {
             })}
           </div>
         )}
-
-        {/* Add Regular Menu Button */}
-        {/* <div className='border p-4 rounded mb-4'>
-          <button onClick={() => router.push("/home/order/menu")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>
-            ➕ เพิ่มเมนูทั่วไป
-          </button>
-        </div> */}
-        {/* ปุ่มใหม่ */}
+        
         <div className='border p-4 rounded mb-4'>
           <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>
             ➕ เพิ่มชุดอาหาร
