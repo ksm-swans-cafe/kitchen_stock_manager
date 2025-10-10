@@ -409,10 +409,7 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
             <PaginationComponent
               totalPages={totalPages}
               currentPage={currentPage}
-              setCurrentPage={(page) => {
-                setMenuItems([]);
-                setCurrentPage(page);
-              }}
+              setCurrentPage={setCurrentPage}
             />
           </div>
         )}
@@ -551,7 +548,7 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
                           }}
                           className='flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'>
                           <option value=''>เลือกวัตถุดิบ</option>
-                          {ingredientOptions.map((opt) => (
+                          {(ingredientOptions || []).map((opt) => (
                             <option key={opt.ingredient_id} value={opt.ingredient_name}>
                               {opt.ingredient_name}
                             </option>
