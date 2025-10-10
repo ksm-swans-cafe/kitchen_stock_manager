@@ -24,6 +24,7 @@ interface SelectedLunchbox {
   selected_menus: MenuItem[];
   quantity: number;
   lunchbox_total_cost: string;
+  note?: string; // เพิ่ม note field
 }
 
 interface CartState {
@@ -51,6 +52,7 @@ interface CartState {
   updateLunchboxQuantity: (index: number, quantity: number) => void;
   updateLunchboxMenus: (index: number, menus: MenuItem[]) => void;
   updateLunchboxTotalCost: (index: number, totalCost: string) => void;
+  updateLunchboxNote: (index: number, note: string) => void;
 }
 
 const generateCartItemId = (menuId: string | undefined, description: string) => {
@@ -184,6 +186,12 @@ export const useCartStore = create<CartState>()(
       updateLunchboxTotalCost: (index, totalCost) => {
         set((state) => ({
           selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, lunchbox_total_cost: totalCost } : item)),
+        }));
+      },
+
+      updateLunchboxNote: (index, note) => {
+        set((state) => ({
+          selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, note } : item)),
         }));
       },
     }),

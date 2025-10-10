@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const rawLunchboxes = cart_lunchboxes.map((lunchbox: any) => ({
       lunchbox_name: lunchbox.lunchbox_name || "",
       lunchbox_set_name: lunchbox.lunchbox_set || "",
-      lunchbox_limit: parseInt(lunchbox.lunchbox_limit || "0"),
+      lunchbox_limit: parseInt(lunchbox.lunchbox_limit?.toString() || "0"),
       lunchbox_total: parseInt(lunchbox.lunchbox_quantity || "1"),
       lunchbox_total_cost: parseInt((lunchbox.lunchbox_total_cost || "0").toString().replace(/[^\d]/g, "")),
       lunchbox_menu: (lunchbox.lunchbox_menus || []).map((menu: any) => ({
@@ -63,15 +63,15 @@ export async function POST(request: NextRequest) {
     // แปลงข้อมูล menu items
     const rawMenuItems = (cart_menu_items || []).map((item: any) => ({
       menu_name: item.menu_name || "",
-      menu_subname: item.menu_subname || "",
-      menu_category: item.menu_category || "",
       menu_total: parseInt(item.menu_total || "1"),
       menu_ingredients: (item.menu_ingredients || []).map((ingredient: any) => ({
         ingredient_name: ingredient.ingredient_name || "",
+        ingredient_status: ingredient.ingredient_status ?? true,
         useItem: parseInt(ingredient.useItem || "0"),
       })),
       menu_description: item.menu_description || "",
       menu_order_id: parseInt(item.menu_order_id || "0"),
+      menu_notes: item.menu_notes || [],
     }));
 
     // แปลง BigInt ทั้งหมดเป็น Number
