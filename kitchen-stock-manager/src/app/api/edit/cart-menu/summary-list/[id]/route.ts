@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const { menuItems } = body;
   console.log("Received menuItems:", JSON.stringify(menuItems, null, 2));
 
-  if (!id || !Array.isArray(menuItems) || menuItems.some((m: MenuItem) => !m.menu_name || m.menu_total < 0 || !Array.isArray(m.menu_ingredients) || m.menu_ingredients.some((ing) => !ing.ingredient_name || ing.useItem < 0) || !m.menu_description)) {
+  if (!id || !Array.isArray(menuItems) || menuItems.some((m: MenuItem) => !m.menu_name || m.menu_total < 0 || !Array.isArray(m.menu_ingredients) || m.menu_ingredients.some((ing) => !ing.ingredient_name || ing.useItem < 0) || m.menu_description === undefined || m.menu_description === null)) {
     return NextResponse.json({ error: "กรุณาระบุ menuItems ที่ถูกต้อง" }, { status: 400 });
   }
 

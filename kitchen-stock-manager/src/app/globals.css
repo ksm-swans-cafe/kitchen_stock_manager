@@ -137,3 +137,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* SweetAlert2 z-index for Dialog overlay */
+.swal2-container.swal-high-zindex {
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}
+
+.swal-high-zindex .swal2-popup {
+  z-index: 100000 !important;
+  pointer-events: auto !important;
+}
+
+.swal-high-zindex .swal2-actions {
+  z-index: 100001 !important;
+  pointer-events: auto !important;
+}
+
+.swal-high-zindex .swal2-confirm,
+.swal-high-zindex .swal2-cancel {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 100002 !important;
+}
