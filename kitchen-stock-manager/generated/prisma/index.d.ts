@@ -1856,6 +1856,7 @@ export namespace Prisma {
     lunchbox_cost?: boolean
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_menu_category?: boolean
   }, ExtArgs["result"]["menuMenuLunchbox"]>
 
 
@@ -1864,9 +1865,10 @@ export namespace Prisma {
     lunchbox_cost?: boolean
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_menu_category?: boolean
   }
 
-  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_cost" | "lunchbox_name" | "lunchbox_set_name", ExtArgs["result"]["menuMenuLunchbox"]>
+  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_cost" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_menu_category", ExtArgs["result"]["menuMenuLunchbox"]>
 
   export type $MenuMenuLunchboxPayload = {
     name: "MenuMenuLunchbox"
@@ -1875,6 +1877,7 @@ export namespace Prisma {
       lunchbox_cost: bigint | null
       lunchbox_name: string
       lunchbox_set_name: string
+      lunchbox_menu_category: string | null
     }
     composites: {}
   }
@@ -1892,6 +1895,7 @@ export namespace Prisma {
     readonly lunchbox_cost: FieldRef<"MenuMenuLunchbox", 'BigInt'>
     readonly lunchbox_name: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"MenuMenuLunchbox", 'String'>
+    readonly lunchbox_menu_category: FieldRef<"MenuMenuLunchbox", 'String'>
   }
     
 
@@ -9502,6 +9506,7 @@ export namespace Prisma {
     lunchbox_cost?: bigint | number | null
     lunchbox_name: string
     lunchbox_set_name: string
+    lunchbox_menu_category?: string | null
   }
 
   export type MenuMenuIngredientsOrderByCompositeAggregateInput = {
@@ -9636,6 +9641,7 @@ export namespace Prisma {
     lunchbox_cost?: bigint | number | null
     lunchbox_name: string
     lunchbox_set_name: string
+    lunchbox_menu_category?: string | null
   }
 
   export type MenuMenuIngredientsListUpdateEnvelopeInput = {
@@ -9827,6 +9833,7 @@ export namespace Prisma {
     lunchbox_cost?: BigIntNullableFilter<"MenuMenuLunchbox"> | bigint | number | null
     lunchbox_name?: StringFilter<"MenuMenuLunchbox"> | string
     lunchbox_set_name?: StringFilter<"MenuMenuLunchbox"> | string
+    lunchbox_menu_category?: StringNullableFilter<"MenuMenuLunchbox"> | string | null
   }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -9988,6 +9995,7 @@ export namespace Prisma {
     lunchbox_cost?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     lunchbox_name?: StringFieldUpdateOperationsInput | string
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_menu_category?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CartCartLunchboxLunchboxMenuWhereInput = {

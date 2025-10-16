@@ -137,6 +137,7 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
               {lb.lunchbox_set_name && <span className='ml-1 text-purple-600'>({lb.lunchbox_set_name})</span>}
             </span>
             <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800'>{lb.lunchbox_cost && <span className='ml-1 text-green-600'>({lb.lunchbox_cost} บาท)</span>}</span>
+            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800'>{lb.lunchbox_menu_category && <span className='ml-1 text-purple-600'>({lb.lunchbox_menu_category})</span>}</span>
           </span>
         </React.Fragment>
       ))}
@@ -221,7 +222,7 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
   };
 
   const addLunchbox = () => {
-    setMenuLunchbox([...menuLunchbox, { lunchbox_name: "", lunchbox_set_name: "", lunchbox_cost: 0 }]);
+    setMenuLunchbox([...menuLunchbox, { lunchbox_name: "", lunchbox_set_name: "", lunchbox_cost: 0 , lunchbox_menu_category: ""}]);
   };
 
   const removeLunchbox = (index: number) => {
@@ -229,7 +230,7 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
     setMenuLunchbox(updated);
   };
 
-  const updateLunchbox = (index: number, field: "lunchbox_name" | "lunchbox_set_name" | "lunchbox_cost", value: any) => {
+  const updateLunchbox = (index: number, field: "lunchbox_name" | "lunchbox_set_name" | "lunchbox_cost" | "lunchbox_menu_category", value: any) => {
     const updated = [...menuLunchbox];
 
     if (field === "lunchbox_cost") updated[index] = { ...updated[index], [field]: Number(value) || 0 };
@@ -513,9 +514,21 @@ const formatLunchbox = (lunchbox: MenuLunchbox[] | undefined) => {
                               disabled={!lb.lunchbox_name}
                             />
                           </div>
+
+                          <div>
+                            <label className='block text-xs font-medium text-gray-600 mb-1'>ประเภทชุดเมนูอาหาร</label>
+                            <input
+                              type='text'
+                              value={lb.lunchbox_menu_category || ""}
+                              onChange={(e) => updateLunchbox(idx, "lunchbox_menu_category", e.target.value)}
+                              className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm'
+                              // required
+                              disabled={!lb.lunchbox_name}
+                            />
+                          </div>
                         </div>
                         <button type='button' onClick={() => removeLunchbox(idx)} className='text-red-500 hover:text-red-700 p-2 transition-colors'>
-                          <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
                           </svg>
                         ลด set อาหาร</button>

@@ -13,6 +13,7 @@ export interface MenuLunchbox {
   lunchbox_name: string;
   lunchbox_set_name: string;
   lunchbox_cost: number;
+  lunchbox_menu_category: string;
 }
 
 export interface MenuItem {

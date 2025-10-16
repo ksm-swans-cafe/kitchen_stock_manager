@@ -71,6 +71,7 @@ type MenuMenuLunchbox {
   lunchbox_cost     BigInt?
   lunchbox_name     String
   lunchbox_set_name String
+  lunchbox_menu_category String?
 }
 
 model cart {
