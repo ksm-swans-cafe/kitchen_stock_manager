@@ -232,20 +232,27 @@ export default function CartList() {
             menu_cost: item.menu_cost,
             menu_order_id: index + 1,
           })),
+          // ในบรรทัดที่ 235-251 ใน confirmOrder function
           cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
             lunchbox_name: lunchbox.lunchbox_name,
             lunchbox_set: lunchbox.lunchbox_set,
-            lunchbox_limit: lunchbox.lunchbox_limit, // ✅ เพิ่ม lunchbox_limit
+            lunchbox_limit: lunchbox.lunchbox_limit,
             lunchbox_quantity: lunchbox.quantity,
             lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
             lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
               menu_name: menu.menu_name,
               menu_subname: menu.menu_subname,
               menu_category: menu.menu_category,
-              menu_total: 1,
-              menu_ingredients: menu.menu_ingredients,
+              menu_total: lunchbox.quantity, // เปลี่ยนจาก 1 เป็น lunchbox.quantity
+              menu_ingredients:
+                menu.menu_ingredients?.map((ingredient) => ({
+                  ...ingredient,
+                  useItem: ingredient.useItem * lunchbox.quantity, // คูณด้วย quantity
+                  // calculatedTotal: (ingredient.useItem || 0) * lunchbox.quantity,
+                  // totalCost: (ingredient.useItem || 0) * lunchbox.quantity * (ingredient.ingredient_price_per_unit || 0),
+                })) || [],
               menu_description: menu.menu_description,
-              menu_cost: menu.menu_cost,
+              menu_cost: (Number(menu.menu_cost) * lunchbox.quantity).toString(), // คูณราคาเมนูด้วย quantity
               menu_order_id: menuIndex + 1,
             })),
           })),
@@ -462,10 +469,9 @@ export default function CartList() {
                     <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(index, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
                   </div>
 
-                  {/* เพิ่มช่องกรอกราคา */}
                   <div className='flex items-center gap-2 mb-2'>
                     <label className='text-sm'>ราคารวม:</label>
-                    <input type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
+                    <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
                     <span className='text-sm text-gray-500'>฿</span>
                   </div>
 
