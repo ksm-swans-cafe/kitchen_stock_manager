@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/stores/store";
 import { MenuItem } from "@/models/menu_card/MenuCard";
 
-// Interface สำหรับข้อมูลจาก API
 interface LunchBoxFromAPI {
   lunchbox_name: string;
   lunchbox_set_name: string;
@@ -21,9 +20,9 @@ export default function Order() {
   const { addLunchbox } = useCartStore();
 
   // States for hierarchical selection system
-  const [selectedFoodSet, setSelectedFoodSet] = useState<string>(""); // ชุดอาหาร
-  const [selectedSetMenu, setSelectedSetMenu] = useState<string>(""); // Set อาหาร
-  const [selectedMenuItems, setSelectedMenuItems] = useState<string[]>([]); // เมนูอาหารหลายตัว
+  const [selectedFoodSet, setSelectedFoodSet] = useState<string>("");
+  const [selectedSetMenu, setSelectedSetMenu] = useState<string>("");
+  const [selectedMenuItems, setSelectedMenuItems] = useState<string[]>([]);
   const [lunchboxData, setLunchboxData] = useState<LunchBoxFromAPI[]>([]);
   const [availableFoodSets, setAvailableFoodSets] = useState<string[]>([]);
   const [availableSetMenus, setAvailableSetMenus] = useState<string[]>([]);
@@ -36,22 +35,6 @@ export default function Order() {
   const [isLoadingEditData, setIsLoadingEditData] = useState<boolean>(false);
   const [isLoadingMenus, setIsLoadingMenus] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-
-  // Update time every second
-  useEffect(() => {
-    const updateTime = () => {
-      setCurrentTime(new Date());
-    };
-
-    // Set initial time
-    updateTime();
-
-    // Update time every second
-    const interval = setInterval(updateTime, 1000);
-
-    // Cleanup interval on unmount
-    return () => clearInterval(interval);
-  }, []);
 
   // Check for edit mode and manage loading state
   useEffect(() => {
@@ -85,7 +68,6 @@ export default function Order() {
           console.log("Set selectedSetMenu to:", editingData.lunchbox_set);
           console.log("Available lunchboxData:", lunchboxData);
 
-          // สำหรับการหน่วงเวลาเล็กน้อยเพื่อให้ระบบอัปเดตข้อมูลทั้งหมด
           setTimeout(() => {
             setIsLoadingEditData(false);
           }, 500);
@@ -94,13 +76,11 @@ export default function Order() {
           setIsLoadingEditData(false);
         }
       } else if (lunchboxData.length === 0) {
-        // ยังรอ lunchboxData โหลด
         console.log("Waiting for lunchboxData to load...");
       }
     }
-  }, [lunchboxData]); // เพิ่ม dependency เพื่อรอ lunchboxData โหลดเสร็จ
+  }, [lunchboxData]);
 
-  // Fetch lunchbox data on component mount
   useEffect(() => {
     const fetchLunchboxData = async () => {
       try {
@@ -108,18 +88,12 @@ export default function Order() {
         const data = await response.json();
         console.log("Lunchbox data:", data);
 
-        if (data && Array.isArray(data)) {
-          setLunchboxData(data);
+        const items = Array.isArray(data) ? data : data?.data;
+        if (items) {
+          setLunchboxData(items);
 
           // Extract unique food sets (ชุดอาหาร)
-          const uniqueFoodSets = [...new Set(data.map((item: LunchBoxFromAPI) => item.lunchbox_name))] as string[];
-          console.log("Available food sets:", uniqueFoodSets);
-          setAvailableFoodSets(uniqueFoodSets);
-        } else if (data.success && data.data) {
-          setLunchboxData(data.data);
-
-          // Extract unique food sets (ชุดอาหาร)
-          const uniqueFoodSets = [...new Set(data.data.map((item: LunchBoxFromAPI) => item.lunchbox_name))] as string[];
+          const uniqueFoodSets = [...new Set(items.map((item: LunchBoxFromAPI) => item.lunchbox_name))] as string[];
           console.log("Available food sets:", uniqueFoodSets);
           setAvailableFoodSets(uniqueFoodSets);
         }
@@ -129,12 +103,18 @@ export default function Order() {
     };
 
     fetchLunchboxData();
+
+    // --- update current time ---
+    const updateTime = () => setCurrentTime(new Date());
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+
+    // cleanup
+    return () => clearInterval(interval);
   }, []);
 
-  // Handle food set selection (ชุดอาหาร)
   useEffect(() => {
     if (selectedFoodSet && lunchboxData.length > 0) {
-      // Get available set menus for selected food set - ใช้ lunchbox_set_name ตาม API
       const availableSets = lunchboxData.filter((item) => item.lunchbox_name === selectedFoodSet);
       const uniqueSetMenus = [...new Set(availableSets.map((item) => item.lunchbox_set_name))] as string[];
       console.log("Available set menus for", selectedFoodSet, ":", uniqueSetMenus);
@@ -142,7 +122,6 @@ export default function Order() {
       setAvailableSetMenus(uniqueSetMenus);
     } else {
       setAvailableSetMenus([]);
-      // เฉพาะในโหมดปกติเท่านั้นที่จะ reset selectedSetMenu
       if (!isEditMode) {
         setSelectedSetMenu("");
         setSelectedMenuItems([]);
@@ -177,6 +156,7 @@ export default function Order() {
             menu_cost: menu.menu_cost || 0,
             menu_ingredients: menu.menu_ingredients || [],
             menu_description: menu.menu_description || "",
+            lunchbox_menu_category: menu.lunchbox_menu_category || null,
           }));
           console.log("Processed menu items:", menuItems);
           setAvailableMenus(menuItems);
@@ -195,7 +175,6 @@ export default function Order() {
     fetchMenus();
   }, [selectedFoodSet, selectedSetMenu, lunchboxData]);
 
-  // Filter products based on selected menu items and search query
   const filteredProducts = useMemo(() => {
     // Only show menus if specific menu items are selected
     let filtered = selectedMenuItems.length > 0 ? availableMenus.filter((menu) => selectedMenuItems.includes(menu.menu_name)) : [];
@@ -207,24 +186,31 @@ export default function Order() {
     return filtered;
   }, [availableMenus, selectedMenuItems, searchQuery]);
 
-  // Function to handle menu selection with limit (FIFO replacement)
+  // Function to handle menu selection with limit and lunchbox_menu_category restriction (FIFO replacement)
   const handleMenuSelection = (menuName: string) => {
     const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
     const limit = setData?.lunchbox_limit || 1;
+
+    const selectedMenu = availableMenus.find((menu) => menu.menu_name === menuName);
+    if (!selectedMenu) return;
 
     setSelectedMenuItems((prev) => {
       const isSelected = prev.includes(menuName);
 
       if (isSelected) {
-        // ถ้าเลือกแล้ว ให้ยกเลิก
         return prev.filter((item) => item !== menuName);
       } else {
-        // ถ้ายังไม่เลือก
+        const currentSelectedMenus = availableMenus.filter((menu) => prev.includes(menu.menu_name));
+        const existingLunchboxCategories = currentSelectedMenus.map((menu) => menu.lunchbox_menu_category).filter((category) => category); // กรองเฉพาะที่มีค่า
+
+        if (selectedMenu.lunchbox_menu_category && existingLunchboxCategories.includes(selectedMenu.lunchbox_menu_category)) {
+          alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "${selectedMenu.lunchbox_menu_category}" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ไว้แล้ว`);
+          return prev;
+        }
+
         if (prev.length < limit) {
-          // ยังไม่ถึง limit ให้เพิ่มเข้าไป
           return [...prev, menuName];
         } else {
-          // เกิน limit แล้ว ให้เอาตัวแรกออกแล้วเพิ่มตัวใหม่เข้าไป (FIFO)
           const newSelection = [...prev.slice(1), menuName];
           return newSelection;
         }
@@ -242,14 +228,12 @@ export default function Order() {
     setIsSaving(true);
 
     try {
-      // แปลงเมนูที่เลือกเป็น MenuItem objects
       const selectedMenuObjects = availableMenus.filter((menu) => selectedMenuItems.includes(menu.menu_name));
 
       // หา limit ของ set ที่เลือก
       const setDataInfo = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
       const limit = setDataInfo?.lunchbox_limit || selectedMenuItems.length;
 
-      // สร้าง lunchbox object
       const newLunchbox = {
         lunchbox_name: selectedFoodSet,
         lunchbox_set: selectedSetMenu,
@@ -257,29 +241,23 @@ export default function Order() {
         selected_menus: selectedMenuObjects,
         quantity: 1,
         lunchbox_total_cost: selectedMenuObjects.reduce((total, menu) => total + (menu.menu_cost || 0), 0).toString(),
-        note: note, // เก็บ note แยกต่างหาก
+        note: note,
       };
 
-      // เพิ่มหน่วงเวลาเล็กน้อยเพื่อแสดง loading
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       if (isEditMode && editingIndex !== -1) {
-        // Edit mode: อัปเดตข้อมูลในตำแหน่งเดิม
         const store = useCartStore.getState();
 
-        // อัปเดตทุกฟิลด์ที่สามารถแก้ไขได้
         store.updateLunchboxMenus(editingIndex, selectedMenuObjects);
         store.updateLunchboxNote(editingIndex, note);
 
-        // ล้างข้อมูล edit
         sessionStorage.removeItem("editingLunchboxIndex");
         sessionStorage.removeItem("editingLunchboxData");
       } else {
-        // Add mode: เพิ่มรายการใหม่
         addLunchbox(newLunchbox);
       }
 
-      // รีเซ็ตการเลือก
       setSelectedFoodSet("");
       setSelectedSetMenu("");
       setSelectedMenuItems([]);
@@ -287,7 +265,6 @@ export default function Order() {
       setIsEditMode(false);
       setEditingIndex(-1);
 
-      // ไปหน้า CartList
       router.push("/home/order");
     } catch (error) {
       console.error("Error processing lunchbox:", error);
@@ -685,21 +662,30 @@ export default function Order() {
                   <div className='grid grid-cols-4 gap-4 md:gap-6'>
                     {availableMenus.map((menu, index) => {
                       const isSelected = selectedMenuItems.includes(menu.menu_name);
+                      const selectedLunchboxCategories = availableMenus
+                        .filter((m) => selectedMenuItems.includes(m.menu_name))
+                        .map((m) => m.lunchbox_menu_category)
+                        .filter((category) => category);
+                      const isLunchboxCategoryTaken = menu.lunchbox_menu_category && selectedLunchboxCategories.includes(menu.lunchbox_menu_category) && !isSelected;
+
                       return (
                         <div
                           key={menu.menu_id || index}
                           className={`group relative rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden cursor-pointer ${
-                            isSelected ? "bg-green-50 border-2 border-green-300 ring-2 ring-green-200" : "bg-white border border-gray-100 hover:border-green-200"
+                            isSelected ? "bg-green-50 border-2 border-green-300 ring-2 ring-green-200" : isLunchboxCategoryTaken ? "bg-red-50 border-2 border-red-200 opacity-60 cursor-not-allowed" : "bg-white border border-gray-100 hover:border-green-200"
                           }`}
-                          onClick={() => handleMenuSelection(menu.menu_name)}>
+                          onClick={() => !isLunchboxCategoryTaken && handleMenuSelection(menu.menu_name)}>
+                          {isLunchboxCategoryTaken && <div className='absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10'>หมวดหมู่ซ้ำ</div>}
+
                           <div className='aspect-square bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300 h-full'>
                             <div className='text-center p-4 relative h-full flex flex-col justify-center'>
                               <div className='w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-green-300 via-emerald-300 to-teal-300 rounded-xl shadow-inner flex items-center justify-center'>
                                 <span className='text-2xl'>🍜</span>
                               </div>
-                              {/* <h3 className='font-semibold text-gray-800 text-xs leading-tight group-hover:text-green-600 transition-colors duration-200 line-clamp-2'>{menu.menu_name}</h3> */}
                               <h3 className='font-semibold text-gray-800 text-xs md:text-sm leading-tight mb-2 group-hover:text-orange-600 transition-colors duration-200'>{menu.menu_name}</h3>
                               {menu.menu_cost > 0 && <p className='text-xs text-gray-600 mt-1 font-medium'>฿{menu.menu_cost}</p>}
+                              {/* แสดง lunchbox_menu_category */}
+                              {/* {menu.lunchbox_menu_category && <p className='text-xs text-blue-600 mt-1 font-medium bg-blue-100 px-2 py-1 rounded-full'>{menu.lunchbox_menu_category}</p>} */}
                               {/* Selection indicator */}
                               {isSelected && (
                                 <div className='absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center'>

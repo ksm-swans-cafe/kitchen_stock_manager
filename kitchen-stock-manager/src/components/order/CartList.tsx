@@ -142,7 +142,7 @@ export default function CartList() {
       const newLunchbox = {
         lunchbox_name: cart_lunch_box,
         lunchbox_set: cart_lunch_box_set,
-        lunchbox_limit: selectedLunchboxData.lunchbox_limit, // ✅ เพิ่มค่า lunchbox_limit จากข้อมูลจริง
+        lunchbox_limit: selectedLunchboxData.lunchbox_limit, 
         selected_menus: [],
         quantity: 1,
         lunchbox_total_cost: "",
@@ -156,11 +156,9 @@ export default function CartList() {
   const handleEditLunchbox = (index: number) => {
     const lunchboxToEdit = selected_lunchboxes[index];
 
-    // เก็บข้อมูล lunchbox ที่จะแก้ไขใน sessionStorage
     sessionStorage.setItem("editingLunchboxIndex", index.toString());
     sessionStorage.setItem("editingLunchboxData", JSON.stringify(lunchboxToEdit));
 
-    // ไปหน้า menu-picker พร้อมข้อมูลเดิม
     router.push("/home/order/menu-picker?edit=true");
   };
 
@@ -232,7 +230,6 @@ export default function CartList() {
             menu_cost: item.menu_cost,
             menu_order_id: index + 1,
           })),
-          // ในบรรทัดที่ 235-251 ใน confirmOrder function
           cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
             lunchbox_name: lunchbox.lunchbox_name,
             lunchbox_set: lunchbox.lunchbox_set,
@@ -243,16 +240,14 @@ export default function CartList() {
               menu_name: menu.menu_name,
               menu_subname: menu.menu_subname,
               menu_category: menu.menu_category,
-              menu_total: lunchbox.quantity, // เปลี่ยนจาก 1 เป็น lunchbox.quantity
+              menu_total: lunchbox.quantity,
               menu_ingredients:
                 menu.menu_ingredients?.map((ingredient) => ({
                   ...ingredient,
-                  useItem: ingredient.useItem * lunchbox.quantity, // คูณด้วย quantity
-                  // calculatedTotal: (ingredient.useItem || 0) * lunchbox.quantity,
-                  // totalCost: (ingredient.useItem || 0) * lunchbox.quantity * (ingredient.ingredient_price_per_unit || 0),
+                  useItem: ingredient.useItem * lunchbox.quantity,
                 })) || [],
               menu_description: menu.menu_description,
-              menu_cost: (Number(menu.menu_cost) * lunchbox.quantity).toString(), // คูณราคาเมนูด้วย quantity
+              menu_cost: (Number(menu.menu_cost) * lunchbox.quantity).toString(), 
               menu_order_id: menuIndex + 1,
             })),
           })),
@@ -278,7 +273,6 @@ export default function CartList() {
     if (quantity >= 1) setItemQuantity(cartItemId, quantity);
   };
 
-  // เพิ่มฟังก์ชันจัดกลุ่มเมนู
   const groupMenusByLimit = (menus: any[], limit: number) => {
     const groups = [];
     for (let i = 0; i < menus.length; i += limit) {
@@ -511,7 +505,7 @@ export default function CartList() {
             })}
           </div>
         )}
-        
+
         <div className='border p-4 rounded mb-4'>
           <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>
             ➕ เพิ่มชุดอาหาร

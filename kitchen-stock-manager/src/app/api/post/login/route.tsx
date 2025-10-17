@@ -6,7 +6,6 @@ export async function POST(request: Request) {
 
   const cookieStore = await cookies();
 
-  // ตั้งค่า cookies
   cookieStore.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

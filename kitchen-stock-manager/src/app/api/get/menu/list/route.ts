@@ -5,13 +5,9 @@ import prisma from "@/lib/prisma";
 function convertBigIntToNumber(obj: any): any {
   if (obj === null || obj === undefined) return obj;
 
-  if (typeof obj === "bigint") {
-    return Number(obj);
-  }
+  if (typeof obj === "bigint") return Number(obj);
 
-  if (Array.isArray(obj)) {
-    return obj.map((item) => convertBigIntToNumber(item));
-  }
+  if (Array.isArray(obj)) return obj.map((item) => convertBigIntToNumber(item));
 
   if (typeof obj === "object") {
     const converted: any = {};

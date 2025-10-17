@@ -1,7 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 
-// ฟังก์ชันแปลง BigInt เป็น Number
 function convertBigIntToNumber(obj: any): any {
   return JSON.parse(JSON.stringify(obj, (key, value) => (typeof value === "bigint" ? Number(value) : value)));
 }
@@ -60,7 +59,6 @@ export async function POST(request: NextRequest) {
       })),
     }));
 
-    // แปลงข้อมูล menu items
     const rawMenuItems = (cart_menu_items || []).map((item: any) => ({
       menu_name: item.menu_name || "",
       menu_total: parseInt(item.menu_total || "1"),
@@ -74,7 +72,6 @@ export async function POST(request: NextRequest) {
       menu_notes: item.menu_notes || [],
     }));
 
-    // แปลง BigInt ทั้งหมดเป็น Number
     const formattedLunchboxes = convertBigIntToNumber(rawLunchboxes);
     const formattedMenuItems = convertBigIntToNumber(rawMenuItems);
 
@@ -95,14 +92,12 @@ export async function POST(request: NextRequest) {
       cart_status: "pending",
     };
 
-    // แปลง BigInt ทั้งหมดในข้อมูลสุดท้าย
     const finalCartData = convertBigIntToNumber(cartData);
 
     const result = await prisma.cart.create({
       data: finalCartData,
     });
 
-    // แปลง BigInt ใน result ก่อนส่งกลับ
     const finalResult = convertBigIntToNumber(result);
 
     return NextResponse.json({ message: "Cart created successfully", cart: finalResult }, { status: 201 });

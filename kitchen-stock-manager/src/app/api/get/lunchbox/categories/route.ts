@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
     const lunchbox_name = searchParams.get("lunchbox_name");
     const lunchbox_set_name = searchParams.get("lunchbox_set_name");
 
-    console.log("API Parameters:", { lunchbox_name, lunchbox_set_name });
 
     if (!lunchbox_name || !lunchbox_set_name) {
       return NextResponse.json({ message: "Missing required parameters" }, { status: 400 });
@@ -29,15 +28,30 @@ export async function GET(request: NextRequest) {
         menu_category: true,
         menu_cost: true,
         menu_ingredients: true,
+        menu_lunchbox: true, 
       },
     });
 
-    console.log("Query result:", result);
+    const processedResult = result.map((menu) => {
+      const matchingLunchbox = menu.menu_lunchbox.find((lb) => lb.lunchbox_name === lunchbox_name && lb.lunchbox_set_name === lunchbox_set_name);
+
+      return {
+        menu_id: menu.menu_id,
+        menu_name: menu.menu_name,
+        menu_subname: menu.menu_subname,
+        menu_category: menu.menu_category,
+        menu_cost: menu.menu_cost,
+        menu_ingredients: menu.menu_ingredients,
+        menu_description: "",
+        lunchbox_menu_category: matchingLunchbox?.lunchbox_menu_category || null,
+      };
+    });
+
 
     return NextResponse.json({
       success: true,
-      data: result,
-      count: result.length,
+      data: processedResult,
+      count: processedResult.length,
       filters: {
         lunchbox_name: lunchbox_name,
         lunchbox_set_name: lunchbox_set_name,
