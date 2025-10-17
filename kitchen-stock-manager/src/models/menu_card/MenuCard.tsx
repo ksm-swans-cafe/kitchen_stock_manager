@@ -15,9 +15,10 @@ export interface MenuItem {
   menu_total: number;
   menu_description: string;
   menu_order_id: number;
+  lunchbox_menu_category?: string; // เพิ่ม field นี้
 }
 
-export interface DetailIngredient extends Ingredients{
+export interface DetailIngredient extends Ingredients {
   // ingredient_id: string;
   ingredient_name: string;
   ingredient_total: number;

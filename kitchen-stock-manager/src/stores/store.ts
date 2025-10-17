@@ -171,9 +171,27 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
+      // updateLunchboxQuantity: (index, quantity) => {
+      //   set((state) => ({
+      //     selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, quantity } : item)),
+      //   }));
+      // },
       updateLunchboxQuantity: (index, quantity) => {
         set((state) => ({
-          selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, quantity } : item)),
+          selected_lunchboxes: state.selected_lunchboxes.map((item, i) => {
+            if (i === index) {
+              const baseCost = item.lunchbox_total_cost ? Number(item.lunchbox_total_cost.replace(/[^\d]/g, "")) : 0;
+              const originalQuantity = item.quantity || 1;
+              const newCost = baseCost > 0 ? (baseCost / originalQuantity) * quantity : 0;
+
+              return {
+                ...item,
+                quantity,
+                lunchbox_total_cost: newCost > 0 ? newCost.toLocaleString("th-TH") : "",
+              };
+            }
+            return item;
+          }),
         }));
       },
 

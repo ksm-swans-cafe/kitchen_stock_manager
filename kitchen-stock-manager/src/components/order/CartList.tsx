@@ -142,7 +142,7 @@ export default function CartList() {
       const newLunchbox = {
         lunchbox_name: cart_lunch_box,
         lunchbox_set: cart_lunch_box_set,
-        lunchbox_limit: selectedLunchboxData.lunchbox_limit, // ✅ เพิ่มค่า lunchbox_limit จากข้อมูลจริง
+        lunchbox_limit: selectedLunchboxData.lunchbox_limit, 
         selected_menus: [],
         quantity: 1,
         lunchbox_total_cost: "",
@@ -156,11 +156,9 @@ export default function CartList() {
   const handleEditLunchbox = (index: number) => {
     const lunchboxToEdit = selected_lunchboxes[index];
 
-    // เก็บข้อมูล lunchbox ที่จะแก้ไขใน sessionStorage
     sessionStorage.setItem("editingLunchboxIndex", index.toString());
     sessionStorage.setItem("editingLunchboxData", JSON.stringify(lunchboxToEdit));
 
-    // ไปหน้า menu-picker พร้อมข้อมูลเดิม
     router.push("/home/order/menu-picker?edit=true");
   };
 
@@ -235,17 +233,21 @@ export default function CartList() {
           cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
             lunchbox_name: lunchbox.lunchbox_name,
             lunchbox_set: lunchbox.lunchbox_set,
-            lunchbox_limit: lunchbox.lunchbox_limit, // ✅ เพิ่ม lunchbox_limit
+            lunchbox_limit: lunchbox.lunchbox_limit,
             lunchbox_quantity: lunchbox.quantity,
             lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
             lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
               menu_name: menu.menu_name,
               menu_subname: menu.menu_subname,
               menu_category: menu.menu_category,
-              menu_total: 1,
-              menu_ingredients: menu.menu_ingredients,
+              menu_total: lunchbox.quantity,
+              menu_ingredients:
+                menu.menu_ingredients?.map((ingredient) => ({
+                  ...ingredient,
+                  useItem: ingredient.useItem * lunchbox.quantity,
+                })) || [],
               menu_description: menu.menu_description,
-              menu_cost: menu.menu_cost,
+              menu_cost: (Number(menu.menu_cost) * lunchbox.quantity).toString(), 
               menu_order_id: menuIndex + 1,
             })),
           })),
@@ -271,7 +273,6 @@ export default function CartList() {
     if (quantity >= 1) setItemQuantity(cartItemId, quantity);
   };
 
-  // เพิ่มฟังก์ชันจัดกลุ่มเมนู
   const groupMenusByLimit = (menus: any[], limit: number) => {
     const groups = [];
     for (let i = 0; i < menus.length; i += limit) {
@@ -462,10 +463,9 @@ export default function CartList() {
                     <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(index, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
                   </div>
 
-                  {/* เพิ่มช่องกรอกราคา */}
                   <div className='flex items-center gap-2 mb-2'>
                     <label className='text-sm'>ราคารวม:</label>
-                    <input type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
+                    <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
                     <span className='text-sm text-gray-500'>฿</span>
                   </div>
 
@@ -505,7 +505,7 @@ export default function CartList() {
             })}
           </div>
         )}
-        
+
         <div className='border p-4 rounded mb-4'>
           <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>
             ➕ เพิ่มชุดอาหาร

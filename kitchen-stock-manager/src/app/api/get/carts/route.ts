@@ -3,17 +3,11 @@ import prisma from "@/lib/prisma";
 
 // Helper function to convert BigInt to string recursively
 function convertBigIntToString(obj: any): any {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
+  if (obj === null || obj === undefined) return obj;
 
-  if (typeof obj === "bigint") {
-    return obj.toString();
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(convertBigIntToString);
-  }
+  if (typeof obj === "bigint") return obj.toString();
+  
+  if (Array.isArray(obj)) return obj.map(convertBigIntToString);
 
   if (typeof obj === "object") {
     const converted: any = {};
@@ -50,9 +44,7 @@ export async function GET() {
       },
     });
     
-    // console.log("Fetched carts:", result);
     if (result.length === 0) return NextResponse.json({ message: "No carts found" }, { status: 404 });
-
     // Convert BigInt values to strings before sending JSON response
     const convertedResult = convertBigIntToString(result);
     return NextResponse.json(convertedResult, { status: 200 });

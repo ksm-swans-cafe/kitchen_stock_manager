@@ -30,14 +30,11 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      if (menu_lunchbox) {
-        parsedLunchbox = JSON.parse(menu_lunchbox);
-      }
+      if (menu_lunchbox) parsedLunchbox = JSON.parse(menu_lunchbox);
     } catch (error) {
       return NextResponse.json({ error: "รูปแบบข้อมูลกล่องอาหารไม่ถูกต้อง" }, { status: 400 });
     }
 
-    // หา menu_id ใหม่
     const lastMenu = await prisma.menu.findFirst({
       orderBy: { menu_id: "desc" },
     });
@@ -52,7 +49,7 @@ export async function POST(req: NextRequest) {
         menu_cost: parseInt(menu_cost) || 0,
         menu_ingredients: parsedIngredients,
         menu_lunchbox: parsedLunchbox,
-        menu_image: "", // ตั้งค่าเริ่มต้น
+        menu_image: "", 
       },
     });
 
