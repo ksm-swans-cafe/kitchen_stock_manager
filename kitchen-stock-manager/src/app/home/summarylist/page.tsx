@@ -258,6 +258,11 @@ const SummaryList: React.FC = () => {
             ingredient_status: menu.menu_ingredients.every((ing: Ingredient) => ing.ingredient_status ?? false),
           }));
 
+          // คำนวณราคารวมจาก lunchbox
+          const totalPriceFromLunchbox = cartLunchbox.reduce((sum, lb) => {
+            return sum + (Number(lb.lunchbox_total_cost) || 0);
+          }, 0);
+
           const orderNumber = cart.cart_order_number || `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
           return {
             id: cart.cart_id || "no-id",
@@ -267,7 +272,7 @@ const SummaryList: React.FC = () => {
             dateISO: formattedDateISO,
             time: formattedTime,
             sets: totalSets,
-            price: cart.cart_total_price || 0,
+            price: totalPriceFromLunchbox || 0,
             status: cart.cart_status,
             createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
             menuItems,
@@ -2098,20 +2103,9 @@ const SummaryList: React.FC = () => {
                                                         <input
                                                           type='number'
                                                           min={0}
-                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed'
                                                           value={lunchbox.lunchbox_total_cost}
-                                                          onChange={(e) => {
-                                                            const newCost = Number(e.target.value) || 0;
-                                                            setEditMenuDialog((prev) => {
-                                                              if (!prev) return prev;
-                                                              return {
-                                                                ...prev,
-                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
-                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_total_cost: newCost } : lb
-                                                                ),
-                                                              };
-                                                            });
-                                                          }}
+                                                          readOnly
                                                         />
                                                       </div>
                                                       
@@ -2121,20 +2115,9 @@ const SummaryList: React.FC = () => {
                                                         <input
                                                           type='number'
                                                           min={0}
-                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed'
                                                           value={lunchbox.lunchbox_limit}
-                                                          onChange={(e) => {
-                                                            const newLimit = Number(e.target.value) || 0;
-                                                            setEditMenuDialog((prev) => {
-                                                              if (!prev) return prev;
-                                                              return {
-                                                                ...prev,
-                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
-                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_limit: newLimit } : lb
-                                                                ),
-                                                              };
-                                                            });
-                                                          }}
+                                                          readOnly
                                                         />
                                                       </div>
                                                     </div>
