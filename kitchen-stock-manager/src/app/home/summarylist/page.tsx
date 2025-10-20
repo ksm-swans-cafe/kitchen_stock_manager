@@ -28,13 +28,10 @@ import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
 import StatusDropdown from "@/app/components/StatusDropdownsummary";
 import PaginationComponent from "@/components/ui/Totalpage";
 
+import { fetcher } from "@/lib/utils";
+
 import { Ingredient, MenuItem, Cart, CartItem, RawCart, Lunchbox } from "@/types/interface_summary_orderhistory";
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
-  return res.json();
-};
 
 const SummaryList: React.FC = () => {
   const router = useRouter();

@@ -25,13 +25,9 @@ import PaginationComponent from "@/components/ui/Totalpage";
 import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
 import StatusDropdown from "@/app/components/StatusOrderhistory";
 
-import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
+import { fetcher } from "@/lib/utils";
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
-  return res.json();
-};
+import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
 
 const OrderHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");

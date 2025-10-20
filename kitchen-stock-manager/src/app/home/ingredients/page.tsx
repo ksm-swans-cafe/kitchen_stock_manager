@@ -20,14 +20,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { fetcher } from "@/lib/utils";
 import useSWR from "swr";
 import axios from "axios";
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch ingredients list");
-  return res.json();
-};
 
 const normalizeThaiVowel = (text: string): string => {
   if (!text) return "";
@@ -264,7 +260,7 @@ export default function IngredientManagement() {
   };
 
   return (
-    <div className='flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto'>
+    <div className='flex min-h-screen flex-col items-center pt-4 px-5'>
       <div className='container'>
         {isLoading && <p>Loading...</p>}
         {error && <p className='text-red-500'>{error.message}</p>}
