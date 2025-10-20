@@ -37,7 +37,6 @@ interface CartState {
   cart_export_time: string;
   cart_receive_time: string;
   cart_shipping_cost: string;
-  // เพิ่มฟิลด์ใหม่
   cart_lunch_box: string;
   cart_lunch_box_set: string;
   selected_lunchboxes: SelectedLunchbox[];
@@ -158,7 +157,6 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
-      // ฟังก์ชันใหม่สำหรับจัดการ lunchbox
       addLunchbox: (lunchbox) => {
         set((state) => ({
           selected_lunchboxes: [...state.selected_lunchboxes, lunchbox],
@@ -171,11 +169,6 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
-      // updateLunchboxQuantity: (index, quantity) => {
-      //   set((state) => ({
-      //     selected_lunchboxes: state.selected_lunchboxes.map((item, i) => (i === index ? { ...item, quantity } : item)),
-      //   }));
-      // },
       updateLunchboxQuantity: (index, quantity) => {
         set((state) => ({
           selected_lunchboxes: state.selected_lunchboxes.map((item, i) => {
