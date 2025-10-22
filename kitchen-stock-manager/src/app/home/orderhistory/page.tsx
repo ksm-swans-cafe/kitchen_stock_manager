@@ -937,7 +937,7 @@ const OrderHistory = () => {
                                   <span>เวลา {cart.time} น.</span>
                                 </div>
                               </div>
-                              <div className='hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
+                              <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
                                 <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                               </div>
                             </div>
@@ -964,15 +964,12 @@ const OrderHistory = () => {
                                             <span className='truncate text-sm text-blue-800 font-bold'>
                                               📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
                                             </span>
-                                            <div className='grid grid-cols-3 gap-2 mt-2 w-full'>
+                                            <div className='flex gap-4 mt-2'>
                                               <div className='text-xs text-blue-700'>
                                                 <span className='font-medium'>จำนวน:</span> {lunchbox.lunchbox_total} กล่อง
                                               </div>
                                               <div className='text-xs text-blue-700'>
                                                 <span className='font-medium'>ราคา:</span> {lunchbox.lunchbox_total_cost} บาท
-                                              </div>
-                                              <div className='text-xs text-blue-700'>
-                                                <span className='font-medium'>จำกัด:</span> {lunchbox.lunchbox_limit} กล่อง
                                               </div>
                                             </div>
                                           </div>
