@@ -54,6 +54,7 @@ const SummaryList: React.FC = () => {
   const [shouldFetchMenu, setShouldFetchMenu] = useState(false);
   const [availableLunchboxes, setAvailableLunchboxes] = useState<any[]>([]);
   const [availableMenus, setAvailableMenus] = useState<any[]>([]);
+  const [availableMenusForLunchbox, setAvailableMenusForLunchbox] = useState<{[key: string]: any[]}>({});  // เก็บเมนูแยกตามแต่ละ lunchbox
   const [selectedLunchboxName, setSelectedLunchboxName] = useState<string>("");
   const [selectedLunchboxSet, setSelectedLunchboxSet] = useState<string>("");
   const [availableLunchboxSets, setAvailableLunchboxSets] = useState<string[]>([]);
@@ -888,22 +889,66 @@ const SummaryList: React.FC = () => {
     }
   };
 
-  // Fetch lunchboxes and menus when opening edit dialog
+  // Fetch lunchboxes when opening edit dialog
   const fetchLunchboxesAndMenus = async () => {
     try {
-      const [lunchboxRes, menuRes] = await Promise.all([
-        fetch("/api/get/lunchbox"),
-        fetch("/api/get/menu/list"),
-      ]);
+      const lunchboxRes = await fetch("/api/get/lunchbox");
       
-      if (lunchboxRes.ok && menuRes.ok) {
+      if (lunchboxRes.ok) {
         const lunchboxData = await lunchboxRes.json();
-        const menuData = await menuRes.json();
         setAvailableLunchboxes(lunchboxData);
-        setAvailableMenus(menuData);
       }
     } catch (err) {
-      console.error("Failed to fetch lunchboxes/menus:", err);
+      console.error("Failed to fetch lunchboxes:", err);
+    }
+  };
+
+  // Helper function to calculate lunchbox cost from menu costs
+  const calculateLunchboxCost = (lunchboxMenus: any[], lunchboxTotal: number, menusForThisBox: any[]) => {
+    // รวมราคาของเมนูทั้งหมดในกล่อง
+    const totalMenuCost = lunchboxMenus.reduce((sum, menu) => {
+      // หาราคาเมนูจาก menusForThisBox
+      const menuData = menusForThisBox.find((m: any) => m.menu_name === menu.menu_name);
+      const menuCost = menuData?.menu_cost || menu.menu_cost || 0;
+      return sum + Number(menuCost);
+    }, 0);
+    
+    // ราคารวม = (ราคาเมนูทั้งหมด) × จำนวนกล่อง
+    return totalMenuCost * lunchboxTotal;
+  };
+
+  // Fetch menus for specific lunchbox using categories API
+  const fetchMenusForLunchbox = async (lunchboxName: string, lunchboxSetName: string, lunchboxIdx: number) => {
+    try {
+      const key = `${lunchboxName}_${lunchboxSetName}_${lunchboxIdx}`;
+      
+      // ถ้ามีข้อมูลแล้ว ไม่ต้อง fetch ซ้ำ
+      if (availableMenusForLunchbox[key] && availableMenusForLunchbox[key].length > 0) {
+        console.log(`✅ มีข้อมูลเมนูสำหรับ ${key} อยู่แล้ว`);
+        return;
+      }
+
+      console.log(`🔍 กำลังดึงเมนูสำหรับ: ${lunchboxName} - ${lunchboxSetName}`);
+      
+      const response = await fetch(
+        `/api/get/lunchbox/categories?lunchbox_name=${encodeURIComponent(lunchboxName)}&lunchbox_set_name=${encodeURIComponent(lunchboxSetName)}`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`✅ ดึงเมนูสำเร็จ:`, result);
+        
+        if (result.success && result.data) {
+          setAvailableMenusForLunchbox(prev => ({
+            ...prev,
+            [key]: result.data
+          }));
+        }
+      } else {
+        console.error(`❌ Failed to fetch menus for ${lunchboxName} - ${lunchboxSetName}`);
+      }
+    } catch (err) {
+      console.error("Failed to fetch menus for lunchbox:", err);
     }
   };
 
@@ -939,6 +984,20 @@ const SummaryList: React.FC = () => {
     }
   }, [selectedLunchboxName, selectedLunchboxSet, availableLunchboxes]);
 
+  // Auto-fetch menus when lunchbox is added to cart
+  useEffect(() => {
+    if (editMenuDialog && editMenuDialog.cart_lunchbox && editMenuDialog.cart_lunchbox.length > 0) {
+      // ดึงเมนูสำหรับทุกกล่องที่ยังไม่มีข้อมูล
+      editMenuDialog.cart_lunchbox.forEach((lunchbox, idx) => {
+        const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${idx}`;
+        // ดึงเฉพาะที่ยังไม่มีข้อมูล
+        if (!availableMenusForLunchbox[key]) {
+          fetchMenusForLunchbox(lunchbox.lunchbox_name, lunchbox.lunchbox_set_name, idx);
+        }
+      });
+    }
+  }, [editMenuDialog?.cart_lunchbox]);
+
   // Add new lunchbox to the cart
   const handleAddLunchbox = () => {
     if (!editMenuDialog || !selectedLunchboxName || !selectedLunchboxSet) {
@@ -971,7 +1030,7 @@ const SummaryList: React.FC = () => {
       lunchbox_set_name: selectedLunchboxSet,
       lunchbox_limit: selectedLunchboxData.lunchbox_limit || 0,
       lunchbox_total: 1,
-      lunchbox_total_cost: 0,
+      lunchbox_total_cost: 0, // เริ่มต้นเป็น 0 จะคำนวณตอนเพิ่มเมนู
       lunchbox_menu: [],
     };
     
@@ -1117,6 +1176,63 @@ const SummaryList: React.FC = () => {
   const handleAddMenuToLunchbox = async (lunchboxIdx: number, selectedMenu: any) => {
     if (!editMenuDialog || !selectedMenu) return;
     
+    console.log('🟢 handleAddMenuToLunchbox called');
+    console.log('🟢 lunchboxIdx:', lunchboxIdx);
+    console.log('🟢 selectedMenu:', selectedMenu);
+    
+    // ตรวจสอบว่า category นี้เลือกไปแล้วหรือไม่
+    const currentLunchbox = editMenuDialog.cart_lunchbox[lunchboxIdx];
+    const selectedMenuCategory = selectedMenu.lunchbox_menu_category;
+    
+    console.log('🟢 Selected menu category:', selectedMenuCategory);
+    
+    // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs lunchbox_limit
+    const currentMenuCount = currentLunchbox.lunchbox_menu?.length || 0;
+    const lunchboxLimit = currentLunchbox.lunchbox_limit || 0;
+    
+    console.log(`🟢 Current menu count: ${currentMenuCount}/${lunchboxLimit}`);
+    
+    if (currentMenuCount >= lunchboxLimit) {
+      console.log('❌ Lunchbox is full! Blocking...');
+      Swal.fire({
+        icon: "warning",
+        title: "เลือกเมนูครบแล้ว",
+        text: `กล่องนี้เลือกได้สูงสุด ${lunchboxLimit} เมนู (เลือกไปแล้ว ${currentMenuCount} เมนู)`,
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+    
+    // ตรวจสอบว่ามีเมนูที่เป็น category เดียวกันอยู่แล้วหรือไม่
+    const key = `${currentLunchbox.lunchbox_name}_${currentLunchbox.lunchbox_set_name}_${lunchboxIdx}`;
+    const menusForThisBox = availableMenusForLunchbox[key] || [];
+    
+    const hasSameCategoryMenu = currentLunchbox.lunchbox_menu?.some((existingMenu: any) => {
+      // หา category ของเมนูที่มีอยู่แล้ว
+      const existingMenuData = menusForThisBox.find((m: any) => m.menu_name === existingMenu.menu_name);
+      const existingCategory = existingMenuData?.lunchbox_menu_category;
+      
+      console.log(`🟢 Checking existing menu "${existingMenu.menu_name}" (${existingCategory}) vs new menu category (${selectedMenuCategory})`);
+      
+      // ถ้า category ตรงกัน แสดงว่ามีเมนูประเภทนี้อยู่แล้ว
+      return existingCategory && selectedMenuCategory && existingCategory === selectedMenuCategory;
+    }) || false;
+    
+    if (hasSameCategoryMenu) {
+      console.log('❌ Category already selected! Blocking...');
+      Swal.fire({
+        icon: "warning",
+        title: "เลือกประเภทนี้ไปแล้ว",
+        text: `ไม่สามารถเลือกเมนูประเภท "${selectedMenuCategory}" ซ้ำได้ กรุณาลบเมนูเดิมก่อน`,
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+    
+    console.log('✅ Menu can be added!');
+    
     try {
       // Fetch menu details including ingredients
       const menuRes = await fetch(`/api/get/menu/${selectedMenu.menu_id}`);
@@ -1141,6 +1257,8 @@ const SummaryList: React.FC = () => {
         menu_total: 1,
         menu_order_id: menuDetails.menu_id || 0,
         menu_description: menuDetails.menu_description || "",
+        menu_cost: menuDetails.menu_cost || 0,  // เพิ่มราคาเมนู
+        lunchbox_menu_category: selectedMenu.lunchbox_menu_category || "",  // เพิ่ม category จาก lunchbox
         menu_ingredients: menuIngredients.map((ing: any) => ({
           useItem: ing.quantity || ing.useItem || 0,
           ingredient_name: ing.name || ing.ingredient_name || "ไม่ระบุวัตถุดิบ",
@@ -1177,13 +1295,25 @@ const SummaryList: React.FC = () => {
           console.log(`📝 เพิ่มเมนูใหม่ "${newMenu.menu_name}" เข้า menuItems`);
         }
         
+        // คำนวณราคาใหม่หลังเพิ่มเมนู
+        const key = `${prev.cart_lunchbox[lunchboxIdx].lunchbox_name}_${prev.cart_lunchbox[lunchboxIdx].lunchbox_set_name}_${lunchboxIdx}`;
+        const menusForThisBox = availableMenusForLunchbox[key] || [];
+        
         return {
           ...prev,
-          cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
-            idx === lunchboxIdx
-              ? { ...lb, lunchbox_menu: [...lb.lunchbox_menu, newMenu] }
-              : lb
-          ),
+          cart_lunchbox: prev.cart_lunchbox.map((lb, idx) => {
+            if (idx === lunchboxIdx) {
+              const updatedMenus = [...lb.lunchbox_menu, newMenu];
+              const newCost = calculateLunchboxCost(updatedMenus, lb.lunchbox_total, menusForThisBox);
+              console.log(`💰 คำนวณราคาใหม่: ${newCost} บาท (เมนู ${updatedMenus.length} รายการ × ${lb.lunchbox_total} กล่อง)`);
+              return { 
+                ...lb, 
+                lunchbox_menu: updatedMenus,
+                lunchbox_total_cost: newCost
+              };
+            }
+            return lb;
+          }),
           menuItems: updatedMenuItems,
         };
       });
@@ -1292,13 +1422,25 @@ const SummaryList: React.FC = () => {
             console.log(`📝 ลบเมนู "${menuName}" ออกจาก menuItems ทั้งหมด`);
           }
           
+          // คำนวณราคาใหม่หลังลบเมนู
+          const key = `${prev.cart_lunchbox[lunchboxIdx].lunchbox_name}_${prev.cart_lunchbox[lunchboxIdx].lunchbox_set_name}_${lunchboxIdx}`;
+          const menusForThisBox = availableMenusForLunchbox[key] || [];
+          
           const updatedState = {
             ...prev,
-            cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
-              idx === lunchboxIdx
-                ? { ...lb, lunchbox_menu: (lb.lunchbox_menu || []).filter((_, mIdx) => mIdx !== menuIdx) }
-                : lb
-            ),
+            cart_lunchbox: prev.cart_lunchbox.map((lb, idx) => {
+              if (idx === lunchboxIdx) {
+                const updatedMenus = (lb.lunchbox_menu || []).filter((_, mIdx) => mIdx !== menuIdx);
+                const newCost = calculateLunchboxCost(updatedMenus, lb.lunchbox_total, menusForThisBox);
+                console.log(`💰 คำนวณราคาใหม่หลังลบ: ${newCost} บาท (เมนู ${updatedMenus.length} รายการ × ${lb.lunchbox_total} กล่อง)`);
+                return { 
+                  ...lb, 
+                  lunchbox_menu: updatedMenus,
+                  lunchbox_total_cost: newCost
+                };
+              }
+              return lb;
+            }),
             menuItems: updatedMenuItems,
           };
           
@@ -1480,6 +1622,7 @@ const SummaryList: React.FC = () => {
         mutateCarts();
         setEditMenuDialog(null);
         setShouldFetchMenu(false);
+        setAvailableMenusForLunchbox({});  // Clear เมนูที่โหลดไว้
       } catch (err) {
         console.error("Error updating menu:", err);
         Swal.fire({
@@ -1800,7 +1943,13 @@ const SummaryList: React.FC = () => {
                                   </div>
                                   <div className='flex items-center gap-1'>
                                     <Wallet className='w-4 h-4 text-green-400' />
-                                    <span>ราคาอาหาร {cart.price.toLocaleString()} บาท</span>
+                                    <span>ราคาอาหาร {(() => {
+                                      // คำนวณราคาอาหารจากผลรวม lunchbox_total_cost
+                                      const foodPrice = cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+                                        ? cart.cart_lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+                                        : cart.price || 0;
+                                      return foodPrice.toLocaleString("th-TH");
+                                    })()} บาท</span>
                                   </div>
                                   <div className='flex items-center gap-1'>
                                     <Container className='w-4 h-4 text-blue-500' />
@@ -1943,6 +2092,7 @@ const SummaryList: React.FC = () => {
                                       setSelectedLunchboxName("");
                                       setSelectedLunchboxSet("");
                                       setPreviewLunchbox(null);
+                                      setAvailableMenusForLunchbox({});  // Clear เมนูที่โหลดไว้
                                     } else {
                                       console.log('⛔ ไม่ reset เพราะ: open =', open, ', isDeleting =', isDeleting, ', editMenuDialog =', editMenuDialog);
                                     }
@@ -2078,60 +2228,77 @@ const SummaryList: React.FC = () => {
                                                             const newTotal = Number(e.target.value) || 0;
                                                             setEditMenuDialog((prev) => {
                                                               if (!prev) return prev;
+                                                              
+                                                              // คำนวณราคาจากผลรวมเมนู × จำนวนกล่อง
+                                                              const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
+                                                              const menusForThisBox = availableMenusForLunchbox[key] || [];
+                                                              const newTotalCost = calculateLunchboxCost(lunchbox.lunchbox_menu || [], newTotal, menusForThisBox);
+                                                              
+                                                              console.log(`💰 เปลี่ยนจำนวนกล่อง: ${lunchbox.lunchbox_total} → ${newTotal}, ราคาใหม่: ${newTotalCost} บาท`);
+                                                              
+                                                              // อัปเดต cart_lunchbox และ menu_total ของเมนูทั้งหมดใน lunchbox นี้
+                                                              const updatedCartLunchbox = prev.cart_lunchbox.map((lb, idx) => {
+                                                                if (idx === lunchboxIdx) {
+                                                                  return {
+                                                                    ...lb,
+                                                                    lunchbox_total: newTotal,
+                                                                    lunchbox_total_cost: newTotalCost,
+                                                                    lunchbox_menu: (lb.lunchbox_menu || []).map(menu => ({
+                                                                      ...menu,
+                                                                      menu_total: newTotal  // อัปเดต menu_total ของทุกเมนูให้เท่ากับ lunchbox_total
+                                                                    }))
+                                                                  };
+                                                                }
+                                                                return lb;
+                                                              });
+                                                              
+                                                              // อัปเดต menuItems ที่เกี่ยวข้องด้วย
+                                                              const updatedMenuItems = prev.menuItems.map(menuItem => {
+                                                                // ตรวจสอบว่าเมนูนี้อยู่ใน lunchbox ที่กำลังแก้ไขหรือไม่
+                                                                const isInThisLunchbox = lunchbox.lunchbox_menu?.some(
+                                                                  lbMenu => lbMenu.menu_name === menuItem.menu_name
+                                                                );
+                                                                
+                                                                if (isInThisLunchbox) {
+                                                                  return {
+                                                                    ...menuItem,
+                                                                    menu_total: newTotal
+                                                                  };
+                                                                }
+                                                                return menuItem;
+                                                              });
+                                                              
                                                               return {
                                                                 ...prev,
-                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
-                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_total: newTotal } : lb
-                                                                ),
+                                                                cart_lunchbox: updatedCartLunchbox,
+                                                                menuItems: updatedMenuItems
                                                               };
                                                             });
                                                           }}
                                                         />
                                                       </div>
                                                       
-                                                      {/* ราคา */}
+                                                      {/* ราคา (readonly) */}
                                                       <div>
                                                         <label className='block text-xs font-medium text-blue-700 mb-1'>ราคา (บาท)</label>
                                                         <input
                                                           type='number'
                                                           min={0}
-                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed'
                                                           value={lunchbox.lunchbox_total_cost}
-                                                          onChange={(e) => {
-                                                            const newCost = Number(e.target.value) || 0;
-                                                            setEditMenuDialog((prev) => {
-                                                              if (!prev) return prev;
-                                                              return {
-                                                                ...prev,
-                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
-                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_total_cost: newCost } : lb
-                                                                ),
-                                                              };
-                                                            });
-                                                          }}
+                                                          readOnly
                                                         />
                                                       </div>
                                                       
-                                                      {/* จำกัด */}
+                                                      {/* จำกัด (readonly) */}
                                                       <div>
                                                         <label className='block text-xs font-medium text-blue-700 mb-1'>จำกัด (กล่อง)</label>
                                                         <input
                                                           type='number'
                                                           min={0}
-                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                          className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed'
                                                           value={lunchbox.lunchbox_limit}
-                                                          onChange={(e) => {
-                                                            const newLimit = Number(e.target.value) || 0;
-                                                            setEditMenuDialog((prev) => {
-                                                              if (!prev) return prev;
-                                                              return {
-                                                                ...prev,
-                                                                cart_lunchbox: prev.cart_lunchbox.map((lb, idx) =>
-                                                                  idx === lunchboxIdx ? { ...lb, lunchbox_limit: newLimit } : lb
-                                                                ),
-                                                              };
-                                                            });
-                                                          }}
+                                                          readOnly
                                                         />
                                                       </div>
                                                     </div>
@@ -2140,13 +2307,23 @@ const SummaryList: React.FC = () => {
                                                 
                                                 <div className='mt-3'>
                                                   <div className='flex justify-between items-center mb-2'>
-                                                    <h5 className='font-medium text-blue-800'>เมนูในกล่อง:</h5>
+                                                    <div>
+                                                      <h5 className='font-medium text-blue-800'>เมนูในกล่อง:</h5>
+                                                      <p className='text-xs text-gray-600 mt-1'>
+                                                        เลือกแล้ว {lunchbox.lunchbox_menu?.length || 0}/{lunchbox.lunchbox_limit} เมนู
+                                                      </p>
+                                                    </div>
                                                     
                                                     {/* ปุ่มเพิ่มเมนู */}
                                                     <div className='flex items-center gap-2'>
                                                       <select
-                                                        className='px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500'
+                                                        className='px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
                                                         value={selectedMenuForLunchbox[lunchboxIdx] || ""}
+                                                        disabled={(lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
+                                                        onFocus={async () => {
+                                                          // ดึงเมนูสำหรับกล่องนี้เมื่อเปิด dropdown
+                                                          await fetchMenusForLunchbox(lunchbox.lunchbox_name, lunchbox.lunchbox_set_name, lunchboxIdx);
+                                                        }}
                                                         onChange={(e) => {
                                                           console.log('🔵 เลือกเมนู! lunchboxIdx:', lunchboxIdx, 'value:', e.target.value);
                                                           setSelectedMenuForLunchbox(prev => ({
@@ -2154,28 +2331,87 @@ const SummaryList: React.FC = () => {
                                                             [lunchboxIdx]: e.target.value
                                                           }));
                                                         }}>
-                                                        <option value="" disabled>เลือกเมนู</option>
-                                                        {availableMenus.map((menu, idx) => (
-                                                          <option key={idx} value={idx}>
-                                                            {menu.menu_name}
-                                                          </option>
-                                                        ))}
+                                                        {(() => {
+                                                          const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
+                                                          const menusForThisBox = availableMenusForLunchbox[key] || [];
+                                                          
+                                                          // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs limit
+                                                          const currentMenuCount = lunchbox.lunchbox_menu?.length || 0;
+                                                          const lunchboxLimit = lunchbox.lunchbox_limit || 0;
+                                                          const isFull = currentMenuCount >= lunchboxLimit;
+                                                          
+                                                          if (isFull) {
+                                                            return <option value="" disabled>เลือกครบแล้ว ({currentMenuCount}/{lunchboxLimit} เมนู)</option>;
+                                                          }
+                                                          
+                                                          // สร้าง Map ของ categories ที่เลือกไปแล้ว
+                                                          const selectedCategories = new Set<string>();
+                                                          lunchbox.lunchbox_menu?.forEach((selectedMenu: any) => {
+                                                            // หาข้อมูลเมนูจาก availableMenusForLunchbox เพื่อดึง category
+                                                            const menuData = menusForThisBox.find((m: any) => m.menu_name === selectedMenu.menu_name);
+                                                            if (menuData?.lunchbox_menu_category) {
+                                                              selectedCategories.add(menuData.lunchbox_menu_category);
+                                                            }
+                                                          });
+                                                          
+                                                          console.log('🔍 Dropdown Render - lunchboxIdx:', lunchboxIdx);
+                                                          console.log('🔍 Menu count:', currentMenuCount, '/', lunchboxLimit);
+                                                          console.log('🔍 Selected categories:', Array.from(selectedCategories));
+                                                          console.log('🔍 Available menus:', menusForThisBox.map((m: any) => `${m.menu_name} (${m.lunchbox_menu_category || 'no category'})`));
+                                                          
+                                                          const filteredMenus = menusForThisBox.filter((menu: any) => {
+                                                            // ตรวจสอบว่า category นี้ถูกเลือกไปแล้วหรือไม่
+                                                            const menuCategory = menu.lunchbox_menu_category;
+                                                            const isCategorySelected = menuCategory && selectedCategories.has(menuCategory);
+                                                            
+                                                            console.log(`🔍 Menu "${menu.menu_name}" (${menuCategory}): category selected = ${isCategorySelected}`);
+                                                            return !isCategorySelected;
+                                                          });
+                                                          
+                                                          console.log('🔍 Filtered menus:', filteredMenus.map((m: any) => m.menu_name));
+                                                          
+                                                          if (filteredMenus.length === 0) {
+                                                            return <option value="" disabled>ไม่มีเมนูให้เลือก</option>;
+                                                          }
+                                                          
+                                                          return (
+                                                            <>
+                                                              <option value="" disabled>เลือกเมนู</option>
+                                                              {filteredMenus.map((menu: any, idx: number) => {
+                                                                // หา original index จาก menusForThisBox
+                                                                const originalIdx = menusForThisBox.findIndex((m: any) => 
+                                                                  m.menu_name === menu.menu_name && 
+                                                                  m.menu_subname === menu.menu_subname
+                                                                );
+                                                                return (
+                                                                  <option key={idx} value={originalIdx}>
+                                                                    {menu.menu_name} {menu.menu_subname ? `(${menu.menu_subname})` : ''}
+                                                                  </option>
+                                                                );
+                                                              })}
+                                                            </>
+                                                          );
+                                                        })()}
                                                       </select>
                                                       <Button
                                                         type="button"
                                                         size="sm"
                                                         className='bg-green-600 hover:bg-green-700 text-white text-xs'
+                                                        disabled={(lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
                                                         onClick={() => {
+                                                          const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
+                                                          const menusForThisBox = availableMenusForLunchbox[key] || [];
+                                                          
                                                           console.log('🔵 กดปุ่มเพิ่มเมนู! lunchboxIdx:', lunchboxIdx);
-                                                          console.log('🔵 availableMenus:', availableMenus);
+                                                          console.log('🔵 menusForThisBox:', menusForThisBox);
                                                           console.log('🔵 selectedMenuForLunchbox:', selectedMenuForLunchbox);
                                                           console.log('🔵 selected value for this lunchbox:', selectedMenuForLunchbox[lunchboxIdx]);
                                                           
-                                                          if (availableMenus.length === 0) {
+                                                          if (menusForThisBox.length === 0) {
                                                             Swal.fire({
                                                               icon: "warning",
                                                               title: "ไม่พบเมนูที่สามารถเพิ่มได้",
-                                                              text: "กรุณารอสักครู่แล้วลองใหม่",
+                                                              text: "กรุณาคลิกที่ช่องเลือกเมนูเพื่อโหลดรายการเมนู",
                                                               showConfirmButton: false,
                                                               timer: 2000,
                                                             });
@@ -2186,9 +2422,9 @@ const SummaryList: React.FC = () => {
                                                           if (selectedValue && selectedValue !== "") {
                                                             const selectedIdx = parseInt(selectedValue);
                                                             console.log('🔵 selectedIdx:', selectedIdx);
-                                                            if (!isNaN(selectedIdx) && selectedIdx >= 0 && selectedIdx < availableMenus.length) {
-                                                              console.log('🔵 กำลังเพิ่มเมนู:', availableMenus[selectedIdx]);
-                                                              handleAddMenuToLunchbox(lunchboxIdx, availableMenus[selectedIdx]);
+                                                            if (!isNaN(selectedIdx) && selectedIdx >= 0 && selectedIdx < menusForThisBox.length) {
+                                                              console.log('🔵 กำลังเพิ่มเมนู:', menusForThisBox[selectedIdx]);
+                                                              handleAddMenuToLunchbox(lunchboxIdx, menusForThisBox[selectedIdx]);
                                                               // Clear selection after adding
                                                               setSelectedMenuForLunchbox(prev => ({
                                                                 ...prev,
@@ -2365,6 +2601,7 @@ const SummaryList: React.FC = () => {
                                               setSelectedLunchboxName("");
                                               setSelectedLunchboxSet("");
                                               setPreviewLunchbox(null);
+                                              setAvailableMenusForLunchbox({});  // Clear เมนูที่โหลดไว้
                                               setIsDeleting(false); // Reset flag when closing dialog
                                             }}
                                           >
