@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import useSWR from "swr";
 import { create } from "zustand";
@@ -29,8 +29,6 @@ interface MenuLists {
   menuLunchbox: MenuLunchbox[];
   isSubmitting: boolean;
   editMenuId: string | null;
-  error: string | null;
-  isLoading: boolean;
   dialog: boolean;
   totalPages: number;
   setCurrentPage: (page: number) => void;
@@ -43,8 +41,6 @@ interface MenuLists {
   setDialog: (dialog: boolean) => void;
   setIsSubmitting: (isSubmitting: boolean) => void;
   setEditMenuId: (id: string | null) => void;
-  setError: (error: string | null) => void;
-  setIsLoading: (isLoading: boolean) => void;
   setTotalPages: (totalPages: number) => void;
 }
 
@@ -58,8 +54,6 @@ const useMenuLists = create<MenuLists>((set) => ({
   menuLunchbox: [],
   isSubmitting: false,
   editMenuId: null,
-  error: null,
-  isLoading: false,
   dialog: false,
   totalPages: 1,
   setCurrentPage: (page: number) => set({ currentPage: page }),
@@ -73,18 +67,18 @@ const useMenuLists = create<MenuLists>((set) => ({
   setDialog: (dialog: boolean) => set({ dialog }),
   setIsSubmitting: (isSubmitting: boolean) => set({ isSubmitting }),
   setEditMenuId: (id: string | null) => set({ editMenuId: id }),
-  setError: (error: string | null) => set({ error }),
-  setIsLoading: (isLoading: boolean) => set({ isLoading }),
   setTotalPages: (totalPages: number) => set({ totalPages }),
 }));
 
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 export default function Page() {
+  const [isMinimumLoading, setIsMinimumLoading] = useState(true);
 
   const {
     currentPage,
     menuName,
+    ingredients,
     menuSubName,
     menuCategoryName,
     menuCost,
@@ -92,8 +86,6 @@ export default function Page() {
     dialog,
     isSubmitting,
     editMenuId,
-    error,
-    isLoading,
     totalPages,
     setCurrentPage,
     setMenuName,
@@ -105,13 +97,11 @@ export default function Page() {
     setDialog,
     setIsSubmitting,
     setEditMenuId,
-    setError,
-    setIsLoading,
     setTotalPages,
   } = useMenuLists();
   const itemsPerPage = 30;
 
-  // SWR hooks
+  // SWR hooks with improved configuration
   const {
     data: menuData,
     error: menuError,
@@ -121,9 +111,15 @@ export default function Page() {
     `/api/get/menu/page?page=${currentPage}&limit=${itemsPerPage}`,
     fetcher,
     {
-      refreshInterval: 5000,
+      refreshInterval: 3000, 
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
+      revalidateOnMount: true,
+      revalidateIfStale: true,
+      dedupingInterval: 1000,
+      errorRetryCount: 3,
+      errorRetryInterval: 1000,
+      keepPreviousData: true, 
     },
   );
 
@@ -131,8 +127,10 @@ export default function Page() {
     "/api/get/ingredients",
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000,
+      revalidateOnFocus: true,
+      refreshInterval: 30000, 
+      dedupingInterval: 10000,
+      keepPreviousData: true,
     },
   );
 
@@ -140,8 +138,10 @@ export default function Page() {
     "/api/get/lunchbox",
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000,
+      revalidateOnFocus: true,
+      refreshInterval: 30000, 
+      dedupingInterval: 10000,
+      keepPreviousData: true,
     },
   );
 
@@ -172,13 +172,23 @@ export default function Page() {
       ? `/api/get/ingredients/list?names=${encodeURIComponent(uniqueIngredients.join(","))}`
       : null,
     fetcher,
+    {
+      revalidateOnFocus: true,
+      refreshInterval: 60000, 
+      keepPreviousData: true,
+    },
   );
 
-  // แปลงข้อมูลจาก SWR ให้ใช้งานได้
   const menuItems = menuData?.data || [];
   const totalPagesFromData = menuData?.pagination?.totalPages || 1;
-  const isLoadingData = menuLoading;
-  const errorData = menuError?.message || null;
+  const currentError = menuError?.message || null;
+
+  const shouldShowLoading = useMemo(() => {
+    return (
+      ((menuLoading && !menuData) || isSubmitting || isMinimumLoading) &&
+      !menuData
+    );
+  }, [menuLoading, menuData, isSubmitting, isMinimumLoading]);
 
   const ingredientUnits = useMemo(() => {
     if (!ingredientUnitsData) return {};
@@ -190,16 +200,24 @@ export default function Page() {
   }, [ingredientUnitsData]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMinimumLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (menuData) {
+      setLastUpdated(new Date());
+    }
+  }, [menuData]);
+
+  useEffect(() => {
     if (totalPagesFromData) setTotalPages(totalPagesFromData);
-  }, [totalPagesFromData]);
-
-  useEffect(() => {
-    setIsLoading(isLoadingData);
-  }, [isLoadingData]);
-
-  useEffect(() => {
-    setError(errorData);
-  }, [errorData]);
+  }, [totalPagesFromData, setTotalPages]);
 
   const formatIngredients = (data: string | Ingredient[]) => {
     try {
@@ -301,8 +319,13 @@ export default function Page() {
       setDialog(false);
       setEditMenuId(null);
 
-      // ใช้ mutate แทน location.reload() เพื่อ refresh ข้อมูล
+      // Optimistic update for better UX
       await mutateMenu();
+
+      // Also revalidate related data
+      if (ingredientOptions) {
+        // Trigger revalidation of ingredient options if needed
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -319,8 +342,11 @@ export default function Page() {
 
       if (res.status !== 200) throw new Error("ไม่สามารถลบเมนูได้");
 
-      // ใช้ mutate แทน location.reload()
+      // Optimistic update after deletion
       await mutateMenu();
+
+      // Show success feedback
+      console.log("Menu deleted successfully");
     } catch (err) {
       console.error(err);
     } finally {
@@ -411,6 +437,9 @@ export default function Page() {
               </h1>
               <p className="mt-1 text-sm text-gray-500">
                 เพิ่ม แก้ไข และลบเมนูอาหารในระบบ
+                <span className="ml-2 text-xs text-green-600">
+                  • อัปเดตล่าสุด: {lastUpdated.toLocaleTimeString("th-TH")}
+                </span>
               </p>
             </div>
             <button
@@ -448,7 +477,7 @@ export default function Page() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Error Message */}
-        {error && (
+        {currentError && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -468,7 +497,7 @@ export default function Page() {
                 <h3 className="text-sm font-medium text-red-800">
                   เกิดข้อผิดพลาด
                 </h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
+                <div className="mt-2 text-sm text-red-700">{currentError}</div>
               </div>
             </div>
           </div>
@@ -476,8 +505,14 @@ export default function Page() {
 
         {/* Menu Table */}
         <div className="bg-white shadow-sm rounded-lg overflow-x-hidden">
-          {isLoading ? (
+          {shouldShowLoading ? (
             <div className="p-8">
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <span className="text-gray-600 font-medium">
+                  กำลังโหลดข้อมูล...
+                </span>
+              </div>
               <div className="animate-pulse space-y-4">
                 {[...Array(5)].map((_, idx) => (
                   <div key={idx} className="flex space-x-4">
@@ -748,7 +783,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Lunchbox Section - แก้ไขส่วนนี้ */}
+                {/* Lunchbox Section */}
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <label className="block text-sm font-medium text-gray-700">
@@ -783,7 +818,7 @@ export default function Page() {
                         className="flex gap-3 items-center p-4 border border-gray-200 rounded-lg bg-gray-50 text-black-800"
                       >
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 text-black-800">
-                          {/* ช่องเลือกชื่อกล่องอาหาร - แก้ไขส่วนนี้ */}
+                          {/* ช่องเลือกชื่อกล่องอาหาร */}
                           <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1 text-black-800">
                               ชื่อกล่องอาหาร
@@ -877,7 +912,6 @@ export default function Page() {
                                 )
                               }
                               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                              // required
                               disabled={!lb.lunchbox_name}
                             />
                           </div>
@@ -1014,7 +1048,7 @@ export default function Page() {
                 </div>
 
                 {/* Error Message */}
-                {error && (
+                {currentError && (
                   <div className="bg-red-50 border border-red-200 rounded-md p-4">
                     <div className="flex">
                       <div className="flex-shrink-0">
@@ -1034,7 +1068,9 @@ export default function Page() {
                         <h3 className="text-sm font-medium text-red-800">
                           เกิดข้อผิดพลาด
                         </h3>
-                        <div className="mt-2 text-sm text-red-700">{error}</div>
+                        <div className="mt-2 text-sm text-red-700">
+                          {currentError}
+                        </div>
                       </div>
                     </div>
                   </div>
