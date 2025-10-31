@@ -259,6 +259,10 @@ export default function CartList() {
 
   const confirmOrder = async () => {
     if (!validateInputs()) return;
+    if (cart_export_time >= cart_receive_time) {
+      setErrors(["เวลาส่งอาหารต้องน้อยกว่าเวลารับอาหาร"]);
+      return;
+    }
 
     setLoading(true);
     setErrors([]);
