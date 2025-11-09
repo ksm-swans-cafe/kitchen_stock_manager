@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function POST(
   req: NextRequest,
@@ -9,6 +10,9 @@ export async function POST(
     params: Promise<{ transaction_type: string; ingredient_name: string }>;
   }
 ) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const { ingredient_name: ingredientName, transaction_type: type } = await params;
 
   try {

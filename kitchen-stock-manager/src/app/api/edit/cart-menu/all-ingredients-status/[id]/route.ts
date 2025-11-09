@@ -1,16 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-
-// เพิ่มฟังก์ชัน helper สำหรับจัดการ BigInt
-function safeStringify(obj: any, space?: number): string {
-  return JSON.stringify(
-    obj,
-    (key, value) => {
-      return typeof value === "bigint" ? value.toString() : value;
-    },
-    space
-  );
-}
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 interface Ingredient {
   ingredient_name: string;
@@ -19,13 +9,9 @@ interface Ingredient {
   description: string;
 }
 
-interface MenuItem {
-  menu_name: string;
-  menu_total: number;
-  menu_ingredients: Ingredient[];
-}
-
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
   const params = await context.params;
   const { id } = params;
   const { isChecked } = await request.json();

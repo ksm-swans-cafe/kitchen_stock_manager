@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { put, del } from "@vercel/blob";
 import { randomUUID } from "crypto";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }): Promise<NextResponse> {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const { id } = params;
     const formData = await request.formData();
 
-    // ดึงข้อมูลจาก formData
     const ingredient_name = formData.get("ingredient_name")?.toString()?.trim();
     const ingredient_total = formData.get("ingredient_total");
     const ingredient_unit = formData.get("ingredient_unit")?.toString()?.trim();

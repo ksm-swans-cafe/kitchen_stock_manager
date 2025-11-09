@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 // import sql from "@app/database/connect";
 
 export async function POST(req: NextRequest, { params }: { params: { ingredient_name: string } }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const ingredientName = params.ingredient_name;
 
   try {
@@ -13,15 +17,11 @@ export async function POST(req: NextRequest, { params }: { params: { ingredient_
     const quantity = formData.get("transaction_quantity")?.toString();
     const unit = formData.get("transaction_units")?.toString()?.trim();
 
-    if (!username || !add_decrease || !total_price) 
-      return NextResponse.json({ error: "Username, add/decrease, and total price are required." }, { status: 400 });
+    if (!username || !add_decrease || !total_price) return NextResponse.json({ error: "Username, add/decrease, and total price are required." }, { status: 400 });
 
-    if (!ingredientName) 
-      return NextResponse.json({ error: "Ingredient name is required." }, { status: 400 });
-    
-    if (!quantity || !unit) 
-      return NextResponse.json({ error: "Quantity and unit are required." }, { status: 400 });
-    
+    if (!ingredientName) return NextResponse.json({ error: "Ingredient name is required." }, { status: 400 });
+
+    if (!quantity || !unit) return NextResponse.json({ error: "Quantity and unit are required." }, { status: 400 });
 
     // const result = await sql`
     //   INSERT INTO ingredient_transactions (
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: { ingredient_
     //   )
     //   RETURNING *;
     // `;
-    const result = await prisma.ingredient_transactions.create({
+    const result = await prisma.ingredient_transaction.create({
       data: {
         transaction_from_username: username,
         transaction_type: add_decrease,

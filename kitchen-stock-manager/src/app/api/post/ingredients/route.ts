@@ -2,8 +2,12 @@ import { NextResponse, NextRequest } from "next/server";
 import sql from "@/app/database/connect";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function POST(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const formData = await request.formData();
 

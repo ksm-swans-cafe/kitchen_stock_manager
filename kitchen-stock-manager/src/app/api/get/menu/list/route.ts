@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
-// ฟังก์ชันแปลง BigInt เป็น Number
 function convertBigIntToNumber(obj: any): any {
   if (obj === null || obj === undefined) return obj;
 
@@ -21,12 +21,15 @@ function convertBigIntToNumber(obj: any): any {
 }
 
 export async function GET() {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const result = await prisma.menu.findMany({
       orderBy: { menu_id: "asc" },
     });
     if (result.length === 0) return NextResponse.json({ message: "Menu not found" }, { status: 404 });
-    
+
     const convertedResult = convertBigIntToNumber(result);
     return NextResponse.json(convertedResult, { status: 200 });
   } catch (error) {

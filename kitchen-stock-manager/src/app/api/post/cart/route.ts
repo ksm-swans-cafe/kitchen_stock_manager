@@ -1,11 +1,14 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 function convertBigIntToNumber(obj: any): any {
   return JSON.parse(JSON.stringify(obj, (key, value) => (typeof value === "bigint" ? Number(value) : value)));
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
   try {
     const body = await request.json();
     const { cart_username, cart_lunchboxes, cart_menu_items, cart_customer_name, cart_customer_tel, cart_delivery_date, cart_location_send, cart_export_time, cart_receive_time, cart_shipping_cost } = body;
@@ -37,7 +40,6 @@ export async function POST(request: NextRequest) {
     const orderNumber = String(orderCount + 1).padStart(3, "0");
     const cartId = `CART-${orderNumber}-${Date.now()}`;
 
-    // แปลงข้อมูล lunchboxes
     const rawLunchboxes = cart_lunchboxes.map((lunchbox: any) => ({
       lunchbox_name: lunchbox.lunchbox_name || "",
       lunchbox_set_name: lunchbox.lunchbox_set || "",
