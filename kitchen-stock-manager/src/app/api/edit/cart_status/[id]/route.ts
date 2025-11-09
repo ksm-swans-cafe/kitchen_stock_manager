@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 function safeStringify(obj: any): string {
   return JSON.stringify(obj, (key, value) => {
@@ -8,9 +9,11 @@ function safeStringify(obj: any): string {
 }
 
 export async function PATCH(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const id = request.nextUrl.pathname.split("/").pop();
   const formData = await request.formData();
-  console.log("Form data:", Object.fromEntries(formData));
   const cart_status = formData.get("cart_status")?.toString()?.trim();
   const cart_last_updated = new Date().toISOString();
 
@@ -18,10 +21,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "No data provided" }, { status: 400 });
   }
 
-  console.log("Updating cart item with ID:", id, "to status:", cart_status);
-
   try {
-    // ขั้นตอนที่ 1: หา cart ด้วย cart_id เพื่อได้ id (primary key)
     const cart = await prisma.cart.findFirst({
       where: { cart_id: id },
       select: { id: true },
@@ -31,7 +31,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
     }
 
-    // ขั้นตอนที่ 2: อัปเดตด้วย id (primary key)
     const result = await prisma.cart.update({
       where: { id: cart.id },
       data: {
@@ -40,7 +39,6 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    // แก้ไข: ใช้ safeStringify หรือส่งคืนข้อมูลที่ปลอดภัย
     return new NextResponse(safeStringify(result), {
       status: 200,
       headers: { "Content-Type": "application/json" },

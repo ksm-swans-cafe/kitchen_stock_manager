@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function GET(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const { searchParams } = new URL(request.url);
     const lunchbox_name = searchParams.get("lunchbox_name");
     const lunchbox_set_name = searchParams.get("lunchbox_set_name");
-
 
     if (!lunchbox_name || !lunchbox_set_name) {
       return NextResponse.json({ message: "Missing required parameters" }, { status: 400 });
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
         menu_category: true,
         menu_cost: true,
         menu_ingredients: true,
-        menu_lunchbox: true, 
+        menu_lunchbox: true,
       },
     });
 
@@ -46,7 +49,6 @@ export async function GET(request: NextRequest) {
         lunchbox_menu_category: matchingLunchbox?.lunchbox_menu_category || null,
       };
     });
-
 
     return NextResponse.json({
       success: true,
