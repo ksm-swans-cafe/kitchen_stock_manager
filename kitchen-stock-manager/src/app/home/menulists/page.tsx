@@ -398,7 +398,7 @@ export default function Page() {
       | "lunchbox_set_name"
       | "lunchbox_cost"
       | "lunchbox_menu_category",
-    value: any,
+    value: string | number,
   ) => {
     const updated = [...menuLunchbox];
 
@@ -595,7 +595,7 @@ export default function Page() {
                       </td>
                     </tr>
                   ) : (
-                    menuItems.map((item) => (
+                    menuItems.map((item: MenuItem) => (
                       <tr
                         key={item.menu_id}
                         className="hover:bg-gray-50 transition-colors"
