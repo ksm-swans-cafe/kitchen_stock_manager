@@ -9,6 +9,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
 import axios from "axios";
+import * as XLSX from "xlsx";
 import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map, Download, Users, Edit2, Container } from "lucide-react";
 
 import FullCalendar from "@fullcalendar/react";
@@ -547,14 +548,16 @@ const SummaryList: React.FC = () => {
 
       try {
         await Promise.all(
-          targetCarts.map((cart) =>
-            axios.patch(`/api/edit/cart-menu/all-ingredients-status/${cart.id}`, JSON.stringify({ isChecked: true })).then(async (response) => {
+          targetCarts.map(async (cart) => {
+            const response = await axios.patch(
+              `/api/edit/cart-menu/all-ingredients-status/${cart.id}`,
+              JSON.stringify({ isChecked: true })
+            );
               if (response.status !== 200) {
                 const errorData = response.data;
                 throw new Error(errorData.error || `Failed to update all ingredients status for cart ${cart.id}`);
               }
             })
-          )
         );
 
         mutateCarts();
@@ -886,7 +889,71 @@ const SummaryList: React.FC = () => {
       });
 
       doc.save("order_history.pdf");
+    } else if (type === "excel") {
+      const worksheetData = filteredAndSortedOrders.map((cart) => {
+        const foodPrice =
+          cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+            ? cart.cart_lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+            : cart.price || 0;
+        const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
+        return {
+          "เลขที่ออร์เดอร์": cart.id,
+          "ชื่อเมนู": cart.name,
+          "คำอธิบายเมนู": menuDescriptions,
+          "วันที่": cart.date,
+          "เวลา": cart.time,
+          "จำนวน Set": cart.sets,
+          "ราคาอาหาร(บาท)": foodPrice,
+          "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+          "สถานะ": getStatus("text", cart.status),
+          "ผู้สร้าง": cart.createdBy,
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+      const timestamp = new Date().toISOString().split("T")[0];
+      XLSX.writeFile(workbook, `order_history_${timestamp}.xlsx`);
     }
+  };
+
+  const handleExportOrder = (cart: Cart) => {
+    const worksheetData = cart.menuItems.map((item) => ({
+      "รหัสออร์เดอร์": cart.order_number || cart.id,
+      "ชื่อเมนู": item.menu_name,
+      "คำอธิบายเมนู": item.menu_description || "",
+      "จำนวน Set": item.menu_total,
+      "ลูกค้า": cart.cart_customer_name,
+      "เบอร์โทร": cart.cart_customer_tel,
+      "สถานที่จัดส่ง": cart.cart_location_send,
+      "วันที่ส่ง": cart.cart_delivery_date,
+      "เวลาส่ง": cart.cart_export_time,
+      "เวลารับ": cart.cart_receive_time,
+      "สถานะ": getStatus("text", cart.status),
+    }));
+
+    if (worksheetData.length === 0) {
+      worksheetData.push({
+        "รหัสออร์เดอร์": cart.order_number || cart.id,
+        "ชื่อเมนู": "ไม่มีข้อมูลเมนู",
+        "คำอธิบายเมนู": "",
+        "จำนวน Set": 0,
+        "ลูกค้า": cart.cart_customer_name,
+        "เบอร์โทร": cart.cart_customer_tel,
+        "สถานที่จัดส่ง": cart.cart_location_send,
+        "วันที่ส่ง": cart.cart_delivery_date,
+        "เวลาส่ง": cart.cart_export_time,
+        "เวลารับ": cart.cart_receive_time,
+        "สถานะ": getStatus("text", cart.status),
+      });
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Order");
+    const fileName = `order_${(cart.order_number || cart.id).toString().replace(/\s+/g, "_")}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   // Fetch lunchboxes when opening edit dialog
@@ -1771,12 +1838,15 @@ const SummaryList: React.FC = () => {
             [ X ] ล้างฟิลเตอร์
             </Button>
           </div>
-          <div className='flex flex-center'>
+          <div className='flex flex-col sm:flex-row flex-center gap-2'>
             <Button onClick={() => handleExport("csv")} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> CSV
             </Button>
             <Button onClick={() => handleExport("pdf")} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> PDF
+            </Button>
+            <Button onClick={() => handleExport("excel")} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
+              <Download className='w-4 h-4 mr-2' /> Excel
             </Button>
           </div>
         </div>
@@ -1996,7 +2066,7 @@ const SummaryList: React.FC = () => {
                               </div>
                             </div>
                           </AccordionTrigger>
-                          <div className='flex justify-center mt-2'>
+                          <div className='flex justify-center mt-2 gap-2 flex-wrap'>
                             <StatusDropdown
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
@@ -2007,6 +2077,13 @@ const SummaryList: React.FC = () => {
                               onUpdated={() => handleUpdateWithCheck(cart)}
                               onOrderSummaryClick={() => handleSummary("order", cart)}
                             />
+                            <Button
+                              size='sm'
+                              className='h-9 px-4 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs'
+                              onClick={() => handleExportOrder(cart)}
+                            >
+                              <Download className='w-4 h-4 mr-2' /> Excel รายออร์เดอร์
+                            </Button>
                           </div>
                           <AccordionContent className='mt-4'>
                             <div className='grid md:grid-cols-2 gap-6'>
