@@ -2538,50 +2538,26 @@ const SummaryList: React.FC = () => {
                                                         </div>
 
                                                         {/* แก้ไขจำนวนวัตถุดิบ */}
-                                                        <div className='mt-3'>
-                                                          <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
-                                                          <div className='space-y-1'>
-                                                            {(() => {
-                                                              const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
-                                                              const ingredients = editableItem?.menu_ingredients ?? menu.menu_ingredients;
-                                                              return ingredients.map((ingredient, ingIdx) => (
-                                                                <div key={`${ingredient.ingredient_name}-${lunchboxIdx}-${menuIdx}-${ingIdx}`} className='flex items-center justify-between text-xs text-gray-600'>
-                                                                  <span>• {ingredient.ingredient_name}</span>
-                                                                  <div className='flex items-center gap-2'>
-                                                                    <input
-                                                                      type='number'
-                                                                      min={0}
-                                                                      className='w-20 h-7 px-2 border rounded'
-                                                                      value={ingredient.useItem ?? 0}
-                                                                      onChange={(e) => {
-                                                                        const newUse = Number(e.target.value) || 0;
-                                                                        setEditMenuDialog((prev) => {
-                                                                          if (!prev) return prev;
-                                                                          return {
-                                                                            ...prev,
-                                                                            menuItems: prev.menuItems.map((mi) =>
-                                                                              mi.menu_name === menu.menu_name
-                                                                                ? {
-                                                                                    ...mi,
-                                                                                    menu_ingredients: mi.menu_ingredients.map((ing) =>
-                                                                                      ing.ingredient_name === ingredient.ingredient_name
-                                                                                        ? { ...ing, useItem: newUse }
-                                                                                        : ing
-                                                                                    ),
-                                                                                  }
-                                                                                : mi
-                                                                            ),
-                                                                          };
-                                                                        });
-                                                                      }}
-                                                                    />
-                                                                    <span>หน่วย</span>
-                                                                  </div>
-                                                                </div>
-                                                              ));
-                                                            })()}
-                                                          </div>
-                                                        </div>
+                                                        <AccordionContent className='pt-3 space-y-2'> 
+                                                        {menu.menu_ingredients?.map((ing, idx) => (
+                                                    <div 
+                                                      key={idx} 
+                                                      className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.ingredient_status ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}
+                                                    >
+                                                      <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+                                                      
+                                                      <div className='flex items-center gap-4'>
+                                                        <span className='text-gray-600'>
+                                                          ใช้ {ing.useItem} {ing.ingredient_unit || 'หน่วย'} × {menu.menu_total} กล่อง ={" "}
+                                                          <strong className='text-black-600' style={{ color: "#000000" }}>
+                                                            {ing.useItem * menu.menu_total}
+                                                          </strong>{" "}
+                                                          {ing.ingredient_unit || 'หน่วย'}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                        </AccordionContent>
                                                       </div>
                                                     ))}
                                                   </div>
@@ -2670,38 +2646,63 @@ const SummaryList: React.FC = () => {
                                                     )}
                                                   </div>
                                                 </AccordionTrigger>
-                                                
+                                                {/* แสดงผลวัตถุดิบ */}
                                                 <AccordionContent className='pt-3 space-y-2'>
-                                                  {menu.menu_ingredients?.map((ing, idx) => (
-                                                    <div 
-                                                      key={idx} 
-                                                      className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.ingredient_status ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}
-                                                    >
-                                                      <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-                                                      
-                                                      <div className='flex items-center gap-4'>
-                                                        <span className='text-gray-600'>
-                                                          ใช้ {ing.useItem} {ing.ingredient_unit || 'หน่วย'} × {menu.menu_total} กล่อง ={" "}
-                                                          <strong className='text-black-600' style={{ color: "#000000" }}>
-                                                            {ing.useItem * menu.menu_total}
-                                                          </strong>{" "}
-                                                          {ing.ingredient_unit || 'หน่วย'}
-                                                        </span>
-                                                        
-                                                        <label className='cursor-pointer'>
+                                                  <div className='mt-3'>
+                                                          <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
+                                                          <div className='space-y-1'>
+                                                            {(() => {
+                                                              const editableItem = editMenuDialog?.menuItems.find((m) => m.menu_name === menu.menu_name);
+                                                              const ingredients = editableItem?.menu_ingredients ?? menu.menu_ingredients;
+                                                              return ingredients.map((ingredient, ingIdx) => (
+                                                                <div key={`${ingredient.ingredient_name}-${lunchboxIdx}-${menuIdx}-${ingIdx}`} className='flex items-center justify-between text-xs text-gray-600'>
+                                                                  <span>• {ingredient.ingredient_name}</span>
+                                                                  <div className='flex items-center gap-2'>
+                                                                    <input
+                                                                      type='number'
+                                                                      min={0}
+                                                                      className='w-20 h-7 px-2 border rounded'
+                                                                      value={ingredient.useItem ?? 0}
+                                                                      onChange={(e) => {
+                                                                        const newUse = Number(e.target.value) || 0;
+                                                                        setEditMenuDialog((prev) => {
+                                                                          if (!prev) return prev;
+                                                                          return {
+                                                                            ...prev,
+                                                                            menuItems: prev.menuItems.map((mi) =>
+                                                                              mi.menu_name === menu.menu_name
+                                                                                ? {
+                                                                                    ...mi,
+                                                                                    menu_ingredients: mi.menu_ingredients.map((ing) =>
+                                                                                      ing.ingredient_name === ingredient.ingredient_name
+                                                                                        ? { ...ing, useItem: newUse }
+                                                                                        : ing
+                                                                                    ),
+                                                                                  }
+                                                                                : mi
+                                                                            ),
+                                                                          };
+                                                                        });
+                                                                      }}
+                                                                    />
+                                                                    <span>หน่วย</span>
+                                                                    <label className='cursor-pointer'>
                                                           <input 
                                                             type='checkbox' 
-                                                            checked={ing.ingredient_status || false} 
-                                                            onChange={() => handleToggleIngredientCheck(cart.id, menu.menu_name, ing.ingredient_name)} 
+                                                            checked={ingredient.ingredient_status || false} 
+                                                            onChange={() => handleToggleIngredientCheck(cart.id, menu.menu_name, ingredient.ingredient_name)} 
                                                             className='hidden' 
                                                           />
-                                                          <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.ingredient_status ? "bg-green-500" : "bg-red-500"}`}>
-                                                            <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.ingredient_status ? "translate-x-5" : "translate-x-0.5"}`} />
+                                                          <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ingredient.ingredient_status ? "bg-green-500" : "bg-red-500"}`}>
+                                                            <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ingredient.ingredient_status ? "translate-x-5" : "translate-x-0.5"}`} />
                                                           </span>
                                                         </label>
-                                                      </div>
-                                                    </div>
-                                                  ))}
+                                                                  </div>
+                                                                </div>
+                                                              ));
+                                                            })()}
+                                                          </div>
+                                                        </div>
                                                 </AccordionContent>
                                               </AccordionItem>
                                             );
@@ -2730,7 +2731,6 @@ const SummaryList: React.FC = () => {
                                               })()}
                                             </div>
                                           </AccordionTrigger>
-                                          
                                           <AccordionContent className='pt-3 space-y-2'>
                                             {menuGroup.ingredients.map((ing, idx) => (
                                               <div 
