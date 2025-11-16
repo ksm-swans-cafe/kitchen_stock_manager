@@ -2551,7 +2551,7 @@ const SummaryList: React.FC = () => {
                                                                       ใช้ <input
                                                                         type='number'
                                                                         min={0}
-                                                                        className='w-20 h-7 px-2 border rounded'
+                                                                        className='w-20 h-7 px-2 border rounded text-mi'
                                                                         value={ing.useItem ?? 0}
                                                                         onChange={(e) => {
                                                                           const newUse = Number(e.target.value) || 0;
@@ -2685,7 +2685,8 @@ const SummaryList: React.FC = () => {
                                                             <span>• {ingredient.ingredient_name}</span>
                                                             <div className='flex items-center gap-2'>
                                                               <input
-                                                                type='number'
+                                                                disabled  
+                                                                type='text'
                                                                 min={0}
                                                                 className='w-20 h-7 px-2 border rounded'
                                                                 value={ingredient.useItem ?? 0}
