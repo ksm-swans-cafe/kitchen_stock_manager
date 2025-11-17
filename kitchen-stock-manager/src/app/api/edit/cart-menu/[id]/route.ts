@@ -1,22 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
-interface MenuItem {
+
+interface MenuIngredient {
+  useItem: number;
+  ingredient_name: string;
+  ingredient_status: boolean;
+}
+
+interface LunchboxMenu {
   menu_name: string;
+  menu_subname: string;
+  menu_category: string;
   menu_total: number;
-  ingredients: {
-    useItem: number;
-    ingredient_id: number;
-    ingredient_name: string;
-    ingredient_status: boolean;
-  }[];
+  menu_ingredients: MenuIngredient[];
   menu_description: string;
+  menu_cost?: number;
   menu_order_id: number;
+}
+
+interface Lunchbox {
+  lunchbox_name: string;
+  lunchbox_set_name: string;
+  lunchbox_limit: number;
+  lunchbox_total: number;
+  lunchbox_total_cost: number;
+  lunchbox_menu: LunchboxMenu[];
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
+
   const params = await context.params;
   const { id } = params;
   const { menuName, menu_total } = await request.json();
@@ -34,12 +49,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
   try {
     const [cart] = await prisma.cart.findMany({
-      where: {
-        cart_id: id,
-      },
+      where: { cart_id: id },
       select: {
         cart_id: true,
-        cart_menu_items: true,
+        cart_lunchbox: true,
       },
     });
 
@@ -48,52 +61,61 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    console.log("Fetched cart_menu_items:", cart.cart_menu_items);
+    console.log("Fetched cart_lunchbox:", cart.cart_lunchbox);
 
-    let menuItems: MenuItem[] = [];
-    if (cart.cart_menu_items) {
-      if (typeof cart.cart_menu_items === "string") {
+    let lunchboxes: Lunchbox[] = [];
+    if (cart.cart_lunchbox) {
+      if (typeof cart.cart_lunchbox === "string") {
         try {
-          menuItems = JSON.parse(cart.cart_menu_items);
-          if (!Array.isArray(menuItems)) {
-            console.error("cart_menu_items is not an array:", menuItems);
-            return NextResponse.json({ error: "ข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
+          lunchboxes = JSON.parse(cart.cart_lunchbox);
+          if (!Array.isArray(lunchboxes)) {
+            console.error("cart_lunchbox is not an array:", lunchboxes);
+            return NextResponse.json({ error: "ข้อมูล lunchbox ในตะกร้าไม่ถูกต้อง" }, { status: 400 });
           }
         } catch (e) {
-          console.error("JSON parse error:", (e as Error).message, "Raw data:", cart.cart_menu_items);
-          return NextResponse.json({ error: "รูปแบบข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
+          console.error("JSON parse error:", (e as Error).message, "Raw data:", cart.cart_lunchbox);
+          return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ในตะกร้าไม่ถูกต้อง" }, { status: 400 });
         }
-      } else if (Array.isArray(cart.cart_menu_items)) {
-        menuItems = (cart.cart_menu_items as unknown as MenuItem[]).filter((item): item is MenuItem => item !== null);
-      } else {
-        console.error("Invalid cart_menu_items format:", cart.cart_menu_items);
-        return NextResponse.json({ error: "รูปแบบข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
+      } else if (Array.isArray(cart.cart_lunchbox)) {
+        lunchboxes = cart.cart_lunchbox as unknown as Lunchbox[];
       }
     }
 
-    if (menuItems.length === 0) {
-      console.warn("Empty menuItems for cart:", id);
-      return NextResponse.json({ error: "ไม่มีเมนูในตะกร้า" }, { status: 400 });
+    if (lunchboxes.length === 0) {
+      console.warn("Empty lunchboxes for cart:", id);
+      return NextResponse.json({ error: "ไม่มี lunchbox ในตะกร้า" }, { status: 400 });
     }
 
     const cleanedMenuName = menuName.trim();
-    const menuExists = menuItems.find((item: MenuItem) => item.menu_name?.trim() === cleanedMenuName);
+    let menuFound = false;
 
-    if (!menuExists) {
+    // อัปเดต menu_total ของเมนูในทุก lunchbox ที่มีเมนูนี้
+    const updatedLunchboxes = lunchboxes.map((lunchbox) => ({
+      ...lunchbox,
+      lunchbox_menu: lunchbox.lunchbox_menu.map((menu) => {
+        if (menu.menu_name?.trim() === cleanedMenuName) {
+          menuFound = true;
+          return { ...menu, menu_total: total };
+        }
+        return menu;
+      }),
+    }));
+
+    if (!menuFound) {
       console.warn("Menu not found:", cleanedMenuName);
       return NextResponse.json({ error: `ไม่พบเมนู "${cleanedMenuName}" ในตะกร้า` }, { status: 404 });
     }
 
-    const updatedMenuItems = menuItems.map((item: MenuItem) => (item.menu_name?.trim() === cleanedMenuName ? { ...item, menu_total: total } : item));
-
     const result = await prisma.cart.update({
-      where: { cart_id: id },
+      where: { id: id },
       data: {
-        cart_menu_items: JSON.stringify(updatedMenuItems),
+        cart_lunchbox: updatedLunchboxes,
+        cart_last_update: new Date().toISOString(),
       },
     });
 
-    console.log("Update result:", result, "Updated data:", result.cart_menu_items);
+
+    console.log("Update result:", result);
 
     if (!result) {
       console.error("Failed to update cart for id:", id);
@@ -103,7 +125,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({
       success: true,
       cart: result,
-      updatedMenu: updatedMenuItems.find((m) => m.menu_name === cleanedMenuName),
     });
   } catch (error: unknown) {
     console.error("Server error:", {
