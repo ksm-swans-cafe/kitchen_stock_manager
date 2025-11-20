@@ -1,7 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const id = params.id;
   try {
     const result = await prisma.ingredients.findMany({

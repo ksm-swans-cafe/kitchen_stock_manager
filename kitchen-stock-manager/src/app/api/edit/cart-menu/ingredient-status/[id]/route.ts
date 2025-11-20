@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 interface Ingredient {
   ingredient_name: string;
@@ -15,6 +16,9 @@ interface MenuItem {
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const params = await context.params;
   const { id } = params;
   const { menuName, ingredientName, isChecked } = await request.json();
@@ -119,9 +123,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     console.error("Server error:", error);
     console.error("Error details:", error instanceof Error ? error.message : String(error));
     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
-    return NextResponse.json({ 
-      error: "เกิดข้อผิดพลาดในการอัปเดทข้อมูล",
-      details: error instanceof Error ? error.message : String(error)
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "เกิดข้อผิดพลาดในการอัปเดทข้อมูล",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }

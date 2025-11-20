@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 function convertBigIntToNumber(obj: any): any {
   if (obj === null || obj === undefined) return obj;
 
-  if (typeof obj === "bigint") {
-    return Number(obj);
-  }
+  if (typeof obj === "bigint") return Number(obj);
 
-  if (Array.isArray(obj)) {
-    return obj.map((item) => convertBigIntToNumber(item));
-  }
+  if (Array.isArray(obj)) return obj.map((item) => convertBigIntToNumber(item));
 
   if (typeof obj === "object") {
     const converted: any = {};
-    for (const key in obj) {
-      converted[key] = convertBigIntToNumber(obj[key]);
-    }
+    for (const key in obj) converted[key] = convertBigIntToNumber(obj[key]);
     return converted;
   }
 
@@ -24,6 +19,9 @@ function convertBigIntToNumber(obj: any): any {
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const params = await context.params;
   const { id } = params;
 
@@ -37,9 +35,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
   console.log("Received data:", { id, menuName, menuIngredientsRaw, menuSubname, menuCategory, menuCost, menuLunchboxRaw });
 
-  if (!id) {
-    return NextResponse.json({ error: "กรุณาระบุ id" }, { status: 400 });
-  }
+  if (!id) return NextResponse.json({ error: "กรุณาระบุ id" }, { status: 400 });
 
   if (!menuName || !menuIngredientsRaw || !menuSubname || !menuCategory || !menuCost) {
     return NextResponse.json(

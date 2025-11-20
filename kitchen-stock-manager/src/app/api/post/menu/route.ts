@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function POST(req: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const formData = await req.formData();
     const menu_name = formData.get("menu_name")?.toString().trim();
@@ -49,7 +53,7 @@ export async function POST(req: NextRequest) {
         menu_cost: parseInt(menu_cost) || 0,
         menu_ingredients: parsedIngredients,
         menu_lunchbox: parsedLunchbox,
-        menu_image: "", 
+        menu_image: "",
       },
     });
 

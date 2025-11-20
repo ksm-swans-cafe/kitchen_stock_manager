@@ -1,7 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 export async function PATCH(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const id = request.nextUrl.pathname.split("/").pop();
     const body = await request.json();
@@ -19,7 +22,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Cart not found" }, { status: 404 });
     }
 
-    // Define the type for updateData to avoid using 'any'
     type UpdateData = {
       cart_last_update: string;
       cart_username?: string;

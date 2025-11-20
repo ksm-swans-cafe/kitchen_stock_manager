@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function PATCH(
   req: NextRequest,
   context: {
     params: Promise<{
-      transaction_date: string; 
+      transaction_date: string;
       ingredient_name: string;
     }>;
   }
 ) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const params = await context.params;
-  const rawDateTime = decodeURIComponent(params.transaction_date); 
+  const rawDateTime = decodeURIComponent(params.transaction_date);
   const ingredientName = params.ingredient_name;
 
   try {
@@ -34,7 +38,7 @@ export async function PATCH(
     });
 
     if (!transaction) return NextResponse.json({ error: "Transaction not found." }, { status: 404 });
-    
+
     const result = await prisma.ingredient_transactions.update({
       where: {
         transaction_id: transaction.transaction_id,

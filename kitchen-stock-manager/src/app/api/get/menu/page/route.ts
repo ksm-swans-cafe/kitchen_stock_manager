@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
-// ฟังก์ชันแปลง BigInt เป็น Number
 function convertBigIntToNumber(obj: any): any {
   if (obj === null || obj === undefined) return obj;
 
@@ -25,6 +25,9 @@ function convertBigIntToNumber(obj: any): any {
 }
 
 export async function GET(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
