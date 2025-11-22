@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 
-import { Plus, Search, Filter, Grid3X3, List, Send, X } from "lucide-react";
+import { Search, Filter, Grid3X3, List, Send } from "lucide-react";
 
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,7 @@ import TopStepper from "@/components/order/TopStepper";
 import MenuCard from "@/components/order/MenuCard";
 import MobileActionBar from "@/components/order/MobileActionBar";
 
+import FoodMenuSetIcon from "@/assets/food-menu.png";
 interface LunchBoxFromAPI {
   lunchbox_name: string;
   lunchbox_set_name: string;
@@ -127,7 +128,7 @@ export default function Order() {
       } catch (error) {
         console.error("Error fetching lunchbox data:", error);
       } finally {
-        setIsLoadingLunchboxData(false); // หยุด loading
+        setIsLoadingLunchboxData(false);
       }
     };
 
@@ -204,7 +205,6 @@ export default function Order() {
     fetchMenus();
   }, [selectedFoodSet, selectedSetMenu, lunchboxData]);
 
-  // เพิ่ม useEffect สำหรับการเลือกข้าวอัตโนมัติ - แก้ไขใหม่
   useEffect(() => {
     if (selectedFoodSet && selectedSetMenu && availableMenus.length > 0) {
       // ตรวจสอบว่าเป็น Custom และ limit = 0 หรือไม่
@@ -231,38 +231,28 @@ export default function Order() {
     }
   }, [selectedFoodSet, selectedSetMenu, availableMenus, lunchboxData]);
 
-  // เมื่อ reset หรือเปลี่ยน set menu ให้ reset riceQuantity ด้วย
   useEffect(() => {
-    if (!selectedSetMenu) {
-      setRiceQuantity(0);
-    }
+    if (!selectedSetMenu) setRiceQuantity(0);
   }, [selectedSetMenu]);
 
-  // Helper function to normalize Thai text for searching
-  // Converts "เเ" (two sara-e) to "แ" (sara-ae) for consistent searching
   const normalizeThaiText = (text: string): string => {
     if (!text) return "";
-    // แปลง "เเ" (U+0E40 U+0E40) เป็น "แ" (U+0E41)
     return text.replace(/เเ/g, "แ");
   };
 
   // Filter menus based on search query
   const filteredMenus = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return availableMenus; // Show all available menus if no search query
-    }
+    if (!searchQuery.trim()) return availableMenus;
 
     const query = searchQuery.toLowerCase();
     const normalizedQuery = normalizeThaiText(query);
 
     return availableMenus.filter((menu) => {
-      // Normalize menu text for comparison
       const normalizedMenuName = normalizeThaiText(menu.menu_name?.toLowerCase() || "");
       const normalizedMenuSubname = normalizeThaiText(menu.menu_subname?.toLowerCase() || "");
       const normalizedMenuDescription = normalizeThaiText(menu.menu_description?.toLowerCase() || "");
       const normalizedMenuCategory = normalizeThaiText(menu.lunchbox_menu_category?.toLowerCase() || "");
 
-      // Search in normalized text
       return normalizedMenuName.includes(normalizedQuery) || normalizedMenuSubname.includes(normalizedQuery) || menu.menu_cost?.toString().includes(query) || normalizedMenuDescription.includes(normalizedQuery) || normalizedMenuCategory.includes(normalizedQuery);
     });
   }, [availableMenus, searchQuery]);
@@ -277,7 +267,6 @@ export default function Order() {
       const isRiceMenu = selectedMenu.lunchbox_menu_category === "ข้าว";
       const isUnlimited = limit === 0;
 
-      // ตรวจสอบว่าเป็น Custom unlimited หรือไม่
       const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
 
       // ตรวจสอบว่าเมนูนี้อยู่ใน category ที่กำหนดใน AddRiceAuto หรือไม่
@@ -289,9 +278,7 @@ export default function Order() {
 
         if (isSelected) {
           // ถ้าเป็น Custom unlimited และเป็นเมนูใน category ใดๆ (ไม่ใช่ข้าว)
-          // ให้ลดจำนวนข้าวตามจำนวนที่ลดลง
           if (isCustomUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category) {
-            // เอาออกเมนูก่อน
             let newPrev = prev.filter((item) => item !== menuName);
 
             // นับจำนวนเมนูใน category เดียวกันที่เหลืออยู่ (ไม่นับข้าว)
@@ -305,7 +292,6 @@ export default function Order() {
               // จำนวนข้าวที่ควรมี (1 ข้าวต่อ 1 เมนูใน category เดียวกัน)
               const requiredRiceCount = menusInCategory.length;
 
-              // อัปเดต quantity ของข้าว
               setRiceQuantity(requiredRiceCount);
 
               // ถ้าไม่มีเมนูเหลือแล้ว ให้เอาข้าวออก
@@ -322,7 +308,6 @@ export default function Order() {
 
           // ถ้าเป็น Custom unlimited และเป็นข้าว
           if (isRiceMenu && isCustomUnlimited) {
-            // ตรวจสอบว่ามีเมนูใน category ใดๆ ที่ยังเหลืออยู่หรือไม่
             const allSelectedMenus = availableMenus.filter((menu) => prev.includes(menu.menu_name) && menu.lunchbox_menu_category !== "ข้าว");
             const totalMenuCount = allSelectedMenus.length;
 
@@ -337,20 +322,16 @@ export default function Order() {
               setRiceQuantity(riceQuantity - 1);
               return prev; // ยังคงข้าวไว้ แต่ลด quantity
             } else {
-              // ถ้า quantity = 1 ให้เอาออก
               setRiceQuantity(0);
               return prev.filter((item) => item !== menuName);
             }
           } else if (isRiceMenu && !isCustomUnlimited) {
-            // ถ้าไม่ใช่ Custom unlimited ให้ใช้เงื่อนไขเดิม
             alert("ไม่สามารถยกเลิกการเลือกข้าวได้ เนื่องจากข้าวเป็นส่วนประกอบหลักของชุดอาหาร");
             return prev;
           }
 
-          // กรณีอื่นๆ ให้เอาออกตามปกติ
           return prev.filter((item) => item !== menuName);
         } else {
-          // การเลือกเมนูใหม่
           const currentSelectedMenus = availableMenus.filter((menu) => prev.includes(menu.menu_name));
 
           // ถ้าเป็น Custom unlimited ให้อนุญาตให้เลือกหมวดเดียวกันซ้ำได้
@@ -375,14 +356,12 @@ export default function Order() {
               // คำนวณจำนวนข้าวที่ต้องการ (1 ข้าวต่อ 1 เมนูใน category)
               const requiredRiceCount = menusInCategory.length + 1; // +1 เพราะกำลังจะเพิ่มเมนูใหม่
 
-              // อัปเดต quantity ของข้าว
               setRiceQuantity(requiredRiceCount);
 
               // ถ้ายังไม่มีข้าวในรายการ ให้เพิ่มข้าว
               if (!prev.includes(riceMenuName)) {
                 return [...prev, riceMenuName, menuName];
               } else {
-                // ถ้ามีข้าวอยู่แล้ว แค่เพิ่มเมนูใหม่
                 return [...prev, menuName];
               }
             }
@@ -414,10 +393,7 @@ export default function Order() {
         return;
       }
 
-      // ป้องกันการ submit ซ้ำ
-      if (isSaving) {
-        return;
-      }
+      if (isSaving) return;
 
       setIsSaving(true);
 
@@ -427,12 +403,8 @@ export default function Order() {
         selectedMenuItems.forEach((menuName) => {
           const menu = availableMenus.find((m) => m.menu_name === menuName);
           // ถ้าเป็นข้าว ให้ใช้ quantity จาก state
-          if (menu?.lunchbox_menu_category === "ข้าว") {
-            menuCountMap.set(menuName, riceQuantity);
-          } else {
-            // ถ้าไม่ใช่ข้าว ให้นับตามปกติ
-            menuCountMap.set(menuName, (menuCountMap.get(menuName) || 0) + 1);
-          }
+          if (menu?.lunchbox_menu_category === "ข้าว") menuCountMap.set(menuName, riceQuantity);
+          else menuCountMap.set(menuName, (menuCountMap.get(menuName) || 0) + 1);
         });
 
         // สร้าง selectedMenuObjects โดยไม่ซ้ำกัน แต่เก็บ quantity ไว้
@@ -450,9 +422,7 @@ export default function Order() {
               const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
               const objectsToCreate = isCustomUnlimited ? quantity : 1;
 
-              for (let i = 0; i < objectsToCreate; i++) {
-                selectedMenuObjects.push({ ...menu });
-              }
+              for (let i = 0; i < objectsToCreate; i++) selectedMenuObjects.push({ ...menu });
               processedMenuNames.add(menuName);
             } else {
               console.warn(`Menu not found: ${menuName}`);
@@ -461,9 +431,7 @@ export default function Order() {
         }
 
         // ตรวจสอบว่ามี menu objects หรือไม่
-        if (selectedMenuObjects.length === 0) {
-          throw new Error("ไม่พบเมนูที่เลือก");
-        }
+        if (selectedMenuObjects.length === 0) throw new Error("ไม่พบเมนูที่เลือก");
 
         const setDataInfo2 = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
         const limit2 = setDataInfo2?.lunchbox_limit ?? 0;
@@ -563,26 +531,30 @@ export default function Order() {
 
       {/* Time - Improved responsive typography */}
       <div className='text-center mb-4 md:mb-6 pt-3'>
-        <div className='text-sm md:text-base xl:text-lg font-medium text-gray-600'>
+        <div className='text-sm md:text-base xl:text-lg font-bold text-black'>
+          วันที่{" "}
           {currentTime
-            ? currentTime
-                .toLocaleDateString("th-TH", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "2-digit",
-                })
-                .replace(/\//g, "/")
-            : "--/--/--"}
+            ? (() => {
+                const date = currentTime;
+                const day = date.toLocaleDateString("th-TH", { day: "2-digit" });
+                const month = date.toLocaleDateString("th-TH", { month: "long" });
+                const year = date.toLocaleDateString("th-TH", { year: "numeric" });
+
+                return `${day} ${month} ${year}`;
+              })()
+            : "วัน เดือน พ.ศ."}
         </div>
-        <div className='text-sm md:text-base xl:text-lg font-medium text-gray-600'>
+        <div className='text-sm md:text-base xl:text-lg font-bold text-black'>
+          เวลา{" "}
           {currentTime
             ? currentTime.toLocaleTimeString("th-TH", {
                 hour12: false,
                 hour: "2-digit",
                 minute: "2-digit",
-                second: "2-digit",
+                // second: "2-digit",
               })
-            : "--:--:--"}
+            : "--:--"}{" "}
+          น.
         </div>
       </div>
 
@@ -744,9 +716,7 @@ export default function Order() {
                 const limit = setData?.lunchbox_limit ?? 0;
 
                 // ถ้า limit > 0 ต้องเลือกครบ, ถ้า limit = 0 (ไม่จำกัด) เลือกอย่างน้อย 1 เมนูก็ได้
-                if (limit > 0) {
-                  return selectedMenuItems.length !== limit;
-                }
+                if (limit > 0) return selectedMenuItems.length !== limit;
                 return false; // limit = 0 (ไม่จำกัด)
               })()}
               className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${
@@ -951,7 +921,7 @@ export default function Order() {
                   <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                   <input
                     type='text'
-                    placeholder='ค้นหาสินค้า, ราคา...'
+                    placeholder='ค้นหาเมนูอาหาร'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className='w-full pl-10 pr-10 py-2.5 sm:py-3 lg:py-4 bg-white/80 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm sm:text-base'
@@ -1003,8 +973,65 @@ export default function Order() {
                         key={index}
                         className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
                         onClick={() => setSelectedFoodSet(foodSet)}>
-                        <div className='aspect-square bg-[linear-gradient(to_bottom_right,theme(colors.orange.100),theme(colors.orange.200),theme(colors.orange.300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300'>
-                          <span className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'>🍽️</span>
+                        <div className='aspect-square bg-[linear-gradient(to_bottom_right,var(--color-orange-100),var(--color-orange-200),var(--color-orange-300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300'>
+                          {/* <span className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'> */}
+                          <svg width={100} height={100} version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
+                            <path
+                              style={{ fill: "#4DA3FF" }}
+                              d='M379.089,134.898v247.18c0,11.396,9.238,20.634,20.634,20.634h91.643
+	c11.396,0,20.634-9.238,20.634-20.634v-247.18C512,134.898,379.089,134.898,379.089,134.898z'
+                            />
+                            <rect x='379.087' y='134.902' style={{ opacity: 0.3, fill: "#333333" }} width='132.913' height='20.756' />
+                            <rect x='379.087' y='62.138' style={{ fill: "#8AE6A1" }} width='132.913' height='72.76' />
+                            {/* <g> */}
+                            <path
+                              style={{ opacity: 0.15, fill: "#333333" }}
+                              d='M405.899,382.078v-247.18h-26.81v247.18
+	                                c0,11.396,9.238,20.634,20.634,20.634h26.81C415.137,402.712,405.899,393.474,405.899,382.078z'
+                            />
+                            <rect
+                              x='379.087'
+                              y='62.138'
+                              width='26.81'
+                              height='72.76'
+                              style={{ opacity: 0.15, fill: "#333333" }}
+                              d='M210.43,209.417h-67.717c-33.582,0-60.904-27.321-60.904-60.904s27.321-60.904,60.904-60.904h67.717
+	c33.582,0,60.903,27.321,60.903,60.904S244.012,209.417,210.43,209.417z M142.713,125.893c-12.473,0-22.619,10.147-22.619,22.619
+	s10.147,22.619,22.619,22.619h67.717c12.473,0,22.619-10.147,22.619-22.619s-10.147-22.619-22.619-22.619
+	C210.43,125.893,142.713,125.893,142.713,125.893z'
+                            />
+                            <path
+                              style={{ opacity: 0.15, fill: "#333333" }}
+                              d='M233.049,148.513c0,12.473-10.146,22.619-22.619,22.619
+	h-67.716c-12.473,0-22.619-10.146-22.619-22.619c0-5.165,1.744-9.929,4.669-13.741H83.392c-1.023,4.419-1.582,9.015-1.582,13.741
+	c0,33.582,27.321,60.904,60.904,60.904h67.716c33.582,0,60.903-27.321,60.903-60.904c0-4.726-0.559-9.321-1.582-13.741H228.38
+	C231.305,138.584,233.049,143.348,233.049,148.513z'
+                            />
+                            <path
+                              style={{ fill: "#FFCA66" }}
+                              d='M20.358,402.712h312.426c11.244,0,20.358-9.114,20.358-20.358V175.886
+	c0-11.244-9.114-20.358-20.358-20.358H20.358C9.114,155.528,0,164.643,0,175.886v206.468C0,393.598,9.114,402.712,20.358,402.712z'
+                            />
+                            <path
+                              style={{ fill: "#FF8095" }}
+                              d='M295.214,199.283H57.93c-7.829,0-14.176,6.347-14.176,14.176v131.326
+	c0,7.829,6.347,14.176,14.176,14.176h237.284c7.829,0,14.176-6.347,14.176-14.176V213.458
+	C309.39,205.628,303.043,199.283,295.214,199.283z'
+                            />
+                            <circle style={{ fill: "#D9576D" }} cx='363.526' cy='378.12' r='71.742' />
+                            <path
+                              style={{ opacity: 0.15, fill: "#333333" }}
+                              d='M316.405,378.118c0-35.419,25.677-64.823,59.427-70.664
+	c-4.002-0.693-8.111-1.075-12.311-1.075c-39.62,0-71.738,32.119-71.738,71.738c0,39.62,32.118,71.738,71.738,71.738
+	c4.2,0,8.309-0.382,12.311-1.073C342.082,442.941,316.405,413.537,316.405,378.118z'
+                            />
+                            <path
+                              style={{ fill: "#8AE6A1" }}
+                              d='M331.519,270.708c-3.873,9.849-1.834,21.483,6.127,29.443c7.96,7.96,19.596,9.999,29.443,6.127
+	c3.873-9.849,1.834-21.483-6.127-29.443C353.001,268.874,341.366,266.836,331.519,270.708z'
+                            />
+                          </svg>
+                          {/* </span> */}
                         </div>
                         <div className='text-center p-2 sm:p-3 lg:p-4'>
                           <h3 className='font-semibold text-gray-800 text-xs sm:text-sm lg:text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2'>ชุด {foodSet}</h3>
@@ -1019,7 +1046,7 @@ export default function Order() {
               {selectedFoodSet && !selectedSetMenu && (
                 <div>
                   <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 flex flex-col gap-2'>
-                    <span className='bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>2. เลือก Set อาหาร</span>
+                    <span className='bg-linear-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>2. เลือก Set อาหาร</span>
                     <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{availableSetMenus.length} รายการ</span>
                   </h2>
 
@@ -1034,7 +1061,8 @@ export default function Order() {
                           className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
                           onClick={() => setSelectedSetMenu(setMenu)}>
                           <div className='aspect-square bg-[linear-gradient(to_bottom_right,theme(colors.blue.100),theme(colors.blue.200),theme(colors.blue.300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300'>
-                            <span className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'>📋</span>
+                            {/* <span className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'></span> */}
+                            <img src={FoodMenuSetIcon.src} className='w-[100px] h-[100px]' alt='' />
                           </div>
 
                           <div className='text-center p-2 sm:p-3 lg:p-4'>

@@ -2,8 +2,6 @@
 
 import React, { KeyboardEvent, forwardRef, memo } from "react";
 
-
-
 export type MenuCardSize = "sm" | "md" | "lg";
 
 export type MenuCardProps = {
@@ -13,16 +11,13 @@ export type MenuCardProps = {
   category?: string | null;
   emoji?: string;
 
-  // Visual states
   selected?: boolean;
-  forced?: boolean; // e.g., rice auto-selected and cannot be deselected
-  duplicate?: boolean; // attempting to pick item in a taken category
-  disabled?: boolean; // true disables interaction
+  forced?: boolean; 
+  duplicate?: boolean; 
+  disabled?: boolean;
 
-  // Behavior
   onClick?: (menuId: string) => void;
 
-  // UI
   className?: string;
   size?: MenuCardSize;
   showPrice?: boolean;

@@ -92,13 +92,9 @@ export default function CartList() {
   // const [availableSets, setAvailableSets] = useState<string[]>([]);
   const router = useRouter();
 
-  // Reset success state when component mounts
   useEffect(() => {
-    // Reset success state when component mounts to prevent showing success popup when navigating back
-    if (success) {
-      setSuccess(false);
-    }
-  }, []); // Run only on mount
+    if (success) setSuccess(false);
+  }, []);
 
   useEffect(() => {
     if (cart_delivery_date) {
@@ -374,26 +370,43 @@ export default function CartList() {
   return (
     <main className='min-h-screen text-black'>
       <div className='p-4 max-w-md mx-auto'>
-        <h1 className='text-2xl font-bold mb-4'>🛒 รายการในตะกร้า</h1>
+        <h1 className='text-2xl !font-bold mb-4 flex items-center gap-2'>
+          <svg
+            version='1.1'
+            id='Layer_1'
+            xmlns='http://www.w3.org/2000/svg'
+            xmlnsXlink='http://www.w3.org/1999/xlink'
+            x='0px'
+            y='0px'
+            viewBox='0 0 115.35 122.88'
+            // style={{ enableBackground: 'new 0 0 115.35 122.88' }}
+            xmlSpace='preserve'
+            className='inline !w-6 !h-6'>
+            <g>
+              <path d='M25.27,86.92c-1.81,0-3.26-1.46-3.26-3.26s1.47-3.26,3.26-3.26h21.49c1.81,0,3.26,1.46,3.26,3.26s-1.46,3.26-3.26,3.26 H25.27L25.27,86.92L25.27,86.92z M61.1,77.47c-0.96,0-1.78-0.82-1.78-1.82c0-0.96,0.82-1.78,1.78-1.78h4.65c0.04,0,0.14,0,0.18,0 c1.64,0.04,3.1,0.36,4.33,1.14c1.37,0.87,2.37,2.19,2.92,4.15c0,0.04,0,0.09,0.05,0.14l0.46,1.82h39.89c1,0,1.78,0.82,1.78,1.78 c0,0.18-0.05,0.36-0.09,0.55l-4.65,18.74c-0.18,0.82-0.91,1.37-1.73,1.37l0,0l-29.18,0c0.64,2.37,1.28,3.65,2.14,4.24 c1.05,0.68,2.87,0.73,5.93,0.68h0.04l0,0h20.61c1,0,1.78,0.82,1.78,1.78c0,1-0.82,1.78-1.78,1.78H87.81l0,0 c-3.79,0.04-6.11-0.05-7.98-1.28c-1.92-1.28-2.92-3.46-3.92-7.43l0,0L69.8,80.2c0-0.05,0-0.05-0.04-0.09 c-0.27-1-0.73-1.69-1.37-2.05c-0.64-0.41-1.5-0.59-2.51-0.59c-0.05,0-0.09,0-0.14,0H61.1L61.1,77.47L61.1,77.47z M103.09,114.13 c2.42,0,4.38,1.96,4.38,4.38s-1.96,4.38-4.38,4.38s-4.38-1.96-4.38-4.38S100.67,114.13,103.09,114.13L103.09,114.13L103.09,114.13z M83.89,114.13c2.42,0,4.38,1.96,4.38,4.38s-1.96,4.38-4.38,4.38c-2.42,0-4.38-1.96-4.38-4.38S81.48,114.13,83.89,114.13 L83.89,114.13L83.89,114.13z M25.27,33.58c-1.81,0-3.26-1.47-3.26-3.26c0-1.8,1.47-3.26,3.26-3.26h50.52 c1.81,0,3.26,1.46,3.26,3.26c0,1.8-1.46,3.26-3.26,3.26H25.27L25.27,33.58L25.27,33.58z M7.57,0h85.63c2.09,0,3.99,0.85,5.35,2.21 s2.21,3.26,2.21,5.35v59.98h-6.5V7.59c0-0.29-0.12-0.56-0.31-0.76c-0.2-0.19-0.47-0.31-0.76-0.31l0,0H7.57 c-0.29,0-0.56,0.12-0.76,0.31S6.51,7.3,6.51,7.59v98.67c0,0.29,0.12,0.56,0.31,0.76s0.46,0.31,0.76,0.31h55.05 c0.61,2.39,1.3,4.48,2.23,6.47H7.57c-2.09,0-3.99-0.85-5.35-2.21C0.85,110.24,0,108.34,0,106.25V7.57c0-2.09,0.85-4,2.21-5.36 S5.48,0,7.57,0L7.57,0L7.57,0z M25.27,60.25c-1.81,0-3.26-1.46-3.26-3.26s1.47-3.26,3.26-3.26h50.52c1.81,0,3.26,1.46,3.26,3.26 s-1.46,3.26-3.26,3.26H25.27L25.27,60.25L25.27,60.25z' />
+            </g>
+          </svg>
+          รายการในตะกร้า
+        </h1>
 
         <div className='grid grid-cols-2 gap-4 mb-4'>
           <div className='flex flex-col gap-1'>
-            <label className='font-medium'>ชื่อลูกค้า</label>
+            <label className='font-bold'>ชื่อลูกค้า</label>
             <input type='text' value={cart_customer_name} onChange={(e) => setCustomerInfo({ name: e.target.value })} placeholder='ชื่อลูกค้า' className='border rounded px-3 py-2' />
           </div>
 
           <div className='flex flex-col gap-1'>
-            <label className='font-medium'>เบอร์โทรลูกค้า</label>
+            <label className='font-bold'>เบอร์โทรลูกค้า</label>
             <input type='text' value={cart_customer_tel} onChange={handlePhoneChange} placeholder='081-234-5678' className='border rounded px-3 py-2' />
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
-            <label className='font-medium'>สถานที่จัดส่ง</label>
+            <label className='font-bold'>สถานที่จัดส่ง</label>
             <input type='text' value={cart_location_send} onChange={(e) => setCustomerInfo({ location: e.target.value })} placeholder='สถานที่จัดส่ง' className='w-full border rounded px-3 py-2' />
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
-            <label className='font-medium'>วันที่จัดส่ง</label>
+            <label className='font-bold'>วันที่จัดส่ง</label>
             <DatePicker
               selected={rawDate ? new Date(rawDate) : null}
               onChange={(date: Date | null) => {
@@ -454,7 +467,7 @@ export default function CartList() {
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
-            <label htmlFor='food-delivery-time' className='font-medium'>
+            <label htmlFor='food-delivery-time' className='font-bold'>
               เวลาส่งอาหาร
             </label>
             <Flatpickr
@@ -476,7 +489,7 @@ export default function CartList() {
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
-            <label htmlFor='food-pickup-time' className='font-medium'>
+            <label htmlFor='food-pickup-time' className='font-bold'>
               เวลารับอาหาร
             </label>
             <Flatpickr
@@ -498,7 +511,7 @@ export default function CartList() {
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
-            <label className='font-medium'>ค่าจัดส่ง</label>
+            <label className='font-bold'>ค่าจัดส่ง</label>
             <input type='text' value={cart_shipping_cost} onChange={handleShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
           </div>
         </div>
@@ -597,8 +610,13 @@ export default function CartList() {
         )}
 
         <div className='border p-4 rounded mb-4'>
-          <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'>
-            ➕ เพิ่มชุดอาหาร
+          <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 '>
+            <svg viewBox='0 0 1024 1024' className='icon relative -top-0.5 !w-10 !h-10' version='1.1' xmlns='http://www.w3.org/2000/svg'>
+              <path d='M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z' fill='#4CAF50' />
+              <path d='M448 298.666667h128v426.666666h-128z' fill='#FFFFFF' />
+              <path d='M298.666667 448h426.666666v128H298.666667z' fill='#FFFFFF' />
+            </svg>
+            เพิ่มชุดอาหาร
           </button>
         </div>
 
