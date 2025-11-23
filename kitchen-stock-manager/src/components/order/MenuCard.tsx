@@ -110,16 +110,12 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       </div>
       
       {/* Body */}
-      <div className='p-2'>
-        <div className={cn("font-medium text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>
-          {name}
+      <div className='p-2 text-center'>
+        <div className={cn("font-bold text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>
+          เมนู{name}
         </div>
 
-        {showPrice && typeof price === "number" && price > 0 && <div className='mt-1 text-sm text-black font-semibold'>฿{price}</div>}
-
-        {showCategory && category && (
-          <div className='mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 text-sm text-black font-medium px-2 py-0.5'>#{category}</div>
-        )}
+        {showPrice && typeof price === "number" && price > 0 && <div className='mt-1 text-sm text-black'>ราคา {price} บาท</div>}
       </div>
 
       {/* Focus ring accent sweep (subtle visual polish) */}

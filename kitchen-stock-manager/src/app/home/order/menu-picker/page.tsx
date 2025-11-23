@@ -279,7 +279,7 @@ export default function Order() {
 
         if (isSelected) {
           // ถ้าเป็น Custom unlimited และเป็นเมนูใน category ใดๆ (ไม่ใช่ข้าว)
-          if (isCustomUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category) {
+          if (isCustomUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && isInAddRiceCategory) {
             let newPrev = prev.filter((item) => item !== menuName);
 
             // นับจำนวนเมนูใน category เดียวกันที่เหลืออยู่ (ไม่นับข้าว)
@@ -346,7 +346,7 @@ export default function Order() {
 
           // ถ้าเป็น Custom unlimited และเลือกเมนูใหม่ (ไม่ใช่ข้าว)
           // ให้เพิ่มจำนวนข้าวตามจำนวนเมนูใน category เดียวกัน
-          if (isCustomUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category) {
+          if (isCustomUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && isInAddRiceCategory) {
             const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว");
             if (riceMenus.length > 0) {
               const riceMenuName = riceMenus[0].menu_name;
