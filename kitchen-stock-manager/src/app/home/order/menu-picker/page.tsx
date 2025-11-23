@@ -14,6 +14,7 @@ import MenuCard from "@/components/order/MenuCard";
 import MobileActionBar from "@/components/order/MobileActionBar";
 
 import FoodMenuSetIcon from "@/assets/food-menu.png";
+import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 interface LunchBoxFromAPI {
   lunchbox_name: string;
   lunchbox_set_name: string;
@@ -1131,6 +1132,7 @@ export default function Order() {
                         <div className='animate-spin w-6 h-6 sm:w-8 sm:h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-3 sm:mb-4'></div>
                         <p className='text-gray-600 text-sm sm:text-base'>กำลังโหลดเมนู...</p>
                       </div>
+
                     </div>
                   ) : (
                     <div className='space-y-4 sm:space-y-6 lg:space-y-8'>
@@ -1165,11 +1167,10 @@ export default function Order() {
                                 <span className='text-xs sm:text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full'>{menusInCategory.length} เมนู</span>
                               </div>
 
-                              {/* Menus Grid for this category - Improved responsive layout */}
-                              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 lg:gap-4'>
+                              {/* Menus Grid for this category - Improved responsive layout แก้ตรงนี้*/}
+                              <div className='responsive-grid'>
                                 {menusInCategory.map((menu, index) => {
                                   const isSelected = selectedMenuItems.includes(menu.menu_name);
-
                                   // ถ้าเป็น Custom unlimited ให้อนุญาตให้เลือกหมวดเดียวกันซ้ำได้
                                   let isLunchboxCategoryTaken = false;
                                   if (!isCustomUnlimited) {
@@ -1189,12 +1190,14 @@ export default function Order() {
 
                                   return (
                                     <MenuCard
+                                      className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
                                       key={menu.menu_id || index}
                                       menuId={menu.menu_id || String(index)}
                                       name={menu.menu_name}
                                       price={menu.menu_cost || 0}
                                       category={menu.lunchbox_menu_category || undefined}
                                       emoji={menu.lunchbox_menu_category === "ข้าว" ? "🍚" : "🍜"}
+                                      image={FoodMenuIcon.src}
                                       selected={isSelected}
                                       forced={isAutoSelectedRice && !isCustomUnlimited} // แก้ไข: ไม่บังคับถ้าเป็น Custom unlimited
                                       duplicate={!!isLunchboxCategoryTaken}

@@ -10,6 +10,7 @@ export type MenuCardProps = {
   price?: number | null;
   category?: string | null;
   emoji?: string;
+  image?: string;
 
   selected?: boolean;
   forced?: boolean; 
@@ -26,9 +27,9 @@ export type MenuCardProps = {
 };
 
 const sizeMap: Record<MenuCardSize, { media: string; emoji: string }> = {
-  sm: { media: "h-20", emoji: "text-lg" },
-  md: { media: "h-24", emoji: "text-xl" },
-  lg: { media: "h-28", emoji: "text-2xl" },
+  sm: { media: "h-56", emoji: "text-lg" },   // ขยายขึ้นเล็กน้อย
+  md: { media: "h-60", emoji: "text-xl" },   // ขยายขึ้นเล็กน้อย
+  lg: { media: "h-64", emoji: "text-2xl" },  // ขยายขึ้นเล็กน้อย
 };
 
 const defaultEmojiByCategory: Record<string, string> = {
@@ -48,7 +49,7 @@ function getEmoji(emoji?: string, category?: string | null) {
   return "🍽️";
 }
 
-const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard({ menuId, name, price, category, emoji, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title }, ref) {
+const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard({ menuId, name, price, category, emoji, image, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title }, ref) {
   const sizeConf = sizeMap[size] || sizeMap.md;
   const isDisabled = disabled || (!!duplicate && !selected);
 
@@ -99,18 +100,26 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
         </div>
       )}
 
-      {/* Media / Emoji */}
+      {/* Media / Emoji or Image */}
       <div className={cn(sizeConf.media, "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]", "flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.02]")} aria-hidden>
-        <span className={cn(sizeConf.emoji)}>{getEmoji(emoji, category || undefined)}</span>
+        {image ? (
+          <img src={image} className="w-3/4 h-3/4 object-contain p-2" alt={name} />
+        ) : (
+          <span className={cn(sizeConf.emoji)}>{getEmoji(emoji, category || undefined)}</span>
+        )}
       </div>
-
+      
       {/* Body */}
       <div className='p-2'>
-        <div className={cn("font-medium text-gray-800 text-xs lg:text-sm leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>{name}</div>
+        <div className={cn("font-medium text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>
+          {name}
+        </div>
 
-        {showPrice && typeof price === "number" && price > 0 && <div className='mt-1 text-[11px] text-gray-700 font-semibold'>฿{price}</div>}
+        {showPrice && typeof price === "number" && price > 0 && <div className='mt-1 text-sm text-black font-semibold'>฿{price}</div>}
 
-        {showCategory && category && <div className='mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 text-[10px] text-gray-600 px-2 py-0.5'>#{category}</div>}
+        {showCategory && category && (
+          <div className='mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 text-sm text-black font-medium px-2 py-0.5'>#{category}</div>
+        )}
       </div>
 
       {/* Focus ring accent sweep (subtle visual polish) */}
