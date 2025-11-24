@@ -8,6 +8,7 @@ import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphon
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -649,6 +650,34 @@ const OrderHistory = () => {
     doc.save("order_history.pdf");
   };
 
+  const handleExportExcel = () => {
+    const worksheetData = filteredAndSortedOrders.map((cart) => {
+      const foodPrice =
+        cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+          ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+          : cart.price || 0;
+      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
+      return {
+        "เลขที่ออร์เดอร์": cart.id,
+        "ชื่อเมนู": cart.name,
+        "คำอธิบายเมนู": menuDescriptions,
+        "วันที่": cart.date,
+        "เวลา": cart.time,
+        "จำนวน Set": cart.sets,
+        "ราคาอาหาร(บาท)": foodPrice,
+        "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+        "สถานะ": getStatusText(cart.status),
+        "ผู้สร้าง": cart.createdBy,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData as any[]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+    const timestamp = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(workbook, `order_history_${timestamp}.xlsx`);
+  };
+
   const handleUpdateWithCheck = (cart: { id: string; allIngredients: any[] }) => {
     const allIngredientsChecked = cart.allIngredients.every((menuGroup) => menuGroup.ingredients.every((ing: any) => ing.isChecked));
 
@@ -803,6 +832,9 @@ const OrderHistory = () => {
             </Button>
             <Button onClick={handleExportPDF} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2 text-gray-400' /> PDF
+            </Button>
+            <Button onClick={handleExportExcel} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> Excel
             </Button>
           </div>
         </div>
