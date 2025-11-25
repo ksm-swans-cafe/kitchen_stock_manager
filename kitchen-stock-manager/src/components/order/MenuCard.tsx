@@ -110,10 +110,8 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       </div>
       
       {/* Body */}
-      <div className='p-2'>
-        <div className={cn("font-medium text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>
-          {name}
-        </div>
+      <div className='p-2 h-24'>
+        <div className={cn("font-medium text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>{name}</div>
 
         {showPrice && typeof price === "number" && price > 0 && <div className='mt-1 text-sm text-black font-semibold'>฿{price}</div>}
 
