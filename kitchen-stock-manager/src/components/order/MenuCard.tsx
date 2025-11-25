@@ -110,7 +110,7 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       </div>
       
       {/* Body */}
-      <div className='p-2 text-center'>
+      <div className='p-2 h-24 text-center'>
         <div className={cn("font-bold text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>
           เมนู{name}
         </div>
