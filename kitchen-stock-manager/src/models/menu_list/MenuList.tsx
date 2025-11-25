@@ -24,6 +24,7 @@ export interface MenuItem {
   menu_subname: string;
   menu_description?: string;
   menu_lunchbox: MenuLunchbox[];
+  menu_cost: number;
 }
 
 export interface IngredientUnit {
