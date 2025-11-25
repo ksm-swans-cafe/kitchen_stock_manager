@@ -1845,9 +1845,6 @@ const SummaryList: React.FC = () => {
             <Button onClick={() => handleExport("pdf")} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> PDF
             </Button>
-            <Button onClick={() => handleExport("excel")} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> Excel
-            </Button>
           </div>
         </div>
 
@@ -2077,13 +2074,6 @@ const SummaryList: React.FC = () => {
                               onUpdated={() => handleUpdateWithCheck(cart)}
                               onOrderSummaryClick={() => handleSummary("order", cart)}
                             />
-                            <Button
-                              size='sm'
-                              className='h-9 px-4 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs'
-                              onClick={() => handleExportOrder(cart)}
-                            >
-                              <Download className='w-4 h-4 mr-2' /> Excel รายออร์เดอร์
-                            </Button>
                           </div>
                           <AccordionContent className='mt-4'>
                             <div className='grid md:grid-cols-2 gap-6'>
