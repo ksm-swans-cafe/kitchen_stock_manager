@@ -13,6 +13,9 @@ import TopStepper from "@/components/order/TopStepper";
 import MenuCard from "@/components/order/MenuCard";
 import MobileActionBar from "@/components/order/MobileActionBar";
 
+import useLoadingDots from "@/lib/hook/Dots";
+
+import SetFoodIcon from "@/assets/setfood.png";
 import FoodMenuSetIcon from "@/assets/food-menu.png";
 import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 interface LunchBoxFromAPI {
@@ -51,6 +54,7 @@ export default function Order() {
   const [isLoadingMenus, setIsLoadingMenus] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLoadingLunchboxData, setIsLoadingLunchboxData] = useState<boolean>(true); // เพิ่ม state นี้
+  const dots = useLoadingDots();
 
   const Unlimited = {
     lunchbox_name: "Custom",
@@ -64,6 +68,7 @@ export default function Order() {
     lunchbox_limit: 0,
     lunchbox_menu_categoty: ["พะเเนง", "คั่วกลิ้ง", "ทอดกระเทียม", "กะเพรา", "ผัดผงกะหรี่", "ผัดพริกเเกงใต้"],
   };
+
   // Check for edit mode and manage loading state
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -500,7 +505,7 @@ export default function Order() {
         <div className='bg-white p-6 md:p-8 rounded-xl shadow-lg text-center max-w-sm w-full'>
           <div className='animate-spin w-10 h-10 md:w-12 md:h-12 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-4'></div>
           <h3 className='text-base md:text-lg font-medium text-gray-700 mb-2'>🔧 กำลังโหลดข้อมูลแก้ไข</h3>
-          <p className='text-sm text-gray-500'>รอสักครู่...</p>
+          <p className='text-base text-gray-500'>กรูณารอสักครู่{dots}</p>
         </div>
       </div>
     );
@@ -512,8 +517,11 @@ export default function Order() {
       <div className='min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-4'>
         <div className='bg-white p-6 md:p-8 rounded-xl shadow-lg text-center max-w-sm w-full'>
           <div className='animate-spin w-10 h-10 md:w-12 md:h-12 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-4'></div>
-          <h3 className='text-base md:text-lg font-medium text-gray-700 mb-2'>📦 กำลังโหลดข้อมูลชุดอาหาร</h3>
-          <p className='text-sm text-gray-500'>รอสักครู่...</p>
+          <h3 className='text-base md:text-lg font-medium text-gray-700 mb-2 flex items-center gap-2 justify-center'>
+            <img src={SetFoodIcon.src} alt='' className='w-10 h-10' />
+            กำลังโหลดข้อมูลชุดอาหาร
+          </h3>
+          <p className='text-base text-gray-500'>กรุณารอสักครู่{dots}</p>
         </div>
       </div>
     );
@@ -734,7 +742,7 @@ export default function Order() {
               {isSaving ? (
                 <>
                   <div className='animate-spin w-4 h-4 md:w-5 md:h-5 xl:w-6 xl:h-6 border-2 border-white border-t-transparent rounded-full'></div>
-                  กำลังบันทึก...
+                  กำลังบันทึก{dots}
                 </>
               ) : (
                 <>
@@ -773,7 +781,7 @@ export default function Order() {
           <div className='bg-white p-6 md:p-8 rounded-xl shadow-lg text-center max-w-sm w-full'>
             <div className='animate-spin w-10 h-10 md:w-12 md:h-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4'></div>
             <h3 className='text-base md:text-lg font-medium text-gray-700 mb-2'>{isEditMode ? "🔧 กำลังบันทึกการแก้ไข" : "💾 กำลังเพิ่มลงตะกร้า"}</h3>
-            <p className='text-sm text-gray-500'>กรุณารอสักครู่...</p>
+            <p className='text-base text-gray-500'>กรุณารอสักครู่{dots}</p>
           </div>
         </div>
       )}
@@ -1132,7 +1140,6 @@ export default function Order() {
                         <div className='animate-spin w-6 h-6 sm:w-8 sm:h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-3 sm:mb-4'></div>
                         <p className='text-gray-600 text-sm sm:text-base'>กำลังโหลดเมนู...</p>
                       </div>
-
                     </div>
                   ) : (
                     <div className='space-y-4 sm:space-y-6 lg:space-y-8'>

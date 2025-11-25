@@ -21,6 +21,7 @@ import { Badge } from "@/share/ui/badge";
 import { DetailIngredient } from "@/models/menu_card/MenuCard";
 import { MenuHome } from "@/models/common";
 import { fetcher } from "@/lib/utils";
+import useLoadingDots from "@/lib/hook/Dots";
 
 interface UseShowProps {
   showAll: boolean;
@@ -40,7 +41,7 @@ export default function Page() {
   const router = useRouter();
   const { showAll, showFullList, setShowAll, setShowFullList } = useShow();
   const popupRef = useRef<HTMLDivElement>(null);
-
+  const dots = useLoadingDots();
   const menuItems: MenuHome[] = [
     {
       id: "add-ingredients",
@@ -159,13 +160,13 @@ export default function Page() {
   if (isLoading)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Loading...
+        กำลังโหลดหน้า Website{dots}
       </div>
     );
   if (error)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Failed to load ingredients. Please try again.
+        เกิดข้อผิดพลาดในการโหลดข้อมูลวัตถุดิบ, กรุณาลองใหม่อีกครั้ง
       </div>
     );
 

@@ -610,7 +610,7 @@ export default function CartList() {
         )}
 
         <div className='border p-4 rounded mb-4'>
-          <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 '>
+          <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 text-white rounded hover:scale-110 hover:duration-300 hover:pointer hover:font-semibold'>
             <svg viewBox='0 0 1024 1024' className='icon relative -top-0.5 !w-10 !h-10' version='1.1' xmlns='http://www.w3.org/2000/svg'>
               <path d='M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z' fill='#4CAF50' />
               <path d='M448 298.666667h128v426.666666h-128z' fill='#FFFFFF' />
@@ -629,7 +629,7 @@ export default function CartList() {
             cursor: loading ? "not-allowed" : "pointer",
             color: "white",
           }}
-          className='w-full py-2 rounded font-bold transition'>
+          className={`w-full py-2 rounded font-bold transition ${loading ? "" : errors.length === 0 ? "hover:bg-green-400" : "hover:bg-red-400"}`}>
           {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
         </button>
 
