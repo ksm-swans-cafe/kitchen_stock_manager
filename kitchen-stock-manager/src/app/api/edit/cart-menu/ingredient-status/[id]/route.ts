@@ -98,8 +98,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: `ไม่พบวัตถุดิบ "${ingredientName}" ในเมนู "${menuName}"` }, { status: 404 });
     }
 
-    // console.log("Attempting to update cart with id:", cart.id);
-    // console.log("Updated lunchboxes:", JSON.stringify(updatedLunchboxes, null, 2));
+    console.log("Attempting to update cart with id:", cart.id);
+    console.log("Updated lunchboxes:", JSON.stringify(updatedLunchboxes, null, 2));
 
     const result = await prisma.cart.updateMany({
       where: { cart_id: id },
@@ -108,7 +108,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       },
     });
 
-    // console.log("Update result:", result);
+    console.log("Update result:", result);
 
     if (result.count === 0) {
       console.error("Failed to update cart for id:", id);

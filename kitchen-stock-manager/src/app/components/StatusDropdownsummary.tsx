@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import useSWR from "swr";
 import Swal from "sweetalert2";
@@ -26,12 +26,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocked, setIsLocked] = useState(defaultStatus === "success" || defaultStatus === "cancelled");
   const { userName } = useAuth();
-
-  // Sync selectedStatus with defaultStatus prop changes
-  useEffect(() => {
-    setSelectedStatus(defaultStatus);
-    setIsLocked(defaultStatus === "success" || defaultStatus === "cancelled");
-  }, [defaultStatus]);
 
   const { mutate: mutateCarts } = useSWR("/api/get/carts", fetcher);
   const { mutate: mutateIngredients } = useSWR("/api/get/ingredients", fetcher);
@@ -91,15 +85,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
         throw new Error(errorData.error || "Failed to update status");
       }
 
-      // อัปเดต state ทันที (Optimistic Update)
-      setSelectedStatus(statusToUpdate);
-      if (statusToUpdate === "success" || statusToUpdate === "cancelled") setIsLocked(true);
-
-      // เรียก callback พร้อมส่ง status ใหม่
-      onUpdated?.(statusToUpdate);
-
-      // Revalidate ข้อมูลจาก API
       await Promise.all([mutateCarts(), mutateIngredients()]);
+      onUpdated?.();
+
+      if (statusToUpdate === "success" || statusToUpdate === "cancelled") setIsLocked(true);
 
       Swal.fire({
         icon: "success",
@@ -109,6 +98,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
         timer: 4000,
       });
 
+      setSelectedStatus(statusToUpdate); // อัปเดต state ทันทีหลังสำเร็จ
       return true;
     } catch (error) {
       console.error("Error updating status:", error);

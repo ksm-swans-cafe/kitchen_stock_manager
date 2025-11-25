@@ -1,40 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-interface MenuIngredient {
-  useItem: number;
-  ingredient_name: string;
-  ingredient_status: boolean;
-}
-
-interface LunchboxMenu {
+interface MenuItem {
   menu_name: string;
-  menu_subname: string;
-  menu_category: string;
   menu_total: number;
+  menu_ingredients: {
+    useItem: number;
+    ingredient_name: string;
+    ingredient_status: boolean;
+  }[];
   menu_description: string;
-  menu_order_id: number;
-  menu_ingredients: MenuIngredient[];
-}
-
-// Interface สำหรับข้อมูลที่ส่งมาจาก frontend
-interface FrontendLunchbox {
-  lunchbox_name: string;
-  lunchbox_set: string; // ใช้ lunchbox_set แทน lunchbox_set_name
-  lunchbox_limit: number;
-  lunchbox_quantity: number; // ใช้ lunchbox_quantity แทน lunchbox_total
-  lunchbox_total_cost: string | number;
-  lunchbox_menus: LunchboxMenu[]; // ใช้ lunchbox_menus แทน lunchbox_menu
-}
-
-// Interface สำหรับข้อมูลใน database
-interface DatabaseLunchbox {
-  lunchbox_name: string;
-  lunchbox_set_name: string;
-  lunchbox_limit: number;
-  lunchbox_total: number;
-  lunchbox_total_cost: number;
-  lunchbox_menu: LunchboxMenu[];
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -49,16 +24,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ error: "Invalid JSON format in request body" }, { status: 400 });
   }
 
-  const { cart_lunchboxes } = body;
-  console.log("Received cart_lunchboxes:", JSON.stringify(cart_lunchboxes, null, 2));
+  const { menuItems } = body;
+  console.log("Received menuItems:", JSON.stringify(menuItems, null, 2));
 
-  if (!id) {
-    return NextResponse.json({ error: "กรุณาระบุ cart_id" }, { status: 400 });
-  }
-
-  // ตรวจสอบว่ามี cart_lunchboxes หรือไม่
-  if (!Array.isArray(cart_lunchboxes) || cart_lunchboxes.length === 0) {
-    return NextResponse.json({ error: "กรุณาระบุ cart_lunchboxes ที่ถูกต้อง" }, { status: 400 });
+  if (!id || !Array.isArray(menuItems) || menuItems.some((m: MenuItem) => !m.menu_name || m.menu_total < 0 || !Array.isArray(m.menu_ingredients) || m.menu_ingredients.some((ing) => !ing.ingredient_name || ing.useItem < 0) || m.menu_description === undefined || m.menu_description === null)) {
+    return NextResponse.json({ error: "กรุณาระบุ menuItems ที่ถูกต้อง" }, { status: 400 });
   }
 
   try {
@@ -66,7 +36,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       where: { cart_id: id },
       select: {
         cart_id: true,
-        cart_lunchbox: true,
+        cart_menu_items: true,
       },
     });
 
@@ -74,60 +44,61 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    let existingLunchboxes: DatabaseLunchbox[] = [];
-    if (cart.cart_lunchbox) {
+    let existingMenuItems: MenuItem[] = [];
+    if (cart.cart_menu_items) {
       try {
-        if (typeof cart.cart_lunchbox === "string") {
-          existingLunchboxes = JSON.parse(cart.cart_lunchbox);
-        } else if (Array.isArray(cart.cart_lunchbox)) {
-          existingLunchboxes = cart.cart_lunchbox as unknown as DatabaseLunchbox[];
+        if (typeof cart.cart_menu_items === "string") {
+          existingMenuItems = JSON.parse(cart.cart_menu_items);
+        } else if (Array.isArray(cart.cart_menu_items)) {
+          existingMenuItems = cart.cart_menu_items as unknown as MenuItem[];
+        } else {
+          existingMenuItems = [];
         }
-        if (!Array.isArray(existingLunchboxes)) {
-          console.warn("cart_lunchbox is not an array, resetting to empty array");
-          existingLunchboxes = [];
+        if (!Array.isArray(existingMenuItems)) {
+          console.warn("cart_menu_items is not an array, resetting to empty array");
+          existingMenuItems = [];
         }
       } catch (parseError) {
-        console.error("Failed to parse cart_lunchbox:", parseError);
-        existingLunchboxes = [];
+        console.error("Failed to parse cart_menu_items:", parseError);
+        existingMenuItems = [];
       }
     }
 
-    // แปลงข้อมูลจาก frontend format เป็น database format
-    const updatedLunchboxes: DatabaseLunchbox[] = cart_lunchboxes.map((frontendLunchbox: FrontendLunchbox) => {
-      const existingLunchbox = existingLunchboxes.find((lb) => lb.lunchbox_name === frontendLunchbox.lunchbox_name && lb.lunchbox_set_name === frontendLunchbox.lunchbox_set);
+    const invalidMenus = await Promise.all(
+      menuItems.map(async (item: MenuItem) => {
+        const [menuCheck] = await prisma.menu.findMany({
+          where: { menu_name: item.menu_name },
+          select: { menu_name: true },
+        });
+        return !menuCheck ? item.menu_name : null;
+      })
+    ).then((results) => results.filter((m) => m));
 
+    if (invalidMenus.length > 0) {
+      return NextResponse.json({ error: `เมนูต่อไปนี้ไม่มีอยู่ในระบบ: ${invalidMenus.join(", ")}` }, { status: 400 });
+    }
+
+    const updatedMenuItems = menuItems.map((item: MenuItem) => {
+      const existingMenu = existingMenuItems.find((m) => m.menu_name === item.menu_name);
+      const menuIngredients = item.menu_ingredients.map((ing) => ({
+        useItem: ing.useItem,
+        ingredient_name: ing.ingredient_name,
+        ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
+      }));
       return {
-        lunchbox_name: frontendLunchbox.lunchbox_name,
-        lunchbox_set_name: frontendLunchbox.lunchbox_set, // แปลง lunchbox_set เป็น lunchbox_set_name
-        lunchbox_limit: frontendLunchbox.lunchbox_limit,
-        lunchbox_total: frontendLunchbox.lunchbox_quantity, // แปลง lunchbox_quantity เป็น lunchbox_total
-        lunchbox_total_cost: Number(frontendLunchbox.lunchbox_total_cost) || 0,
-        lunchbox_menu: (frontendLunchbox.lunchbox_menus || []).map((newMenu) => {
-          const existingMenu = existingLunchbox?.lunchbox_menu?.find((m) => m.menu_name === newMenu.menu_name);
-
-          return {
-            menu_name: newMenu.menu_name,
-            menu_subname: newMenu.menu_subname || "",
-            menu_category: newMenu.menu_category || "",
-            menu_total: newMenu.menu_total || 0,
-            menu_description: newMenu.menu_description || "",
-            menu_order_id: newMenu.menu_order_id || 0,
-            menu_ingredients: (newMenu.menu_ingredients || []).map((newIng) => ({
-              useItem: newIng.useItem || 0,
-              ingredient_name: newIng.ingredient_name || "",
-              ingredient_status: existingMenu?.menu_ingredients?.find((ei) => ei.ingredient_name === newIng.ingredient_name)?.ingredient_status ?? newIng.ingredient_status ?? false,
-            })),
-          };
-        }),
+        menu_name: item.menu_name,
+        menu_total: item.menu_total,
+        menu_ingredients: menuIngredients,
+        menu_description: item.menu_description,
       };
     });
 
-    console.log("Updated lunchboxes to save:", JSON.stringify(updatedLunchboxes, null, 2));
+    console.log("Updated menuItems to save:", JSON.stringify(updatedMenuItems, null, 2));
 
     const result = await prisma.cart.updateMany({
       where: { cart_id: id },
       data: {
-        cart_lunchbox: updatedLunchboxes,
+        cart_menu_items: updatedMenuItems,
         cart_last_update: new Date().toISOString(),
       },
     });
