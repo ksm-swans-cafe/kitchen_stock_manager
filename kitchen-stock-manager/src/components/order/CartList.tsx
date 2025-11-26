@@ -569,7 +569,7 @@ export default function CartList() {
                   <div className='flex items-center gap-2 mb-2'>
                     <label className='text-sm'>ราคารวม:</label>
                     <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
-                    <span className='text-sm text-gray-500'>฿</span>
+                    <span className='text-sm text-gray-500'>บาท</span>
                   </div>
 
                   <div className='mb-2'>
