@@ -618,15 +618,15 @@ export default function Order() {
             }`}>
             {/* Similar structure to Step 1 with responsive improvements */}
             <div className='flex items-center justify-between'>
-              <div className='flex items-center space-x-3 xl:space-x-4'>
+              <div className='flex items-center space-x-3 xl:space-x-4 truncate '>
                 <div
-                  className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                    selectedSetMenu ? "bg-green-500 text-white" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white" : selectedFoodSet ? "bg-gray-400 text-white" : "bg-gray-300 text-gray-500"
+                  className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold truncate ${
+                    selectedSetMenu ? "bg-green-500 text-white truncate" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white truncate" : selectedFoodSet ? "bg-gray-400 text-white truncate " : "bg-gray-300 text-gray-500 truncate" 
                   }`}>
                   2
                 </div>
-                <div className='flex-1 min-w-0'>
-                  <div className='font-medium text-gray-800 text-sm md:text-base xl:text-lg'>เลือก Set อาหาร</div>
+                <div className='flex-1 min-w-0 truncate'>
+                  <div className='font-medium text-gray-800 text-sm md:text-base xl:text-lg truncate'>เลือก Set อาหาร</div>
                   <div className='text-xs md:text-sm xl:text-base text-gray-500 truncate'>
                     {selectedSetMenu ? (
                       <>
@@ -645,7 +645,7 @@ export default function Order() {
                   </div>
                 </div>
               </div>
-              {selectedSetMenu && <span className='text-green-600 text-lg md:text-xl xl:text-2xl'>✓</span>}
+              {selectedSetMenu && <span className='text-green-600 text-lg md:text-xl xl:text-2xl truncate'>✓</span>}
             </div>
           </button>
 
