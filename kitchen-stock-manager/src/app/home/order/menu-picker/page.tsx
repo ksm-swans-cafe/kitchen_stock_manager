@@ -62,6 +62,11 @@ export default function Order() {
     lunchbox_limit: 0,
   };
 
+  const extractPriceFromSetName = (setName: string): number | null => {
+    const match = setName.match(/(\d+)\s*baht/i);
+    return match ? parseInt(match[1], 10) : null;
+  };
+
   const AddRiceAuto = {
     lunchbox_name: "Custom",
     lunchbox_set_name: ["มีข้าวอยู่ในนั้น", "ไม่มีข้าวอยู่ในนั้น"],
@@ -275,6 +280,16 @@ export default function Order() {
 
       const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
 
+      // ตรวจสอบว่าเป็น Lunchbox Set E หรือ F หรือไม่
+      const isSidedishesSet = selectedFoodSet === "Lunch Box" && (selectedSetMenu === "E" || selectedSetMenu === "F");
+      const isSidedishesSetJ = selectedFoodSet === "อาหารเจ" && selectedSetMenu === "D";
+      const isSidedishesSetPre = selectedFoodSet === "Premium Lunch" && (selectedSetMenu === "270 baht" || selectedSetMenu === "300 baht" || selectedSetMenu === "379 baht");
+      // เพิ่มเงื่อนไขสำหรับ Premium Lunch Set "379 baht"
+      const isPremium379 = selectedFoodSet === "Premium Lunch" && selectedSetMenu === "379 baht";
+      const isSidedishCategory = selectedMenu.lunchbox_menu_category === "เครื่องเคียง";
+      // เพิ่มการตรวจสอบหมวด "กับข้าว"
+      const isMainDishCategory = selectedMenu.lunchbox_menu_category === "กับข้าวที่ 1";
+
       // ตรวจสอบว่าเมนูนี้อยู่ใน category ที่กำหนดใน AddRiceAuto หรือไม่
       const addRiceCategories = AddRiceAuto.lunchbox_menu_categoty || [];
       const isInAddRiceCategory = addRiceCategories.includes(selectedMenu.lunchbox_menu_category || "");
@@ -326,7 +341,7 @@ export default function Order() {
             // ลด quantity ของข้าว หรือเอาออกถ้า quantity = 0
             if (riceQuantity > 1) {
               setRiceQuantity(riceQuantity - 1);
-              return prev; // ยังคงข้าวไว้ แต่ลด quantity
+              return prev.filter((item) => item !== menuName);
             } else {
               setRiceQuantity(0);
               return prev.filter((item) => item !== menuName);
@@ -343,7 +358,40 @@ export default function Order() {
           // ถ้าเป็น Custom unlimited ให้อนุญาตให้เลือกหมวดเดียวกันซ้ำได้
           if (!isCustomUnlimited) {
             const existingLunchboxCategories = currentSelectedMenus.map((menu) => menu.lunchbox_menu_category).filter((category) => category);
-            if (selectedMenu.lunchbox_menu_category && existingLunchboxCategories.includes(selectedMenu.lunchbox_menu_category)) {
+
+            // กรณีพิเศษ: Premium Lunch Set "379 baht" - ให้เลือกเครื่องเคียงได้ 3 อย่าง
+            if (isPremium379 && isSidedishCategory) {
+              // นับจำนวนเมนูในหมวด "เครื่องเคียง" ที่เลือกไว้แล้ว
+              const sidedishCount = currentSelectedMenus.filter((menu) => menu.lunchbox_menu_category === "เครื่องเคียง").length;
+
+              // ถ้าเลือกครบ 3 อย่างแล้ว ให้แจ้งเตือน
+              if (sidedishCount >= 3) {
+                alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "เครื่องเคียง" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ครบ 3 อย่างแล้ว`);
+                return prev;
+              }
+            }
+            // กรณีพิเศษ: ถ้าเป็น Lunchbox Set E หรือ F หรือ อาหารเจ Set D หรือ Premium Lunch Set "270 baht", "300 baht" และเป็นหมวด "เครื่องเคียง" ให้เลือกได้ 2 อย่าง
+            else if ((isSidedishesSet || isSidedishesSetJ || (selectedFoodSet === "Premium Lunch" && (selectedSetMenu === "270 baht" || selectedSetMenu === "300 baht"))) && isSidedishCategory) {
+              // นับจำนวนเมนูในหมวด "เครื่องเคียง" ที่เลือกไว้แล้ว
+              const sidedishCount = currentSelectedMenus.filter((menu) => menu.lunchbox_menu_category === "เครื่องเคียง").length;
+
+              // ถ้าเลือกครบ 2 อย่างแล้ว ให้แจ้งเตือน
+              if (sidedishCount >= 2) {
+                alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "เครื่องเคียง" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ครบ 2 อย่างแล้ว`);
+                return prev;
+              }
+            }
+            // เพิ่มเงื่อนไขสำหรับ Premium Lunch Set "379 baht" - ให้เลือกกับข้าวได้ 2 อย่าง
+            else if (isPremium379 && isMainDishCategory) {
+              // นับจำนวนเมนูในหมวด "กับข้าว" ที่เลือกไว้แล้ว
+              const mainDishCount = currentSelectedMenus.filter((menu) => menu.lunchbox_menu_category === "กับข้าว").length;
+
+              // ถ้าเลือกครบ 2 อย่างแล้ว ให้แจ้งเตือน
+              if (mainDishCount >= 2) {
+                alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "กับข้าว" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ครบ 2 อย่างแล้ว`);
+                return prev;
+              }
+            } else if (selectedMenu.lunchbox_menu_category && existingLunchboxCategories.includes(selectedMenu.lunchbox_menu_category)) {
               alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "${selectedMenu.lunchbox_menu_category}" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ไว้แล้ว`);
               return prev;
             }
@@ -442,13 +490,18 @@ export default function Order() {
         const setDataInfo2 = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
         const limit2 = setDataInfo2?.lunchbox_limit ?? 0;
 
+        let totalCost: number;
+        const setPrice = extractPriceFromSetName(selectedSetMenu);
+        if (setPrice !== null) totalCost = setPrice;
+        else totalCost = selectedMenuObjects.reduce((total, menu) => total + (menu.menu_cost || 0), 0);
+
         const newLunchbox = {
           lunchbox_name: selectedFoodSet,
           lunchbox_set: selectedSetMenu,
           lunchbox_limit: limit2,
           selected_menus: selectedMenuObjects,
           quantity: 1,
-          lunchbox_total_cost: selectedMenuObjects.reduce((total, menu) => total + (menu.menu_cost || 0), 0).toString(),
+          lunchbox_total_cost: totalCost.toString(),
           note: note,
         };
 
@@ -467,7 +520,6 @@ export default function Order() {
           addLunchbox(newLunchbox);
         }
 
-        // Reset state ก่อน navigate
         setSelectedFoodSet("");
         setSelectedSetMenu("");
         setSelectedMenuItems([]);
@@ -475,8 +527,6 @@ export default function Order() {
         setIsEditMode(false);
         setEditingIndex(-1);
 
-        // ใช้ router.push แทน window.location เพื่อให้ Next.js จัดการ navigation
-        // และรอให้ state reset เสร็จก่อน
         await new Promise((resolve) => setTimeout(resolve, 200));
         router.push("/home/order");
       } catch (error) {
@@ -487,7 +537,6 @@ export default function Order() {
     },
   };
 
-  // Add responsive detection - ย้าย useEffect มาที่นี่ก่อน early return
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1024); // lg breakpoint
@@ -1178,6 +1227,22 @@ export default function Order() {
                               <div className='responsive-grid'>
                                 {menusInCategory.map((menu, index) => {
                                   const isSelected = selectedMenuItems.includes(menu.menu_name);
+
+                                  // ตรวจสอบว่าเป็น Custom unlimited หรือไม่
+                                  const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
+                                  const limit = setData?.lunchbox_limit ?? 0;
+                                  const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
+
+                                  // ตรวจสอบว่าเป็น Lunch Box Set E หรือ F หรือ อาหารเจ Set D หรือ Premium Lunch Set "270 baht" และเป็นหมวด "เครื่องเคียง" หรือไม่
+                                  const isSidedishesSet =
+                                    (selectedFoodSet === "Lunch Box" && (selectedSetMenu === "E" || selectedSetMenu === "F")) ||
+                                    (selectedFoodSet === "อาหารเจ" && selectedSetMenu === "D") ||
+                                    (selectedFoodSet === "Premium Lunch" && (selectedSetMenu === "270 baht" || selectedSetMenu === "300 baht" || selectedSetMenu === "379 baht"));
+                                  const isSidedishCategory = menu.lunchbox_menu_category === "เครื่องเคียง";
+                                  // เพิ่มเงื่อนไขสำหรับ Premium Lunch Set "379 baht"
+                                  const isPremium379 = selectedFoodSet === "Premium Lunch" && selectedSetMenu === "379 baht";
+                                  const isMainDishCategory = menu.lunchbox_menu_category === "กับข้าวที่ 1";
+
                                   // ถ้าเป็น Custom unlimited ให้อนุญาตให้เลือกหมวดเดียวกันซ้ำได้
                                   let isLunchboxCategoryTaken = false;
                                   if (!isCustomUnlimited) {
@@ -1185,7 +1250,39 @@ export default function Order() {
                                       .filter((m) => selectedMenuItems.includes(m.menu_name))
                                       .map((m) => m.lunchbox_menu_category)
                                       .filter((category) => category);
-                                    isLunchboxCategoryTaken = menu.lunchbox_menu_category && selectedLunchboxCategories.includes(menu.lunchbox_menu_category) && !isSelected;
+
+                                    // กรณีพิเศษ: Premium Lunch Set "379 baht" - ให้เลือกเครื่องเคียงได้ 3 อย่าง
+                                    if (isPremium379 && isSidedishCategory) {
+                                      // นับจำนวนเมนูในหมวด "เครื่องเคียง" ที่เลือกไว้แล้ว
+                                      const sidedishCount = availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name) && m.lunchbox_menu_category === "เครื่องเคียง").length;
+
+                                      // ถ้าเลือกครบ 3 อย่างแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
+                                      isLunchboxCategoryTaken = sidedishCount >= 3 && !isSelected;
+                                    }
+                                    // กรณีพิเศษ: ถ้าเป็น Lunch Box Set E หรือ F หรือ อาหารเจ Set D หรือ Premium Lunch Set "270 baht", "300 baht" และเป็นหมวด "เครื่องเคียง" ให้ตรวจสอบจำนวนที่เลือกไว้แล้ว
+                                    else if (
+                                      ((selectedFoodSet === "Lunch Box" && (selectedSetMenu === "E" || selectedSetMenu === "F")) ||
+                                        (selectedFoodSet === "อาหารเจ" && selectedSetMenu === "D") ||
+                                        (selectedFoodSet === "Premium Lunch" && (selectedSetMenu === "270 baht" || selectedSetMenu === "300 baht"))) &&
+                                      isSidedishCategory
+                                    ) {
+                                      // นับจำนวนเมนูในหมวด "เครื่องเคียง" ที่เลือกไว้แล้ว
+                                      const sidedishCount = availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name) && m.lunchbox_menu_category === "เครื่องเคียง").length;
+
+                                      // ถ้าเลือกครบ 2 อย่างแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
+                                      isLunchboxCategoryTaken = sidedishCount >= 2 && !isSelected;
+                                    }
+                                    // เพิ่มเงื่อนไขสำหรับ Premium Lunch Set "379 baht" - ให้เลือกกับข้าวได้ 2 อย่าง
+                                    else if (isPremium379 && isMainDishCategory) {
+                                      // นับจำนวนเมนูในหมวด "กับข้าว" ที่เลือกไว้แล้ว
+                                      const mainDishCount = availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name) && m.lunchbox_menu_category === "กับข้าว").length;
+
+                                      // ถ้าเลือกครบ 2 อย่างแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
+                                      isLunchboxCategoryTaken = mainDishCount >= 2 && !isSelected;
+                                    } else {
+                                      // กรณีปกติ: ถ้าหมวดนั้นถูกเลือกไปแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
+                                      isLunchboxCategoryTaken = !!menu.lunchbox_menu_category && selectedLunchboxCategories.includes(menu.lunchbox_menu_category) && !isSelected;
+                                    }
                                   }
 
                                   const isAutoSelectedRice = menu.lunchbox_menu_category === "ข้าว" && isSelected;
@@ -1254,15 +1351,23 @@ export default function Order() {
               const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
               const limit = setData?.lunchbox_limit ?? 0;
 
-              // ถ้า limit > 0 ต้องเลือกครบ, ถ้า limit = 0 (ไม่จำกัด) เลือกอย่างน้อย 1 เมนูก็ได้
               if (limit > 0) {
                 return selectedMenuItems.length === limit;
               }
-              return true; // limit = 0 (ไม่จำกัด)
+              return true;
             })()}
             saving={isSaving}
             editMode={isEditMode}
-            totalCost={selectedMenuItems.length > 0 ? availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name)).reduce((sum, m) => sum + (m.menu_cost || 0), 0) : null}
+            totalCost={(() => {
+              if (selectedMenuItems.length === 0) return null;
+
+              const setPrice = extractPriceFromSetName(selectedSetMenu);
+              if (setPrice !== null) {
+                return setPrice;
+              }
+
+              return availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name)).reduce((sum, m) => sum + (m.menu_cost || 0), 0);
+            })()}
             onSubmit={handle.Submit}
             onReset={() => {
               const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว").map((menu) => menu.menu_name);
