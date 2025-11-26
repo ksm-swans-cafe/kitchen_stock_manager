@@ -1,6 +1,5 @@
-"use client";
 import CartList from "@/components/order/CartList";
 
-export default function Order() {
+export default function Cart() {
   return <CartList />;
 }

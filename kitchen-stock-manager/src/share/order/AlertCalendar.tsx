@@ -3,11 +3,10 @@
 import React, { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { th } from 'date-fns/locale';
 
 type AlertCalendarProps = {
-  alertDates?: string[];
-  onSelectDate?: (date: Date) => void;
+  alertDates: string[];
+  onSelectDate: (date: Date) => void;
 };
 
 const AlertCalendar: React.FC<AlertCalendarProps> = ({

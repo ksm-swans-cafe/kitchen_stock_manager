@@ -6,7 +6,7 @@ import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { Badge } from "@/share/ui/badge";
 import SearchBox from "@/share/order/SearchBox_v2";
-import { ingredient } from "@/models/menu_card/MenuCard-model";
+import { DetailIngredient } from "@/models/menu_card/MenuCard";
 // import { Employee } from "@/models/employee/employee-model";
 import MenuCard from "@/share/order/MenuCard";
 import {
@@ -20,13 +20,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { fetcher } from "@/lib/utils";
 import useSWR from "swr";
+import axios from "axios";
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch ingredients list");
-  return res.json();
-};
 
 const normalizeThaiVowel = (text: string): string => {
   if (!text) return "";
@@ -35,11 +32,9 @@ const normalizeThaiVowel = (text: string): string => {
 
 export default function IngredientManagement() {
   const chunkSize = 1000;
-  // const [allIngredient, setIngredient] = useState<ingredient[]>([]);
   // const [allEmployee, setEmployee] = useState<Employee[]>([]);
   const [visibleCount, setVisibleCount] = useState(chunkSize);
   const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ทั้งหมด");
   const [searchQuery, setSearchQuery] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -49,17 +44,15 @@ export default function IngredientManagement() {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { userName } = useAuth();
 
-  // Detect mobile device based on window width
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 640); // Tailwind 'sm' breakpoint
+      setIsMobile(window.innerWidth <= 640);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Add Escape key support for closing popup
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelectedImage(null);
@@ -73,36 +66,31 @@ export default function IngredientManagement() {
     error,
     isLoading,
     mutate,
-  } = useSWR<ingredient[]>("/api/get/ingredients", fetcher, {
+  } = useSWR<DetailIngredient[]>("/api/get/ingredients", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     refreshInterval: 30000,
   });
 
-  const [ingredient, setingredient] = useState<ingredient>({
+  const [ingredient, setingredient] = useState<DetailIngredient>({
     ingredient_name: "",
     ingredient_total: 0,
     ingredient_unit: "",
     ingredient_image: "",
     ingredient_total_alert: 0,
-    // ingredient_category: "",
-    // ingredient_sub_category: "",
     ingredient_status: "",
     ingredient_price: 0,
   });
 
-  // ในฟังก์ชัน getStepValue
   const getStepValue = (unit: string): string => {
-    if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
-      return "1";
-    }
+    if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) return "1";
+
     // else if (["กิโลกรัม", "ลิตร"].includes(unit)) {
     //   return "0.01";
     // }
     return "";
   };
 
-  // ในฟังก์ชัน formatNumber
   const formatNumber = (value: number, unit: string): number => {
     if (["กรัม", "ฟอง", "ลูก", "มิลลิลิตร"].includes(unit)) {
       return Math.floor(value);
@@ -115,8 +103,7 @@ export default function IngredientManagement() {
 
   const handleAddIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsAddDialogOpen(true); // ป้องกัน dialog ปิดก่อน
-
+    setIsAddDialogOpen(true);
     try {
       const trimmedName = normalizeThaiVowel(ingredient.ingredient_name?.trim() || "");
       let total = Number(ingredient.ingredient_total);
@@ -135,31 +122,19 @@ export default function IngredientManagement() {
       formDataIngredient.append("ingredient_unit", ingredient.ingredient_unit.trim());
       formDataIngredient.append("ingredient_total_alert", String(alert));
       formDataIngredient.append("ingredient_price", String(ingredient.ingredient_price ?? 0).trim());
-      if (imageFile) {
-        formDataIngredient.append("ingredient_image", imageFile);
-      }
+      if (imageFile) formDataIngredient.append("ingredient_image", imageFile);
+      const res = await axios.post("/api/post/ingredients", formDataIngredient);
 
-      const res = await fetch("/api/post/ingredients", {
-        method: "POST",
-        body: formDataIngredient,
-      });
+      const result = res.data;
 
-      const result = await res.json();
-
-      if (!res.ok) {
-        if (res.status === 400) {
-          throw new Error("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
-        }
-        if (res.status === 409) {
-          throw new Error("ชื่อวัตถุดิบนี้มีอยู่แล้วในระบบ");
-        }
+      if (res.status !== 201) {
+        if (res.status === 400) throw new Error("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
+        if (res.status === 409) throw new Error("ชื่อวัตถุดิบนี้มีอยู่แล้วในระบบ");
         throw new Error(result.error || "Failed to add ingredient");
       }
 
-      const addedIngredient = result?.ingredient?.[0] ?? result?.data ?? result;
-      if (!addedIngredient) {
-        throw new Error("Invalid response format: No ingredient data");
-      }
+      const addedIngredient = result.ingredient[0] ?? result.data ?? result;
+      if (!addedIngredient) throw new Error("Invalid response format: No ingredient data");
 
       const type = "add";
       const formDataTransaction = new FormData();
@@ -169,17 +144,14 @@ export default function IngredientManagement() {
       formDataTransaction.append("transaction_units", ingredient.ingredient_unit.trim());
 
       const encodedIngredientName = encodeURIComponent(trimmedName);
-      const resTran = await fetch(`/api/post/${type}/stock/${encodedIngredientName}`, {
-        method: "POST",
-        body: formDataTransaction,
-      });
+      const resTran = await axios.post(`/api/post/${type}/stock/${encodedIngredientName}`, formDataTransaction);
 
-      if (!resTran.ok) {
-        const tranError = await resTran.json();
+      if (resTran.status !== 201) {
+        const tranError = resTran.data;
         throw new Error(tranError.error || "เกิดข้อผิดพลาดในการเพิ่มรายการธุรกรรม");
       }
 
-      const transactionResult = await resTran.json();
+      const transactionResult = resTran.data;
       if (!transactionResult.transaction_type) {
         throw new Error("Invalid transaction response format");
       }
@@ -193,7 +165,7 @@ export default function IngredientManagement() {
         ingredient_unit: "",
         ingredient_image: "",
         ingredient_total_alert: 0,
-        ingredient_status: "",
+        ingredient_status_value: "",
         ingredient_price: 0,
       });
       setImageFile(null);
@@ -204,17 +176,13 @@ export default function IngredientManagement() {
       toast.error(errorMessage);
     }
   };
-  const getStockStatus = (ingredient: ingredient): { label: string; color: string } => {
+
+  const getStockStatus = (ingredient: DetailIngredient): { label: string; color: string } => {
     const total = Number(ingredient.ingredient_total ?? 0);
     const alert = Number(ingredient.ingredient_total_alert ?? 0);
-
-    if (total >= alert * 2) {
-      return { label: "เพียงพอ", color: "success" };
-    } else if (total >= 1.5 * alert && total < 2 * alert) {
-      return { label: "ปานกลาง", color: "warning" };
-    } else {
-      return { label: "ใกล้หมด", color: "destructive" };
-    }
+    if (total >= alert * 2) return { label: "เพียงพอ", color: "success" };
+    else if (total >= 1.5 * alert && total < 2 * alert) return { label: "ปานกลาง", color: "warning" };
+    else return { label: "ใกล้หมด", color: "destructive" };
   };
 
   const filteredIngredient = useMemo(
@@ -234,25 +202,17 @@ export default function IngredientManagement() {
       filteredIngredient.slice(0, visibleCount).sort((a, b) => {
         const aStatus = getStockStatus(a).label;
         const bStatus = getStockStatus(b).label;
-
         const isALow = aStatus === "ใกล้หมด";
         const isBLow = bStatus === "ใกล้หมด";
 
         if (isALow && !isBLow) return -1;
         if (!isALow && isBLow) return 1;
-
-        if (isALow && isBLow) {
-          return (a.ingredient_total ?? 0) - (b.ingredient_total ?? 0);
-        }
+        if (isALow && isBLow) return (a.ingredient_total ?? 0) - (b.ingredient_total ?? 0);
 
         return 0;
       }),
     [filteredIngredient, visibleCount]
   );
-
-  const ingredients = (allIngredient || [])
-    .map((ingredient) => normalizeThaiVowel(ingredient.ingredient_name || ""))
-    .filter((ingredient_name): ingredient_name is string => typeof ingredient_name === "string");
 
   const lowStockIngredients = useMemo(
     () =>
@@ -263,6 +223,11 @@ export default function IngredientManagement() {
       }),
     [allIngredient]
   );
+  
+  const ingredients = (allIngredient || [])
+    .map((ingredient) => normalizeThaiVowel(ingredient.ingredient_name || ""))
+    .filter((ingredient_name): ingredient_name is string => typeof ingredient_name === "string");
+
 
   const loadMore = useCallback(() => {
     setVisibleCount((prev) => Math.min(prev + chunkSize, filteredIngredient.length));
@@ -272,9 +237,7 @@ export default function IngredientManagement() {
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting) {
-          loadMore();
-        }
+        if (entry.isIntersecting) loadMore();
       },
       {
         root: null,
@@ -297,7 +260,7 @@ export default function IngredientManagement() {
   };
 
   return (
-    <div className='flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto'>
+    <div className='flex min-h-screen flex-col items-center pt-4 px-5'>
       <div className='container'>
         {isLoading && <p>Loading...</p>}
         {error && <p className='text-red-500'>{error.message}</p>}
@@ -328,8 +291,8 @@ export default function IngredientManagement() {
           </Card>
         )}
 
-        <div className='flex flex-row items-center gap-2 w-full mb-2'>
-          <div className='relative flex-1 min-w-[120px] mt-2'>
+        <div className='flex flex-row  items-center gap-2 w-full mb-2'>
+          <div className='relative flex-1 min-w-[120px] padding-right-10 mt-2'>
             <SearchBox
               dataSource={ingredients}
               onSelect={(val) => setSearchQuery(val)}
@@ -345,7 +308,6 @@ export default function IngredientManagement() {
               <Select
                 value={selectedStatus}
                 onValueChange={(value) => {
-                  // console.log("Selected status:", value);
                   setSelectedStatus(value);
                 }}>
                 <SelectTrigger className='inline-flex min-w-fit px-3' style={{ zIndex: 1000 }}>
@@ -409,92 +371,23 @@ export default function IngredientManagement() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value='กรัม'>กรัม</SelectItem>
+                            <SelectItem value='กิโลกรัม'>กิโลกรัม</SelectItem>
                             <SelectItem value='มิลลิลิตร'>มิลลิลิตร</SelectItem>
-                            {/* <SelectItem value="กิโลกรัม">กิโลกรัม</SelectItem> */}
+                            <SelectItem value='ลิตร'>ลิตร</SelectItem>
+                            <SelectItem value='ชิ้น'>ชิ้น</SelectItem>
+                            <SelectItem value='ตัว'>ตัว</SelectItem>
+                            <SelectItem value='ซอง'>ซอง</SelectItem>
+                            <SelectItem value='ใบ'>ใบ</SelectItem>
+                            <SelectItem value='ถ้วย'>ถ้วย</SelectItem>
+                            <SelectItem value='กระป๋อง'>กระป๋อง</SelectItem>
+                            <SelectItem value='ขวด'>ขวด</SelectItem>
+                            <SelectItem value='ก้อน'>ก้อน</SelectItem>
                             <SelectItem value='ฟอง'>ฟอง</SelectItem>
                             <SelectItem value='ลูก'>ลูก</SelectItem>
-                            {/* <SelectItem value="ลิตร">ลิตร</SelectItem> */}
-                            {/* <SelectItem value="ถุง">ถุง</SelectItem> */}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-
-                    {/* <div>
-                      <Label htmlFor="category">ประเภท</Label>
-                      <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
-                        <Select
-                          value={ingredient.ingredient_category ?? ""}
-                          onValueChange={(value) =>
-                            setingredient({
-                              ...ingredient,
-                              ingredient_category: value,
-                              ingredient_sub_category: "",
-                            })
-                          }
-                          required
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="เลือกประเภท" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="วัตถุดิบหลัก">
-                              วัตถุดิบหลัก
-                            </SelectItem>
-                            <SelectItem value="ผักและผลไม้">
-                              ผักและผลไม้
-                            </SelectItem>
-                            <SelectItem value="ธัญพืชและแป้ง">
-                              ธัญพืชและแป้ง
-                            </SelectItem>
-                            <SelectItem value="เครื่องปรุงรส">
-                              เครื่องปรุงรส
-                            </SelectItem>
-                            <SelectItem value="วัตถุดิบแช่แข็งและแปรรูป">
-                              วัตถุดิบแช่แข็งและแปรรูป
-                            </SelectItem>
-                            <SelectItem value="ของแห้งและของแปรรูป">
-                              ของแห้งและของแปรรูป
-                            </SelectItem>
-                            <SelectItem value="เครื่องดื่มและส่วนผสมอื่น">
-                              เครื่องดื่มและส่วนผสมอื่น
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div> */}
-
-                    {/* {subCategoryMap[ingredient.ingredient_category ?? ""] && (
-                      <div>
-                        <Label htmlFor="sub-category">ประเภทย่อย</Label>
-                        <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
-                          <Select
-                            value={ingredient.ingredient_sub_category ?? ""}
-                            onValueChange={(value) =>
-                              setingredient({
-                                ...ingredient,
-                                ingredient_sub_category: value,
-                              })
-                            }
-                            required
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="เลือกประเภทย่อย" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {subCategoryMap[
-                                ingredient.ingredient_category ?? ""
-                              ].map((sub) => (
-                                <SelectItem key={sub} value={sub}>
-                                  {sub}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )} */}
-
                     <div>
                       <Label htmlFor='currentStock'>จำนวนปัจจุบัน</Label>
                       <div className='bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400'>
@@ -565,21 +458,6 @@ export default function IngredientManagement() {
                         />
                       </div>
                     </div>
-
-                    {/* <div>
-                      <Label htmlFor="image">รูปภาพวัตถุดิบ (ถ้ามี)</Label>
-                      <div className="bg-white rounded-md shadow hover:bg-gray-200 hover:text-blue-900 border border-gray-400">
-                        <Input
-                          id="image"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) =>
-                            setImageFile(e.target.files?.[0] || null)
-                          }
-                        />
-                      </div>
-                    </div> */}
-
                     <Button type='submit' className='w-full' disabled={loading}>
                       {loading ? "กำลังเพิ่ม..." : "เพิ่มวัตถุดิบ"}
                     </Button>

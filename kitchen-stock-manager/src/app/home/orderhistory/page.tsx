@@ -1,66 +1,36 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import useSWR from "swr";
+import { BsCashStack } from "react-icons/bs";
+import { FaWallet } from "react-icons/fa";
+import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map as MapIcon, Download, Users, Edit2, Container } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
+
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { formatDate, EventInput } from "@fullcalendar/core";
-import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
+
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
-import { BsCashStack } from "react-icons/bs";
-import { FaWallet } from "react-icons/fa";
-import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map as MapIcon, Download, Users, Edit2 } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/share/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
-import PaginationComponent from "@/components/ui/Totalpage";
 import { Input } from "@/share/ui/input";
-import ResponsiveOrderId from "./ResponsiveOrderId";
-import StatusDropdown from "./StatusDropdown";
+
+import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
+import PaginationComponent from "@/components/ui/Totalpage";
+import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
+import StatusDropdown from "@/app/components/StatusOrderhistory";
+
+import { fetcher } from "@/lib/utils";
+
 import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
-import Swal from "sweetalert2";
-// import { thSarabunFont } from "../../th-sarabun-font"; // import font base64
 
-// export const exportThaiPDF = () => {
-//   const doc = new jsPDF();
-
-//   // เพิ่มฟอนต์เข้าไป
-//   doc.addFileToVFS("THSarabunNew.ttf", thSarabunFont);
-//   doc.addFont("THSarabunNew.ttf", "THSarabun", "normal");
-//   doc.setFont("THSarabun");
-
-//   // เพิ่มข้อความไทย
-//   doc.setFontSize(16);
-//   doc.text("ประวัติคำสั่งซื้อ", 14, 20);
-
-//   autoTable(doc, {
-//     head: [["ลำดับ", "ชื่อเมนู", "จำนวน"]],
-//     body: [
-//       ["1", "ข้าวผัดหมู", "5"],
-//       ["2", "ไข่เจียวหมูสับ", "3"],
-//     ],
-//     styles: {
-//       font: "THSarabun",
-//       fontSize: 14,
-//     },
-//     startY: 30,
-//   });
-
-//   doc.save("thai_order.pdf");
-// };
-// Fetcher function สำหรับ SWR
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch from ${url}`);
-  return res.json();
-};
-
-const OrderHistory: React.FC = () => {
-  const router = useRouter();
+const OrderHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
@@ -81,24 +51,19 @@ const OrderHistory: React.FC = () => {
   const [selectedDateForSummary, setSelectedDateForSummary] = useState<string | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // State สำหรับการแก้ไขเวลา
   const [editingTimes, setEditingTimes] = useState<{
     cartId: string;
     exportTime: string;
     receiveTime: string;
   } | null>(null);
 
-  // ใช้ SWR เพื่อดึงข้อมูล
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher);
   const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
 
-  // รวมข้อผิดพลาดจากทุก API
   const combinedError = cartsError || menuError || ingredientError;
   const isLoading = !cartsData || !menuData || !ingredientData;
 
-  // State สำหรับ carts และ allCarts
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
 
@@ -111,7 +76,6 @@ const OrderHistory: React.FC = () => {
     }
   };
 
-  // แปลงข้อมูลเมื่อข้อมูลจาก SWR พร้อม
   useEffect(() => {
     if (!cartsData || !ingredientData) return;
 
@@ -123,27 +87,64 @@ const OrderHistory: React.FC = () => {
         });
 
         const formattedOrders: Cart[] = cartsData.map((cart: RawCart) => {
-          const [rawDate] = cart.cart_create_date.split("T");
+          if (!cart.cart_create_date) {
+            console.warn(`Cart ${cart.cart_id} has no cart_create_date`);
+            
+            // Parse cart_lunchbox for fallback case
+            let cartLunchboxFallback: any[] = [];
+            if (cart.cart_lunchbox) {
+              if (typeof cart.cart_lunchbox === "string") {
+                try {
+                  cartLunchboxFallback = JSON.parse(cart.cart_lunchbox);
+                } catch (e) {
+                  console.error("Failed to parse cart_lunchbox:", e);
+                  cartLunchboxFallback = [];
+                }
+              } else if (Array.isArray(cart.cart_lunchbox)) {
+                cartLunchboxFallback = cart.cart_lunchbox;
+              }
+            }
+            
+            return {
+              id: cart.cart_id || "no-id",
+              orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
+              name: "ไม่มีข้อมูลวันที่",
+              date: "ไม่ระบุ",
+              dateISO: "",
+              time: "ไม่ระบุ",
+              sets: 0,
+              price: cart.cart_total_price || 0,
+              status: cart.cart_status,
+              createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
+              menuItems: [],
+              allIngredients: [],
+              order_number: cart.cart_order_number,
+              cart_delivery_date: cart.cart_delivery_date,
+              cart_receive_time: cart.cart_receive_time,
+              cart_export_time: cart.cart_export_time,
+              cart_customer_tel: cart.cart_customer_tel,
+              cart_customer_name: cart.cart_customer_name,
+              cart_location_send: cart.cart_location_send,
+              cart_shipping_cost: cart.cart_shipping_cost,
+              cart_lunchbox: cartLunchboxFallback,
+            };
+          }
+
+          // แก้ไขการแยกวันที่และเวลา - ใช้ space แทน T
+          const [rawDate, timePart] = cart.cart_create_date.split(" ");
           const [year, month, day] = rawDate.split("-");
           const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
           const formattedDate = dateObjectForLocale
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
+            .toLocaleDateString("th-TH", {day: "numeric",month: "short",year: "numeric",})
             .replace(/ /g, " ");
-
           const date = new Date(cart.cart_create_date);
           const formattedDateISO = date.toISOString().split("T")[0];
-          const formattedTime = cart.cart_create_date.split("T")[1].split(".")[0].slice(0, 5);
 
-          const menuItems: MenuItem[] =
-            typeof cart.cart_menu_items === "string" && cart.cart_menu_items
-              ? safeParseJSON(cart.cart_menu_items)
-              : Array.isArray(cart.cart_menu_items)
-              ? cart.cart_menu_items.filter((item) => item && typeof item.menu_total === "number")
-              : [];
+          // แก้ไขการแยกเวลา - ใช้ space และตัดส่วน timezone
+          const timeOnly = timePart ? timePart.split("+")[0] : "";
+          const formattedTime = timeOnly ? timeOnly.slice(0, 5) : "ไม่ระบุ";
+
+          const menuItems: MenuItem[] = typeof cart.cart_menu_items === "string" && cart.cart_menu_items ? safeParseJSON(cart.cart_menu_items) : Array.isArray(cart.cart_menu_items) ? cart.cart_menu_items.filter((item) => item && typeof item.menu_total === "number") : [];
 
           const totalSets = menuItems.filter((item) => item && typeof item === "object" && typeof item.menu_total === "number").reduce((sum, item) => sum + (item.menu_total || 0), 0);
 
@@ -165,6 +166,22 @@ const OrderHistory: React.FC = () => {
           }));
 
           const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
+          
+          // Parse cart_lunchbox if it's a string
+          let cartLunchbox: any[] = [];
+          if (cart.cart_lunchbox) {
+            if (typeof cart.cart_lunchbox === "string") {
+              try {
+                cartLunchbox = JSON.parse(cart.cart_lunchbox);
+              } catch (e) {
+                console.error("Failed to parse cart_lunchbox:", e);
+                cartLunchbox = [];
+              }
+            } else if (Array.isArray(cart.cart_lunchbox)) {
+              cartLunchbox = cart.cart_lunchbox;
+            }
+          }
+          
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -176,7 +193,10 @@ const OrderHistory: React.FC = () => {
             price: cart.cart_total_price || 0,
             status: cart.cart_status,
             createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
-            menuItems: menuItems.map((item) => ({ ...item })),
+            menuItems: menuItems.map((item) => ({
+              ...item,
+              menu_description: item.menu_description || undefined,
+            })),
             allIngredients,
             order_number: cart.cart_order_number,
             cart_delivery_date: cart.cart_delivery_date,
@@ -185,6 +205,8 @@ const OrderHistory: React.FC = () => {
             cart_customer_tel: cart.cart_customer_tel,
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
+            cart_shipping_cost: cart.cart_shipping_cost,
+            cart_lunchbox: cartLunchbox,
           };
         });
 
@@ -217,8 +239,6 @@ const OrderHistory: React.FC = () => {
 
     formatOrders();
   }, [cartsData, ingredientData]);
-
-  // แปลงข้อมูลสำหรับปฏิทิน
   useEffect(() => {
     if (!cartsData) return;
 
@@ -256,6 +276,11 @@ const OrderHistory: React.FC = () => {
     return `${christianYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   };
 
+  const handleDatePicker = (action: string) => {
+    if (action === "open") return setIsDatePickerOpen(true);
+    else if (action === "close") return setIsDatePickerOpen(false);
+  };
+
   const handleDateClick = (info: { dateStr: string }) => {
     const selectedDateStr = info.dateStr;
     const filteredOrders = allCarts.filter((cart) => convertThaiDateToISO(cart.cart_delivery_date) === selectedDateStr);
@@ -265,15 +290,7 @@ const OrderHistory: React.FC = () => {
     setIsDatePickerOpen(false);
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
-      setError(
-        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          locale: "th",
-          timeZone: "Asia/Bangkok",
-        })}`
-      );
+      setError(`ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
     } else {
       setError(null);
     }
@@ -316,29 +333,8 @@ const OrderHistory: React.FC = () => {
                 menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
                 allIngredients: cart.allIngredients.map((group) =>
                   group.menuName === cleanedMenuName
-                    ? {
-                        ...group,
-                        ingredients: group.ingredients.map((ing) => ({
-                          ...ing,
-                          calculatedTotal: ing.useItem * editTotalBox,
-                        })),
-                      }
-                    : group
-                ),
-                sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
-              }
-            : cart
-        )
-      );
-
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตจำนวนกล่องเรียบร้อย!",
-        text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-
+                    ? {...group,ingredients: group.ingredients.map((ing) => ({...ing,calculatedTotal: ing.useItem * editTotalBox,})),}: group),sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),}: cart));
+      Swal.fire({icon: "success",title: "อัปเดตจำนวนกล่องเรียบร้อย!",text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`, showConfirmButton: false,timer: 3000,});
       mutateCarts();
       setEditingMenu(null);
     } catch (err) {
@@ -351,12 +347,7 @@ const OrderHistory: React.FC = () => {
 
   const handleEditTimes = (cartId: string, exportTime: string, receiveTime: string) => {
     const formatToThaiTime = (time: string) => (time ? time.replace(":", ".") + " น." : "00.00 น.");
-    setEditingTimes({
-      cartId,
-      exportTime: formatToThaiTime(exportTime),
-      receiveTime: formatToThaiTime(receiveTime),
-    });
-  };
+    setEditingTimes({cartId, exportTime: formatToThaiTime(exportTime),receiveTime: formatToThaiTime(receiveTime),});};
 
   const formatInputTime = (value: string): string => {
     const cleaned = value.replace(/[^0-9.]/g, "");
@@ -413,122 +404,12 @@ const OrderHistory: React.FC = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to update times");
       }
-
       mutateCarts();
       setEditingTimes(null);
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตเวลาเรียบร้อย!",
-        text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`,
-        showConfirmButton: false,
-        timer: 3000,
-      });
+      Swal.fire({icon: "success",title: "อัปเดตเวลาเรียบร้อย!",text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`,showConfirmButton: false,timer: 3000,});
     } catch (err) {
       console.error("Error updating times:", err);
       setError(err instanceof Error ? `ไม่สามารถอัปเดตเวลา: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตเวลา");
-    } finally {
-      setIsSaving(null);
-    }
-  };
-
-  const handleToggleIngredientCheck = async (cartId: string, menuName: string, ingredientName: string) => {
-    const previousCarts = [...carts];
-    const currentCart = carts.find((cart) => cart.id === cartId);
-    const currentIngredient = currentCart?.allIngredients.find((group) => group.menuName === menuName)?.ingredients.find((ing) => ing.ingredient_name === ingredientName);
-
-    const newCheckedStatus = !currentIngredient?.isChecked;
-
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? {
-                              ...ing,
-                              isChecked: newCheckedStatus,
-                              ingredient_status: newCheckedStatus,
-                            }
-                          : ing
-                      ),
-                      ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),
-                    }
-                  : group
-              ),
-            }
-          : cart
-      )
-    );
-
-    try {
-      const response = await fetch(`/api/edit/cart-menu/ingredient-status/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          menuName,
-          ingredientName,
-          isChecked: newCheckedStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update ingredient status");
-      }
-
-      mutateCarts();
-    } catch (err) {
-      console.error("Error updating ingredient status:", err);
-      setError(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบ: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบ");
-      setCarts(previousCarts);
-    }
-  };
-
-  const handleCheckAllIngredients = async (cartId: string) => {
-    const previousCarts = [...carts];
-    setIsSaving(cartId);
-
-    setCarts((prevCarts) =>
-      prevCarts.map((cart) =>
-        cart.id === cartId
-          ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) => ({
-                ...group,
-                ingredients: group.ingredients.map((ing) => ({
-                  ...ing,
-                  isChecked: true,
-                  ingredient_status: true,
-                })),
-                ingredient_status: true,
-              })),
-            }
-          : cart
-      )
-    );
-
-    try {
-      const response = await fetch(`/api/edit/cart-menu/all-ingredients-status/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isChecked: true }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update all ingredients status");
-      }
-
-      mutateCarts();
-    } catch (err) {
-      console.error("Error updating all ingredients status:", err);
-      setError(err instanceof Error ? `ไม่สามารถอัปเดตสถานะวัตถุดิบทั้งหมด: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตสถานะวัตถุดิบทั้งหมด");
-      setCarts(previousCarts);
     } finally {
       setIsSaving(null);
     }
@@ -626,7 +507,7 @@ const OrderHistory: React.FC = () => {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
+      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy, order.cart_customer_tel, order.cart_customer_name, order.order_number, order.cart_location_send].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
     }
     if (filterStatus !== "ทั้งหมด") {
       filtered = filtered.filter((order) => getStatusText(order.status) === filterStatus);
@@ -645,12 +526,7 @@ const OrderHistory: React.FC = () => {
     }, {} as { [key: string]: Cart[] });
 
     Object.values(groupedByDate).forEach((orders) => {
-      orders.sort((a, b) => {
-        const orderNumA = parseInt(a.order_number || "0");
-        const orderNumB = parseInt(b.order_number || "0");
-        return orderNumA - orderNumB;
-      });
-    });
+      orders.sort((a, b) => { const orderNumA = parseInt(a.order_number || "0");  const orderNumB = parseInt(b.order_number || "0");  return orderNumA - orderNumB; }); });
 
     const currentDate = new Date();
     const sortedDates = Object.keys(groupedByDate).sort((dateA, dateB) => {
@@ -669,25 +545,10 @@ const OrderHistory: React.FC = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
-        : "ไม่มีวันที่จัดส่ง";
-      (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
-      return acc;
-    }, {} as { [key: string]: Cart[] });
-
+            .toLocaleDateString("th-TH", {  day: "numeric", month: "short",  year: "numeric",  })  .replace(/ /g, " "): "ไม่มีวันที่จัดส่ง";(acc[dateDisplay] = acc[dateDisplay] || []).push(cart);return acc;}, {} as { [key: string]: Cart[] });
     const currentDate = new Date();
     const currentDateDisplay = currentDate
-      .toLocaleDateString("th-TH", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-      .replace(/ /g, " ");
+      .toLocaleDateString("th-TH", {  day: "numeric",  month: "short",  year: "numeric",}).replace(/ /g, " ");
 
     const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay] ? [[currentDateDisplay, grouped[currentDateDisplay]]] : [];
     const otherDateGroups = Object.entries(grouped).filter(([date]) => date !== currentDateDisplay);
@@ -708,9 +569,6 @@ const OrderHistory: React.FC = () => {
     return [...currentDateGroup, ...sortedOtherDates];
   }, [filteredAndSortedOrders, sortOrder]);
 
-  const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
-  const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
   const summarizeIngredients = (date: string) => {
     const ingredientSummary: {
       [key: string]: { checked: number; total: number; unit: string };
@@ -722,50 +580,53 @@ const OrderHistory: React.FC = () => {
       cart.allIngredients.forEach((menuGroup) => {
         menuGroup.ingredients.forEach((ing) => {
           if (!ingredientSummary[ing.ingredient_name]) {
-            ingredientSummary[ing.ingredient_name] = {
-              checked: 0,
-              total: 0,
-              unit: ing.ingredient_unit || "ไม่ระบุหน่วย",
-            };
-          }
+            ingredientSummary[ing.ingredient_name] = {  checked: 0,  total: 0,  unit: ing.ingredient_unit || "ไม่ระบุหน่วย",  };}
           const totalGrams = ing.calculatedTotal || 0;
           ingredientSummary[ing.ingredient_name].total += totalGrams;
           if (ing.isChecked) {
             ingredientSummary[ing.ingredient_name].checked += totalGrams;
-          }
-        });
-      });
-    });
+          }});});});
 
     const allIngredientsChecked = ordersOnDate.every((cart) => cart.allIngredients.every((menuGroup) => menuGroup.ingredients.every((ing) => ing.isChecked)));
 
     return {
-      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({
-        name,
-        checked,
-        total,
-        unit,
-      })),
-      allIngredientsChecked,
-    };
-  };
+      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({name,checked,total,unit,})),allIngredientsChecked,};};
+
+  const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
+  const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleExportCSV = () => {
-    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
+    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
     const csvContent = [
       headers.join(","),
-      ...filteredAndSortedOrders.map((cart) => [cart.id, cart.name, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy].join(",")),
+      ...filteredAndSortedOrders.map((cart) => {
+        const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
+        return [
+          cart.id,
+          `"${cart.name.replace(/"/g, '""')}"`, // ป้องกัน comma ในชื่อเมนู
+          `"${menuDescriptions.replace(/"/g, '""')}"`, // ป้องกัน comma ในคำอธิบายเมนู
+          cart.date,
+          cart.time,
+          cart.sets,
+          cart.price,
+          getStatusText(cart.status),
+          cart.createdBy,
+        ].join(",");
+      }),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "order_history.csv");
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "order_history.csv";
+    link.target = "_blank";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
+  // ...existing code...
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -773,8 +634,11 @@ const OrderHistory: React.FC = () => {
     doc.setFontSize(16);
     doc.text("Order History", 14, 20);
 
-    const tableColumn = ["Order ID", "Menu", "Date", "Time", "Sets", "Price", "Status", "Created By"];
-    const tableRows = filteredAndSortedOrders.map((cart) => [cart.id, cart.name, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy]);
+    const tableColumn = ["Order ID", "Menu", "Menu Description", "Date", "Time", "Sets", "Price", "Status", "Created By"];
+    const tableRows = filteredAndSortedOrders.map((cart) => {
+      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
+      return [cart.id, cart.name, menuDescriptions, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy];
+    });
 
     autoTable(doc, {
       head: [tableColumn],
@@ -784,6 +648,34 @@ const OrderHistory: React.FC = () => {
     });
 
     doc.save("order_history.pdf");
+  };
+
+  const handleExportExcel = () => {
+    const worksheetData = filteredAndSortedOrders.map((cart) => {
+      const foodPrice =
+        cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+          ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+          : cart.price || 0;
+      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
+      return {
+        "เลขที่ออร์เดอร์": cart.id,
+        "ชื่อเมนู": cart.name,
+        "คำอธิบายเมนู": menuDescriptions,
+        "วันที่": cart.date,
+        "เวลา": cart.time,
+        "จำนวน Set": cart.sets,
+        "ราคาอาหาร(บาท)": foodPrice,
+        "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+        "สถานะ": getStatusText(cart.status),
+        "ผู้สร้าง": cart.createdBy,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData as any[]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+    const timestamp = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(workbook, `order_history_${timestamp}.xlsx`);
   };
 
   const handleUpdateWithCheck = (cart: { id: string; allIngredients: any[] }) => {
@@ -815,31 +707,25 @@ const OrderHistory: React.FC = () => {
           <div className='col-span-full xl:col-span-2'>
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
-              <Input
-                placeholder='Enter name, order ID...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
+              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm'
               />
             </div>
           </div>
 
           <div>
-            <Button onClick={() => setIsDatePickerOpen(true)} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
+            <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
                     year: "numeric",
                     month: "short",
                     day: "numeric",
                     locale: "th",
-                    timeZone: "Asia/Bangkok",
-                  })}`
-                : "เลือกวันที่ที่ต้องการ"}
+                    timeZone: "Asia/Bangkok",})}`: "เลือกวันที่ที่ต้องการ"}
             </Button>
 
             <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
               <DialogContent className='max-w-4xl'>
-                <DialogTitle className='sr-only'>Calendar View</DialogTitle>
+                <DialogTitle className='sr-only'>เลือกวันที่จัดส่ง</DialogTitle>
                 <FullCalendar
                   plugins={[dayGridPlugin, interactionPlugin]}
                   initialView='dayGridMonth'
@@ -847,6 +733,7 @@ const OrderHistory: React.FC = () => {
                   events={calendarEvents}
                   dateClick={handleDateClick}
                   height='auto'
+                  contentHeight='auto'
                   locale='th'
                   buttonText={{
                     today: "วันนี้",
@@ -859,6 +746,21 @@ const OrderHistory: React.FC = () => {
                     center: "title",
                     right: "dayGridMonth,dayGridWeek,dayGridDay",
                   }}
+                  footerToolbar={{
+                    start: "",
+                    center: "",
+                    end: "custom1",
+                  }}
+                  customButtons={{
+                    custom1: {
+                      text: "ล้างวันที่",
+                      click: function () {
+                        setSelectedDate(null);
+                        setCarts(allCarts);
+                        handleDatePicker("close");
+                      },
+                    },
+                  }}
                 />
               </DialogContent>
             </Dialog>
@@ -866,8 +768,9 @@ const OrderHistory: React.FC = () => {
 
           <div>
             <Select value={sortOrder} onValueChange={(val: "asc" | "desc") => setSortOrder(val)}>
-              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
-                <SelectValue placeholder='Order' />
+              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm  '>
+                <Filter className='w-4 h-4 mr-2 text-slate-500' />
+                <SelectValue placeholder='Order' className='' />
               </SelectTrigger>
               <SelectContent side='bottom' align='start' avoidCollisions={false}>
                 <SelectItem value='asc'>เรียงจากใหม่ไปเก่า</SelectItem>
@@ -909,20 +812,29 @@ const OrderHistory: React.FC = () => {
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
-          <Button
-            onClick={() => {
-              setSelectedDate(null);
-              setCarts(allCarts);
-            }}
-            className='h-12 w-full rounded-lg border border-slate-300 shadow-sm text-sm'>
-            ล้างวันที่
-          </Button>
+          <div className='flex flex-center justify-self-end text-red-400'>
+            <Button
+              onClick={() => {
+                setSearchTerm("");
+                setSortOrder("asc");
+                setSelectedDate(null);
+                setFilterCreator("ทั้งหมด");
+                setFilterStatus("ทั้งหมด");
+                setCarts(allCarts);
+              }}
+              className='h-12 w-35 text-sm'>
+              [ X ] ล้างฟิลเตอร์
+            </Button>
+          </div>
           <div className='flex flex-center'>
             <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> CSV
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> CSV
             </Button>
             <Button onClick={handleExportPDF} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> PDF
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> PDF
+            </Button>
+            <Button onClick={handleExportExcel} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
+              <Download className='w-4 h-4 mr-2 text-gray-400' /> Excel
             </Button>
           </div>
         </div>
@@ -941,7 +853,7 @@ const OrderHistory: React.FC = () => {
                 <span className='text-red-500'>เกิดข้อผิดพลาด: {combinedError.message}</span>
               </CardContent>
             </Card>
-          ) : groupedOrders.length === 0 ? (
+          ) : paginatedGroupedOrders.length === 0 ? (
             <Card>
               <CardContent className='text-center py-12'>
                 <Package className='w-12 h-12 text-slate-400 mx-auto mb-2' />
@@ -949,7 +861,7 @@ const OrderHistory: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            groupedOrders.map(([date, orders], index) => (
+            paginatedGroupedOrders.map(([date, orders], index) => (
               <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
                 <h3 style={{ fontSize: "28px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
                   วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
@@ -971,15 +883,7 @@ const OrderHistory: React.FC = () => {
                                       value={editingTimes?.exportTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                exportTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
+                                        setEditingTimes((prev) => prev? {...prev,exportTime: formattedValue,}: prev);}}
                                       placeholder='14.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit export time'
@@ -992,15 +896,7 @@ const OrderHistory: React.FC = () => {
                                       value={editingTimes?.receiveTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                                ...prev,
-                                                receiveTime: formattedValue,
-                                              }
-                                            : prev
-                                        );
-                                      }}
+                                        setEditingTimes((prev) => prev? {...prev,receiveTime: formattedValue,}: prev);}}
                                       placeholder='19.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit receive time'
@@ -1025,7 +921,6 @@ const OrderHistory: React.FC = () => {
                                   <FaWallet className='w-4 h-4 ml-4' />
                                   <span>เวลารับอาหาร {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                   <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")}>
-                                    {/* <Edit2 className="w-4 h-4" /> */}
                                   </span>
                                 </div>
                               )}
@@ -1046,6 +941,8 @@ const OrderHistory: React.FC = () => {
                                   <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
                                   <Wallet className='w-4 h-4 text-green-400' />
                                   <span className='text-sm sm:text-base font-normal'>ราคาทั้งหมด {cart.price.toLocaleString()} บาท</span>
+                                  <Container className='w-4 h-4 text-blue-500' />
+                                  <span className='font-medium'>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
@@ -1072,21 +969,13 @@ const OrderHistory: React.FC = () => {
                                   <span>เวลา {cart.time} น.</span>
                                 </div>
                               </div>
-                              <div className='hidden flex items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
+                              <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
                                 <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                               </div>
                             </div>
                           </AccordionTrigger>
                           <div className='flex justify-center mt-2'>
-                            <StatusDropdown
-                              cartId={cart.id}
-                              allIngredients={cart.allIngredients}
-                              defaultStatus={cart.status}
-                              cart_receive_time={formatToHHMM(cart.cart_receive_time)}
-                              cart_export_time={formatToHHMM(cart.cart_export_time)}
-                              cart={cart}
-                              onUpdated={() => handleUpdateWithCheck(cart)}
-                            />
+                            <StatusDropdown cartId={cart.id} allIngredients={cart.allIngredients} defaultStatus={cart.status} cart_receive_time={formatToHHMM(cart.cart_receive_time)} cart_export_time={formatToHHMM(cart.cart_export_time)} cart={cart} onUpdated={() => handleUpdateWithCheck(cart)} />
                           </div>
                           <AccordionContent className='mt-4'>
                             <div className='grid md:grid-cols-2 gap-6'>
@@ -1095,87 +984,117 @@ const OrderHistory: React.FC = () => {
                                   <User className='w-4 h-4' /> เมนูที่สั่ง
                                 </h4>
                                 <Accordion type='multiple' className='space-y-3'>
-                                  {cart.allIngredients.map((menuGroup, groupIdx) => {
-                                    const totalBox = cart.menuItems.find((item) => item.menu_name === menuGroup.menuName)?.menu_total || 0;
-                                    const isEditingThisMenu = editingMenu?.cartId === cart.id && editingMenu?.menuName === menuGroup.menuName;
-                                    const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
-
-                                    return (
-                                      <AccordionItem
-                                        key={groupIdx}
-                                        value={`menu-${groupIdx}`}
-                                        className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                  {cart.cart_lunchbox && cart.cart_lunchbox.length > 0 ? (
+                                    cart.cart_lunchbox.map((lunchbox: any, lunchboxIdx: number) => (
+                                      <AccordionItem 
+                                        key={lunchboxIdx} 
+                                        value={`lunchbox-${lunchboxIdx}`} 
+                                        className="rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50"
+                                      >
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                          <span className='truncate text-sm text-gray-700'>{menuGroup.menuName}</span>
-                                          <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
-                                        </AccordionTrigger>
-                                        <AccordionContent className='pt-3 space-y-2'>
-                                          {isEditingThisMenu ? (
-                                            <div className='flex items-center gap-2 mb-3'>
-                                              <Input
-                                                type='number'
-                                                value={editTotalBox}
-                                                onChange={(e) => setEditTotalBox(Number(e.target.value))}
-                                                className='w-20 h-8 text-sm rounded-md border-gray-300'
-                                                min='0'
-                                                aria-label='Edit box quantity'
-                                              />
-                                              <Button
-                                                variant='ghost'
-                                                size='sm'
-                                                onClick={() => handleSaveTotalBox(cart.id, menuGroup.menuName)}
-                                                className='h-8 px-2 text-blue-600 hover:bg-blue-50'
-                                                aria-label='Save box quantity'
-                                                disabled={isSaving === cart.id}>
-                                                {isSaving === cart.id ? "Saving..." : "Save"}
-                                              </Button>
-                                              <Button
-                                                variant='ghost'
-                                                size='sm'
-                                                onClick={() => setEditingMenu(null)}
-                                                className='h-8 px-2 text-gray-600 hover:bg-gray-50'
-                                                aria-label='Cancel edit'
-                                                disabled={isSaving === cart.id}>
-                                                Cancel
-                                              </Button>
-                                            </div>
-                                          ) : (
-                                            <div className='flex items-center gap-2 mb-3'>
-                                              <Button
-                                                variant='ghost'
-                                                size='sm'
-                                                onClick={() => handleEditTotalBox(cart.id, menuGroup.menuName, totalBox)}
-                                                className='h-8 px-2 text-blue-600 hover:bg-blue-100'>
-                                                {/* <Edit2 className="w-4 h-4" /> */}
-                                              </Button>
-                                            </div>
-                                          )}
-                                          {menuGroup.ingredients.map((ing, idx) => (
-                                            <div
-                                              key={idx}
-                                              className={`flex items-center justify-between rounded-lg px-3 py-2 border ${
-                                                ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
-                                              } text-sm`}>
-                                              <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-                                              <div className='flex items-center gap-4'>
-                                                <span className='text-gray-600'>
-                                                  ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
-                                                  <strong
-                                                    className='text-black-600'
-                                                    style={{
-                                                      color: "#000000",
-                                                    }}>
-                                                    {ing.calculatedTotal}
-                                                  </strong>{" "}
-                                                  {ing.ingredient_unit}
-                                                </span>
+                                          <div className='flex flex-col items-start flex-1'>
+                                            <span className='truncate text-sm text-blue-800 font-bold'>
+                                              📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                            </span>
+                                            <div className='flex gap-4 mt-2'>
+                                              <div className='text-xs text-blue-700'>
+                                                <span className='font-medium'>จำนวน:</span> {lunchbox.lunchbox_total} กล่อง
+                                              </div>
+                                              <div className='text-xs text-blue-700'>
+                                                <span className='font-medium'>ราคา:</span> {lunchbox.lunchbox_total_cost} บาท
                                               </div>
                                             </div>
-                                          ))}
+                                          </div>
+                                        </AccordionTrigger>
+                                        
+                                        <AccordionContent className='pt-3 space-y-2'>
+                                          <h5 className='font-medium text-blue-800 mb-2 text-xs'>เมนูในกล่อง:</h5>
+                                          {lunchbox.lunchbox_menu.map((menu: any, menuIdx: number) => {
+                                            const allIngredientsChecked = menu.menu_ingredients?.every((ing: any) => ing.ingredient_status) ?? false;
+                                            
+                                            return (
+                                              <div 
+                                                key={menuIdx} 
+                                                className={`rounded-lg border p-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
+                                              >
+                                                <div className='mb-2'>
+                                                  <div className='font-medium text-gray-800 text-sm'>
+                                                    {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
+                                                  </div>
+                                                  <div className='text-xs text-gray-600 mt-1'>
+                                                    หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
+                                                  </div>
+                                                  {menu.menu_description && (
+                                                    <div className='text-xs text-gray-500 mt-1'>
+                                                      {menu.menu_description}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                
+                                                <div className='space-y-1 mt-2'>
+                                                  <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
+                                                  {menu.menu_ingredients?.map((ing: any, idx: number) => (
+                                                    <div 
+                                                      key={idx} 
+                                                      className='flex items-center justify-between text-xs text-gray-600 py-1'
+                                                    >
+                                                      <span>• {ing.ingredient_name}</span>
+                                                      <div style={{ color: "#000000" }} className='flex items-center gap-2'>
+                                                        <span>
+                                                          {ing.useItem} หน่วย × {menu.menu_total} กล่อง = <strong style={{ color: "#000000" }}>{ing.useItem * menu.menu_total}</strong> หน่วย
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
                                         </AccordionContent>
                                       </AccordionItem>
-                                    );
-                                  })}
+                                    ))
+                                  ) : (
+                                    // Fallback to old structure if cart_lunchbox is not available
+                                    cart.allIngredients.map((menuGroup, groupIdx) => {
+                                      const totalBox = cart.menuItems.find((item) => item.menu_name === menuGroup.menuName)?.menu_total || 0;
+                                      const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
+
+                                      return (
+                                        <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                          <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                            <div className='flex flex-col items-start'>
+                                              <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                              {(() => {
+                                                const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                                return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
+                                              })()}
+                                            </div>
+                                            <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
+                                          </AccordionTrigger>
+                                          <AccordionContent className='pt-3 space-y-2'>
+                                            {menuGroup.ingredients.map((ing, idx) => (
+                                              <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
+                                                <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+                                                <div className='flex items-center gap-4'>
+                                                  <span className='text-gray-600'>
+                                                    ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
+                                                    <strong
+                                                      className='text-black-600'
+                                                      style={{
+                                                        color: "#000000",
+                                                      }}>
+                                                      {ing.calculatedTotal}
+                                                    </strong>{" "}
+                                                    {ing.ingredient_unit}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      );
+                                    })
+                                  )}
                                 </Accordion>
                               </div>
                             </div>
@@ -1228,10 +1147,7 @@ const OrderHistory: React.FC = () => {
                         ))}
                       </div>
                       <div style={{ color: "#000000", background: "#5cfa6c" }}>
-                        <Button
-                          onClick={() => handleCheckAllIngredientsForDate(selectedDateForSummary)}
-                          className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg'
-                          disabled={isSaving === "all" || allIngredientsChecked}>
+                        <Button onClick={() => handleCheckAllIngredientsForDate(selectedDateForSummary)} className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg' disabled={isSaving === "all" || allIngredientsChecked}>
                           {isSaving === "all" ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
                         </Button>
                       </div>

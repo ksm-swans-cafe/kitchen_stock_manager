@@ -1,28 +1,59 @@
 "use client";
 
-import SearchBox from "@/share/order/SearchBox_v2";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MenuItem } from "@/models/menu_card/MenuCard-model";
+import axios from "axios";
+
+import { MenuItem } from "@/models/menu_card/MenuCard";
+
+import { create } from "zustand";
+
+import SearchBox from "@/share/order/SearchBox_v2";
 import MenuCard from "@/share/order/MenuCardForMenu";
+
 import "./style.css";
+
+interface MenuProps {
+  visibleCount: number;
+  allMenus: MenuItem[];
+  error: string | null;
+  searchQuery: string;
+  loading: boolean;
+  setVisibleCount: (count: number) => void;
+  setAllMenus: (menus: MenuItem[]) => void;
+  setError: (error: string | null) => void;
+  setSearchQuery: (query: string) => void;
+  setLoading: (loading: boolean) => void;
+}
+
+const useMenu = create<MenuProps>((set) => ({
+  visibleCount: 10,
+  allMenus: [],
+  error: null,
+  searchQuery: "",
+  loading: false,
+  setVisibleCount: (count) => set({ visibleCount: count }),
+  setAllMenus: (menus) => set({ allMenus: menus }),
+  setError: (error) => set({ error }),
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setLoading: (loading) => set({ loading }),
+}));
 
 export default function Menu() {
   const chunkSize = 10;
-
   const [visibleCount, setVisibleCount] = useState(chunkSize);
   const [allMenus, setAllMenus] = useState<MenuItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchMenus = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/get/menu/list");
-        if (!res.ok) throw new Error("Failed to fetch menu list");
-        let data: MenuItem[] = await res.json();
+        const res = await axios.get("/api/get/menu/list");
+        if (res.status !== 200) throw new Error("Failed to fetch menu list");
+        let data: MenuItem[] = await res.data;
 
         const seen = new Set<string>();
         data = data.filter((menu) => {
@@ -39,11 +70,8 @@ export default function Menu() {
 
         setAllMenus(data);
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
-        }
+        if (err instanceof Error) setError(err.message);
+        else setError("เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ");
       } finally {
         setLoading(false);
       }
@@ -52,7 +80,9 @@ export default function Menu() {
   }, []);
 
   const filteredMenus = allMenus
-    .filter((menu) => menu.menu_subname?.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((menu) =>
+      menu.menu_subname?.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
     .sort((a, b) => {
       const nameA = a.menu_subname?.toLowerCase() || "";
       const nameB = b.menu_subname?.toLowerCase() || "";
@@ -69,15 +99,13 @@ export default function Menu() {
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting) {
-          loadMore();
-        }
+        if (entry.isIntersecting) loadMore();
       },
       {
         root: null,
         rootMargin: "0px",
         threshold: 1.0,
-      }
+      },
     );
 
     const currentRef = loadMoreRef.current;
@@ -89,11 +117,14 @@ export default function Menu() {
     };
   }, [visibleCount, filteredMenus]);
 
-  const menus = allMenus.map((menu) => menu.menu_subname).filter((name): name is string => typeof name === "string");
+  const menus = allMenus
+    .map((menu) => menu.menu_subname)
+    .filter((name): name is string => typeof name === "string");
 
   return (
-    <main className='flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto'>
+    <main className="flex min-h-screen flex-col items-center pt-4 px-5 overflow-auto">
       <SearchBox
+        apiUrl=""
         dataSource={menus}
         onSelect={(val) => setSearchQuery(val)}
         onChangeQuery={(val) => {
@@ -103,15 +134,17 @@ export default function Menu() {
         minLength={1}
       />
 
-      <div className='container'>
-        <div className='p-3 has-text-centered'>{/* <h1 className='title'>Menu</h1> */}</div>
+      <div className="container">
+        <div className="p-3 has-text-centered">
+          {/* <h1 className='title'>Menu</h1> */}
+        </div>
 
-        {error && <p className='has-text-danger'>Error: {error}</p>}
+        {error && <p className="has-text-danger">Error: {error}</p>}
         {loading && <p>Loading...</p>}
 
-        <div className='justify-center columns grid is-multiline'>
+        <div className="justify-center columns grid is-multiline">
           {visibleMenus.map((menu, idx) => (
-            <MenuCard mode='menu' key={idx} item={menu} />
+            <MenuCard mode="menu" key={idx} item={menu} />
           ))}
         </div>
 

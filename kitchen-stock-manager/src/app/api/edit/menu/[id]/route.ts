@@ -1,84 +1,97 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+import { checkServerAuth } from "@/lib/auth/serverAuth";
+
+function convertBigIntToNumber(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === "bigint") return Number(obj);
+
+  if (Array.isArray(obj)) return obj.map((item) => convertBigIntToNumber(item));
+
+  if (typeof obj === "object") {
+    const converted: any = {};
+    for (const key in obj) converted[key] = convertBigIntToNumber(obj[key]);
+    return converted;
+  }
+
+  return obj;
+}
+
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const params = await context.params;
   const { id } = params;
-  console.log(params);
 
   const formData = await request.formData();
   const menuName = formData.get("menu_name")?.toString() || "";
   const menuIngredientsRaw = formData.get("menu_ingredients")?.toString() || "";
   const menuSubname = formData.get("menu_subname")?.toString() || "";
-  const newMenuName = formData.get("newMenuName")?.toString() || "";
+  const menuCategory = formData.get("menu_category")?.toString() || "";
+  const menuCost = formData.get("menu_cost")?.toString() || "";
+  const menuLunchboxRaw = formData.get("menu_lunchbox")?.toString() || "";
 
-  if (!id || !menuName || !menuIngredientsRaw || !menuSubname) {
+  console.log("Received data:", { id, menuName, menuIngredientsRaw, menuSubname, menuCategory, menuCost, menuLunchboxRaw });
+
+  if (!id) return NextResponse.json({ error: "กรุณาระบุ id" }, { status: 400 });
+
+  if (!menuName || !menuIngredientsRaw || !menuSubname || !menuCategory || !menuCost) {
     return NextResponse.json(
       {
-        error:
-          "กรุณาระบุ id, menuName, menuIngredients และ menuSubname ให้ครบถ้วน",
+        error: "กรุณาระบุข้อมูลให้ครบถ้วน",
       },
       { status: 400 }
     );
   }
 
   let menuIngredients;
+  let menuLunchbox = [];
+
   try {
     menuIngredients = JSON.parse(menuIngredientsRaw);
   } catch {
-    return NextResponse.json(
-      { error: "รูปแบบวัตถุดิบไม่ถูกต้อง" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "รูปแบบวัตถุดิบไม่ถูกต้อง" }, { status: 400 });
   }
 
   try {
-    // ตรวจสอบว่ามีเมนูนั้นจริงหรือไม่
-    const existing = await prisma.menu.findUnique({
+    if (menuLunchboxRaw) {
+      menuLunchbox = JSON.parse(menuLunchboxRaw);
+    }
+  } catch {
+    return NextResponse.json({ error: "รูปแบบข้อมูลกล่องอาหารไม่ถูกต้อง" }, { status: 400 });
+  }
+
+  try {
+    // ใช้ menu_id เพื่อหา record ก่อน
+    const existing = await prisma.menu.findFirst({
       where: { menu_id: Number(id) },
     });
 
-    if (!existing) {
-      return NextResponse.json(
-        { error: "ไม่พบเมนูที่ต้องการแก้ไข" },
-        { status: 404 }
-      );
-    }
+    if (!existing) return NextResponse.json({ error: "ไม่พบเมนูที่ต้องการแก้ไข" }, { status: 404 });
 
-    // เตรียมข้อมูลอัปเดต
-    const updatedName = newMenuName?.trim() || menuName.trim();
-    const updatedSubname = menuSubname.trim();
-
-    // อัปเดตข้อมูลในตาราง menu
-    // const result = await sql`
-    //     UPDATE menu
-    //     SET 
-    //       menu_name = ${updatedName},
-    //       menu_subname = ${updatedSubname},
-    //       menu_ingredients = ${JSON.stringify(menuIngredients)}
-    //     WHERE menu_id = ${id}
-    //     RETURNING *;
-    //   `;
+    // ใช้ id (ObjectId) เพื่อ update
     const result = await prisma.menu.update({
-      where: { menu_id: Number(id) },
+      where: { id: existing.id },
       data: {
-        menu_name: updatedName,
-        menu_subname: updatedSubname,
-        menu_ingredients: JSON.stringify(menuIngredients),
+        menu_name: menuName.trim(),
+        menu_subname: menuSubname.trim(),
+        menu_category: menuCategory.trim(),
+        menu_cost: parseInt(menuCost) || 0,
+        menu_ingredients: menuIngredients,
+        menu_lunchbox: menuLunchbox,
       },
     });
 
+    const convertedResult = convertBigIntToNumber(result);
+
     return NextResponse.json({
       success: true,
-      updatedMenu: result,
+      updatedMenu: convertedResult,
     });
   } catch (error) {
     console.error("Server error:", error);
-    return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดในการอัปเดตเมนู" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "เกิดข้อผิดพลาดในการอัปเดตเมนู" }, { status: 500 });
   }
 }

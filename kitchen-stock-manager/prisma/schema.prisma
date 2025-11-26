@@ -4,68 +4,148 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
+type CartCartLunchbox {
+  /// Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
+  lunchbox_limit      Json
+  lunchbox_menu       CartCartLunchboxLunchboxMenu[]
+  lunchbox_name       String
+  lunchbox_set_name   String
+  /// Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
+  lunchbox_total      Json
+  lunchbox_total_cost BigInt?
+}
+
+type CartCartLunchboxLunchboxMenu {
+  menu_category    String
+  menu_cost        BigInt?
+  menu_description String
+  menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
+  menu_name        String
+  /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
+  menu_order_id    Json
+  menu_subname     String
+  /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
+  menu_total       Json
+}
+
+type CartCartLunchboxLunchboxMenuMenuIngredients {
+  ingredient_name   String
+  ingredient_status Boolean?
+  /// Multiple data types found: Int: 95.2%, BigInt: 4.8% out of 146 sampled entries
+  useItem           Json
+}
+
+type CartCartMenuItems {
+  menu_description String?
+  menu_ingredients CartCartMenuItemsMenuIngredients[]
+  menu_name        String
+  menu_notes       CartCartMenuItemsMenuNotes[]
+  menu_order_id    Int?
+  /// Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 683 sampled entries
+  menu_total       Json
+}
+
+type CartCartMenuItemsMenuIngredients {
+  ingredient_name   String
+  ingredient_status Boolean?
+  /// Multiple data types found: Int: 98.6%, BigInt: 1.4% out of 2659 sampled entries
+  useItem           Json
+}
+
+type CartCartMenuItemsMenuNotes {
+  note String
+  qty  Int
+}
+
+type MenuMenuIngredients {
+  ingredient_name String
+  /// Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 337 sampled entries
+  useItem         Json
+}
+
+type MenuMenuLunchbox {
+  lunchbox_cost     BigInt?
+  lunchbox_name     String
+  lunchbox_set_name String
+  lunchbox_menu_category String?
+}
+
 model cart {
-  cart_id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cart_username      String    @db.VarChar(100)
-  cart_menu_items    Json
-  cart_create_date   DateTime? @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
-  cart_status        String?   @default("pending") @db.VarChar
-  cart_order_number  String?   @db.VarChar(3)
-  cart_last_update   String?   @db.VarChar(100)
-  cart_customer_name String?   @db.VarChar(300)
-  cart_customer_tel  String?   @db.VarChar(12)
-  cart_location_send String?   @db.VarChar(100)
-  cart_delivery_date String?   @db.VarChar(10)
-  cart_export_time   String?   @db.VarChar(10)
-  cart_receive_time  String?   @db.VarChar(10)
-  cart_shipping_cost Decimal?  @default(0) @db.Decimal(4, 0)
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  cart_create_date   String
+  cart_customer_name String
+  cart_customer_tel  String
+  cart_delivery_date String
+  cart_export_time   String
+  cart_id            String
+  cart_last_update   String?
+  cart_location_send String
+  cart_lunchbox      CartCartLunchbox[]
+  cart_menu_items    CartCartMenuItems[]
+  cart_order_number  String
+  cart_receive_time  String
+  cart_shipping_cost String
+  cart_status        String
+  cart_username      String
 }
 
 model employee {
-  employee_id        String   @id(map: "employee_new_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  employee_username  String?  @db.VarChar(30)
-  employee_firstname String?  @db.VarChar(50)
-  employee_lastname  String?  @db.VarChar(50)
-  employee_pin       Decimal? @db.Decimal(4, 0)
-  employee_role      String?  @default("employee") @db.VarChar(20)
+  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  employee_firstname String
+  employee_id        String
+  employee_lastname  String
+  employee_pin       String
+  employee_role      String
+  employee_username  String
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model ingredient_transactions {
-  transaction_id            Int      @id @default(autoincrement())
-  transaction_date          DateTime @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
-  transaction_from_username String   @db.VarChar(100)
-  transaction_type          String?  @db.VarChar(7)
-  ingredient_name           String   @db.VarChar(100)
-  transaction_total_price   Decimal  @db.Decimal(10, 2)
-  transaction_quantity      Decimal  @db.Decimal(10, 2)
-  transaction_units         String   @db.VarChar(50)
+model ingredient_transaction {
+  id                        String @id @default(auto()) @map("_id") @db.ObjectId
+  ingredient_name           String
+  transaction_date          String
+  transaction_from_username String
+  transaction_id            Int
+  transaction_quantity      String
+  transaction_total_price   String
+  transaction_type          String
+  transaction_units         String
 }
 
 model ingredients {
-  ingredient_id             Int       @id @default(autoincrement())
-  ingredient_name           String    @db.VarChar(30)
-  ingredient_total          Decimal?  @default(0) @db.Decimal(10, 2)
-  ingredient_unit           String    @db.VarChar(20)
-  ingredient_lastupdate     DateTime? @default(dbgenerated("(now() AT TIME ZONE 'Asia/Bangkok'::text)")) @db.Timestamptz(6)
-  ingredient_image          String?   @db.VarChar(300)
-  ingredient_total_alert    Decimal?  @db.Decimal(10, 2)
-  ingredient_category       String?   @db.VarChar(30)
-  ingredient_sub_category   String?   @db.VarChar(30)
-  ingredient_price          Decimal?  @default(0) @db.Decimal(10, 2)
-  ingredient_price_per_unit Decimal?  @default(0) @db.Decimal(10, 2)
+  id                        String @id @default(auto()) @map("_id") @db.ObjectId
+  ingredient_category       String
+  ingredient_id             Int
+  ingredient_image          String
+  ingredient_lastupdate     String
+  ingredient_name           String
+  ingredient_price          String
+  ingredient_price_per_unit String
+  ingredient_sub_category   String
+  ingredient_total          String
+  ingredient_total_alert    String
+  ingredient_unit           String
+}
+
+model lunchbox {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  lunchbox_limit    Int
+  lunchbox_name     String
+  lunchbox_set_name String
 }
 
 model menu {
-  menu_id          Int      @id @default(autoincrement())
-  menu_name        String   @db.VarChar(100)
-  menu_ingredients Json
-  menu_total       Decimal? @db.Decimal(7, 0)
-  menu_image       String?  @db.VarChar(999)
-  menu_subname     String?  @db.VarChar(100)
-  menu_catagory    String?  @db.VarChar(100)
+  id               String                @id @default(auto()) @map("_id") @db.ObjectId
+  menu_category    String
+  /// Multiple data types found: Int: 99.1%, BigInt: 0.9% out of 110 sampled entries
+  menu_cost        Json
+  menu_id          Int                   @unique
+  menu_image       String
+  menu_ingredients MenuMenuIngredients[]
+  menu_lunchbox    MenuMenuLunchbox[]
+  menu_name        String
+  menu_subname     String
 }

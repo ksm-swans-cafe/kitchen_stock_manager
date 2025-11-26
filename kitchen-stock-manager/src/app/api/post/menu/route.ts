@@ -1,59 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-// import sql from "@app/database/connect";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function POST(req: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const formData = await req.formData();
     const menu_name = formData.get("menu_name")?.toString().trim();
-    const menu_ingredients = formData
-      .get("menu_ingredients")
-      ?.toString()
-      .trim();
+    const menu_ingredients = formData.get("menu_ingredients")?.toString().trim();
     const menu_subname = formData.get("menu_subname")?.toString().trim();
+    const menu_category = formData.get("menu_category")?.toString().trim();
+    const menu_cost = formData.get("menu_cost")?.toString().trim();
+    const menu_lunchbox = formData.get("menu_lunchbox")?.toString().trim();
 
-    if (!menu_name || !menu_ingredients) {
+    if (!menu_name || !menu_ingredients || !menu_subname || !menu_category || !menu_cost) {
       return NextResponse.json(
-        { error: "Ingredients and price are required." },
+        {
+          error: "กรุณาระบุข้อมูลให้ครบถ้วน (menu_name, menu_ingredients, menu_subname, menu_category, menu_cost)",
+        },
         { status: 400 }
       );
     }
 
-    // Validate JSON for menu_ingredients
+    let parsedIngredients;
+    let parsedLunchbox = [];
+
     try {
-      JSON.parse(menu_ingredients);
+      parsedIngredients = JSON.parse(menu_ingredients);
     } catch (error) {
-      return NextResponse.json(
-        { error: "Invalid JSON format for menu_ingredients." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "รูปแบบวัตถุดิบไม่ถูกต้อง" }, { status: 400 });
     }
 
-    console.log("Creating menu with name:", menu_name);
-    console.log("Menu ingredients:", menu_ingredients);
-    console.log("Creating menu with subname:", menu_subname);
+    try {
+      if (menu_lunchbox) parsedLunchbox = JSON.parse(menu_lunchbox);
+    } catch (error) {
+      return NextResponse.json({ error: "รูปแบบข้อมูลกล่องอาหารไม่ถูกต้อง" }, { status: 400 });
+    }
+
+    const lastMenu = await prisma.menu.findFirst({
+      orderBy: { menu_id: "desc" },
+    });
+    const newMenuId = lastMenu ? lastMenu.menu_id + 1 : 1;
 
     const result = await prisma.menu.create({
       data: {
+        menu_id: newMenuId,
         menu_name,
-        menu_ingredients: JSON.parse(menu_ingredients),
         menu_subname,
+        menu_category,
+        menu_cost: parseInt(menu_cost) || 0,
+        menu_ingredients: parsedIngredients,
+        menu_lunchbox: parsedLunchbox,
+        menu_image: "",
       },
     });
-
-    if (result === null) {
-      return NextResponse.json(
-        { error: "Menu ID already exists." },
-        { status: 409 }
-      );
-    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Error creating menu:", error);
-    return NextResponse.json(
-      { error: `Failed to create menu` },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: `Failed to create menu` }, { status: 500 });
   }
 }

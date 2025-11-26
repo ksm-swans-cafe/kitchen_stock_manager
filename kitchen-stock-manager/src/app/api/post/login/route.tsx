@@ -1,4 +1,3 @@
-// app/api/post/login/route.ts
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -7,7 +6,6 @@ export async function POST(request: Request) {
 
   const cookieStore = await cookies();
 
-  // ตั้งค่า cookies
   cookieStore.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

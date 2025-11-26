@@ -1,32 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
+
+function convertBigIntToNumber(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === "bigint") {
+    return Number(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertBigIntToNumber(item));
+  }
+
+  if (typeof obj === "object") {
+    const converted: any = {};
+    for (const key in obj) {
+      converted[key] = convertBigIntToNumber(obj[key]);
+    }
+    return converted;
+  }
+
+  return obj;
+}
 
 export async function GET(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-
-    console.log(`Fetching menu list: page=${page}, limit=${limit}`);
     const safePage = isNaN(page) || page < 1 ? 1 : page;
     const safeLimit = isNaN(limit) || limit < 1 ? 10 : limit;
-
-    // 🔹 คำนวณ offset
     const offset = (safePage - 1) * safeLimit;
-
-    // 🔹 Query total count
     const total = await prisma.menu.count();
-
-    // 🔹 Query menu ตามหน้าที่ต้องการ
     const result = await prisma.menu.findMany({
       orderBy: { menu_id: "asc" },
       skip: offset,
       take: safeLimit,
     });
 
+    const convertedResult = convertBigIntToNumber(result);
+
     return NextResponse.json(
       {
-        data: result,
+        data: convertedResult,
         pagination: {
           page: safePage,
           limit: safeLimit,
@@ -38,9 +58,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error fetching menu list:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch menu list" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch menu list" }, { status: 500 });
   }
 }
