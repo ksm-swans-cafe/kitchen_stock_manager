@@ -1255,11 +1255,12 @@ const SummaryList: React.FC = () => {
     
     // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs lunchbox_limit
     const currentMenuCount = currentLunchbox.lunchbox_menu?.length || 0;
-    const lunchboxLimit = currentLunchbox.lunchbox_limit || 0;
+    const lunchboxLimit = currentLunchbox.lunchbox_limit ?? 0;
+    const isUnlimited = lunchboxLimit <= 0;
     
-    console.log(`🟢 Current menu count: ${currentMenuCount}/${lunchboxLimit}`);
+    console.log(`🟢 Current menu count: ${currentMenuCount}/${isUnlimited ? "∞" : lunchboxLimit}`);
     
-    if (currentMenuCount >= lunchboxLimit) {
+    if (!isUnlimited && currentMenuCount >= lunchboxLimit) {
       console.log('❌ Lunchbox is full! Blocking...');
       Swal.fire({
         icon: "warning",
@@ -2379,7 +2380,10 @@ const SummaryList: React.FC = () => {
                                                     <div>
                                                       <h5 className='font-medium text-blue-800'>เมนูในกล่อง:</h5>
                                                       <p className='text-xs text-gray-600 mt-1'>
-                                                        เลือกแล้ว {lunchbox.lunchbox_menu?.length || 0}/{lunchbox.lunchbox_limit} เมนู
+                                                        เลือกแล้ว{" "}
+                                                        {lunchbox.lunchbox_limit && lunchbox.lunchbox_limit > 0
+                                                          ? `${lunchbox.lunchbox_menu?.length || 0}/${lunchbox.lunchbox_limit} เมนู`
+                                                          : `${lunchbox.lunchbox_menu?.length || 0} เมนู (ไม่จำกัด)`}
                                                       </p>
                                                     </div>
                                                     
@@ -2388,7 +2392,7 @@ const SummaryList: React.FC = () => {
                                                       <select
                                                         className='px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
                                                         value={selectedMenuForLunchbox[lunchboxIdx] || ""}
-                                                        disabled={(lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
+                                                        disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
                                                         onFocus={async () => {
                                                           // ดึงเมนูสำหรับกล่องนี้เมื่อเปิด dropdown
                                                           await fetchMenusForLunchbox(lunchbox.lunchbox_name, lunchbox.lunchbox_set_name, lunchboxIdx);
@@ -2406,8 +2410,9 @@ const SummaryList: React.FC = () => {
                                                           
                                                           // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs limit
                                                           const currentMenuCount = lunchbox.lunchbox_menu?.length || 0;
-                                                          const lunchboxLimit = lunchbox.lunchbox_limit || 0;
-                                                          const isFull = currentMenuCount >= lunchboxLimit;
+                                                          const lunchboxLimit = lunchbox.lunchbox_limit ?? 0;
+                                                          const isUnlimited = lunchboxLimit <= 0;
+                                                          const isFull = !isUnlimited && currentMenuCount >= lunchboxLimit;
                                                           
                                                           if (isFull) {
                                                             return <option value="" disabled>เลือกครบแล้ว ({currentMenuCount}/{lunchboxLimit} เมนู)</option>;
@@ -2466,7 +2471,7 @@ const SummaryList: React.FC = () => {
                                                         type="button"
                                                         size="sm"
                                                         className='bg-green-600 hover:bg-green-700 text-white text-xs'
-                                                        disabled={(lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
+                                                        disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
                                                         onClick={() => {
                                                           const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
                                                           const menusForThisBox = availableMenusForLunchbox[key] || [];
