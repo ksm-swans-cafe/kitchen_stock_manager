@@ -55,7 +55,7 @@ const SummaryList: React.FC = () => {
   const [shouldFetchMenu, setShouldFetchMenu] = useState(false);
   const [availableLunchboxes, setAvailableLunchboxes] = useState<any[]>([]);
   const [availableMenus, setAvailableMenus] = useState<any[]>([]);
-  const [availableMenusForLunchbox, setAvailableMenusForLunchbox] = useState<{[key: string]: any[]}>({});  // เก็บเมนูแยกตามแต่ละ lunchbox
+  const [availableMenusForLunchbox, setAvailableMenusForLunchbox] = useState<{[key: string]: any[]}>({});  // เก็บเมนูแยกตามแต่ละ lunchbox ชื่อ
   const [selectedLunchboxName, setSelectedLunchboxName] = useState<string>("");
   const [selectedLunchboxSet, setSelectedLunchboxSet] = useState<string>("");
   const [availableLunchboxSets, setAvailableLunchboxSets] = useState<string[]>([]);
