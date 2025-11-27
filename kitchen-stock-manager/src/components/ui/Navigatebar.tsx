@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCartStore } from "@/stores/store";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 // สร้าง mapping สำหรับแปลง path เป็นชื่อภาษาไทย
 const pathNameMap: Record<string, string> = {
@@ -26,6 +27,7 @@ export default function Navigatebar() {
   const router = useRouter();
   const [isMounted, setIsMounted] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const { userName } = useAuth();
 
   const items = useCartStore((state: { items: { menu_total: number }[] }) => state.items);
 
@@ -45,6 +47,11 @@ export default function Navigatebar() {
 
   if (!pathname || !isMounted) return <nav></nav>;
   if (pathname === "/login") return <nav></nav>;
+
+  // Hide Navigatebar if not logged in
+  if (!userName) {
+    return <nav></nav>;
+  }
 
   const pathSegments = pathname.split("/").filter(Boolean);
   const isOrderPage = pathname.startsWith("/home/order") && !pathname.startsWith("/home/orderhistory");

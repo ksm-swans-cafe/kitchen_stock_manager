@@ -213,7 +213,30 @@ export default function Dashboard() {
 
   useEffect(() => {
     document.body.style.overflow = fullscreen ? "hidden" : "auto";
+    
+    // Hide/show Menubar and Navigatebar in fullscreen mode
+    const menubar = document.querySelector('div[class*="bg-card"]') as HTMLElement;
+    const navigatebar = document.querySelector('nav[class*="bg-gray-200"]') as HTMLElement;
+    
+    if (fullscreen) {
+      if (menubar) menubar.style.display = "none";
+      if (navigatebar) navigatebar.style.display = "none";
+    } else {
+      if (menubar) menubar.style.display = "";
+      if (navigatebar) navigatebar.style.display = "";
+    }
   }, [fullscreen]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setFullscreen(false);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {

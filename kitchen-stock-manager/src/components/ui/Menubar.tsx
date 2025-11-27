@@ -86,6 +86,11 @@ export default function Menubar() {
     );
   }
 
+  // Hide Menubar if not logged in
+  if (!userName) {
+    return null;
+  }
+
   return (
     <div className='w-full bg-card/90 backdrop-blur-sm border-b border-border shadow-sm'>
       <div className='mx-auto max-w-[1200px] px-4 flex justify-between items-center py-3'>
