@@ -271,7 +271,7 @@ export default function Dashboard() {
       <div
         key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")}
         className={`bg-white rounded-2xl shadow overflow-hidden flex flex-col ${
-          asPinnedSlot && timeAlert ? "ring-2 ring-offset-2 ring-amber-300" : ""
+          asPinnedSlot && timeAlert ? "ring-2 ring-amber-300" : ""
         }`}
       >
         {/* HEADER */}
@@ -426,40 +426,39 @@ export default function Dashboard() {
           {/* Header ปกติ (ข้อ 6: ซ่อนเวลา Fullscreen เพื่อให้ TV โล่ง) */}
           {!fullscreen && (
             <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-              Dashboard สรุปออเดอร์อาหารกล่อง
-            </h1>
-           
-          </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                  Dashboard สรุปออเดอร์อาหารกล่อง
+                </h1>
+              </div>
 
-          <div className="flex items-center gap-3 justify-between sm:justify-end">
+              <div className="flex items-center gap-3 justify-between sm:justify-end">
             {/* Legend สีวัน (ข้อ 7) */}
-            <div className="hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs">
-              {dayColorLegend.map((day) => (
-                <div
-                  key={day.label}
-                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100"
-                >
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${day.className}`}
-                  />
-                  <span>{day.label}</span>
-                </div>
-              ))}
-            </div>
+              <div className="hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs">
+                {dayColorLegend.map((day) => (
+                  <div
+                    key={day.label}
+                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100"
+                  >
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full ${day.className}`}
+                    />
+                    <span>{day.label}</span>
+                  </div>
+                ))}
+              </div>
 
-            <Button
-              className="flex items-center gap-2"
-              size="sm"
-              onClick={toggleFullscreen}
-            >
-              <Maximize2 className="w-4 h-4" />
-             FullScreen
-            </Button>
+              <Button
+                className="flex items-center gap-2"
+                size="sm"
+                onClick={toggleFullscreen}
+              >
+                <Maximize2 className="w-4 h-4" />
+                FullScreen
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* ปุ่มออก fullscreen (ข้อ 6) */}
       {fullscreen && (
