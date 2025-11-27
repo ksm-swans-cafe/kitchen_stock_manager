@@ -55,7 +55,7 @@ const SummaryList: React.FC = () => {
   const [shouldFetchMenu, setShouldFetchMenu] = useState(false);
   const [availableLunchboxes, setAvailableLunchboxes] = useState<any[]>([]);
   const [availableMenus, setAvailableMenus] = useState<any[]>([]);
-  const [availableMenusForLunchbox, setAvailableMenusForLunchbox] = useState<{[key: string]: any[]}>({});  // เก็บเมนูแยกตามแต่ละ lunchbox
+  const [availableMenusForLunchbox, setAvailableMenusForLunchbox] = useState<{[key: string]: any[]}>({});  // เก็บเมนูแยกตามแต่ละ lunchbox ชื่อ
   const [selectedLunchboxName, setSelectedLunchboxName] = useState<string>("");
   const [selectedLunchboxSet, setSelectedLunchboxSet] = useState<string>("");
   const [availableLunchboxSets, setAvailableLunchboxSets] = useState<string[]>([]);
@@ -1255,11 +1255,12 @@ const SummaryList: React.FC = () => {
     
     // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs lunchbox_limit
     const currentMenuCount = currentLunchbox.lunchbox_menu?.length || 0;
-    const lunchboxLimit = currentLunchbox.lunchbox_limit || 0;
+    const lunchboxLimit = currentLunchbox.lunchbox_limit ?? 0;
+    const isUnlimited = lunchboxLimit <= 0;
     
-    console.log(`🟢 Current menu count: ${currentMenuCount}/${lunchboxLimit}`);
+    console.log(`🟢 Current menu count: ${currentMenuCount}/${isUnlimited ? "∞" : lunchboxLimit}`);
     
-    if (currentMenuCount >= lunchboxLimit) {
+    if (!isUnlimited && currentMenuCount >= lunchboxLimit) {
       console.log('❌ Lunchbox is full! Blocking...');
       Swal.fire({
         icon: "warning",
@@ -1272,30 +1273,36 @@ const SummaryList: React.FC = () => {
     }
     
     // ตรวจสอบว่ามีเมนูที่เป็น category เดียวกันอยู่แล้วหรือไม่
+    // แต่ถ้าเป็น Custom (lunchbox_limit = 0) ให้เลือกซ้ำได้
     const key = `${currentLunchbox.lunchbox_name}_${currentLunchbox.lunchbox_set_name}_${lunchboxIdx}`;
     const menusForThisBox = availableMenusForLunchbox[key] || [];
     
-    const hasSameCategoryMenu = currentLunchbox.lunchbox_menu?.some((existingMenu: any) => {
-      // หา category ของเมนูที่มีอยู่แล้ว
-      const existingMenuData = menusForThisBox.find((m: any) => m.menu_name === existingMenu.menu_name);
-      const existingCategory = existingMenuData?.lunchbox_menu_category;
+    // ถ้าเป็น Custom unlimited ให้ข้ามการตรวจสอบ category ซ้ำ
+    if (!isUnlimited) {
+      const hasSameCategoryMenu = currentLunchbox.lunchbox_menu?.some((existingMenu: any) => {
+        // หา category ของเมนูที่มีอยู่แล้ว
+        const existingMenuData = menusForThisBox.find((m: any) => m.menu_name === existingMenu.menu_name);
+        const existingCategory = existingMenuData?.lunchbox_menu_category;
+        
+        console.log(`🟢 Checking existing menu "${existingMenu.menu_name}" (${existingCategory}) vs new menu category (${selectedMenuCategory})`);
+        
+        // ถ้า category ตรงกัน แสดงว่ามีเมนูประเภทนี้อยู่แล้ว
+        return existingCategory && selectedMenuCategory && existingCategory === selectedMenuCategory;
+      }) || false;
       
-      console.log(`🟢 Checking existing menu "${existingMenu.menu_name}" (${existingCategory}) vs new menu category (${selectedMenuCategory})`);
-      
-      // ถ้า category ตรงกัน แสดงว่ามีเมนูประเภทนี้อยู่แล้ว
-      return existingCategory && selectedMenuCategory && existingCategory === selectedMenuCategory;
-    }) || false;
-    
-    if (hasSameCategoryMenu) {
-      console.log('❌ Category already selected! Blocking...');
-      Swal.fire({
-        icon: "warning",
-        title: "เลือกประเภทนี้ไปแล้ว",
-        text: `ไม่สามารถเลือกเมนูประเภท "${selectedMenuCategory}" ซ้ำได้ กรุณาลบเมนูเดิมก่อน`,
-        showConfirmButton: false,
-        timer: 2500,
-      });
-      return;
+      if (hasSameCategoryMenu) {
+        console.log('❌ Category already selected! Blocking...');
+        Swal.fire({
+          icon: "warning",
+          title: "เลือกประเภทนี้ไปแล้ว",
+          text: `ไม่สามารถเลือกเมนูประเภท "${selectedMenuCategory}" ซ้ำได้ กรุณาลบเมนูเดิมก่อน`,
+          showConfirmButton: false,
+          timer: 2500,
+        });
+        return;
+      }
+    } else {
+      console.log('✅ Custom unlimited - สามารถเลือก category ซ้ำได้');
     }
     
     console.log('✅ Menu can be added!');
@@ -1333,6 +1340,257 @@ const SummaryList: React.FC = () => {
         })),
       };
       
+      // ตรวจสอบว่าต้องเพิ่มข้าวอัตโนมัติหรือไม่ (ก่อน set state)
+      // ใช้ key และ menusForThisBox ที่ประกาศไว้แล้วด้านบน
+      const autoAddRiceCategories = ["พะเเนง", "คั่วกลิ้ง", "ทอดกระเทียม", "กะเพรา", "ผัดผงกะหรี่", "พริกแกง"];
+      
+      // ฟังก์ชันลบ zero-width characters และ whitespace ทั้งหมด
+      const cleanString = (str: string) => {
+        if (!str) return '';
+        // ใช้วิธีลบอักขระที่ไม่ต้องการโดยตรงจาก character codes
+        // ลบ zero-width characters ทั้งหมด (ครอบคลุมทุกประเภท)
+        // \u200B = zero-width space (8203)
+        // \u200C = zero-width non-joiner (8204)
+        // \u200D = zero-width joiner (8205)
+        // \uFEFF = zero-width no-break space (65279)
+        // \u2060 = word joiner (8288)
+        // \u180E = mongolian vowel separator (6158)
+        return str
+          .split('')
+          .filter((char: string) => {
+            const code = char.charCodeAt(0);
+            // เก็บเฉพาะอักขระที่ไม่ใช่ zero-width characters และ whitespace
+            return !(
+              code === 0x200B || // zero-width space
+              code === 0x200C || // zero-width non-joiner
+              code === 0x200D || // zero-width joiner
+              code === 0xFEFF || // zero-width no-break space
+              code === 0x2060 || // word joiner
+              code === 0x180E || // mongolian vowel separator
+              code === 0x0020 || // space
+              code === 0x00A0 || // non-breaking space
+              code === 0x1680 || // ogham space mark
+              code === 0x2000 || // en quad
+              code === 0x2001 || // em quad
+              code === 0x2002 || // en space
+              code === 0x2003 || // em space
+              code === 0x2004 || // three-per-em space
+              code === 0x2005 || // four-per-em space
+              code === 0x2006 || // six-per-em space
+              code === 0x2007 || // figure space
+              code === 0x2008 || // punctuation space
+              code === 0x2009 || // thin space
+              code === 0x200A || // hair space
+              code === 0x2028 || // line separator
+              code === 0x2029 || // paragraph separator
+              code === 0x202F || // narrow no-break space
+              code === 0x205F || // medium mathematical space
+              code === 0x3000   // ideographic space
+            );
+          })
+          .join('')
+          .trim(); // trim อีกครั้งเพื่อความแน่ใจ
+      };
+      
+      // ฟังก์ชัน normalize สระ แ และ เ ให้เป็นรูปแบบเดียวกัน
+      const normalizeVowels = (str: string) => {
+        if (!str) return str;
+        // แปลง "เ" 2 ตัวติดกันเป็น "แ" 1 ตัว (3648, 3648 -> 3649)
+        // และ normalize สระ แ ให้เป็นรูปแบบมาตรฐาน
+        return str
+          .replace(/\u0E40\u0E40/g, '\u0E41') // เ 2 ตัว -> แ
+          .replace(/\u0E41/g, '\u0E41'); // แ -> แ (เพื่อความแน่ใจ)
+      };
+      
+      // ฟังก์ชัน normalize category เพื่อรองรับความแตกต่างของตัวอักษร
+      const normalizeCategory = (cat: string) => {
+        if (!cat) return cat;
+        // ลบ zero-width space และอักขระพิเศษทั้งหมด แล้วแปลง "ผัดพริกแกงใต้" เป็น "พริกแกง"
+        const cleaned = cleanString(cat);
+        const normalized = normalizeVowels(cleaned);
+        return normalized
+          .replace(/ผัดพริกแกงใต้/g, "พริกแกง")
+          .replace(/ผัดพริกเเกงใต้/g, "พริกแกง");
+      };
+      
+      const normalizedSelectedCategory = normalizeCategory(selectedMenuCategory);
+      
+      // Clean และ normalize สระทั้งสองแบบ
+      const trimmedSelectedCategory = normalizeVowels(cleanString(selectedMenuCategory || ''));
+      const trimmedNormalizedCategory = normalizeVowels(cleanString(normalizedSelectedCategory || ''));
+      
+      // Debug: ตรวจสอบว่า cleanString และ normalizeVowels ทำงานถูกต้องหรือไม่
+      const trimmedSelectedChars = trimmedSelectedCategory.split('');
+      const trimmedSelectedCharCodes = trimmedSelectedChars.map((c: string) => c.charCodeAt(0));
+      const hasZeroWidthInTrimmed = trimmedSelectedCharCodes.some((code: number) => 
+        code === 0x200B || code === 0x200C || code === 0x200D || code === 0xFEFF || code === 0x2060 || code === 0x180E
+      );
+      
+      // ตรวจสอบว่ามีสระ เ 2 ตัวหรือไม่
+      const hasDoubleE = selectedMenuCategory?.includes('\u0E40\u0E40') || false;
+      const normalizedPhrikKaeng = normalizeVowels("พริกแกง");
+      const normalizedPhrikEKaeng = normalizeVowels("พริกเเกง");
+      
+      // เปรียบเทียบโดยลบ zero-width space และ whitespace ทั้งหมด
+      // และ normalize สระ แ และ เ ให้เป็นรูปแบบเดียวกัน
+      // และตรวจสอบว่า category มีคำที่ต้องการอยู่หรือไม่ (เพื่อรองรับกรณีที่มีอักขระพิเศษ)
+      const comparisonResults = autoAddRiceCategories.map(cat => {
+        const trimmedCat = normalizeVowels(cleanString(cat));
+        const exactMatch = trimmedCat === trimmedSelectedCategory || trimmedCat === trimmedNormalizedCategory;
+        const includesMatch = trimmedSelectedCategory?.includes(trimmedCat) || 
+                             trimmedNormalizedCategory?.includes(trimmedCat) ||
+                             trimmedCat.includes(trimmedSelectedCategory || '') ||
+                             trimmedCat.includes(trimmedNormalizedCategory || '');
+        return {
+          original: cat,
+          trimmed: trimmedCat,
+          trimmedLength: trimmedCat.length,
+          selectedLength: trimmedSelectedCategory.length,
+          normalizedLength: trimmedNormalizedCategory.length,
+          exactMatch,
+          includesMatch,
+          match: exactMatch || includesMatch
+        };
+      });
+      
+      const isInAutoAddList = comparisonResults.some(r => r.match);
+      
+      // Debug logs - ตรวจสอบรายละเอียดเพิ่มเติม
+      const directCheck = autoAddRiceCategories.includes("พริกแกง");
+      const selectedCheck = autoAddRiceCategories.some(cat => normalizeVowels(cleanString(cat)) === trimmedSelectedCategory);
+      const normalizedCheck = autoAddRiceCategories.some(cat => normalizeVowels(cleanString(cat)) === trimmedNormalizedCategory);
+      
+      // ตรวจสอบความยาวและ character codes
+      const selectedLength = selectedMenuCategory?.length;
+      const normalizedLength = normalizedSelectedCategory?.length;
+      const phrikKaengLength = "พริกแกง".length;
+      const selectedChars = selectedMenuCategory?.split('');
+      const normalizedChars = normalizedSelectedCategory?.split('');
+      const phrikKaengChars = "พริกแกง".split('');
+      const selectedCharCodes = selectedChars?.map((c: string) => c.charCodeAt(0));
+      const normalizedCharCodes = normalizedChars?.map((c: string) => c.charCodeAt(0));
+      const phrikKaengCharCodes = phrikKaengChars.map((c: string) => c.charCodeAt(0));
+      
+      // หาอักขระที่แตกต่าง
+      const diffChars = selectedChars?.filter((c: string, i: number) => {
+        const phrikChar = phrikKaengChars[i];
+        return c !== phrikChar && c.charCodeAt(0) !== 32 && c.charCodeAt(0) !== 160; // ไม่ใช่ space
+      });
+      
+      console.log('🍚 Auto Rice Check:', {
+        lunchboxLimit,
+        isUnlimited: lunchboxLimit <= 0,
+        selectedMenuCategory,
+        normalizedSelectedCategory,
+        isInAutoAddList,
+        checkOriginal: selectedCheck,
+        checkNormalized: normalizedCheck,
+        directCheck,
+        trimmedSelectedCategory,
+        trimmedSelectedCategoryLength: trimmedSelectedCategory.length,
+        trimmedSelectedChars,
+        trimmedSelectedCharCodes,
+        hasZeroWidthInTrimmed,
+        hasDoubleE,
+        normalizedPhrikKaeng,
+        normalizedPhrikEKaeng,
+        trimmedNormalizedCategory,
+        trimmedNormalizedCategoryLength: trimmedNormalizedCategory.length,
+        comparisonResults,
+        selectedLength,
+        normalizedLength,
+        phrikKaengLength,
+        selectedChars,
+        normalizedChars,
+        phrikKaengChars,
+        selectedCharCodes,
+        normalizedCharCodes,
+        phrikKaengCharCodes,
+        diffChars,
+        autoAddRiceCategories,
+        autoAddRiceCategoriesString: JSON.stringify(autoAddRiceCategories),
+        hasPhrikKaeng: directCheck,
+        menusForThisBoxLength: menusForThisBox.length,
+        currentMenus: currentLunchbox.lunchbox_menu?.map((m: any) => m.menu_name),
+      });
+      
+      // นับจำนวนเมนูในหมวดหมู่ที่กำหนด (รวมเมนูใหม่ที่กำลังจะเพิ่ม)
+      const countAutoAddRiceMenus = (currentLunchbox.lunchbox_menu || []).filter((menu: any) => {
+        const menuData = menusForThisBox.find((m: any) => m.menu_name === menu.menu_name);
+        const menuCategory = normalizeCategory(menuData?.lunchbox_menu_category || "");
+        return autoAddRiceCategories.includes(menuCategory);
+      }).length + 1; // +1 เพราะกำลังจะเพิ่มเมนูใหม่
+      
+      console.log('🍚 Count of auto-add-rice category menus:', countAutoAddRiceMenus);
+      
+      // หาเมนูข้าวที่มีอยู่แล้ว
+      const existingRiceMenu = currentLunchbox.lunchbox_menu?.find((menu: any) => {
+        const menuData = menusForThisBox.find((m: any) => m.menu_name === menu.menu_name);
+        return menuData?.lunchbox_menu_category === "ข้าว";
+      });
+      
+      console.log('🍚 Existing rice menu:', existingRiceMenu ? existingRiceMenu.menu_name : 'none');
+      
+      const shouldAddOrUpdateRice = 
+        lunchboxLimit <= 0 && // Custom unlimited
+        isInAutoAddList; // Category อยู่ในรายการที่ต้องเพิ่มข้าว
+      
+      console.log('🍚 Should add/update rice:', shouldAddOrUpdateRice);
+      
+      // Fetch ข้าวอัตโนมัติถ้าต้องการ
+      let autoRiceMenu: any = null;
+      let riceMenuDetails: any = null;
+      
+      if (shouldAddOrUpdateRice) {
+        const riceMenu = menusForThisBox.find((m: any) => m.lunchbox_menu_category === "ข้าว");
+        if (riceMenu) {
+          console.log('🍚 Fetching rice menu:', riceMenu.menu_name);
+          try {
+            const riceMenuRes = await fetch(`/api/get/menu/${riceMenu.menu_id}`);
+            if (riceMenuRes.ok) {
+              riceMenuDetails = await riceMenuRes.json();
+              let riceIngredients: any[] = [];
+              if (riceMenuDetails.menu_ingredients) {
+                if (typeof riceMenuDetails.menu_ingredients === 'string') {
+                  riceIngredients = JSON.parse(riceMenuDetails.menu_ingredients);
+                } else if (Array.isArray(riceMenuDetails.menu_ingredients)) {
+                  riceIngredients = riceMenuDetails.menu_ingredients;
+                }
+              }
+              
+              // ถ้ามีข้าวอยู่แล้ว ให้ใช้ข้อมูลเดิม แต่อัปเดตจำนวน
+              if (existingRiceMenu) {
+                autoRiceMenu = {
+                  ...existingRiceMenu,
+                  menu_total: countAutoAddRiceMenus, // อัปเดตจำนวนให้เท่ากับจำนวนเมนูในหมวดหมู่
+                };
+                console.log('🍚 Updating existing rice menu quantity to:', countAutoAddRiceMenus);
+              } else {
+                // ถ้ายังไม่มีข้าว ให้สร้างใหม่
+                autoRiceMenu = {
+                  menu_name: riceMenuDetails.menu_name || "ไม่ระบุชื่อเมนู",
+                  menu_subname: riceMenuDetails.menu_subname || "",
+                  menu_category: riceMenuDetails.menu_category || "",
+                  menu_total: countAutoAddRiceMenus, // ตั้งจำนวนให้เท่ากับจำนวนเมนูในหมวดหมู่
+                  menu_order_id: riceMenuDetails.menu_id || 0,
+                  menu_description: riceMenuDetails.menu_description || "",
+                  menu_cost: riceMenuDetails.menu_cost || 0,
+                  lunchbox_menu_category: "ข้าว",
+                  menu_ingredients: riceIngredients.map((ing: any) => ({
+                    useItem: ing.quantity || ing.useItem || 0,
+                    ingredient_name: ing.name || ing.ingredient_name || "ไม่ระบุวัตถุดิบ",
+                    ingredient_status: false,
+                  })),
+                };
+                console.log('🍚 Creating new rice menu with quantity:', countAutoAddRiceMenus);
+              }
+            }
+          } catch (riceErr) {
+            console.error("Error adding auto rice:", riceErr);
+          }
+        }
+      }
+      
       setEditMenuDialog((prev) => {
         if (!prev) return prev;
         
@@ -1362,20 +1620,66 @@ const SummaryList: React.FC = () => {
           console.log(`📝 เพิ่มเมนูใหม่ "${newMenu.menu_name}" เข้า menuItems`);
         }
         
-        // คำนวณราคาใหม่หลังเพิ่มเมนู
-        const key = `${prev.cart_lunchbox[lunchboxIdx].lunchbox_name}_${prev.cart_lunchbox[lunchboxIdx].lunchbox_set_name}_${lunchboxIdx}`;
-        const menusForThisBox = availableMenusForLunchbox[key] || [];
+        // เพิ่ม/อัปเดตข้าวเข้า menuItems ถ้ามี
+        if (autoRiceMenu) {
+          const existingRiceIndex = updatedMenuItems.findIndex(m => m.menu_name === autoRiceMenu.menu_name);
+          if (existingRiceIndex >= 0) {
+            // อัปเดตจำนวนข้าวให้เท่ากับจำนวนเมนูในหมวดหมู่ที่กำหนด
+            updatedMenuItems = updatedMenuItems.map((m, idx) => 
+              idx === existingRiceIndex 
+                ? { ...m, menu_total: autoRiceMenu.menu_total }
+                : m
+            );
+            console.log(`🍚 อัปเดตจำนวนข้าวใน menuItems เป็น: ${autoRiceMenu.menu_total}`);
+          } else {
+            // เพิ่มข้าวใหม่
+            updatedMenuItems = [...updatedMenuItems, {
+              menu_name: autoRiceMenu.menu_name,
+              menu_category: autoRiceMenu.menu_category,
+              menu_subname: autoRiceMenu.menu_subname,
+              menu_total: autoRiceMenu.menu_total,
+              menu_order_id: autoRiceMenu.menu_order_id,
+              menu_description: autoRiceMenu.menu_description,
+              menu_ingredients: autoRiceMenu.menu_ingredients,
+            }];
+            console.log(`🍚 เพิ่มข้าวใหม่ใน menuItems จำนวน: ${autoRiceMenu.menu_total}`);
+          }
+        }
+        
+        // สร้างรายการเมนูสุดท้าย (รวมข้าวถ้ามี)
+        let finalMenus = [...currentLunchbox.lunchbox_menu, newMenu];
+        
+        if (autoRiceMenu) {
+          // หาว่ามีข้าวอยู่ใน lunchbox_menu แล้วหรือไม่
+          const existingRiceMenuIndex = finalMenus.findIndex((menu: any) => {
+            const menuData = menusForThisBox.find((m: any) => m.menu_name === menu.menu_name);
+            return menuData?.lunchbox_menu_category === "ข้าว";
+          });
+          
+          if (existingRiceMenuIndex >= 0) {
+            // อัปเดตจำนวนข้าวที่มีอยู่แล้ว
+            finalMenus[existingRiceMenuIndex] = {
+              ...finalMenus[existingRiceMenuIndex],
+              menu_total: autoRiceMenu.menu_total,
+            };
+            console.log(`🍚 อัปเดตจำนวนข้าวใน lunchbox_menu เป็น: ${autoRiceMenu.menu_total}`);
+          } else {
+            // เพิ่มข้าวใหม่
+            finalMenus = [...finalMenus, autoRiceMenu];
+            console.log(`🍚 เพิ่มข้าวใหม่ใน lunchbox_menu จำนวน: ${autoRiceMenu.menu_total}`);
+          }
+        }
+        
+        const newCost = calculateLunchboxCost(finalMenus, currentLunchbox.lunchbox_total, menusForThisBox);
+        console.log(`💰 คำนวณราคาใหม่: ${newCost} บาท (เมนู ${finalMenus.length} รายการ × ${currentLunchbox.lunchbox_total} กล่อง)`);
         
         return {
           ...prev,
           cart_lunchbox: prev.cart_lunchbox.map((lb, idx) => {
             if (idx === lunchboxIdx) {
-              const updatedMenus = [...lb.lunchbox_menu, newMenu];
-              const newCost = calculateLunchboxCost(updatedMenus, lb.lunchbox_total, menusForThisBox);
-              console.log(`💰 คำนวณราคาใหม่: ${newCost} บาท (เมนู ${updatedMenus.length} รายการ × ${lb.lunchbox_total} กล่อง)`);
               return { 
                 ...lb, 
-                lunchbox_menu: updatedMenus,
+                lunchbox_menu: finalMenus,
                 lunchbox_total_cost: newCost
               };
             }
@@ -1385,10 +1689,16 @@ const SummaryList: React.FC = () => {
         };
       });
       
+      const riceMessage = autoRiceMenu 
+        ? existingRiceMenu 
+          ? ` และอัปเดตข้าวเป็น ${autoRiceMenu.menu_total} อัน`
+          : ` และเพิ่มข้าวอัตโนมัติ ${autoRiceMenu.menu_total} อัน`
+        : "";
+      
       Swal.fire({
         icon: "success",
         title: "เพิ่มเมนูสำเร็จ!",
-        text: `เพิ่ม ${newMenu.menu_name} เรียบร้อยแล้ว`,
+        text: `เพิ่ม ${newMenu.menu_name} เรียบร้อยแล้ว${riceMessage}`,
         showConfirmButton: false,
         timer: 2000,
       });
@@ -1845,9 +2155,6 @@ const SummaryList: React.FC = () => {
             <Button onClick={() => handleExport("pdf")} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> PDF
             </Button>
-            <Button onClick={() => handleExport("excel")} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> Excel
-            </Button>
           </div>
         </div>
 
@@ -2077,13 +2384,6 @@ const SummaryList: React.FC = () => {
                               onUpdated={() => handleUpdateWithCheck(cart)}
                               onOrderSummaryClick={() => handleSummary("order", cart)}
                             />
-                            <Button
-                              size='sm'
-                              className='h-9 px-4 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-xs'
-                              onClick={() => handleExportOrder(cart)}
-                            >
-                              <Download className='w-4 h-4 mr-2' /> Excel รายออร์เดอร์
-                            </Button>
                           </div>
                           <AccordionContent className='mt-4'>
                             <div className='grid md:grid-cols-2 gap-6'>
@@ -2389,7 +2689,10 @@ const SummaryList: React.FC = () => {
                                                     <div>
                                                       <h5 className='font-medium text-blue-800'>เมนูในกล่อง:</h5>
                                                       <p className='text-xs text-gray-600 mt-1'>
-                                                        เลือกแล้ว {lunchbox.lunchbox_menu?.length || 0}/{lunchbox.lunchbox_limit} เมนู
+                                                        เลือกแล้ว{" "}
+                                                        {lunchbox.lunchbox_limit && lunchbox.lunchbox_limit > 0
+                                                          ? `${lunchbox.lunchbox_menu?.length || 0}/${lunchbox.lunchbox_limit} เมนู`
+                                                          : `${lunchbox.lunchbox_menu?.length || 0} เมนู (ไม่จำกัด)`}
                                                       </p>
                                                     </div>
                                                     
@@ -2398,7 +2701,7 @@ const SummaryList: React.FC = () => {
                                                       <select
                                                         className='px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
                                                         value={selectedMenuForLunchbox[lunchboxIdx] || ""}
-                                                        disabled={(lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
+                                                        disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
                                                         onFocus={async () => {
                                                           // ดึงเมนูสำหรับกล่องนี้เมื่อเปิด dropdown
                                                           await fetchMenusForLunchbox(lunchbox.lunchbox_name, lunchbox.lunchbox_set_name, lunchboxIdx);
@@ -2416,29 +2719,38 @@ const SummaryList: React.FC = () => {
                                                           
                                                           // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs limit
                                                           const currentMenuCount = lunchbox.lunchbox_menu?.length || 0;
-                                                          const lunchboxLimit = lunchbox.lunchbox_limit || 0;
-                                                          const isFull = currentMenuCount >= lunchboxLimit;
+                                                          const lunchboxLimit = lunchbox.lunchbox_limit ?? 0;
+                                                          const isUnlimited = lunchboxLimit <= 0;
+                                                          const isFull = !isUnlimited && currentMenuCount >= lunchboxLimit;
                                                           
                                                           if (isFull) {
                                                             return <option value="" disabled>เลือกครบแล้ว ({currentMenuCount}/{lunchboxLimit} เมนู)</option>;
                                                           }
                                                           
                                                           // สร้าง Map ของ categories ที่เลือกไปแล้ว
+                                                          // แต่ถ้าเป็น Custom unlimited ให้ไม่กรอง category ซ้ำ
                                                           const selectedCategories = new Set<string>();
-                                                          lunchbox.lunchbox_menu?.forEach((selectedMenu: any) => {
-                                                            // หาข้อมูลเมนูจาก availableMenusForLunchbox เพื่อดึง category
-                                                            const menuData = menusForThisBox.find((m: any) => m.menu_name === selectedMenu.menu_name);
-                                                            if (menuData?.lunchbox_menu_category) {
-                                                              selectedCategories.add(menuData.lunchbox_menu_category);
-                                                            }
-                                                          });
+                                                          if (!isUnlimited) {
+                                                            lunchbox.lunchbox_menu?.forEach((selectedMenu: any) => {
+                                                              // หาข้อมูลเมนูจาก availableMenusForLunchbox เพื่อดึง category
+                                                              const menuData = menusForThisBox.find((m: any) => m.menu_name === selectedMenu.menu_name);
+                                                              if (menuData?.lunchbox_menu_category) {
+                                                                selectedCategories.add(menuData.lunchbox_menu_category);
+                                                              }
+                                                            });
+                                                          }
                                                           
                                                           console.log('🔍 Dropdown Render - lunchboxIdx:', lunchboxIdx);
                                                           console.log('🔍 Menu count:', currentMenuCount, '/', lunchboxLimit);
+                                                          console.log('🔍 Is unlimited:', isUnlimited);
                                                           console.log('🔍 Selected categories:', Array.from(selectedCategories));
                                                           console.log('🔍 Available menus:', menusForThisBox.map((m: any) => `${m.menu_name} (${m.lunchbox_menu_category || 'no category'})`));
                                                           
                                                           const filteredMenus = menusForThisBox.filter((menu: any) => {
+                                                            // ถ้าเป็น Custom unlimited ให้ไม่กรอง category ซ้ำ
+                                                            if (isUnlimited) {
+                                                              return true;
+                                                            }
                                                             // ตรวจสอบว่า category นี้ถูกเลือกไปแล้วหรือไม่
                                                             const menuCategory = menu.lunchbox_menu_category;
                                                             const isCategorySelected = menuCategory && selectedCategories.has(menuCategory);
@@ -2476,7 +2788,7 @@ const SummaryList: React.FC = () => {
                                                         type="button"
                                                         size="sm"
                                                         className='bg-green-600 hover:bg-green-700 text-white text-xs'
-                                                        disabled={(lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
+                                                        disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
                                                         onClick={() => {
                                                           const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
                                                           const menusForThisBox = availableMenusForLunchbox[key] || [];
