@@ -71,6 +71,27 @@ const allCards: DayCard[] = [];
 // ตัดข้อความในวงเล็บ เช่น (ตี 5)
 const cleanTime = (text: string) => text.replace(/\(.*?\)/g, "").trim();
 
+// แปลงเลขเดือนเป็นเดือนภาษาไทย
+const monthNames = [
+  "มกราคม",
+  "กุมภาพันธ์",
+  "มีนาคม",
+  "เมษายน",
+  "พฤษภาคม",
+  "มิถุนายน",
+  "กรกฎาคม",
+  "สิงหาคม",
+  "กันยายน",
+  "ตุลาคม",
+  "พฤศจิกายน",
+  "ธันวาคม",
+];
+
+const getMonthName = (monthNum: string | number): string => {
+  const num = typeof monthNum === "string" ? parseInt(monthNum, 10) : monthNum;
+  return monthNames[num - 1] || monthNum.toString();
+};
+
 // คืนค่า label + classes สำหรับสถานะแจ้งเตือนเวลา
 const getTimeAlertInfo = (minutes?: number) => {
   if (minutes == null) {
@@ -149,6 +170,7 @@ export default function Dashboard() {
           .map((item, index) => {
             const dateStr = item.date; // DD/MM/YYYY
             const [day, month, year] = dateStr.split("/");
+            const dayNum = parseInt(day, 10); // Remove leading zero
             
             // คำนวณจำนวนชุดทั้งหมด
             const totalQty = item.items.reduce((sum, lunchbox) => sum + lunchbox.quantity, 0);
@@ -179,7 +201,7 @@ export default function Dashboard() {
             return {
               id: index + 1,
               dayOfWeek: item.dayOfWeek,
-              dateTitle: `วัน${item.dayOfWeek}ที่ ${day} เดือน ${month} พ.ศ.${year}`,
+              dateTitle: `วัน${item.dayOfWeek}ที่ ${dayNum} ${getMonthName(month)} พ.ศ.${year}`,
               sendPlace: item.location,
               sendTime: item.sendTime + " น.",
               receiveTime: item.receiveTime + " น.",
@@ -286,13 +308,8 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="text-center mb-3">
-            {asPinnedSlot && (
-              <div className="text-[11px] text-white/80 -mb-0.5">
-                ออเดอร์ที่ปักหมุดไว้
-              </div>
-            )}
-            <h2 className="text-base sm:text-lg font-bold drop-shadow">
+          <div className="text-center mb-3 mt-6">
+            <h2 className="text-xl sm:text-2xl font-semi-bold drop-shadow !text-black">
               {day.dateTitle}
             </h2>
           </div>
@@ -307,8 +324,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* เวลาส่ง + เวลารับ บรรทัดเดียวกัน */}
-          <div className="flex items-center gap-3 mt-2">
+          {/* เวลาส่ง + เวลารับ */}
+          <div className="flex flex-wrap gap-3 mt-2">
             {/* เวลาส่ง */}
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 flex-1 min-w-[150px]">
               <Clock className="w-4 h-4" />
@@ -353,10 +370,10 @@ export default function Dashboard() {
             </colgroup>
             <thead>
               <tr className="bg-gray-100">
-                <th className="px-4 py-2 text-left font-semibold text-gray-700">
+                <th className="px-4 py-2 text-left font-semibold !text-black">
                   รายการ
                 </th>
-                <th className="px-4 py-2 text-right font-semibold text-gray-700">
+                <th className="px-4 py-2 text-right font-semibold !text-black">
                   จำนวน
                 </th>
               </tr>
@@ -367,7 +384,7 @@ export default function Dashboard() {
                   key={index}
                   className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                 >
-                  <td className="px-4 py-2 text-gray-800 align-middle">
+                  <td className="px-4 py-2 text-gray-800 !text-black align-middle">
                     {item.name}
                   </td>
                   <td className="px-4 py-2 text-right text-gray-900 font-semibold align-middle">
@@ -425,15 +442,8 @@ export default function Dashboard() {
         <>
           {/* Header ปกติ (ข้อ 6: ซ่อนเวลา Fullscreen เพื่อให้ TV โล่ง) */}
           {!fullscreen && (
-            <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                  Dashboard สรุปออเดอร์อาหารกล่อง
-                </h1>
-              </div>
-
-              <div className="flex items-center gap-3 justify-between sm:justify-end">
-            {/* Legend สีวัน (ข้อ 7) */}
+            <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              {/* Legend สีวัน (ข้อ 7) */}
               <div className="hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs">
                 {dayColorLegend.map((day) => (
                   <div
@@ -449,7 +459,7 @@ export default function Dashboard() {
               </div>
 
               <Button
-                className="flex items-center gap-2"
+                className="hidden lg:flex items-center gap-2"
                 size="sm"
                 onClick={toggleFullscreen}
               >
@@ -457,8 +467,7 @@ export default function Dashboard() {
                 FullScreen
               </Button>
             </div>
-          </div>
-        )}
+          )}
 
       {/* ปุ่มออก fullscreen (ข้อ 6) */}
       {fullscreen && (
