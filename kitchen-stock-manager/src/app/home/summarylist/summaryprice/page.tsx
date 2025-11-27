@@ -641,7 +641,7 @@ const SummaryPrice: React.FC = () => {
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
       setError(
-        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
+        `ไม่มีออเดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -950,7 +950,7 @@ const SummaryPrice: React.FC = () => {
 
   const handleExportCSV = () => {
     const headers = [
-      "เลขที่ออร์เดอร์",
+      "เลขที่ออเดอร์",
       "ชื่อเมนู",
       "วันที่",
       "เวลา",

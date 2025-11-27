@@ -255,7 +255,7 @@ const OrderHistory: React.FC = () => {
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
       setError(
-        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
+        `ไม่มีออเดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -480,7 +480,7 @@ const OrderHistory: React.FC = () => {
   const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleExportCSV = () => {
-    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
+    const headers = ["เลขที่ออเดอร์", "ชื่อเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
     const csvContent = [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) => [cart.id, cart.name, cart.date, cart.time, cart.sets, cart.price, getStatusText(cart.status), cart.createdBy].join(",")),
