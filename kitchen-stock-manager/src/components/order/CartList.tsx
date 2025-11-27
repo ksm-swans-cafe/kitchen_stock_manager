@@ -20,7 +20,7 @@ registerLocale("th", th);
 interface cartList {
   loading: boolean;
   setLoading: (loading: boolean) => void;
-  errors: string;
+  errors: string[];
   setErrors: (errors: string[]) => void;
   success: boolean;
   setSuccess: (success: boolean) => void;
@@ -35,7 +35,7 @@ interface cartList {
 const useCartList = create<cartList>((set) => ({
   loading: false,
   setLoading: (loading) => set({ loading }),
-  errors: "",
+  errors: [],
   setErrors: (errors) => set({ errors }),
   success: false,
   setSuccess: (success) => set({ success }),
@@ -95,6 +95,18 @@ export default function CartList() {
   useEffect(() => {
     if (success) setSuccess(false);
   }, []);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(false);
+        clearCart();
+        router.push("/home/summarylist");
+      }, 2000); // 2 วินาที
+
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   useEffect(() => {
     if (cart_delivery_date) {
@@ -197,11 +209,37 @@ export default function CartList() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
+    const digitsOnly = value;
+    const len = digitsOnly.length;
 
-    if (value.length > 3 && value.length <= 6) {
-      value = `${value.slice(0, 3)}-${value.slice(3)}`;
-    } else if (value.length > 6) {
-      value = `${value.slice(0, 3)}-${value.slice(3, 6)}-${value.slice(6, 10)}`;
+    // รองรับเบอร์ 8 หลัก, 9 หลัก (บ้าน), และ 10 หลัก (มือถือ)
+    if (len === 0) {
+      value = "";
+    } else if (len === 9 && digitsOnly.startsWith("0")) {
+      // เบอร์ 9 หลักบ้าน: 02-123-4567 (เริ่มด้วย 0)
+      if (len <= 2) {
+        value = digitsOnly;
+      } else if (len <= 5) {
+        value = `${digitsOnly.slice(0, 2)}-${digitsOnly.slice(2)}`;
+      } else {
+        value = `${digitsOnly.slice(0, 2)}-${digitsOnly.slice(2, 5)}-${digitsOnly.slice(5, 9)}`;
+      }
+    } else if (len <= 8) {
+      // เบอร์ 8 หลัก: 1234-5678
+      if (len > 4) {
+        value = `${digitsOnly.slice(0, 4)}-${digitsOnly.slice(4, 8)}`;
+      } else {
+        value = digitsOnly;
+      }
+    } else {
+      // เบอร์ 10 หลัก: 081-234-5678
+      if (len <= 3) {
+        value = digitsOnly;
+      } else if (len <= 6) {
+        value = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
+      } else {
+        value = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
+      }
     }
     setCustomerInfo({ tel: value });
   };
@@ -222,8 +260,14 @@ export default function CartList() {
     if (!cart_customer_name.trim()) newErrors.push("กรุณากรอกชื่อลูกค้า");
     if (!cart_customer_tel.trim()) {
       newErrors.push("กรุณากรอกเบอร์โทรลูกค้า");
-    } else if (!/^\d{3}-\d{3}-\d{4}$/.test(cart_customer_tel)) {
-      newErrors.push("เบอร์โทรต้องอยู่ในรูปแบบ 081-234-5678");
+    } else {
+      // รองรับเบอร์ 8 หลัก (1234-5678), 9 หลักบ้าน (02-123-4567), และ 10 หลักมือถือ (081-234-5678)
+      const phonePattern8 = /^\d{4}-\d{4}$/; // 8 หลัก
+      const phonePattern9 = /^0\d-\d{3}-\d{4}$/; // 9 หลักบ้าน (เริ่มด้วย 0)
+      const phonePattern10 = /^\d{3}-\d{3}-\d{4}$/; // 10 หลักมือถือ
+      if (!phonePattern8.test(cart_customer_tel) && !phonePattern9.test(cart_customer_tel) && !phonePattern10.test(cart_customer_tel)) {
+        newErrors.push("เบอร์โทรต้องอยู่ในรูปแบบ 1234-5678, 02-123-4567 หรือ 081-234-5678");
+      }
     }
     if (!cart_location_send.trim()) newErrors.push("กรุณากรอกสถานที่จัดส่ง");
     if (!cart_delivery_date.trim()) newErrors.push("กรุณาเลือกวันที่จัดส่ง");
@@ -647,9 +691,7 @@ export default function CartList() {
           <div className='bg-white p-6 rounded max-w-sm text-center space-y-4'>
             <h2 className='text-xl font-bold'>สั่งซื้อสำเร็จ</h2>
             <p>คำสั่งซื้อของคุณถูกบันทึกเรียบร้อยแล้ว</p>
-            <button onClick={handleDone} className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' style={{ backgroundColor: "#16a34a", color: "#ffffff" }}>
-              ตกลง
-            </button>
+            <p className='text-sm text-gray-500'>กำลังนำทางไปหน้าสรุปรายการ...</p>
           </div>
         </div>
       )}
