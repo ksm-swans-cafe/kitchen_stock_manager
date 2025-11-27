@@ -233,7 +233,7 @@ const OrderHistory = () => {
         setCarts(formattedOrders);
       } catch (err) {
         console.error("Error formatting orders:", err);
-        setError(err instanceof Error ? `ไม่สามารถจัดรูปแบบออร์เดอร์: ${err.message}` : "เกิดข้อผิดพลาดในการจัดรูปแบบออร์เดอร์");
+        setError(err instanceof Error ? `ไม่สามารถจัดรูปแบบออเดอร์: ${err.message}` : "เกิดข้อผิดพลาดในการจัดรูปแบบออเดอร์");
       }
     };
 
@@ -290,7 +290,7 @@ const OrderHistory = () => {
     setIsDatePickerOpen(false);
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
-      setError(`ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
+      setError(`ไม่มีออเดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
     } else {
       setError(null);
     }
@@ -596,7 +596,7 @@ const OrderHistory = () => {
   const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleExportCSV = () => {
-    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
+    const headers = ["เลขที่ออเดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
     const csvContent = [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) => {
@@ -658,7 +658,7 @@ const OrderHistory = () => {
           : cart.price || 0;
       const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
       return {
-        "เลขที่ออร์เดอร์": cart.id,
+        "เลขที่ออเดอร์": cart.id,
         "ชื่อเมนู": cart.name,
         "คำอธิบายเมนู": menuDescriptions,
         "วันที่": cart.date,
