@@ -349,7 +349,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* แถบแจ้งเตือนเวลา (ข้อ 5) */}
+          {/* แถบแจ้งเตือนเวลา ข้อ 5) */}
           {timeAlert && (
             <div className="mt-3 flex justify-start">
               <div
