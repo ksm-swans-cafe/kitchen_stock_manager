@@ -309,16 +309,16 @@ export default function Dashboard() {
           )}
 
           <div className="text-center mb-3 mt-6">
-            <h2 className="text-xl sm:text-2xl font-semi-bold drop-shadow !text-black">
+            <h2 className="!text-2xl !font-semibold drop-shadow !text-black">
               {day.dateTitle}
             </h2>
           </div>
 
           {/* สถานที่ */}
           <div className="flex justify-start mb-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/20 whitespace-normal break-words">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs sm:text-sm leading-snug">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 whitespace-normal break-words">
+              <MapPin className="w-4 h-4 flex-shrink-0 !text-black" />
+              <span className="text-xs sm:text-sm leading-snug !text-black">
                 {day.sendPlace}
               </span>
             </div>
@@ -327,23 +327,23 @@ export default function Dashboard() {
           {/* เวลาส่ง + เวลารับ */}
           <div className="flex flex-wrap gap-3 mt-2">
             {/* เวลาส่ง */}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 flex-1 min-w-[150px]">
-              <Clock className="w-4 h-4" />
-              <span className="font-semibold whitespace-nowrap">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[150px]">
+              <Clock className="w-4 h-4 !text-black" />
+              <span className="font-semibold whitespace-nowrap !text-black">
                 เวลาส่ง
               </span>
-              <span className="whitespace-nowrap">
+              <span className="whitespace-nowrap !text-black">
                 {cleanTime(day.sendTime)}
               </span>
             </div>
 
             {/* เวลารับ */}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 flex-1 min-w-[150px]">
-              <Clock className="w-4 h-4" />
-              <span className="font-semibold whitespace-nowrap">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[150px]">
+              <Clock className="w-4 h-4 !text-black" />
+              <span className="font-semibold whitespace-nowrap !text-black">
                 เวลารับ
               </span>
-              <span className="whitespace-nowrap">
+              <span className="whitespace-nowrap !text-black">
                 {cleanTime(day.receiveTime)}
               </span>
             </div>
@@ -373,7 +373,7 @@ export default function Dashboard() {
                 <th className="px-4 py-2 text-left font-semibold !text-black">
                   รายการ
                 </th>
-                <th className="px-4 py-2 text-right font-semibold !text-black">
+                <th className="px-4 py-2 !text-center font-semibold !text-black">
                   จำนวน
                 </th>
               </tr>
@@ -387,7 +387,7 @@ export default function Dashboard() {
                   <td className="px-4 py-2 text-gray-800 !text-black align-middle">
                     {item.name}
                   </td>
-                  <td className="px-4 py-2 text-right text-gray-900 font-semibold align-middle">
+                  <td className="px-4 py-2 !text-center text-gray-900 font-semibold align-middle">
                     {item.qty}
                   </td>
                 </tr>
