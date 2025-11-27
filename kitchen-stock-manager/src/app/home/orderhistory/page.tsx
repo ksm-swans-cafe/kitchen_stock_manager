@@ -9,6 +9,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -693,7 +694,44 @@ const OrderHistory = () => {
       });
   }, [allCarts]);
 
-  const handleExportExcel = (selectedMonth?: string) => {
+  // ฟังก์ชันแปลง cart_delivery_date (รูปแบบไทย) เป็นรูปแบบที่อ่านง่าย
+  const formatDeliveryDate = (thaiDate: string | undefined): string => {
+    if (!thaiDate) return "ไม่ระบุ";
+    const isoDate = convertThaiDateToISO(thaiDate);
+    if (!isoDate) return "ไม่ระบุ";
+    const date = new Date(isoDate);
+    if (isNaN(date.getTime())) return "ไม่ระบุ";
+    const thaiMonthNames = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    const day = date.getDate();
+    const month = date.getMonth();
+    const year = date.getFullYear() + 543; // แปลงเป็นปี พ.ศ.
+    return `${day} ${thaiMonthNames[month]} ${year}`;
+  };
+
+  // ฟังก์ชันแปลง cart_create_date (รูปแบบ ISO) เป็นรูปแบบที่อ่านง่าย
+  const formatCreateDate = (isoDateString: string | undefined): string => {
+    if (!isoDateString) return "ไม่ระบุ";
+    // แปลง ISO date string โดยแทนที่ 'T' ด้วย space
+    const normalizedDate = isoDateString.replace('T', ' ');
+    const [rawDate, timePart] = normalizedDate.split(" ");
+    if (!rawDate) return "ไม่ระบุ";
+    
+    const [year, month, day] = rawDate.split("-");
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    if (isNaN(date.getTime())) return "ไม่ระบุ";
+    
+    const thaiMonthNames = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    const thaiYear = Number(year) + 543; // แปลงเป็นปี พ.ศ.
+    return `${Number(day)} ${thaiMonthNames[Number(month) - 1]} ${thaiYear}`;
+  };
+
+  const handleExportExcel = async (selectedMonth?: string) => {
     // กรองข้อมูลตามเดือนที่เลือก (ใช้ cart_delivery_date)
     let ordersToExport = allCarts.filter((cart) => cart.status === "success" || cart.status === "cancelled");
     
@@ -710,30 +748,143 @@ const OrderHistory = () => {
       });
     }
 
-    const worksheetData = ordersToExport.map((cart) => {
+    // สร้าง map เพื่อเก็บ cart_create_date จาก cartsData
+    const cartCreateDateMap = new Map<string, string>();
+    if (cartsData && Array.isArray(cartsData)) {
+      cartsData.forEach((rawCart: any) => {
+        if (rawCart.cart_id && rawCart.cart_create_date) {
+          cartCreateDateMap.set(rawCart.cart_id, rawCart.cart_create_date);
+        }
+      });
+    }
+
+    const worksheetData = ordersToExport.flatMap((cart) => {
       const foodPrice =
         cart.cart_lunchbox && cart.cart_lunchbox.length > 0
           ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
       const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
-      return {
-        "เลขที่ออเดอร์": cart.id,
-        "ชื่อเมนู": cart.name,
-        "คำอธิบายเมนู": menuDescriptions,
-        "วันที่": cart.date,
-        "เวลา": cart.time,
-        "จำนวน Set": cart.sets,
+      
+      // ดึง cart_create_date จาก map
+      const cartCreateDate = cartCreateDateMap.get(cart.id);
+      const formattedDeliveryDate = formatDeliveryDate(cart.cart_delivery_date);
+      const formattedCreateDate = formatCreateDate(cartCreateDate);
+      
+      // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
+      const menuRows: any[] = [];
+      
+      if (cart.cart_lunchbox && cart.cart_lunchbox.length > 0) {
+        // วน loop ผ่าน cart_lunchbox และ lunchbox_menu เพื่อสร้าง row ใหม่สำหรับแต่ละ menu
+        cart.cart_lunchbox.forEach((lunchbox: any) => {
+          if (lunchbox.lunchbox_menu && Array.isArray(lunchbox.lunchbox_menu)) {
+            lunchbox.lunchbox_menu.forEach((menu: any) => {
+              if (menu.menu_name) {
+                menuRows.push({
+                  "เลขที่ออเดอร์": cart.id,
+                  "ชื่อเมนู": menu.menu_name,
+                  "คำอธิบายเมนู": menuDescriptions,
+                  "วันที่สร้างรายการ": formattedCreateDate,
+                  "วันที่จัดส่ง": formattedDeliveryDate,
+                  "เวลา": cart.time,
+                  "จำนวน Set": menu.menu_total || 0,
+                  "ราคาอาหาร(บาท)": foodPrice,
+                  "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+                  "สถานะ": getStatusText(cart.status),
+                  "ผู้สร้าง": cart.createdBy,
+                });
+              }
+            });
+          }
+        });
+      }
+      
+      // ถ้าไม่มี cart_lunchbox หรือไม่มีเมนู ให้ใช้ข้อมูลเดิม
+      if (menuRows.length === 0) {
+        menuRows.push({
+          "เลขที่ออเดอร์": cart.id,
+          "ชื่อเมนู": cart.name || "ไม่มีชื่อเมนู",
+          "คำอธิบายเมนู": menuDescriptions,
+          "วันที่สร้างรายการ": formattedCreateDate,
+          "วันที่จัดส่ง": formattedDeliveryDate,
+          "เวลา": cart.time,
+          "จำนวน Set": cart.sets,
+          "ราคาอาหาร(บาท)": foodPrice,
+          "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+          "สถานะ": getStatusText(cart.status),
+          "ผู้สร้าง": cart.createdBy,
+        });
+      }
+      
+      // จัดกลุ่มตามชื่อเมนูและรวมจำนวน Set
+      const menuGroupMap = new Map<string, any>();
+      menuRows.forEach((row) => {
+        const menuName = row["ชื่อเมนู"];
+        if (menuGroupMap.has(menuName)) {
+          // ถ้ามีชื่อเมนูซ้ำ ให้รวมจำนวน Set
+          const existingRow = menuGroupMap.get(menuName);
+          existingRow["จำนวน Set"] = (existingRow["จำนวน Set"] || 0) + (row["จำนวน Set"] || 0);
+        } else {
+          // ถ้ายังไม่มี ให้เพิ่มเข้าไป (ไม่ใส่เลขที่ออเดอร์และราคาอาหารใน row ข้อมูลเมนู)
+          menuGroupMap.set(menuName, {
+            ...row,
+            "เลขที่ออเดอร์": "", // ไม่แสดงเลขที่ออเดอร์ใน row ข้อมูลเมนู
+            "ราคาอาหาร(บาท)": "", // ไม่แสดงราคาอาหารใน row ข้อมูลเมนู
+          });
+        }
+      });
+      
+      // แปลง Map กลับเป็น array
+      const groupedMenuRows = Array.from(menuGroupMap.values());
+      
+      // แสดงเลขที่ออเดอร์แค่ใน row แรกของแต่ละ order
+      if (groupedMenuRows.length > 0) {
+        groupedMenuRows[0]["เลขที่ออเดอร์"] = cart.id;
+      }
+      
+      // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงเลขที่ออเดอร์และราคาอาหาร)
+      groupedMenuRows.push({
+        "เลขที่ออเดอร์": "",
+        "ชื่อเมนู": "รวม",
+        "คำอธิบายเมนู": "",
+        "วันที่สร้างรายการ": "",
+        "วันที่จัดส่ง": "",
+        "เวลา": "",
+        "จำนวน Set": "",
         "ราคาอาหาร(บาท)": foodPrice,
         "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-        "สถานะ": getStatusText(cart.status),
-        "ผู้สร้าง": cart.createdBy,
-      };
+        "สถานะ": "",
+        "ผู้สร้าง": "",
+      });
+      
+      return groupedMenuRows;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData as any[]);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
-    
+    // คำนวณราคาอาหารรวมของทุก order (จาก row สรุปที่มี "ชื่อเมนู" = "รวม")
+    const totalFoodPrice = worksheetData.reduce((sum, row) => {
+      if (row["ชื่อเมนู"] === "รวม") {
+        return sum + (Number(row["ราคาอาหาร(บาท)"]) || 0);
+      }
+      return sum;
+    }, 0);
+
+    // เพิ่ม row สรุปที่ท้ายสุด
+    const summaryRow = {
+      "เลขที่ออเดอร์": "รวม",
+      "ชื่อเมนู": "",
+      "คำอธิบายเมนู": "",
+      "วันที่จัดส่ง": "",
+      "วันที่สร้างรายการ": "",
+      "เวลา": "",
+      "จำนวน Set": "",
+      "ราคาอาหาร(บาท)": totalFoodPrice,
+      "ค่าจัดส่ง(บาท)": "",
+      "สถานะ": "",
+      "ผู้สร้าง": "",
+    };
+
+    // เพิ่ม row สรุปเข้าไปใน worksheetData
+    worksheetData.push(summaryRow);
+
     // ตั้งชื่อไฟล์ตามเดือนที่เลือก
     let fileName = `order_history`;
     if (selectedMonth) {
@@ -745,8 +896,59 @@ const OrderHistory = () => {
       const timestamp = new Date().toISOString().split("T")[0];
       fileName = `order_history_${timestamp}`;
     }
-    
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+
+    // ใช้ ExcelJS สำหรับการสร้าง Excel พร้อม styling
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Orders");
+
+    // กำหนด headers
+    const headers = Object.keys(worksheetData[0] || {});
+    worksheet.addRow(headers);
+
+    // กำหนด style ให้ header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" }
+    };
+
+    // เพิ่มข้อมูล rows
+    worksheetData.forEach((row, index) => {
+      const rowData = headers.map((header) => row[header] ?? "");
+      const addedRow = worksheet.addRow(rowData);
+      
+      // ถ้าเป็น row สรุป (row ที่มี "ชื่อเมนู" = "รวม") ให้กำหนด styling
+      if (row["ชื่อเมนู"] === "รวม") {
+        addedRow.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF1F4E78" }
+        };
+        addedRow.font = {
+          color: { argb: "FFFFFFFF" },
+          bold: true
+        };
+      }
+    });
+
+    // Auto-fit columns
+    worksheet.columns.forEach((column) => {
+      if (column.header) {
+        column.width = 15;
+      }
+    });
+
+    // Export file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${fileName}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
     setIsExcelMonthDialogOpen(false);
     setSelectedMonthForExcel("");
   };
