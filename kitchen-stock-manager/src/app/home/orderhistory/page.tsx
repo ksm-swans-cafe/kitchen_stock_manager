@@ -56,6 +56,8 @@ const OrderHistory = () => {
     exportTime: string;
     receiveTime: string;
   } | null>(null);
+  const [isExcelMonthDialogOpen, setIsExcelMonthDialogOpen] = useState(false);
+  const [selectedMonthForExcel, setSelectedMonthForExcel] = useState<string>("");
 
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher);
@@ -650,8 +652,65 @@ const OrderHistory = () => {
     doc.save("order_history.pdf");
   };
 
-  const handleExportExcel = () => {
-    const worksheetData = filteredAndSortedOrders.map((cart) => {
+  // ฟังก์ชันสำหรับดึงรายการเดือนที่มีข้อมูล (เฉพาะ status success หรือ cancelled)
+  const getAvailableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    // กรองเฉพาะ cart ที่มี status เป็น success หรือ cancelled (เหมือนกับที่ใช้ใน handleExportExcel)
+    const validCarts = allCarts.filter((cart) => cart.status === "success" || cart.status === "cancelled");
+    
+    validCarts.forEach((cart) => {
+      if (cart.cart_delivery_date) {
+        const isoDate = convertThaiDateToISO(cart.cart_delivery_date);
+        if (isoDate) {
+          const date = new Date(isoDate);
+          // ตรวจสอบว่า date ถูกต้อง
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1; // 1-12
+            const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
+            monthSet.add(monthKey);
+          }
+        }
+      }
+    });
+    
+    // แปลงเป็น array และเรียงลำดับ
+    return Array.from(monthSet)
+      .sort()
+      .reverse() // เรียงจากใหม่ไปเก่า
+      .map((monthKey) => {
+        const [year, month] = monthKey.split("-");
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const thaiMonthNames = [
+          "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+          "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        ];
+        const thaiYear = parseInt(year) + 543;
+        return {
+          value: monthKey,
+          label: `${thaiMonthNames[parseInt(month) - 1]} ${thaiYear}`,
+        };
+      });
+  }, [allCarts]);
+
+  const handleExportExcel = (selectedMonth?: string) => {
+    // กรองข้อมูลตามเดือนที่เลือก (ใช้ cart_delivery_date)
+    let ordersToExport = allCarts.filter((cart) => cart.status === "success" || cart.status === "cancelled");
+    
+    if (selectedMonth) {
+      ordersToExport = ordersToExport.filter((cart) => {
+        if (!cart.cart_delivery_date) return false;
+        const isoDate = convertThaiDateToISO(cart.cart_delivery_date);
+        if (!isoDate) return false;
+        const date = new Date(isoDate);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
+        return monthKey === selectedMonth;
+      });
+    }
+
+    const worksheetData = ordersToExport.map((cart) => {
       const foodPrice =
         cart.cart_lunchbox && cart.cart_lunchbox.length > 0
           ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
@@ -674,8 +733,22 @@ const OrderHistory = () => {
     const worksheet = XLSX.utils.json_to_sheet(worksheetData as any[]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
-    const timestamp = new Date().toISOString().split("T")[0];
-    XLSX.writeFile(workbook, `order_history_${timestamp}.xlsx`);
+    
+    // ตั้งชื่อไฟล์ตามเดือนที่เลือก
+    let fileName = `order_history`;
+    if (selectedMonth) {
+      const selectedMonthData = getAvailableMonths.find((m) => m.value === selectedMonth);
+      if (selectedMonthData) {
+        fileName = `order_history_${selectedMonthData.label.replace(/\s+/g, "_")}`;
+      }
+    } else {
+      const timestamp = new Date().toISOString().split("T")[0];
+      fileName = `order_history_${timestamp}`;
+    }
+    
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    setIsExcelMonthDialogOpen(false);
+    setSelectedMonthForExcel("");
   };
 
   const handleUpdateWithCheck = (cart: { id: string; allIngredients: any[] }) => {
@@ -833,7 +906,7 @@ const OrderHistory = () => {
             <Button onClick={handleExportPDF} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2 text-gray-400' /> PDF
             </Button>
-            <Button onClick={handleExportExcel} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
+            <Button onClick={() => setIsExcelMonthDialogOpen(true)} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2 text-gray-400' /> Excel
             </Button>
           </div>
@@ -1155,6 +1228,57 @@ const OrderHistory = () => {
                   );
                 })()}
             </DialogTitle>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog สำหรับเลือกเดือนก่อน Export Excel */}
+        <Dialog open={isExcelMonthDialogOpen} onOpenChange={setIsExcelMonthDialogOpen}>
+          <DialogContent className='max-w-lg'>
+            <div className='space-y-4'>
+            <DialogTitle className='text-xl mb-4 text-black !font-bold'>เลือกเดือนสำหรับ Export Excel</DialogTitle>
+              <div className='flex flex-col gap-2'>
+                {/* <label className='text-sm font-medium text-gray-700'>เลือกเดือน</label> */}
+                <Select value={selectedMonthForExcel} onValueChange={setSelectedMonthForExcel}>
+                  <SelectTrigger style={{ color: "#000000" }} className='w-full !bg-gray-100'>
+                    <SelectValue placeholder='เลือกเดือนที่ต้องการ' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>ทั้งหมด</SelectItem>
+                    {getAvailableMonths.map((month) => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='flex justify-end gap-2 pt-4 '>
+                <Button
+                  variant='outline'
+                  style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
+                  className=' !bg-red-400'
+                  onClick={() => {
+                    setIsExcelMonthDialogOpen(false);
+                    setSelectedMonthForExcel("");
+                  }}>
+                  ยกเลิก
+                </Button>
+                
+                <Button
+                  variant='default'
+                  style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
+                  className=' !bg-green-400'
+                  onClick={() => {
+                    if (selectedMonthForExcel && selectedMonthForExcel !== 'all') {
+                      handleExportExcel(selectedMonthForExcel);
+                    } else {
+                      handleExportExcel();
+                    }
+                  }}>
+                  Export Excel
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
