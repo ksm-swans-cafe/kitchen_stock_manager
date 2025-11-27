@@ -22,6 +22,28 @@ interface DayCard {
   minutesToSend?: number;      // ใช้สำหรับแจ้งเตือนเวลา (เหลือกี่นาทีก่อนเวลาส่ง)
 }
 
+interface ApiResponse {
+  status: string;
+  total: number;
+  result: Array<{
+    id: string;
+    date: string; // DD/MM/YYYY
+    dayOfWeek: string;
+    location: string;
+    sendTime: string; // HH:MM
+    receiveTime: string; // HH:MM
+    items: Array<{
+      lunchbox_name: string;
+      set: string;
+      quantity: number;
+      lunchbox_menu: Array<{
+        menu_name: string;
+        menu_quantity: number;
+      }>;
+    }>;
+  }>;
+}
+
 const dayColor: Record<string, string> = {
   จันทร์: "from-yellow-400 to-yellow-500",
   อังคาร: "from-pink-400 to-pink-500",
@@ -44,81 +66,7 @@ const dayColorLegend = [
 ];
 
 // ข้อมูลทั้งหมด (4 ใบ) — ใช้ minutesToSend สำหรับแจ้งเตือนเวลา
-const allCards: DayCard[] = [
-  {
-    id: 1,
-    dayOfWeek: "พุธ",
-    dateTitle: "วันพุธที่ 1 ต.ค. 68",
-    sendPlace: "โบเนส ทาวเวอร์ สุขุมวิท 6",
-    sendTime: "09.45 น.",
-    receiveTime: "11.45 น.",
-    minutesToSend: 120, // เหลือ 120 นาที (ตัวอย่าง)
-    items: [
-      { name: "ก๋วยจั๊บหมู", qty: 12 },
-      { name: "ผัดผักรวมมิตร", qty: 12 },
-      { name: "กระเพราหมู", qty: 12 },
-      { name: "คั่วกลิ้งหมู", qty: 12 },
-      { name: "แกงจืดเห็ดหูหนูขั้ว", qty: 12 },
-      { name: "ไก่น่องทอด", qty: 12 },
-      { name: "ไข่ตุ๋น", qty: 36 },
-      { name: "น้ำผลไม้ / ชาไทย / กาแฟ", qty: 12 },
-    ],
-    totalText: "รวม 36 ชุด",
-  },
-  {
-    id: 2,
-    dayOfWeek: "พฤหัสบดี",
-    dateTitle: "วันพฤหัสบดีที่ 2 ต.ค. 68",
-    sendPlace: "โบเนส ทาวเวอร์ สุขุมวิท 6",
-    sendTime: "09.45 น.",
-    receiveTime: "11.45 น.",
-    minutesToSend: 75,
-    items: [
-      { name: "ก๋วยจั๊บไก่", qty: 9 },
-      { name: "ผัดผักรวม", qty: 10 },
-      { name: "กระเพราหมูสับ", qty: 9 },
-      { name: "คั่วกลิ้งหมู", qty: 9 },
-      { name: "แกงจืดเห็ดหูหนูขั้ว", qty: 9 },
-      { name: "ไก่น่องทอด", qty: 9 },
-      { name: "ไข่ตุ๋น", qty: 28 },
-    ],
-    totalText: "รวม 28 ชุด",
-  },
-  {
-    id: 3,
-    dayOfWeek: "เสาร์",
-    dateTitle: "วันเสาร์ที่ 4 ต.ค. 68",
-    sendPlace: "สถานีกลางบางซื่อ",
-    sendTime: "05.00 น. (ตี 5)",
-    receiveTime: "05.30 น.",
-    minutesToSend: 35,
-    items: [
-      { name: "ข้าวกล่องเมนูรวม", qty: 200 },
-      { name: "หมูผัดซอส", qty: 760 },
-      { name: "ไก่ย่าง / ไก่อบ", qty: 40 },
-      { name: "บ๊ะจ่าง", qty: 200 },
-    ],
-    totalText: "รวม 200 ชุด",
-  },
-  {
-    id: 4,
-    dayOfWeek: "อาทิตย์",
-    dateTitle: "วันอาทิตย์ที่ 5 ต.ค. 68",
-    sendPlace: "อาคารตัวอย่าง",
-    sendTime: "10.00 น.",
-    receiveTime: "11.00 น.",
-    minutesToSend: 20, // ปักหมุด + ใกล้เวลาส่ง
-    items: [
-      { name: "ข้าวผัดหมู", qty: 50 },
-      { name: "แกงจืดเห็ดหูหนูสับ", qty: 50 },
-      { name: "ไก่ทอดน้ำปลา", qty: 50 },
-      { name: "ผัดผักรวม", qty: 50 },
-      { name: "ผลไม้รวม", qty: 50 },
-    ],
-    totalText: "รวม 50 ชุด",
-    isPinned: true, // ออเดอร์ที่ปักหมุด
-  },
-];
+const allCards: DayCard[] = [];
 
 // ตัดข้อความในวงเล็บ เช่น (ตี 5)
 const cleanTime = (text: string) => text.replace(/\(.*?\)/g, "").trim();
@@ -145,15 +93,123 @@ const getTimeAlertInfo = (minutes?: number) => {
     };
   }
 
+  // Convert to hours if between 60 and 1440 minutes
+  if (minutes <= 1440) {
+    const hours = Math.round(minutes / 60);
+    return {
+      label: `เหลือเวลาอีก ${hours} ชั่วโมง`,
+      className:
+        "bg-emerald-50 border border-emerald-300 text-emerald-800",
+    };
+  }
+
+  // Convert to days if more than 24 hours (1440 minutes)
+  const days = Math.round(minutes / 1440);
   return {
-    label: `เหลือเวลาอีก ${minutes} นาที`,
+    label: `เหลือเวลาอีก ${days} วัน`,
     className:
-      "bg-emerald-50 border border-emerald-300 text-emerald-800",
+      "bg-blue-50 border border-blue-300 text-blue-800",
   };
 };
 
 export default function Dashboard() {
   const [fullscreen, setFullscreen] = useState(false);
+  const [allCards, setAllCards] = useState<DayCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Calculate minutes until send time
+  const calculateMinutesToSend = (date: string, sendTime: string): number => {
+    const [day, month, year] = date.split("/").map(Number);
+    const [hours, minutes] = sendTime.split(":").map(Number);
+    
+    // Create date object for Thai calendar date
+    const gregorianYear = year - 543;
+    const sendDateTime = new Date(gregorianYear, month - 1, day, hours, minutes, 0);
+    const now = new Date();
+    
+    const diffMs = sendDateTime.getTime() - now.getTime();
+    const diffMinutes = Math.round(diffMs / (1000 * 60));
+    
+    return Math.max(diffMinutes, -999); // Return negative if past
+  };
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/get/dashboard");
+        const data: ApiResponse = await response.json();
+
+        if (!response.ok || data.status !== "success") {
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const transformedCards: DayCard[] = data.result
+          .map((item, index) => {
+            const dateStr = item.date; // DD/MM/YYYY
+            const [day, month, year] = dateStr.split("/");
+            
+            // คำนวณจำนวนชุดทั้งหมด
+            const totalQty = item.items.reduce((sum, lunchbox) => sum + lunchbox.quantity, 0);
+            
+            const menuItems: DayItem[] = [];
+            item.items.forEach((lunchbox) => {
+              lunchbox.lunchbox_menu.forEach((menu) => {
+                menuItems.push({
+                  name: menu.menu_name,
+                  qty: menu.menu_quantity,
+                });
+              });
+            });
+            
+            // Aggregate items with the same name
+            const aggregatedItems = menuItems.reduce((acc, item) => {
+              const existingItem = acc.find((i) => i.name === item.name);
+              if (existingItem) {
+                existingItem.qty = (Number(existingItem.qty) + Number(item.qty)).toString();
+              } else {
+                acc.push({ ...item, qty: String(item.qty) });
+              }
+              return acc;
+            }, [] as DayItem[]);
+            
+            const minutesToSend = calculateMinutesToSend(item.date, item.sendTime);
+            
+            return {
+              id: index + 1,
+              dayOfWeek: item.dayOfWeek,
+              dateTitle: `วัน${item.dayOfWeek}ที่ ${day} เดือน ${month} พ.ศ.${year}`,
+              sendPlace: item.location,
+              sendTime: item.sendTime + " น.",
+              receiveTime: item.receiveTime + " น.",
+              items: aggregatedItems,
+              totalText: `รวม ${totalQty} ชุด`,
+              isPinned: false,
+              minutesToSend,
+            };
+          })
+          .filter((card) => card.minutesToSend >= 0); // Filter out past times
+
+        setAllCards(transformedCards);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+        setAllCards([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // ตั้งเวลารีเฟรชข้อมูลทุก ๆ 1 นาที
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = fullscreen ? "hidden" : "auto";
@@ -312,9 +368,41 @@ export default function Dashboard() {
 
   return (
     <div className={`p-4 sm:p-6 ${fullscreen ? "h-screen" : "min-h-screen"}`}>
-      {/* Header ปกติ (ข้อ 6: ซ่อนเวลา Fullscreen เพื่อให้ TV โล่ง) */}
-      {!fullscreen && (
-        <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="bg-red-50 border border-red-300 rounded-lg p-6 text-center">
+            <p className="text-red-700 font-semibold">เกิดข้อผิดพลาด</p>
+            <p className="text-red-600 text-sm mt-2">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* No Data State */}
+      {!loading && !error && allCards.length === 0 && (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-gray-600">ไม่มีข้อมูลออเดอร์</p>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!loading && !error && allCards.length > 0 && (
+        <>
+          {/* Header ปกติ (ข้อ 6: ซ่อนเวลา Fullscreen เพื่อให้ TV โล่ง) */}
+          {!fullscreen && (
+            <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
               Dashboard สรุปออเดอร์อาหารกล่อง
@@ -387,6 +475,8 @@ export default function Dashboard() {
         {/* ช่องปักหมุด ถ้าไม่มีปักหมุดก็ใช้ออเดอร์อื่นแทน */}
         {cardForPinnedSlot && renderDayCard(cardForPinnedSlot, true)}
       </div>
+        </>
+      )}
     </div>
   );
 }

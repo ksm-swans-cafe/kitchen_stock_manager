@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
+import { send } from "process";
 
 function convertBigIntToString(obj: any): any {
   if (obj === null || obj === undefined) return obj;
@@ -37,6 +38,21 @@ export async function GET() {
     };
     
     const todayComparable = convertToComparableDate(todayString);
+    
+    // Function to get Thai day of week
+    const getDayOfWeekThai = (day: number): string => {
+      const daysThai = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+      return daysThai[day];
+    };
+    
+    // Function to get day of week from DD/MM/YYYY (Buddhist calendar)
+    const getDayFromDateString = (dateStr: string): string => {
+      const [d, m, y] = dateStr.split("/").map(Number);
+      // Convert Buddhist year to Gregorian
+      const gregorianYear = y - 543;
+      const date = new Date(gregorianYear, m - 1, d);
+      return getDayOfWeekThai(date.getDay());
+    };
 
     const result = await (prisma.cart as any).aggregateRaw({
       pipeline: [
@@ -75,6 +91,7 @@ export async function GET() {
             cart_location_send: 1,
             cart_delivery_date: 1,
             cart_export_time: 1,
+            cart_receive_time: 1,
             cart_lunchbox: 1,
           },
         },
@@ -90,10 +107,29 @@ export async function GET() {
     }
     
     const convertedResult = convertBigIntToString(result);
+    
+    const resultWithDayOfWeek = convertedResult.map((item: any) => ({
+      id: item.cart_id,
+      date: item.cart_delivery_date,
+      dayOfWeek: getDayFromDateString(item.cart_delivery_date),
+      location: item.cart_location_send,
+      sendTime: item.cart_export_time,
+      receiveTime: item.cart_receive_time,
+      items: item.cart_lunchbox.map((lunchbox: any) => ({
+        lunchbox_name: lunchbox.lunchbox_name,
+        set: lunchbox.lunchbox_set_name,
+        quantity: lunchbox.lunchbox_total,
+        lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => ({
+          menu_name: menu.menu_name,
+          menu_quantity: menu.menu_total,
+        })),
+      })),
+    }));
+    
     return NextResponse.json({
       status: "success",
-      total: convertedResult.length,
-      result: convertedResult
+      total: resultWithDayOfWeek.length,
+      result: resultWithDayOfWeek
     }, { status: 200 });
   } catch (error) {
     console.error("Error fetching carts:", error);
