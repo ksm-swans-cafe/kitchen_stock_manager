@@ -198,6 +198,7 @@ export default function Order() {
             menu_ingredients: menu.menu_ingredients || [],
             menu_description: menu.menu_description || "",
             lunchbox_menu_category: menu.lunchbox_menu_category || null,
+            lunchbox_showPrice: menu.lunchbox_showPrice ?? true,
           }));
           console.log("Processed menu items:", menuItems);
           setAvailableMenus(menuItems);
@@ -1306,6 +1307,7 @@ export default function Order() {
                                       forced={isAutoSelectedRice && !isCustomUnlimited} // แก้ไข: ไม่บังคับถ้าเป็น Custom unlimited
                                       duplicate={!!isLunchboxCategoryTaken}
                                       size={isMobile ? "sm" : "md"}
+                                      showPrice={menu.lunchbox_showPrice ?? true} // เพิ่มบรรทัดนี้
                                       onClick={() => {
                                         if (!isLunchboxCategoryTaken) {
                                           handle.MenuSelection(menu.menu_name);
