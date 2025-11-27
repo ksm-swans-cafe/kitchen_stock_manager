@@ -179,24 +179,39 @@ const SummaryList: React.FC = () => {
             };
           }
 
-          // แก้ไขการแยกวันที่และเวลา - ใช้ space แทน T
-          const [rawDate, timePart] = cart.cart_create_date.split(" ");
-          const [year, month, day] = rawDate.split("-");
-          const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
-          const formattedDate = dateObjectForLocale
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ");
+        // Normalize datetime string to support both "YYYY-MM-DD HH:mm" และ ISO "YYYY-MM-DDTHH:mm"
+        const normalizedDateTime = cart.cart_create_date.replace("T", " ");
+        const [rawDate, timePartWithZone] = normalizedDateTime.split(" ");
+        const [year, month, day] = rawDate.split("-");
+        const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
+        const formattedDate = Number.isNaN(dateObjectForLocale.getTime())
+          ? "ไม่ระบุ"
+          : dateObjectForLocale
+              .toLocaleDateString("th-TH", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+              .replace(/ /g, " ");
 
-          const date = new Date(cart.cart_create_date);
-          const formattedDateISO = date.toISOString().split("T")[0];
+        const date = new Date(cart.cart_create_date);
+        const formattedDateISO = Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
 
-          // แก้ไขการแยกเวลา - ใช้ space และตัดส่วน timezone
-          const timeOnly = timePart ? timePart.split("+")[0] : "";
-          const formattedTime = timeOnly ? timeOnly.slice(0, 5) : "ไม่ระบุ";
+        // แก้ไขการแยกเวลา - รองรับทั้ง +timezone และ Z
+        let formattedTime = "ไม่ระบุ";
+        if (timePartWithZone) {
+          const timeOnly = timePartWithZone
+            .split("+")[0]
+            .replace("Z", "")
+            .slice(0, 5);
+          if (timeOnly) {
+            formattedTime = timeOnly;
+          }
+        } else if (!Number.isNaN(date.getTime())) {
+          formattedTime = date
+            .toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", hour12: false })
+            .trim();
+        }
 
           // ประมวลผล cart_lunchbox
           let cartLunchbox: Lunchbox[] = [];
@@ -601,7 +616,7 @@ const SummaryList: React.FC = () => {
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
       console.error(
-        `ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
+        `ไม่มีออเดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -851,7 +866,7 @@ const SummaryList: React.FC = () => {
 
   const handleExport = (type: string) => {
     if (type === "csv") {
-      const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
+      const headers = ["เลขที่ออเดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
       const csvContent = [
         headers.join(","),
         ...filteredAndSortedOrders.map((cart) => {
@@ -897,7 +912,7 @@ const SummaryList: React.FC = () => {
             : cart.price || 0;
         const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
         return {
-          "เลขที่ออร์เดอร์": cart.id,
+          "เลขที่ออเดอร์": cart.id,
           "ชื่อเมนู": cart.name,
           "คำอธิบายเมนู": menuDescriptions,
           "วันที่": cart.date,
@@ -920,7 +935,7 @@ const SummaryList: React.FC = () => {
 
   const handleExportOrder = (cart: Cart) => {
     const worksheetData = cart.menuItems.map((item) => ({
-      "รหัสออร์เดอร์": cart.order_number || cart.id,
+      "รหัสออเดอร์": cart.order_number || cart.id,
       "ชื่อเมนู": item.menu_name,
       "คำอธิบายเมนู": item.menu_description || "",
       "จำนวน Set": item.menu_total,
@@ -935,7 +950,7 @@ const SummaryList: React.FC = () => {
 
     if (worksheetData.length === 0) {
       worksheetData.push({
-        "รหัสออร์เดอร์": cart.order_number || cart.id,
+        "รหัสออเดอร์": cart.order_number || cart.id,
         "ชื่อเมนู": "ไม่มีข้อมูลเมนู",
         "คำอธิบายเมนู": "",
         "จำนวน Set": 0,
@@ -2093,7 +2108,7 @@ const SummaryList: React.FC = () => {
                                           Swal.fire({
                                             icon: "error",
                                             title: "เกิดข้อผิดพลาด",
-                                            text: "ไม่พบข้อมูลออร์เดอร์",
+                                            text: "ไม่พบข้อมูลออเดอร์",
                                             showConfirmButton: false,
                                             timer: 3000,
                                           });
@@ -2171,7 +2186,7 @@ const SummaryList: React.FC = () => {
                                     {editMenuDialog && (
                                       <div className='space-y-6'>
                                         <div style={{ color: "#000000" }} className='text-xl font-bold mb-4'>
-                                      แก้ไขเมนูสำหรับออร์เดอร์ {editMenuDialog?.cart_id}
+                                      แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.cart_id}
                                     </div>
                                         <div style={{ color: "#000000" }} className='bg-gray-100 p-4 rounded-lg'>
                                           <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
