@@ -12,7 +12,7 @@ import {
   AlertTriangle,
   FileText,
   DollarSign,
-  LayoutGrid, // ⭐ Dashboard icon
+  LayoutGrid,
 } from "lucide-react";
 
 import { Button } from "@/share/ui/button";
