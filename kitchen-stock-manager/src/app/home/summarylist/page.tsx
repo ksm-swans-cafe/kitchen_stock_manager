@@ -28,6 +28,9 @@ import { Input } from "@/share/ui/input";
 import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
 import StatusDropdown from "@/app/components/StatusDropdownsummary";
 import PaginationComponent from "@/components/ui/Totalpage";
+import { Loading } from "@/components/loading/loading";
+
+import SummaryIcon from "@/assets/summarylist.png";
 
 import { fetcher } from "@/lib/utils";
 
@@ -2213,13 +2216,9 @@ const SummaryList: React.FC = () => {
 
         <div className='space-y-6'>
           {isLoading ? (
-            <Card>
-              <CardContent className='text-center py-12'>
-                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4'></div>
-                <span className='text-slate-500'>Loading...</span>
-              </CardContent>
-            </Card>
-          ) : error ? (
+            <Loading context='หน้าสรุปรายการ' icon={SummaryIcon.src} color="yellow"/>
+          ) : 
+          error ? (
             <Card>
               <CardContent className='text-center py-12'>
                 <span className='text-red-500'>เกิดข้อผิดพลาด: {error.message}</span>

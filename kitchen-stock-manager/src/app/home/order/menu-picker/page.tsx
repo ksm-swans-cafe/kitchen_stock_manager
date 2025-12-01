@@ -12,6 +12,7 @@ import { MenuItem } from "@/models/menu_card/MenuCard";
 import TopStepper from "@/components/order/TopStepper";
 import MenuCard from "@/components/order/MenuCard";
 import MobileActionBar from "@/components/order/MobileActionBar";
+import { Loading } from "@/components/loading/loading";
 
 import useLoadingDots from "@/lib/hook/Dots";
 
@@ -564,18 +565,7 @@ export default function Order() {
 
   // Show loading overlay when loading lunchbox data
   if (isLoadingLunchboxData) {
-    return (
-      <div className='min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-4'>
-        <div className='bg-white p-6 md:p-8 rounded-xl shadow-lg text-center max-w-sm w-full'>
-          <div className='animate-spin w-10 h-10 md:w-12 md:h-12 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-4'></div>
-          <h3 className='text-base md:text-lg font-medium text-gray-700 mb-2 flex items-center gap-2 justify-center'>
-            <img src={SetFoodIcon.src} alt='' className='w-10 h-10' />
-            กำลังโหลดข้อมูลชุดอาหาร
-          </h3>
-          <p className='text-base text-gray-500'>กรุณารอสักครู่{dots}</p>
-        </div>
-      </div>
-    );
+    return <Loading context='กำลังโหลดข้อมูลชุดอาหาร' icon={SetFoodIcon.src} />;
   }
 
   return (
@@ -744,7 +734,11 @@ export default function Order() {
                     setSelectedMenuItems([]);
                   }}
                   className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectedFoodSet ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-100 border-2 border-orange-300" : "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+                    selectedFoodSet
+                      ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+                      : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0
+                      ? "bg-orange-100 border-2 border-orange-300"
+                      : "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
                   }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
@@ -961,8 +955,8 @@ export default function Order() {
           {/* Scrollable Content - Enhanced responsive design */}
           <div className='flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 pb-[calc(80px+env(safe-area-inset-bottom))] lg:pb-6 xl:pb-8 bg-gradient-to-br from-white/80 via-gray-50/50 to-white/80 backdrop-blur-sm'>
             {/* Search and Filter Section - Improved responsive layout */}
-            <div className='bg-white/70 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 xl:p-8 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 shadow-lg border border-white/20'>
-              <div className='flex flex-col gap-3 sm:gap-4 lg:gap-6 mb-3 sm:mb-4'>
+            <div className=' bg-white/70 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 xl:p-8 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 shadow-lg border border-white/20'>
+              <div className='sticky flex flex-col gap-3 sm:gap-4 lg:gap-6 mb-3 sm:mb-4'>
                 <div className='flex-1 relative w-full'>
                   <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                   <input

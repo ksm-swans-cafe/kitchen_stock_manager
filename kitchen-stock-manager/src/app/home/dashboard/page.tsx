@@ -6,6 +6,10 @@ import { Button } from "@/share/ui/button";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 
+import { Loading } from "@/components/loading/loading";
+
+import DashboardIcon from "@/assets/dashboard.png";
+
 interface DayItem {
   name: string;
   qty: number | string;
@@ -328,14 +332,7 @@ export default function Dashboard() {
   return (
     <div className={`p-4 sm:p-6 ${fullscreen ? "h-screen" : "min-h-screen"}`}>
       {/* Loading State */}
-      {isLoading && (
-        <div className='flex items-center justify-center min-h-screen'>
-          <div className='text-center'>
-            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4'></div>
-            <p className='text-gray-600'>กำลังโหลดข้อมูล...</p>
-          </div>
-        </div>
-      )}
+      {isLoading && <Loading context='หน้าแดชบอร์ด' icon={DashboardIcon.src} color="blue"/>}
 
       {/* Error State */}
       {error && !isLoading && (

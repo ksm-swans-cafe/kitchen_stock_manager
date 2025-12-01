@@ -26,6 +26,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
 import PaginationComponent from "@/components/ui/Totalpage";
 import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
 import StatusDropdown from "@/app/components/StatusOrderhistory";
+import { Loading } from "@/components/loading/loading";
+
+import HistoryIcon from "@/assets/history.png"
 
 import { fetcher } from "@/lib/utils";
 
@@ -1116,12 +1119,7 @@ const OrderHistory = () => {
 
         <div className='space-y-6'>
           {isLoading ? (
-            <Card>
-              <CardContent className='text-center py-12'>
-                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4'></div>
-                <span className='text-slate-500'>Loading...</span>
-              </CardContent>
-            </Card>
+            <Loading context="หน้าประวัติการสั่งซื้อ" icon={HistoryIcon.src} color="green"/>
           ) : combinedError ? (
             <Card>
               <CardContent className='text-center py-12'>
