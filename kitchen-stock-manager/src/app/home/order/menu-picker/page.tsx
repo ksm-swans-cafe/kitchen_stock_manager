@@ -786,8 +786,8 @@ export default function Order() {
                   const limit = setData?.lunchbox_limit ?? 0;
                   return limit > 0 && selectedMenuItems.length !== limit;
                 })()
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transform hover:scale-105 hover:shadow-xl"
+                  ? "!bg-gray-200 !cursor-not-allowed"
+                  : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
               }`}>
               {isSaving ? (
                 <>
