@@ -53,15 +53,15 @@ export default function CartList() {
   const [deliveryTime, setDeliveryTime] = useState<Date | undefined>(midnight);
   const [pickupTime, setPickupTime] = useState<Date | undefined>(midnight);
 
-  const formatTime = (date?: Date) => {
-    return date
-      ? date.toLocaleTimeString("th-TH", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })
-      : "";
-  };
+const formatTime = (date?: Date) => {
+  return date
+    ? date.toLocaleTimeString("th-TH", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+    : "";
+};
 
   const {
     items,
@@ -524,7 +524,7 @@ export default function CartList() {
               }}
               value={deliveryTime}
               onChange={([time]) => {
-                setDeliveryTime(time);
+                  setDeliveryTime(time);
                 setCustomerInfo({ exportTime: formatTime(time) });
               }}
               className='border border-gray-300 rounded px-3 py-2'
@@ -546,7 +546,7 @@ export default function CartList() {
               }}
               value={pickupTime}
               onChange={([time]) => {
-                setPickupTime(time);
+                  setPickupTime(time);
                 setCustomerInfo({ receiveTime: formatTime(time) });
               }}
               className='border border-gray-300 rounded px-3 py-2'
