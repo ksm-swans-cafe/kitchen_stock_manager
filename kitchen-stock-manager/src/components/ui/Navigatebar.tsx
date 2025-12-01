@@ -4,12 +4,30 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCartStore } from "@/stores/store";
+import { useAuth } from "@/lib/auth/AuthProvider";
+
+// สร้าง mapping สำหรับแปลง path เป็นชื่อภาษาไทย
+const pathNameMap: Record<string, string> = {
+  home: "หน้าหลัก",
+  order: "สั่งอาหาร",
+  cart: "ตะกร้าสินค้า",
+  menu: "เมนูอาหาร",
+  "menu-picker": "เลือกเมนูอาหาร",
+  orderhistory: "ประวัติการสั่งอาหาร",
+  // "orderhistoryprice": "ราคาประวัติการสั่งซื้อ",
+  menulists: "จัดการรายการเมนูอาหาร",
+  ingredients: "วัตถุดิบ",
+  finance: "การเงิน",
+  summarylist: "สรุปรายการ",
+  // "summaryprice": "ราคาสรุปรายการ",
+};
 
 export default function Navigatebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMounted, setIsMounted] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const { userName } = useAuth();
 
   const items = useCartStore((state: { items: { menu_total: number }[] }) => state.items);
 
@@ -30,11 +48,21 @@ export default function Navigatebar() {
   if (!pathname || !isMounted) return <nav></nav>;
   if (pathname === "/login") return <nav></nav>;
 
+  // Hide Navigatebar if not logged in
+  if (!userName) {
+    return <nav></nav>;
+  }
+
   const pathSegments = pathname.split("/").filter(Boolean);
   const isOrderPage = pathname.startsWith("/home/order") && !pathname.startsWith("/home/orderhistory");
   const isHomePage = pathname === "/home";
 
-  const formatName = (segment: string) => segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatName = (segment: string) => {
+    if (pathNameMap[segment]) {
+      return pathNameMap[segment];
+    }
+    return segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -65,7 +93,7 @@ export default function Navigatebar() {
 
           <li>
             <Link href='/home' className={pathname === "/home" ? "font-bold" : "font-bold"}>
-              Home
+              หน้าหลัก
             </Link>
           </li>
 

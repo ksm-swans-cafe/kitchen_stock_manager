@@ -9,8 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import { th } from "date-fns/locale/th";
-import Flatpickr from "react-flatpickr";
-import "flatpickr/dist/themes/material_blue.css";
+
 import { LunchBox } from "@/stores/store";
 
 import { create } from "zustand";
@@ -48,20 +47,6 @@ const useCartList = create<cartList>((set) => ({
 }));
 
 export default function CartList() {
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
-  const [deliveryTime, setDeliveryTime] = useState<Date | undefined>(midnight);
-  const [pickupTime, setPickupTime] = useState<Date | undefined>(midnight);
-
-const formatTime = (date?: Date) => {
-  return date
-    ? date.toLocaleTimeString("th-TH", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
-    : "";
-};
 
   const {
     items,
@@ -123,21 +108,7 @@ const formatTime = (date?: Date) => {
     }
   }, [cart_delivery_date]);
 
-  useEffect(() => {
-    if (cart_export_time) {
-      const [hour, minute] = cart_export_time.split(":").map(Number);
-      const d = new Date();
-      d.setHours(hour, minute, 0, 0);
-      setDeliveryTime(d);
-    }
 
-    if (cart_receive_time) {
-      const [hour, minute] = cart_receive_time.split(":").map(Number);
-      const d = new Date();
-      d.setHours(hour, minute, 0, 0);
-      setPickupTime(d);
-    }
-  }, []);
 
   useEffect(() => {
     const fetchLunchbox = async () => {
@@ -510,48 +481,122 @@ const formatTime = (date?: Date) => {
             {cart_delivery_date && <p className='text-sm text-gray-500 mt-1'>วันที่จัดส่ง: {cart_delivery_date}</p>}
           </div>
 
-          <div className='col-span-2 flex flex-col gap-1'>
+          <div className='flex flex-col gap-1'>
             <label htmlFor='food-delivery-time' className='font-bold'>
               เวลาส่งอาหาร
             </label>
-            <Flatpickr
-              id='food-delivery-time'
-              options={{
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: "H:i",
-                time_24hr: true,
-              }}
-              value={deliveryTime}
-              onChange={([time]) => {
-                  setDeliveryTime(time);
-                setCustomerInfo({ exportTime: formatTime(time) });
-              }}
-              className='border border-gray-300 rounded px-3 py-2'
-            />
-            <p className='text-sm text-gray-500'>เวลาที่เลือก: {formatTime(deliveryTime)}</p>
+            <div className='flex items-center gap-2'>
+              <input
+                id='food-delivery-time'
+                type='text'
+                value={cart_export_time}
+                onChange={(e) => {
+                  let raw = e.target.value.replace(/[^0-9:]/g, '');
+                  let digits = raw.replace(/:/g, '');
+                  
+                  if (digits.length === 0) {
+                    setCustomerInfo({ exportTime: '' });
+                    return;
+                  }
+                  
+                  if (digits.length <= 2) {
+                    setCustomerInfo({ exportTime: digits });
+                    return;
+                  }
+                  
+                  let hours = parseInt(digits.slice(0, 2), 10);
+                  if (hours > 23) hours = 23;
+                  let minutes = digits.slice(2, 4);
+                  if (minutes.length === 2) {
+                    let mins = parseInt(minutes, 10);
+                    if (mins > 59) minutes = '59';
+                  }
+                  
+                  let value = hours.toString().padStart(2, '0') + ':' + minutes;
+                  setCustomerInfo({ exportTime: value });
+                }}
+                onBlur={(e) => {
+                  let value = e.target.value;
+                  if (!value) return;
+                  
+                  let digits = value.replace(/[^0-9]/g, '');
+                  if (digits.length === 0) return;
+                  
+                  let hours = digits.slice(0, 2).padStart(2, '0');
+                  let mins = digits.slice(2, 4).padEnd(2, '0');
+                  
+                  let h = parseInt(hours, 10);
+                  let m = parseInt(mins, 10);
+                  if (h > 23) h = 23;
+                  if (m > 59) m = 59;
+                  
+                  setCustomerInfo({ exportTime: h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0') });
+                }}
+                maxLength={5}
+                className='w-full border border-gray-300 rounded px-3 py-2 font-mono'
+                placeholder='__:__'
+              />
+              <span className='text-gray-600'>น.</span>
+            </div>
           </div>
 
-          <div className='col-span-2 flex flex-col gap-1'>
+          <div className='flex flex-col gap-1'>
             <label htmlFor='food-pickup-time' className='font-bold'>
               เวลารับอาหาร
             </label>
-            <Flatpickr
-              id='food-pickup-time'
-              options={{
-                enableTime: true,
-                noCalendar: true,
-                dateFormat: "H:i",
-                time_24hr: true,
-              }}
-              value={pickupTime}
-              onChange={([time]) => {
-                  setPickupTime(time);
-                setCustomerInfo({ receiveTime: formatTime(time) });
-              }}
-              className='border border-gray-300 rounded px-3 py-2'
-            />
-            <p className='text-sm text-gray-500'>เวลาที่เลือก: {formatTime(pickupTime)}</p>
+            <div className='flex items-center gap-2'>
+              <input
+                id='food-pickup-time'
+                type='text'
+                value={cart_receive_time}
+                onChange={(e) => {
+                  let raw = e.target.value.replace(/[^0-9:]/g, '');
+                  let digits = raw.replace(/:/g, '');
+                  
+                  if (digits.length === 0) {
+                    setCustomerInfo({ receiveTime: '' });
+                    return;
+                  }
+                  
+                  if (digits.length <= 2) {
+                    setCustomerInfo({ receiveTime: digits });
+                    return;
+                  }
+                  
+                  let hours = parseInt(digits.slice(0, 2), 10);
+                  if (hours > 23) hours = 23;
+                  let minutes = digits.slice(2, 4);
+                  if (minutes.length === 2) {
+                    let mins = parseInt(minutes, 10);
+                    if (mins > 59) minutes = '59';
+                  }
+                  
+                  let value = hours.toString().padStart(2, '0') + ':' + minutes;
+                  setCustomerInfo({ receiveTime: value });
+                }}
+                onBlur={(e) => {
+                  let value = e.target.value;
+                  if (!value) return;
+                  
+                  let digits = value.replace(/[^0-9]/g, '');
+                  if (digits.length === 0) return;
+                  
+                  let hours = digits.slice(0, 2).padStart(2, '0');
+                  let mins = digits.slice(2, 4).padEnd(2, '0');
+                  
+                  let h = parseInt(hours, 10);
+                  let m = parseInt(mins, 10);
+                  if (h > 23) h = 23;
+                  if (m > 59) m = 59;
+                  
+                  setCustomerInfo({ receiveTime: h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0') });
+                }}
+                maxLength={5}
+                className='w-full border border-gray-300 rounded px-3 py-2 font-mono'
+                placeholder='__:__'
+              />
+              <span className='text-gray-600'>น.</span>
+            </div>
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
@@ -613,7 +658,7 @@ const formatTime = (date?: Date) => {
                   <div className='flex items-center gap-2 mb-2'>
                     <label className='text-sm'>ราคารวม:</label>
                     <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
-                    <span className='text-sm text-gray-500'>฿</span>
+                    <span className='text-sm text-gray-500'>บาท</span>
                   </div>
 
                   <div className='mb-2'>
@@ -654,7 +699,7 @@ const formatTime = (date?: Date) => {
         )}
 
         <div className='border p-4 rounded mb-4'>
-          <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 '>
+          <button onClick={() => router.push("/home/order/menu-picker")} className='w-full text-center px-4 py-2 text-white rounded hover:scale-110 hover:duration-300 hover:pointer hover:font-semibold'>
             <svg viewBox='0 0 1024 1024' className='icon relative -top-0.5 !w-10 !h-10' version='1.1' xmlns='http://www.w3.org/2000/svg'>
               <path d='M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z' fill='#4CAF50' />
               <path d='M448 298.666667h128v426.666666h-128z' fill='#FFFFFF' />
@@ -673,7 +718,7 @@ const formatTime = (date?: Date) => {
             cursor: loading ? "not-allowed" : "pointer",
             color: "white",
           }}
-          className='w-full py-2 rounded font-bold transition'>
+          className={`w-full py-2 rounded font-bold transition ${loading ? "" : errors.length === 0 ? "hover:bg-green-400" : "hover:bg-red-400"}`}>
           {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
         </button>
 

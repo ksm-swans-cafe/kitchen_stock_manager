@@ -1858,6 +1858,7 @@ export namespace Prisma {
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
     lunchbox_menu_category?: boolean
+    lunchbox_showPrice?: boolean
   }, ExtArgs["result"]["menuMenuLunchbox"]>
 
 
@@ -1867,9 +1868,10 @@ export namespace Prisma {
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
     lunchbox_menu_category?: boolean
+    lunchbox_showPrice?: boolean
   }
 
-  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_cost" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_menu_category", ExtArgs["result"]["menuMenuLunchbox"]>
+  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_cost" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_menu_category" | "lunchbox_showPrice", ExtArgs["result"]["menuMenuLunchbox"]>
 
   export type $MenuMenuLunchboxPayload = {
     name: "MenuMenuLunchbox"
@@ -1879,6 +1881,7 @@ export namespace Prisma {
       lunchbox_name: string
       lunchbox_set_name: string
       lunchbox_menu_category: string | null
+      lunchbox_showPrice: boolean | null
     }
     composites: {}
   }
@@ -1897,6 +1900,7 @@ export namespace Prisma {
     readonly lunchbox_name: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_menu_category: FieldRef<"MenuMenuLunchbox", 'String'>
+    readonly lunchbox_showPrice: FieldRef<"MenuMenuLunchbox", 'Boolean'>
   }
     
 
@@ -9508,6 +9512,7 @@ export namespace Prisma {
     lunchbox_name: string
     lunchbox_set_name: string
     lunchbox_menu_category?: string | null
+    lunchbox_showPrice?: boolean | null
   }
 
   export type MenuMenuIngredientsOrderByCompositeAggregateInput = {
@@ -9643,6 +9648,7 @@ export namespace Prisma {
     lunchbox_name: string
     lunchbox_set_name: string
     lunchbox_menu_category?: string | null
+    lunchbox_showPrice?: boolean | null
   }
 
   export type MenuMenuIngredientsListUpdateEnvelopeInput = {
@@ -9835,6 +9841,7 @@ export namespace Prisma {
     lunchbox_name?: StringFilter<"MenuMenuLunchbox"> | string
     lunchbox_set_name?: StringFilter<"MenuMenuLunchbox"> | string
     lunchbox_menu_category?: StringNullableFilter<"MenuMenuLunchbox"> | string | null
+    lunchbox_showPrice?: BoolNullableFilter<"MenuMenuLunchbox"> | boolean | null
   }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -9963,6 +9970,12 @@ export namespace Prisma {
     isSet?: boolean
   }
 
+  export type BoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+    isSet?: boolean
+  }
+
   export type CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput = {
     ingredient_name: string
     ingredient_status?: boolean | null
@@ -9997,6 +10010,7 @@ export namespace Prisma {
     lunchbox_name?: StringFieldUpdateOperationsInput | string
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
     lunchbox_menu_category?: NullableStringFieldUpdateOperationsInput | string | null
+    lunchbox_showPrice?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
   export type CartCartLunchboxLunchboxMenuWhereInput = {
@@ -10042,6 +10056,12 @@ export namespace Prisma {
     qty?: IntFilter<"CartCartMenuItemsMenuNotes"> | number
   }
 
+  export type NestedBoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+    isSet?: boolean
+  }
+
   export type CartCartLunchboxLunchboxMenuListUpdateEnvelopeInput = {
     set?: CartCartLunchboxLunchboxMenuCreateInput | CartCartLunchboxLunchboxMenuCreateInput[]
     push?: CartCartLunchboxLunchboxMenuCreateInput | CartCartLunchboxLunchboxMenuCreateInput[]
@@ -10081,18 +10101,17 @@ export namespace Prisma {
     unset?: boolean
   }
 
+  export type NullableBoolFieldUpdateOperationsInput = {
+    set?: boolean | null
+    unset?: boolean
+  }
+
   export type CartCartLunchboxLunchboxMenuMenuIngredientsCompositeListFilter = {
     equals?: CartCartLunchboxLunchboxMenuMenuIngredientsObjectEqualityInput[]
     every?: CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput
     some?: CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput
     none?: CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput
     isEmpty?: boolean
-    isSet?: boolean
-  }
-
-  export type BoolNullableFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
-    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
     isSet?: boolean
   }
 
@@ -10132,12 +10151,6 @@ export namespace Prisma {
     useItem?: JsonFilter<"CartCartLunchboxLunchboxMenuMenuIngredients">
   }
 
-  export type NestedBoolNullableFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
-    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
-    isSet?: boolean
-  }
-
   export type CartCartLunchboxLunchboxMenuUpdateInput = {
     menu_category?: StringFieldUpdateOperationsInput | string
     menu_cost?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
@@ -10165,11 +10178,6 @@ export namespace Prisma {
     push?: CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput | CartCartLunchboxLunchboxMenuMenuIngredientsCreateInput[]
     updateMany?: CartCartLunchboxLunchboxMenuMenuIngredientsUpdateManyInput
     deleteMany?: CartCartLunchboxLunchboxMenuMenuIngredientsDeleteManyInput
-  }
-
-  export type NullableBoolFieldUpdateOperationsInput = {
-    set?: boolean | null
-    unset?: boolean
   }
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsUpdateManyInput = {
