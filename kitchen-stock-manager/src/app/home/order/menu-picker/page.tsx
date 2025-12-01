@@ -939,7 +939,7 @@ export default function Order() {
 
       <div className='flex min-h-[100svh]'>
         {/* Desktop Sidebar - Improved responsive widths */}
-        <div className='hidden lg:block w-72 xl:w-80 2xl:w-96 bg-white border-r border-gray-200'>
+        <div className='hidden lg:block w-72 xl:w-80 2xl:w-96 bg-white border-r border-gray-200 sticky top-[52px] h-[calc(100vh-52px)] overflow-y-auto'>
           <DesktopSidebar />
         </div>
 
