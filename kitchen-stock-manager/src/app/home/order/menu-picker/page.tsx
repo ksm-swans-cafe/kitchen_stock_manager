@@ -855,7 +855,7 @@ export default function Order() {
                 </button>
               </div>
 
-              {/* Note Section */}
+              {/* Note  Section */}
               {selectedMenuItems.length > 0 && (
                 <div className='mt-4 xl:mt-6 space-y-3 xl:space-y-4'>
                   <div>
