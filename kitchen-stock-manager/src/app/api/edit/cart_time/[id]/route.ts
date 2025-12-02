@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const { id } = params;
   const { cart_export_time, cart_receive_time } = await request.json();
 
-  if (!id || typeof id !== "string") return NextResponse.json({ error: "ID ออร์เดอร์ไม่ถูกต้อง" }, { status: 400 });
+  if (!id || typeof id !== "string") return NextResponse.json({ error: "ID ออเดอร์ไม่ถูกต้อง" }, { status: 400 });
   
   const parseTime = (time: string | null | undefined): string | null => {
     if (!time || typeof time !== "string") return null;
@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       },
     });
 
-    if (result.count === 0) return NextResponse.json({ error: "ไม่พบออร์เดอร์ที่มี ID นี้" }, { status: 404 });
+    if (result.count === 0) return NextResponse.json({ error: "ไม่พบออเดอร์ที่มี ID นี้" }, { status: 404 });
 
     return NextResponse.json({
       success: true,

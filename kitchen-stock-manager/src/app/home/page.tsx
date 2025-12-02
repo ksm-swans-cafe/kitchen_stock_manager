@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 import { create } from "zustand";
 import { toast } from "sonner";
 import {
@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   FileText,
   DollarSign,
+  LayoutGrid,
 } from "lucide-react";
 
 import { Button } from "@/share/ui/button";
@@ -30,7 +31,7 @@ interface UseShowProps {
   setShowFullList: (value: boolean) => void;
 }
 
-const useShow = create<UseShowProps>((set, get) => ({
+const useShow = create<UseShowProps>((set) => ({
   showAll: false,
   showFullList: false,
   setShowAll: (value) => set({ showAll: value }),
@@ -42,6 +43,8 @@ export default function Page() {
   const { showAll, showFullList, setShowAll, setShowFullList } = useShow();
   const popupRef = useRef<HTMLDivElement>(null);
   const dots = useLoadingDots();
+
+  // ⭐ เมนูพร้อม Dashboard ใต้ Summary List
   const menuItems: MenuHome[] = [
     {
       id: "add-ingredients",
@@ -82,6 +85,23 @@ export default function Page() {
       hasBadge: false,
       badgeText: "",
     },
+
+    // ⭐ Dashboard (เด่นนิดหน่อย แต่ขนาดเท่าคนอื่น)
+    {
+      id: "dashboard",
+      title: "Dashboard",
+      icon: LayoutGrid,
+      color: {
+        bg: "bg-sky-500/10 border border-sky-400/40 shadow-[0_0_20px_rgba(56,189,248,0.45)]",
+        hover:
+          "group-hover:bg-sky-500/20 group-hover:shadow-[0_0_28px_rgba(56,189,248,0.75)]",
+        icon: "text-sky-500",
+      },
+      onClick: () => router.push("/home/dashboard"),
+      hasBadge: false, // ❌ เอา badge ออก
+      badgeText: "",
+    },
+
     {
       id: "order-history",
       title: "ประวัติการสั่งอาหาร",
@@ -129,16 +149,6 @@ export default function Page() {
       }
     },
   });
-
-  useEffect(() => {
-    const navEntry = performance.getEntriesByType(
-      "navigation",
-    )[0] as PerformanceNavigationTiming;
-    if (navEntry.type !== "reload") {
-      mutate("/api/get/ingredients", undefined, { revalidate: false });
-      location.reload();
-    }
-  }, []);
 
   const lowStockIngredients = allIngredient.filter((item: DetailIngredient) => {
     const total = Number(item.ingredient_total) || 0;
@@ -200,24 +210,17 @@ export default function Page() {
                 {(showFullList
                   ? lowStockIngredients
                   : lowStockIngredients.slice(0, 4)
-                ).map(
-                  (ingredient: {
-                    ingredient_id: string;
-                    ingredient_name: string;
-                    ingredient_total: number;
-                    ingredient_total_alert: number;
-                  }) => (
-                    <Badge
-                      key={ingredient.ingredient_id}
-                      variant="destructive"
-                      className="text-sm w-fit"
-                    >
-                      {ingredient.ingredient_name} (
-                      {ingredient.ingredient_total} /{" "}
-                      {ingredient.ingredient_total_alert})
-                    </Badge>
-                  ),
-                )}
+                ).map((ingredient: DetailIngredient) => (
+                  <Badge
+                    key={ingredient.ingredient_id}
+                    variant="destructive"
+                    className="text-sm w-fit"
+                  >
+                    {ingredient.ingredient_name} (
+                    {Number(ingredient.ingredient_total)} /{" "}
+                    {Number(ingredient.ingredient_total_alert)})
+                  </Badge>
+                ))}
               </div>
               {lowStockIngredients.length > 4 && (
                 <button
@@ -238,11 +241,16 @@ export default function Page() {
           {menuItems.map((item) => (
             <Card
               key={item.id}
-              className="group hover:shadow-xl transition-all"
+              className={`group hover:shadow-xl transition-all duration-300
+              ${
+                item.id === "dashboard"
+                  ? "border border-sky-400/70 bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent shadow-[0_0_24px_rgba(56,189,248,0.6)]"
+                  : ""
+              }`}
             >
               <CardContent className="relative p-0">
                 {item.hasBadge && (
-                  <div className="absolute top-2 right-2 bg-red-500 text-white text-sm font-bold px-2 py-0.5 rounded-md z-10">
+                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md z-10">
                     {item.badgeText}
                   </div>
                 )}
@@ -252,7 +260,7 @@ export default function Page() {
                   className="w-full h-24 ml-2 flex items-center justify-start space-x-5 px-7 text-foreground font-semibold hover:bg-transparent"
                 >
                   <div
-                    className={`w-14 h-14 ${item.color.bg} ${item.color.hover} rounded-xl flex items-center justify-center`}
+                    className={`w-14 h-14 ${item.color.bg} ${item.color.hover} rounded-xl flex items-center justify-center transition-all duration-300`}
                   >
                     <item.icon className={`w-7 h-7 ${item.color.icon}`} />
                   </div>

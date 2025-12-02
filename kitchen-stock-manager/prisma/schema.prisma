@@ -72,6 +72,7 @@ type MenuMenuLunchbox {
   lunchbox_name     String
   lunchbox_set_name String
   lunchbox_menu_category String?
+  lunchbox_showPrice Boolean?
 }
 
 model cart {

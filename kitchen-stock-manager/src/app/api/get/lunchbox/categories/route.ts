@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
         menu_ingredients: menu.menu_ingredients,
         menu_description: "",
         lunchbox_menu_category: matchingLunchbox?.lunchbox_menu_category || null,
+        lunchbox_showPrice: matchingLunchbox?.lunchbox_showPrice ?? true,
       };
     });
 

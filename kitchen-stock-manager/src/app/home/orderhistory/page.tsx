@@ -9,6 +9,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -25,6 +26,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
 import PaginationComponent from "@/components/ui/Totalpage";
 import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
 import StatusDropdown from "@/app/components/StatusOrderhistory";
+import { Loading } from "@/components/loading/loading";
+
+import HistoryIcon from "@/assets/history.png"
 
 import { fetcher } from "@/lib/utils";
 
@@ -56,6 +60,8 @@ const OrderHistory = () => {
     exportTime: string;
     receiveTime: string;
   } | null>(null);
+  const [isExcelMonthDialogOpen, setIsExcelMonthDialogOpen] = useState(false);
+  const [selectedMonthForExcel, setSelectedMonthForExcel] = useState<string>("");
 
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts", fetcher, { refreshInterval: 30000 });
   const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher);
@@ -233,7 +239,7 @@ const OrderHistory = () => {
         setCarts(formattedOrders);
       } catch (err) {
         console.error("Error formatting orders:", err);
-        setError(err instanceof Error ? `ไม่สามารถจัดรูปแบบออร์เดอร์: ${err.message}` : "เกิดข้อผิดพลาดในการจัดรูปแบบออร์เดอร์");
+        setError(err instanceof Error ? `ไม่สามารถจัดรูปแบบออเดอร์: ${err.message}` : "เกิดข้อผิดพลาดในการจัดรูปแบบออเดอร์");
       }
     };
 
@@ -290,7 +296,7 @@ const OrderHistory = () => {
     setIsDatePickerOpen(false);
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
-      setError(`ไม่มีออร์เดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
+      setError(`ไม่มีออเดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
     } else {
       setError(null);
     }
@@ -426,6 +432,20 @@ const OrderHistory = () => {
         targetCarts.some((target) => target.id === cart.id)
           ? {
               ...cart,
+              // อัปเดต cart_lunchbox ถ้ามี
+              cart_lunchbox: cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+                ? cart.cart_lunchbox.map((lunchbox: any) => ({
+                    ...lunchbox,
+                    lunchbox_menu: lunchbox.lunchbox_menu?.map((menu: any) => ({
+                      ...menu,
+                      menu_ingredients: menu.menu_ingredients?.map((ing: any) => ({
+                        ...ing,
+                        ingredient_status: true,
+                      })) || [],
+                    })) || [],
+                  }))
+                : cart.cart_lunchbox,
+              // อัปเดต allIngredients สำหรับ fallback
               allIngredients: cart.allIngredients.map((group) => ({
                 ...group,
                 ingredients: group.ingredients.map((ing) => ({
@@ -576,27 +596,107 @@ const OrderHistory = () => {
 
     const ordersOnDate = filteredAndSortedOrders.filter((cart) => convertThaiDateToISO(cart.cart_delivery_date) === date);
 
-    ordersOnDate.forEach((cart) => {
-      cart.allIngredients.forEach((menuGroup) => {
-        menuGroup.ingredients.forEach((ing) => {
-          if (!ingredientSummary[ing.ingredient_name]) {
-            ingredientSummary[ing.ingredient_name] = {  checked: 0,  total: 0,  unit: ing.ingredient_unit || "ไม่ระบุหน่วย",  };}
-          const totalGrams = ing.calculatedTotal || 0;
-          ingredientSummary[ing.ingredient_name].total += totalGrams;
-          if (ing.isChecked) {
-            ingredientSummary[ing.ingredient_name].checked += totalGrams;
-          }});});});
+    // สร้าง ingredientUnitMap จาก ingredientData
+    const ingredientUnitMap = new Map<string, string>();
+    if (ingredientData) {
+      ingredientData.forEach((ing: any) => {
+        ingredientUnitMap.set(ing.ingredient_name.toString(), ing.ingredient_unit);
+      });
+    }
 
-    const allIngredientsChecked = ordersOnDate.every((cart) => cart.allIngredients.every((menuGroup) => menuGroup.ingredients.every((ing) => ing.isChecked)));
+    ordersOnDate.forEach((cart) => {
+      // ตรวจสอบว่ามี cart_lunchbox หรือไม่
+      if (cart.cart_lunchbox && cart.cart_lunchbox.length > 0) {
+        // ใช้ข้อมูลจาก cart_lunchbox
+        cart.cart_lunchbox.forEach((lunchbox: any) => {
+          if (lunchbox.lunchbox_menu && Array.isArray(lunchbox.lunchbox_menu)) {
+            lunchbox.lunchbox_menu.forEach((menu: any) => {
+              if (menu.menu_ingredients && Array.isArray(menu.menu_ingredients)) {
+                menu.menu_ingredients.forEach((ing: any) => {
+                  const ingredientName = ing.ingredient_name;
+                  if (!ingredientName) return;
+
+                  if (!ingredientSummary[ingredientName]) {
+                    ingredientSummary[ingredientName] = {
+                      checked: 0,
+                      total: 0,
+                      unit: ingredientUnitMap.get(ingredientName) || "ไม่ระบุหน่วย",
+                    };
+                  }
+
+                  // คำนวณ total จาก useItem × menu_total
+                  const totalAmount = (ing.useItem || 0) * (menu.menu_total || 0);
+                  ingredientSummary[ingredientName].total += totalAmount;
+
+                  // ตรวจสอบ ingredient_status
+                  if (ing.ingredient_status) {
+                    ingredientSummary[ingredientName].checked += totalAmount;
+                  }
+                });
+              }
+            });
+          }
+        });
+      } else {
+        // Fallback: ใช้ข้อมูลจาก allIngredients (แบบเดิม)
+        cart.allIngredients.forEach((menuGroup) => {
+          menuGroup.ingredients.forEach((ing) => {
+            if (!ingredientSummary[ing.ingredient_name]) {
+              ingredientSummary[ing.ingredient_name] = {
+                checked: 0,
+                total: 0,
+                unit: ing.ingredient_unit || "ไม่ระบุหน่วย",
+              };
+            }
+            const totalGrams = ing.calculatedTotal || 0;
+            ingredientSummary[ing.ingredient_name].total += totalGrams;
+            if (ing.isChecked) {
+              ingredientSummary[ing.ingredient_name].checked += totalGrams;
+            }
+          });
+        });
+      }
+    });
+
+    // ตรวจสอบว่าวัตถุดิบทั้งหมดถูกเช็คแล้วหรือยัง
+    const allIngredientsChecked = ordersOnDate.every((cart) => {
+      if (cart.cart_lunchbox && cart.cart_lunchbox.length > 0) {
+        // ตรวจสอบจาก cart_lunchbox
+        return cart.cart_lunchbox.every((lunchbox: any) => {
+          if (lunchbox.lunchbox_menu && Array.isArray(lunchbox.lunchbox_menu)) {
+            return lunchbox.lunchbox_menu.every((menu: any) => {
+              if (menu.menu_ingredients && Array.isArray(menu.menu_ingredients)) {
+                return menu.menu_ingredients.every((ing: any) => ing.ingredient_status);
+              }
+              return true;
+            });
+          }
+          return true;
+        });
+      } else {
+        // Fallback: ตรวจสอบจาก allIngredients
+        return cart.allIngredients.every((menuGroup) =>
+          menuGroup.ingredients.every((ing) => ing.isChecked)
+        );
+      }
+    });
 
     return {
-      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({name,checked,total,unit,})),allIngredientsChecked,};};
+      summary: Object.entries(ingredientSummary).map(([name, { checked, total, unit }]) => ({
+        name,
+        checked,
+        total,
+        unit,
+      })),
+      allIngredientsChecked,
+    };
+  };
 
   const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
   const paginatedGroupedOrders = groupedOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleExportCSV = () => {
-    const headers = ["เลขที่ออร์เดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
+    const headers = ["เลขที่ออเดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
     const csvContent = [
       headers.join(","),
       ...filteredAndSortedOrders.map((cart) => {
@@ -650,32 +750,529 @@ const OrderHistory = () => {
     doc.save("order_history.pdf");
   };
 
-  const handleExportExcel = () => {
-    const worksheetData = filteredAndSortedOrders.map((cart) => {
+  // ฟังก์ชันสำหรับดึงรายการเดือนที่มีข้อมูล (เฉพาะ status success หรือ cancelled)
+  const getAvailableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    // กรองเฉพาะ cart ที่มี status เป็น success หรือ cancelled (เหมือนกับที่ใช้ใน handleExportExcel)
+    const validCarts = allCarts.filter((cart) => cart.status === "success" || cart.status === "cancelled");
+    
+    validCarts.forEach((cart) => {
+      if (cart.cart_delivery_date) {
+        const isoDate = convertThaiDateToISO(cart.cart_delivery_date);
+        if (isoDate) {
+          const date = new Date(isoDate);
+          // ตรวจสอบว่า date ถูกต้อง
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1; // 1-12
+            const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
+            monthSet.add(monthKey);
+          }
+        }
+      }
+    });
+    
+    // แปลงเป็น array และเรียงลำดับ
+    return Array.from(monthSet)
+      .sort()
+      .reverse() // เรียงจากใหม่ไปเก่า
+      .map((monthKey) => {
+        const [year, month] = monthKey.split("-");
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const thaiMonthNames = [
+          "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+          "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        ];
+        const thaiYear = parseInt(year) + 543;
+        return {
+          value: monthKey,
+          label: `${thaiMonthNames[parseInt(month) - 1]} ${thaiYear}`,
+        };
+      });
+  }, [allCarts]);
+
+  // ฟังก์ชันแปลง cart_delivery_date (รูปแบบไทย) เป็นรูปแบบที่อ่านง่าย
+  const formatDeliveryDate = (thaiDate: string | undefined): string => {
+    if (!thaiDate) return "ไม่ระบุ";
+    const isoDate = convertThaiDateToISO(thaiDate);
+    if (!isoDate) return "ไม่ระบุ";
+    const date = new Date(isoDate);
+    if (isNaN(date.getTime())) return "ไม่ระบุ";
+    const thaiMonthNames = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    const day = date.getDate();
+    const month = date.getMonth();
+    const year = date.getFullYear() + 543; // แปลงเป็นปี พ.ศ.
+    return `${day} ${thaiMonthNames[month]} ${year}`;
+  };
+
+  // ฟังก์ชันแปลง cart_create_date (รูปแบบ ISO) เป็นรูปแบบที่อ่านง่าย
+  const formatCreateDate = (isoDateString: string | undefined): string => {
+    if (!isoDateString) return "ไม่ระบุ";
+    // แปลง ISO date string โดยแทนที่ 'T' ด้วย space
+    const normalizedDate = isoDateString.replace('T', ' ');
+    const [rawDate, timePart] = normalizedDate.split(" ");
+    if (!rawDate) return "ไม่ระบุ";
+    
+    const [year, month, day] = rawDate.split("-");
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    if (isNaN(date.getTime())) return "ไม่ระบุ";
+    
+    const thaiMonthNames = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    const thaiYear = Number(year) + 543; // แปลงเป็นปี พ.ศ.
+    return `${Number(day)} ${thaiMonthNames[Number(month) - 1]} ${thaiYear}`;
+  };
+
+  const handleExportExcelForDate = async (dateISO: string, orders: Cart[]) => {
+    // กรองเฉพาะ orders ที่มี status success หรือ cancelled
+    const ordersToExport = orders.filter((cart) => cart.status === "success" || cart.status === "cancelled");
+    
+    if (ordersToExport.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "ไม่มีข้อมูล",
+        text: "ไม่มีรายการออเดอร์สำหรับวันที่นี้",
+        showConfirmButton: false,
+        timer: 2000,
+      });
+      return;
+    }
+
+    // สร้าง map เพื่อเก็บ cart_create_date จาก cartsData
+    const cartCreateDateMap = new Map<string, string>();
+    if (cartsData && Array.isArray(cartsData)) {
+      cartsData.forEach((rawCart: any) => {
+        if (rawCart.cart_id && rawCart.cart_create_date) {
+          cartCreateDateMap.set(rawCart.cart_id, rawCart.cart_create_date);
+        }
+      });
+    }
+
+    const worksheetData = ordersToExport.flatMap((cart) => {
       const foodPrice =
         cart.cart_lunchbox && cart.cart_lunchbox.length > 0
           ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
       const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
-      return {
-        "เลขที่ออร์เดอร์": cart.id,
-        "ชื่อเมนู": cart.name,
-        "คำอธิบายเมนู": menuDescriptions,
-        "วันที่": cart.date,
-        "เวลา": cart.time,
-        "จำนวน Set": cart.sets,
+      
+      // ดึง cart_create_date จาก map
+      const cartCreateDate = cartCreateDateMap.get(cart.id);
+      const formattedDeliveryDate = formatDeliveryDate(cart.cart_delivery_date);
+      const formattedCreateDate = formatCreateDate(cartCreateDate);
+      
+      // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
+      const menuRows: any[] = [];
+      
+      if (cart.cart_lunchbox && cart.cart_lunchbox.length > 0) {
+        // วน loop ผ่าน cart_lunchbox และ lunchbox_menu เพื่อสร้าง row ใหม่สำหรับแต่ละ menu
+        cart.cart_lunchbox.forEach((lunchbox: any) => {
+          if (lunchbox.lunchbox_menu && Array.isArray(lunchbox.lunchbox_menu)) {
+            lunchbox.lunchbox_menu.forEach((menu: any) => {
+              if (menu.menu_name) {
+                menuRows.push({
+                  "เลขที่ออเดอร์": cart.id,
+                  "ชื่อเมนู": menu.menu_name,
+                  "คำอธิบายเมนู": menuDescriptions,
+                  "วันที่สร้างรายการ": formattedCreateDate,
+                  "วันที่จัดส่ง": formattedDeliveryDate,
+                  "เวลา": cart.time,
+                  "จำนวน Set": menu.menu_total || 0,
+                  "ราคาอาหาร(บาท)": foodPrice,
+                  "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+                  "สถานะ": getStatusText(cart.status),
+                  "ผู้สร้าง": cart.createdBy,
+                });
+              }
+            });
+          }
+        });
+      }
+      
+      // ถ้าไม่มี cart_lunchbox หรือไม่มีเมนู ให้ใช้ข้อมูลเดิม
+      if (menuRows.length === 0) {
+        menuRows.push({
+          "เลขที่ออเดอร์": cart.id,
+          "ชื่อเมนู": cart.name || "ไม่มีชื่อเมนู",
+          "คำอธิบายเมนู": menuDescriptions,
+          "วันที่สร้างรายการ": formattedCreateDate,
+          "วันที่จัดส่ง": formattedDeliveryDate,
+          "เวลา": cart.time,
+          "จำนวน Set": cart.sets,
+          "ราคาอาหาร(บาท)": foodPrice,
+          "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+          "สถานะ": getStatusText(cart.status),
+          "ผู้สร้าง": cart.createdBy,
+        });
+      }
+      
+      // จัดกลุ่มตามชื่อเมนูและรวมจำนวน Set
+      const menuGroupMap = new Map<string, any>();
+      menuRows.forEach((row) => {
+        const menuName = row["ชื่อเมนู"];
+        if (menuGroupMap.has(menuName)) {
+          // ถ้ามีชื่อเมนูซ้ำ ให้รวมจำนวน Set
+          const existingRow = menuGroupMap.get(menuName);
+          existingRow["จำนวน Set"] = (existingRow["จำนวน Set"] || 0) + (row["จำนวน Set"] || 0);
+        } else {
+          // ถ้ายังไม่มี ให้เพิ่มเข้าไป (ไม่ใส่เลขที่ออเดอร์และราคาอาหารใน row ข้อมูลเมนู)
+          menuGroupMap.set(menuName, {
+            ...row,
+            "เลขที่ออเดอร์": "", // ไม่แสดงเลขที่ออเดอร์ใน row ข้อมูลเมนู
+            "ราคาอาหาร(บาท)": "", // ไม่แสดงราคาอาหารใน row ข้อมูลเมนู
+          });
+        }
+      });
+      
+      // แปลง Map กลับเป็น array
+      const groupedMenuRows = Array.from(menuGroupMap.values());
+      
+      // แสดงเลขที่ออเดอร์แค่ใน row แรกของแต่ละ order
+      if (groupedMenuRows.length > 0) {
+        groupedMenuRows[0]["เลขที่ออเดอร์"] = cart.id;
+      }
+      
+      // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงเลขที่ออเดอร์และราคาอาหาร)
+      groupedMenuRows.push({
+        "เลขที่ออเดอร์": "",
+        "ชื่อเมนู": "รวม",
+        "คำอธิบายเมนู": "",
+        "วันที่สร้างรายการ": "",
+        "วันที่จัดส่ง": "",
+        "เวลา": "",
+        "จำนวน Set": "",
         "ราคาอาหาร(บาท)": foodPrice,
         "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-        "สถานะ": getStatusText(cart.status),
-        "ผู้สร้าง": cart.createdBy,
-      };
+        "สถานะ": "",
+        "ผู้สร้าง": "",
+      });
+      
+      return groupedMenuRows;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData as any[]);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
-    const timestamp = new Date().toISOString().split("T")[0];
-    XLSX.writeFile(workbook, `order_history_${timestamp}.xlsx`);
+    // คำนวณราคาอาหารรวมของทุก order (จาก row สรุปที่มี "ชื่อเมนู" = "รวม")
+    const totalFoodPrice = worksheetData.reduce((sum, row) => {
+      if (row["ชื่อเมนู"] === "รวม") {
+        return sum + (Number(row["ราคาอาหาร(บาท)"]) || 0);
+      }
+      return sum;
+    }, 0);
+
+    // เพิ่ม row สรุปที่ท้ายสุด
+    const summaryRow = {
+      "เลขที่ออเดอร์": "รวม",
+      "ชื่อเมนู": "",
+      "คำอธิบายเมนู": "",
+      "วันที่จัดส่ง": "",
+      "วันที่สร้างรายการ": "",
+      "เวลา": "",
+      "จำนวน Set": "",
+      "ราคาอาหาร(บาท)": totalFoodPrice,
+      "ค่าจัดส่ง(บาท)": "",
+      "สถานะ": "",
+      "ผู้สร้าง": "",
+    };
+
+    // เพิ่ม row สรุปเข้าไปใน worksheetData
+    worksheetData.push(summaryRow);
+
+    // ตั้งชื่อไฟล์ตามวันที่
+    const date = new Date(dateISO);
+    const thaiMonthNames = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    const day = date.getDate();
+    const month = date.getMonth();
+    const year = date.getFullYear() + 543;
+    const fileName = `order_history_${day}_${thaiMonthNames[month]}_${year}`;
+
+    // ใช้ ExcelJS สำหรับการสร้าง Excel พร้อม styling
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Orders");
+
+    // กำหนด headers
+    const headers = Object.keys(worksheetData[0] || {});
+    worksheet.addRow(headers);
+
+    // กำหนด style ให้ header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" }
+    };
+
+    // เพิ่มข้อมูล rows
+    worksheetData.forEach((row, index) => {
+      const rowData = headers.map((header) => row[header] ?? "");
+      const addedRow = worksheet.addRow(rowData);
+      
+      // ถ้าเป็น row สรุป (row ที่มี "ชื่อเมนู" = "รวม") ให้กำหนด styling
+      if (row["ชื่อเมนู"] === "รวม") {
+        addedRow.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF1F4E78" }
+        };
+        addedRow.font = {
+          color: { argb: "FFFFFFFF" },
+          bold: true
+        };
+      }
+    });
+
+    // Auto-fit columns
+    worksheet.columns.forEach((column) => {
+      if (column.header) {
+        column.width = 15;
+      }
+    });
+
+    // Export file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${fileName}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    
+    Swal.fire({
+      icon: "success",
+      title: "Export สำเร็จ",
+      text: `ดาวน์โหลดไฟล์ Excel สำหรับวันที่ ${day} ${thaiMonthNames[month]} ${year} เรียบร้อยแล้ว`,
+      showConfirmButton: false,
+      timer: 2000,
+    });
+  };
+
+  const handleExportExcel = async (selectedMonth?: string) => {
+    // กรองข้อมูลตามเดือนที่เลือก (ใช้ cart_delivery_date)
+    let ordersToExport = allCarts.filter((cart) => cart.status === "success" || cart.status === "cancelled");
+    
+    if (selectedMonth) {
+      ordersToExport = ordersToExport.filter((cart) => {
+        if (!cart.cart_delivery_date) return false;
+        const isoDate = convertThaiDateToISO(cart.cart_delivery_date);
+        if (!isoDate) return false;
+        const date = new Date(isoDate);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
+        return monthKey === selectedMonth;
+      });
+    }
+
+    // สร้าง map เพื่อเก็บ cart_create_date จาก cartsData
+    const cartCreateDateMap = new Map<string, string>();
+    if (cartsData && Array.isArray(cartsData)) {
+      cartsData.forEach((rawCart: any) => {
+        if (rawCart.cart_id && rawCart.cart_create_date) {
+          cartCreateDateMap.set(rawCart.cart_id, rawCart.cart_create_date);
+        }
+      });
+    }
+
+    const worksheetData = ordersToExport.flatMap((cart) => {
+      const foodPrice =
+        cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+          ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+          : cart.price || 0;
+      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
+      
+      // ดึง cart_create_date จาก map
+      const cartCreateDate = cartCreateDateMap.get(cart.id);
+      const formattedDeliveryDate = formatDeliveryDate(cart.cart_delivery_date);
+      const formattedCreateDate = formatCreateDate(cartCreateDate);
+      
+      // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
+      const menuRows: any[] = [];
+      
+      if (cart.cart_lunchbox && cart.cart_lunchbox.length > 0) {
+        // วน loop ผ่าน cart_lunchbox และ lunchbox_menu เพื่อสร้าง row ใหม่สำหรับแต่ละ menu
+        cart.cart_lunchbox.forEach((lunchbox: any) => {
+          if (lunchbox.lunchbox_menu && Array.isArray(lunchbox.lunchbox_menu)) {
+            lunchbox.lunchbox_menu.forEach((menu: any) => {
+              if (menu.menu_name) {
+                menuRows.push({
+                  "เลขที่ออเดอร์": cart.id,
+                  "ชื่อเมนู": menu.menu_name,
+                  "คำอธิบายเมนู": menuDescriptions,
+                  "วันที่สร้างรายการ": formattedCreateDate,
+                  "วันที่จัดส่ง": formattedDeliveryDate,
+                  "เวลา": cart.time,
+                  "จำนวน Set": menu.menu_total || 0,
+                  "ราคาอาหาร(บาท)": foodPrice,
+                  "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+                  "สถานะ": getStatusText(cart.status),
+                  "ผู้สร้าง": cart.createdBy,
+                });
+              }
+            });
+          }
+        });
+      }
+      
+      // ถ้าไม่มี cart_lunchbox หรือไม่มีเมนู ให้ใช้ข้อมูลเดิม
+      if (menuRows.length === 0) {
+        menuRows.push({
+          "เลขที่ออเดอร์": cart.id,
+          "ชื่อเมนู": cart.name || "ไม่มีชื่อเมนู",
+          "คำอธิบายเมนู": menuDescriptions,
+          "วันที่สร้างรายการ": formattedCreateDate,
+          "วันที่จัดส่ง": formattedDeliveryDate,
+          "เวลา": cart.time,
+          "จำนวน Set": cart.sets,
+          "ราคาอาหาร(บาท)": foodPrice,
+          "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+          "สถานะ": getStatusText(cart.status),
+          "ผู้สร้าง": cart.createdBy,
+        });
+      }
+      
+      // จัดกลุ่มตามชื่อเมนูและรวมจำนวน Set
+      const menuGroupMap = new Map<string, any>();
+      menuRows.forEach((row) => {
+        const menuName = row["ชื่อเมนู"];
+        if (menuGroupMap.has(menuName)) {
+          // ถ้ามีชื่อเมนูซ้ำ ให้รวมจำนวน Set
+          const existingRow = menuGroupMap.get(menuName);
+          existingRow["จำนวน Set"] = (existingRow["จำนวน Set"] || 0) + (row["จำนวน Set"] || 0);
+        } else {
+          // ถ้ายังไม่มี ให้เพิ่มเข้าไป (ไม่ใส่เลขที่ออเดอร์และราคาอาหารใน row ข้อมูลเมนู)
+          menuGroupMap.set(menuName, {
+            ...row,
+            "เลขที่ออเดอร์": "", // ไม่แสดงเลขที่ออเดอร์ใน row ข้อมูลเมนู
+            "ราคาอาหาร(บาท)": "", // ไม่แสดงราคาอาหารใน row ข้อมูลเมนู
+          });
+        }
+      });
+      
+      // แปลง Map กลับเป็น array
+      const groupedMenuRows = Array.from(menuGroupMap.values());
+      
+      // แสดงเลขที่ออเดอร์แค่ใน row แรกของแต่ละ order
+      if (groupedMenuRows.length > 0) {
+        groupedMenuRows[0]["เลขที่ออเดอร์"] = cart.id;
+      }
+      
+      // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงเลขที่ออเดอร์และราคาอาหาร)
+      groupedMenuRows.push({
+        "เลขที่ออเดอร์": "",
+        "ชื่อเมนู": "รวม",
+        "คำอธิบายเมนู": "",
+        "วันที่สร้างรายการ": "",
+        "วันที่จัดส่ง": "",
+        "เวลา": "",
+        "จำนวน Set": "",
+        "ราคาอาหาร(บาท)": foodPrice,
+        "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+        "สถานะ": "",
+        "ผู้สร้าง": "",
+      });
+      
+      return groupedMenuRows;
+    });
+
+    // คำนวณราคาอาหารรวมของทุก order (จาก row สรุปที่มี "ชื่อเมนู" = "รวม")
+    const totalFoodPrice = worksheetData.reduce((sum, row) => {
+      if (row["ชื่อเมนู"] === "รวม") {
+        return sum + (Number(row["ราคาอาหาร(บาท)"]) || 0);
+      }
+      return sum;
+    }, 0);
+
+    // เพิ่ม row สรุปที่ท้ายสุด
+    const summaryRow = {
+      "เลขที่ออเดอร์": "รวม",
+      "ชื่อเมนู": "",
+      "คำอธิบายเมนู": "",
+      "วันที่จัดส่ง": "",
+      "วันที่สร้างรายการ": "",
+      "เวลา": "",
+      "จำนวน Set": "",
+      "ราคาอาหาร(บาท)": totalFoodPrice,
+      "ค่าจัดส่ง(บาท)": "",
+      "สถานะ": "",
+      "ผู้สร้าง": "",
+    };
+
+    // เพิ่ม row สรุปเข้าไปใน worksheetData
+    worksheetData.push(summaryRow);
+
+    // ตั้งชื่อไฟล์ตามเดือนที่เลือก
+    let fileName = `order_history`;
+    if (selectedMonth) {
+      const selectedMonthData = getAvailableMonths.find((m) => m.value === selectedMonth);
+      if (selectedMonthData) {
+        fileName = `order_history_${selectedMonthData.label.replace(/\s+/g, "_")}`;
+      }
+    } else {
+      const timestamp = new Date().toISOString().split("T")[0];
+      fileName = `order_history_${timestamp}`;
+    }
+
+    // ใช้ ExcelJS สำหรับการสร้าง Excel พร้อม styling
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Orders");
+
+    // กำหนด headers
+    const headers = Object.keys(worksheetData[0] || {});
+    worksheet.addRow(headers);
+
+    // กำหนด style ให้ header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" }
+    };
+
+    // เพิ่มข้อมูล rows
+    worksheetData.forEach((row, index) => {
+      const rowData = headers.map((header) => row[header] ?? "");
+      const addedRow = worksheet.addRow(rowData);
+      
+      // ถ้าเป็น row สรุป (row ที่มี "ชื่อเมนู" = "รวม") ให้กำหนด styling
+      if (row["ชื่อเมนู"] === "รวม") {
+        addedRow.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF1F4E78" }
+        };
+        addedRow.font = {
+          color: { argb: "FFFFFFFF" },
+          bold: true
+        };
+      }
+    });
+
+    // Auto-fit columns
+    worksheet.columns.forEach((column) => {
+      if (column.header) {
+        column.width = 15;
+      }
+    });
+
+    // Export file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${fileName}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    setIsExcelMonthDialogOpen(false);
+    setSelectedMonthForExcel("");
   };
 
   const handleUpdateWithCheck = (cart: { id: string; allIngredients: any[] }) => {
@@ -827,13 +1424,7 @@ const OrderHistory = () => {
             </Button>
           </div>
           <div className='flex flex-center'>
-            <Button onClick={handleExportCSV} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2 text-gray-400' /> CSV
-            </Button>
-            <Button onClick={handleExportPDF} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2 text-gray-400' /> PDF
-            </Button>
-            <Button onClick={handleExportExcel} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
+            <Button onClick={() => setIsExcelMonthDialogOpen(true)} className='h-12 w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2 text-gray-400' /> Excel
             </Button>
           </div>
@@ -841,12 +1432,7 @@ const OrderHistory = () => {
 
         <div className='space-y-6'>
           {isLoading ? (
-            <Card>
-              <CardContent className='text-center py-12'>
-                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4'></div>
-                <span className='text-slate-500'>Loading...</span>
-              </CardContent>
-            </Card>
+            <Loading context="หน้าประวัติการสั่งซื้อ" icon={HistoryIcon.src} color="green"/>
           ) : combinedError ? (
             <Card>
               <CardContent className='text-center py-12'>
@@ -1103,13 +1689,25 @@ const OrderHistory = () => {
                       </AccordionItem>
                     </Accordion>
                   ))}
-                  <div className='flex justify-center m-4'>
+                  <div className='flex justify-center gap-3 m-4'>
                     <Button
                       size='sm'
                       onClick={() => handleSummaryClick(convertThaiDateToISO(orders[0].cart_delivery_date)!)}
                       className='h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4'
                       style={{ color: "#000000", background: "#fcf22d" }}>
                       📦 สรุปวัตถุดิบทั้งหมด
+                    </Button>
+                    <Button
+                      size='sm'
+                      onClick={() => {
+                        const dateISO = convertThaiDateToISO(orders[0].cart_delivery_date);
+                        if (dateISO) {
+                          handleExportExcelForDate(dateISO, orders);
+                        }
+                      }}
+                      className='h-9 px-4 rounded-xl border border-blue-500 text-blue-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4 flex items-center gap-2'
+                      style={{ color: "#ffffff", background: "#3b82f6" }}>
+                      <Download className='w-4 h-4' /> Download Excel
                     </Button>
                   </div>
                 </div>
@@ -1119,8 +1717,8 @@ const OrderHistory = () => {
         </div>
 
         <Dialog open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen}>
-          <DialogContent className='max-w-md'>
-            <DialogTitle className='text-lg font-bold'>
+          <DialogContent className='max-w-md max-h-[90vh] flex flex-col'>
+            <DialogTitle className='text-lg font-bold shrink-0'>
               <div style={{ color: "#000000" }} className='mb-4'>
                 สรุปวัตถุดิบทั้งหมดของวันที่{" "}
                 {selectedDateForSummary &&
@@ -1130,31 +1728,84 @@ const OrderHistory = () => {
                     year: "numeric",
                   })}
               </div>
-              {selectedDateForSummary &&
-                (() => {
-                  const { summary, allIngredientsChecked } = summarizeIngredients(selectedDateForSummary);
-                  return (
-                    <div className='space-y-4'>
-                      <div className='space-y-2'>
-                        <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบรวม</h5>
+            </DialogTitle>
+            {selectedDateForSummary &&
+              (() => {
+                const { summary } = summarizeIngredients(selectedDateForSummary);
+                return (
+                  <div className='flex flex-col flex-1 min-h-0 space-y-4'>
+                    <div className='flex-1 overflow-y-auto space-y-2 pr-2'>
+                      <h5 className='text-sm font-semibold text-gray-700 sticky top-0 bg-white pb-2 z-10'>สรุปวัตถุดิบรวม</h5>
+                      <div className='space-y-0'>
                         {summary.map((ing, idx) => (
                           <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
-                            <span className='text-gray-700'>{ing.name}</span>
-                            <span className='text-gray-600'>
+                            <span className='text-gray-700 flex-1'>{ing.name}</span>
+                            <span className='text-gray-600 ml-4 whitespace-nowrap'>
                               {ing.checked}/{ing.total} {ing.unit}
                             </span>
                           </div>
                         ))}
                       </div>
-                      <div style={{ color: "#000000", background: "#5cfa6c" }}>
-                        <Button onClick={() => handleCheckAllIngredientsForDate(selectedDateForSummary)} className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg' disabled={isSaving === "all" || allIngredientsChecked}>
-                          {isSaving === "all" ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
-                        </Button>
-                      </div>
                     </div>
-                  );
-                })()}
-            </DialogTitle>
+                    <div className='shrink-0 pt-2 border-t border-gray-200'>
+                      <Button onClick={() => setIsSummaryModalOpen(false)} className='w-full bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg'>
+                        ปิด
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog สำหรับเลือกเดือนก่อน Export Excel */}
+        <Dialog open={isExcelMonthDialogOpen} onOpenChange={setIsExcelMonthDialogOpen}>
+          <DialogContent className='max-w-lg'>
+            <div className='space-y-4'>
+            <DialogTitle className='text-xl mb-4 text-black !font-bold'>เลือกเดือนสำหรับ Export Excel</DialogTitle>
+              <div className='flex flex-col gap-2'>
+                {/* <label className='text-sm font-medium text-gray-700'>เลือกเดือน</label> */}
+                <Select value={selectedMonthForExcel} onValueChange={setSelectedMonthForExcel}>
+                  <SelectTrigger style={{ color: "#000000" }} className='w-full !bg-gray-100'>
+                    <SelectValue placeholder='เลือกเดือนที่ต้องการ' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>ทั้งหมด</SelectItem>
+                    {getAvailableMonths.map((month) => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='flex justify-end gap-2 pt-4 '>
+                <Button
+                  variant='outline'
+                  style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
+                  className=' !bg-red-400'
+                  onClick={() => {
+                    setIsExcelMonthDialogOpen(false);
+                    setSelectedMonthForExcel("");
+                  }}>
+                  ยกเลิก
+                </Button>
+                
+                <Button
+                  variant='default'
+                  style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
+                  className=' !bg-green-400'
+                  onClick={() => {
+                    if (selectedMonthForExcel && selectedMonthForExcel !== 'all') {
+                      handleExportExcel(selectedMonthForExcel);
+                    } else {
+                      handleExportExcel();
+                    }
+                  }}>
+                  Export Excel
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
