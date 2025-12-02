@@ -86,8 +86,8 @@ export default function Menubar() {
     );
   }
 
-  // Hide Menubar if not logged in
-  if (!userName) {
+  // Hide Menubar if loading or not logged in
+  if (isLoading || !userName) {
     return null;
   }
 

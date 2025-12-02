@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { create } from "zustand";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
@@ -46,6 +47,7 @@ const useLogin = create<LoginState>((set, get) => ({
 
 const Login: React.FC = () => {
   const { username, pin, loading, error, setUsername, setLoading, setError, resetPin, updatePinDigit } = useLogin();
+  const { checkAuth } = useAuth();
   const dots = useLoadingDots();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
@@ -101,8 +103,8 @@ const Login: React.FC = () => {
           });
 
           if (loginResponse.status === 200) {
+            await checkAuth(true);
             router.push("/home");
-            router.refresh();
           } else throw new Error("Failed to set login cookie");
         } else {
           setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
