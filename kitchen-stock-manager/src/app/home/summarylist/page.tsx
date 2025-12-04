@@ -228,12 +228,6 @@ const SummaryList: React.FC = () => {
             }
           }
 
-          // เมื่อมีการเปลี่ยนแปลงข้อมูลในหน้าจะเลื่อนขึ้นไปบนสุด
-          const handlePageChange = (page: number) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          };
-
           // ประมวลผล menuItems จาก cart_lunchbox
           const menuItems: MenuItem[] = [];
           cartLunchbox.forEach((lunchbox) => {
