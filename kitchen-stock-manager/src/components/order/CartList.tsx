@@ -47,7 +47,6 @@ const useCartList = create<cartList>((set) => ({
 }));
 
 export default function CartList() {
-
   const {
     items,
     addItem,
@@ -76,22 +75,37 @@ export default function CartList() {
   // const [lunchbox, setLunchbox] = useState<LunchBox[]>([]);
   // const [availableSets, setAvailableSets] = useState<string[]>([]);
   const router = useRouter();
+  const [isErrorVisible, setIsErrorVisible] = useState(false);
+  const [isSuccessVisible, setIsSuccessVisible] = useState(false);
 
+  // Reset success only on initial mount, not when it changes
   useEffect(() => {
-    if (success) setSuccess(false);
-  }, []);
+    // Only reset if success is true on mount (stale state)
+    // But don't interfere with new success states
+    const mountedSuccess = success;
+    if (mountedSuccess) {
+      // Don't reset immediately, let the success handler manage it
+      // Or reset after a delay to allow toast to show
+    }
+  }, []); // Only run once on mount
 
   useEffect(() => {
     if (success) {
+      setIsSuccessVisible(true);
       const timer = setTimeout(() => {
-        setSuccess(false);
-        clearCart();
-        router.push("/home/summarylist");
-      }, 2000); // 2 วินาที
+        setIsSuccessVisible(false);
+        setTimeout(() => {
+          setSuccess(false);
+          clearCart();
+          router.push("/home/summarylist");
+        }, 300);
+      }, 3000);
 
       return () => clearTimeout(timer);
+    } else {
+      setIsSuccessVisible(false);
     }
-  }, [success]);
+  }, [success, clearCart, router]);
 
   useEffect(() => {
     if (cart_delivery_date) {
@@ -107,8 +121,6 @@ export default function CartList() {
       setRawDate("");
     }
   }, [cart_delivery_date]);
-
-
 
   useEffect(() => {
     const fetchLunchbox = async () => {
@@ -359,12 +371,6 @@ export default function CartList() {
     }
   };
 
-  const handleDone = () => {
-    setSuccess(false); // Reset success state before clearing cart
-    clearCart();
-    router.push("/home/summarylist");
-  };
-
   const handleChangeQuantity = (cartItemId: string, quantity: number) => {
     if (quantity >= 1) setItemQuantity(cartItemId, quantity);
   };
@@ -382,8 +388,101 @@ export default function CartList() {
     return groups;
   };
 
+  useEffect(() => {
+    if (errors.length > 0) {
+      setIsErrorVisible(true);
+      const timer = setTimeout(() => {
+        setIsErrorVisible(false);
+        setTimeout(() => {
+          setErrors([]);
+        }, 300);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setIsErrorVisible(false);
+    }
+  }, [errors]);
+
   return (
     <main className='min-h-screen text-black'>
+      {/* Success Notification Toast - Top Right */}
+      {success && (
+        <div className={`fixed top-4 right-4 z-50 flex w-3/4 max-w-96 h-24 bg-white rounded-xl overflow-hidden shadow-lg transition-all duration-300 ease-in-out ${isSuccessVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"}`}>
+          <svg width='16' height='96' xmlns='http://www.w3.org/2000/svg'>
+            <path
+              d='M 8 0 
+                   Q 4 4.8, 8 9.6 
+                   T 8 19.2 
+                   Q 4 24, 8 28.8 
+                   T 8 38.4 
+                   Q 4 43.2, 8 48 
+                   T 8 57.6 
+                   Q 4 62.4, 8 67.2 
+                   T 8 76.8 
+                   Q 4 81.6, 8 86.4 
+                   T 8 96 
+                   L 0 96 
+                   L 0 0 
+                   Z'
+              fill='#66cdaa'
+              stroke='#66cdaa'
+              strokeWidth='2'
+              strokeLinecap='round'
+            />
+          </svg>
+          <div className='mx-2.5 overflow-hidden w-full'>
+            <p className='mt-1.5 text-xl font-bold text-[#66cdaa] leading-8 mr-3 overflow-hidden text-ellipsis whitespace-nowrap'>Success !</p>
+            <p className='overflow-hidden leading-5 break-all text-zinc-400 max-h-10'>
+              สั่งซื้อสำเร็จ!
+              <br />
+              คำสั่งซื้อของคุณถูกบันทึกเรียบร้อยแล้ว
+            </p>
+          </div>
+          <button className='w-16 cursor-pointer focus:outline-none'>
+            <svg className='w-7 h-7' fill='none' stroke='mediumseagreen' strokeWidth='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+              <path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Error Notification Toast - Top Right */}
+      {errors.length > 0 && (
+        <div className={`fixed top-4 right-4 z-50 flex w-3/4 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${isErrorVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"}`}>
+          <svg xmlns='http://www.w3.org/2000/svg' height='96' width='16'>
+            <path
+              strokeLinecap='round'
+              strokeWidth='2'
+              stroke='indianred'
+              fill='indianred'
+              d='M 8 0 
+                   Q 4 4.8, 8 9.6 
+                   T 8 19.2 
+                   Q 4 24, 8 28.8 
+                   T 8 38.4 
+                   Q 4 43.2, 8 48 
+                   T 8 57.6 
+                   Q 4 62.4, 8 67.2 
+                   T 8 76.8 
+                   Q 4 81.6, 8 86.4 
+                   T 8 96 
+                   L 0 96 
+                   L 0 0 
+                   Z'
+            />
+          </svg>
+          <div className='mx-2.5 overflow-hidden w-full'>
+            <p className='mt-1.5 text-xl font-bold text-[indianred] leading-8 mr-3 overflow-hidden text-ellipsis whitespace-nowrap'>เกิดข้อผิดพลาดการยืนยันคำสั่งซื้อ</p>
+            <div className='overflow-hidden leading-5 break-all text-zinc-400 max-h-10'>
+              {errors.map((err: string, i: number) => (
+                <p key={i}>{err}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className='p-4 max-w-md mx-auto'>
         <h1 className='text-2xl !font-bold mb-4 flex items-center gap-2'>
           <svg
@@ -491,46 +590,46 @@ export default function CartList() {
                 type='text'
                 value={cart_export_time}
                 onChange={(e) => {
-                  let raw = e.target.value.replace(/[^0-9:]/g, '');
-                  let digits = raw.replace(/:/g, '');
-                  
+                  let raw = e.target.value.replace(/[^0-9:]/g, "");
+                  let digits = raw.replace(/:/g, "");
+
                   if (digits.length === 0) {
-                    setCustomerInfo({ exportTime: '' });
+                    setCustomerInfo({ exportTime: "" });
                     return;
                   }
-                  
+
                   if (digits.length <= 2) {
                     setCustomerInfo({ exportTime: digits });
                     return;
                   }
-                  
+
                   let hours = parseInt(digits.slice(0, 2), 10);
                   if (hours > 23) hours = 23;
                   let minutes = digits.slice(2, 4);
                   if (minutes.length === 2) {
                     let mins = parseInt(minutes, 10);
-                    if (mins > 59) minutes = '59';
+                    if (mins > 59) minutes = "59";
                   }
-                  
-                  let value = hours.toString().padStart(2, '0') + ':' + minutes;
+
+                  let value = hours.toString().padStart(2, "0") + ":" + minutes;
                   setCustomerInfo({ exportTime: value });
                 }}
                 onBlur={(e) => {
                   let value = e.target.value;
                   if (!value) return;
-                  
-                  let digits = value.replace(/[^0-9]/g, '');
+
+                  let digits = value.replace(/[^0-9]/g, "");
                   if (digits.length === 0) return;
-                  
-                  let hours = digits.slice(0, 2).padStart(2, '0');
-                  let mins = digits.slice(2, 4).padEnd(2, '0');
-                  
+
+                  let hours = digits.slice(0, 2).padStart(2, "0");
+                  let mins = digits.slice(2, 4).padEnd(2, "0");
+
                   let h = parseInt(hours, 10);
                   let m = parseInt(mins, 10);
                   if (h > 23) h = 23;
                   if (m > 59) m = 59;
-                  
-                  setCustomerInfo({ exportTime: h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0') });
+
+                  setCustomerInfo({ exportTime: h.toString().padStart(2, "0") + ":" + m.toString().padStart(2, "0") });
                 }}
                 maxLength={5}
                 className='w-full border border-gray-300 rounded px-3 py-2 font-mono'
@@ -550,46 +649,46 @@ export default function CartList() {
                 type='text'
                 value={cart_receive_time}
                 onChange={(e) => {
-                  let raw = e.target.value.replace(/[^0-9:]/g, '');
-                  let digits = raw.replace(/:/g, '');
-                  
+                  let raw = e.target.value.replace(/[^0-9:]/g, "");
+                  let digits = raw.replace(/:/g, "");
+
                   if (digits.length === 0) {
-                    setCustomerInfo({ receiveTime: '' });
+                    setCustomerInfo({ receiveTime: "" });
                     return;
                   }
-                  
+
                   if (digits.length <= 2) {
                     setCustomerInfo({ receiveTime: digits });
                     return;
                   }
-                  
+
                   let hours = parseInt(digits.slice(0, 2), 10);
                   if (hours > 23) hours = 23;
                   let minutes = digits.slice(2, 4);
                   if (minutes.length === 2) {
                     let mins = parseInt(minutes, 10);
-                    if (mins > 59) minutes = '59';
+                    if (mins > 59) minutes = "59";
                   }
-                  
-                  let value = hours.toString().padStart(2, '0') + ':' + minutes;
+
+                  let value = hours.toString().padStart(2, "0") + ":" + minutes;
                   setCustomerInfo({ receiveTime: value });
                 }}
                 onBlur={(e) => {
                   let value = e.target.value;
                   if (!value) return;
-                  
-                  let digits = value.replace(/[^0-9]/g, '');
+
+                  let digits = value.replace(/[^0-9]/g, "");
                   if (digits.length === 0) return;
-                  
-                  let hours = digits.slice(0, 2).padStart(2, '0');
-                  let mins = digits.slice(2, 4).padEnd(2, '0');
-                  
+
+                  let hours = digits.slice(0, 2).padStart(2, "0");
+                  let mins = digits.slice(2, 4).padEnd(2, "0");
+
                   let h = parseInt(hours, 10);
                   let m = parseInt(mins, 10);
                   if (h > 23) h = 23;
                   if (m > 59) m = 59;
-                  
-                  setCustomerInfo({ receiveTime: h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0') });
+
+                  setCustomerInfo({ receiveTime: h.toString().padStart(2, "0") + ":" + m.toString().padStart(2, "0") });
                 }}
                 maxLength={5}
                 className='w-full border border-gray-300 rounded px-3 py-2 font-mono'
@@ -633,11 +732,13 @@ export default function CartList() {
         {selected_lunchboxes.length > 0 && (
           <div className='space-y-3 mb-4'>
             <h3 className='font-bold'>📦 ชุดอาหารที่เลือก</h3>
-            {selected_lunchboxes.map((lunchbox, index) => {
+            {selected_lunchboxes.slice().reverse().map((lunchbox, reversedIndex) => {
+              // คำนวณ index จริงจาก reversed index
+              const actualIndex = selected_lunchboxes.length - 1 - reversedIndex;
               const menuGroups = groupMenusByLimit(lunchbox.selected_menus, lunchbox.lunchbox_limit);
 
               return (
-                <div key={index} className='border p-4 rounded bg-gray-50'>
+                <div key={actualIndex} className='border p-4 rounded bg-gray-50'>
                   <div className='flex justify-between items-start mb-2'>
                     <div>
                       <h4 className='font-medium'>
@@ -645,19 +746,19 @@ export default function CartList() {
                       </h4>
                       <p className='text-sm text-gray-600'>เลือกได้ {lunchbox.lunchbox_limit} อย่าง</p>
                     </div>
-                    <button onClick={() => removeLunchbox(index)} className='px-2 py-1 bg-red-500 text-white rounded text-sm'>
+                    <button onClick={() => removeLunchbox(actualIndex)} className='px-2 py-1 bg-red-500 text-white rounded text-sm'>
                       ลบ
                     </button>
                   </div>
 
                   <div className='flex items-center gap-2 mb-2'>
                     <label className='text-sm'>จำนวน:</label>
-                    <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(index, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
+                    <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(actualIndex, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
                   </div>
 
                   <div className='flex items-center gap-2 mb-2'>
                     <label className='text-sm'>ราคารวม:</label>
-                    <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(index, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
+                    <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(actualIndex, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
                     <span className='text-sm text-gray-500'>บาท</span>
                   </div>
 
@@ -689,7 +790,7 @@ export default function CartList() {
                     </div>
                   )}
 
-                  <button onClick={() => handleEditLunchbox(index)} className='w-full text-center px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm'>
+                  <button onClick={() => handleEditLunchbox(actualIndex)} className='w-full text-center px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm'>
                     🔧 แก้ไขทั้งหมด
                   </button>
                 </div>
@@ -722,16 +823,18 @@ export default function CartList() {
           {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
         </button>
 
-        {errors.length > 0 && (
+        {/* Remove or keep the old error list - you can remove this if you only want the toast */}
+        {/* {errors.length > 0 && (
           <ul className='mt-4 text-red-500 space-y-1 list-disc list-inside text-sm'>
             {errors.map((err: string, i: number) => (
               <li key={i}>{err}</li>
             ))}
           </ul>
-        )}
+        )} */}
       </div>
 
-      {success && (
+      {/* Remove the old success modal */}
+      {/* {success && (
         <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
           <div className='bg-white p-6 rounded max-w-sm text-center space-y-4'>
             <h2 className='text-xl font-bold'>สั่งซื้อสำเร็จ</h2>
@@ -739,7 +842,7 @@ export default function CartList() {
             <p className='text-sm text-gray-500'>กำลังนำทางไปหน้าสรุปรายการ...</p>
           </div>
         </div>
-      )}
+      )} */}
     </main>
   );
 }
