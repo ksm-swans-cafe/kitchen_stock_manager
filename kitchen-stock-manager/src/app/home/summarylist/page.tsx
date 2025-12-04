@@ -1974,10 +1974,9 @@ const SummaryList: React.FC = () => {
           };
         });
 
-        // console.log("[Save] PATCH /api/edit/cart-menu/summary-list", {
-        //   url: `/api/edit/cart-menu/summary-list/${cartId}`,
-        //   body: { menuItems: updatedMenuItems },
-        // });
+        console.log("✅ [API #1] กำลังส่งข้อมูลไปยัง PATCH /api/edit/cart-menu/summary-list");
+        console.log("🔗 URL:", `/api/edit/cart-menu/summary-list/${cartId}`);
+        console.log("📦 Body:", JSON.stringify({ menuItems: updatedMenuItems }, null, 2));
 
         const response = await fetch(`/api/edit/cart-menu/summary-list/${cartId}`, {
           method: "PATCH",
@@ -1994,28 +1993,49 @@ const SummaryList: React.FC = () => {
         // Build lunchbox structure from menuItems
         const foundCart = carts.find((cart) => cart.id === cartId);
         const lunchboxesToUse = updatedLunchboxes || foundCart?.cart_lunchbox || [];
+
+        // สร้าง Map ของ updatedMenuItems เพื่อค้นหาข้อมูลที่อัปเดตแล้วได้เร็วขึ้น
+        const updatedMenuMap = new globalThis.Map(updatedMenuItems.map((item) => [item.menu_name, item]));
+
         const cart_lunchboxes = lunchboxesToUse.map((lunchbox: any) => ({
           lunchbox_name: lunchbox.lunchbox_name,
           lunchbox_set: lunchbox.lunchbox_set_name,
           lunchbox_limit: lunchbox.lunchbox_limit || 0,
           lunchbox_quantity: lunchbox.lunchbox_total || 0,
           lunchbox_total_cost: lunchbox.lunchbox_total_cost || 0,
-          // Use only menus from this specific lunchbox
-          lunchbox_menus: (lunchbox.lunchbox_menu || []).map((menu: any) => ({
-            menu_name: menu.menu_name,
-            menu_subname: menu.menu_subname,
-            menu_category: menu.menu_category,
-            menu_total: menu.menu_total,
-            menu_description: menu.menu_description,
-            menu_ingredients: menu.menu_ingredients,
-          })),
+          // ใช้ข้อมูลจาก updatedMenuItems ที่ผู้ใช้แก้ไขแล้ว แทนที่จะใช้ข้อมูลเดิม
+          lunchbox_menus: (lunchbox.lunchbox_menu || []).map((menu: any) => {
+            // หาเมนูที่ตรงกันจาก updatedMenuItems
+            const updatedMenu = updatedMenuMap.get(menu.menu_name);
+
+            // ถ้าเจอเมนูที่อัปเดตแล้ว ให้ใช้ข้อมูลใหม่ ไม่เช่นนั้นใช้ข้อมูลเดิม
+            if (updatedMenu) {
+              return {
+                menu_name: updatedMenu.menu_name,
+                menu_subname: updatedMenu.menu_subname,
+                menu_category: updatedMenu.menu_category,
+                menu_total: updatedMenu.menu_total,
+                menu_description: updatedMenu.menu_description,
+                menu_ingredients: updatedMenu.menu_ingredients,
+              };
+            }
+
+            // ถ้าไม่เจอ ใช้ข้อมูลเดิม (กรณีที่เมนูไม่ได้ถูกแก้ไข)
+            return {
+              menu_name: menu.menu_name,
+              menu_subname: menu.menu_subname,
+              menu_category: menu.menu_category,
+              menu_total: menu.menu_total,
+              menu_description: menu.menu_description,
+              menu_ingredients: menu.menu_ingredients,
+            };
+          }),
         }));
 
-        // console.log("[Save] PATCH /api/edit/cart", {
-        //   url: `/api/edit/cart/${cartId}`,
-        //   body: { cart_lunchboxes },
-        // });
-        // console.log("[Save] Updated Menu Items with Ingredients:", JSON.stringify(updatedMenuItems, null, 2));
+        console.log("✅ [API #2] กำลังส่งข้อมูลไปยัง PATCH /api/edit/cart");
+        console.log("🔗 URL:", `/api/edit/cart/${cartId}`);
+        console.log("📦 Body:", JSON.stringify({ cart_lunchboxes }, null, 2));
+
         try {
           await fetch(`/api/edit/cart/${cartId}`, {
             method: "PATCH",
@@ -3037,7 +3057,17 @@ const SummaryList: React.FC = () => {
                                                 onClick={() => {
                                                   // เรียกใช้ฟังก์ชัน handleEdit.Menu
                                                   if (editMenuDialog) {
-                                                    handleEdit.Menu(editMenuDialog.cart_id, editMenuDialog.menuItems, editMenuDialog.cart_lunchbox);
+                                                    console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
+                                                    console.log("📦 cart_id:", editMenuDialog.cart_id);
+                                                    console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
+                                                    console.log("🍱 cart_lunchbox:", JSON.stringify(editMenuDialog.cart_lunchbox, null, 2));
+
+                                                    handleEdit.Menu
+                                                      (
+                                                        editMenuDialog.cart_id,
+                                                        editMenuDialog.menuItems,
+                                                        editMenuDialog.cart_lunchbox
+                                                      );
                                                   }
                                                 }}
                                                 disabled={isSaving !== null}>
