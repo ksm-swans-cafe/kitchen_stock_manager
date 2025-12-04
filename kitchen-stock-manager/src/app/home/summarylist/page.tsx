@@ -124,6 +124,11 @@ const SummaryList: React.FC = () => {
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
 
+  // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentPage]);
+
   const handleSummaryprice = () => {
     router.push("/home/summarylist/summaryprice");
   };
@@ -222,12 +227,6 @@ const SummaryList: React.FC = () => {
               cartLunchbox = cart.cart_lunchbox;
             }
           }
-
-          // เมื่อมีการเปลี่ยนแปลงข้อมูลในหน้าจะเลื่อนขึ้นไปบนสุด
-          const handlePageChange = (page: number) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          };
 
           // ประมวลผล menuItems จาก cart_lunchbox
           const menuItems: MenuItem[] = [];
