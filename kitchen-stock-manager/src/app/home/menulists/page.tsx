@@ -128,17 +128,17 @@ export default function Page() {
 
   const uniqueIngredients = menuData?.data
     ? Array.from(
-        new Set(
-          menuData.data.flatMap((item: MenuItem) => {
-            try {
-              const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
-              return ingredients.map((ing: Ingredient) => ing.ingredient_name?.trim().toLowerCase()).filter(Boolean);
-            } catch {
-              return [];
-            }
-          })
-        )
+      new Set(
+        menuData.data.flatMap((item: MenuItem) => {
+          try {
+            const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
+            return ingredients.map((ing: Ingredient) => ing.ingredient_name?.trim().toLowerCase()).filter(Boolean);
+          } catch {
+            return [];
+          }
+        })
       )
+    )
     : [];
 
   const { data: ingredientUnitsData } = useSWR(uniqueIngredients.length > 0 ? `/api/get/ingredients/list?names=${encodeURIComponent(uniqueIngredients.join(","))}` : null, fetcher, {
@@ -163,6 +163,11 @@ export default function Page() {
     });
     return unitMap;
   }, [ingredientUnitsData]);
+
+  // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentPage]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -404,7 +409,7 @@ export default function Page() {
         {/* Error Message */}
         {currentError && (
           <div className='notification is-danger is-light mb-5'>
-            <button className='delete' onClick={() => {}}></button>
+            <button className='delete' onClick={() => { }}></button>
             <strong>เกิดข้อผิดพลาด</strong>
             <p>{currentError}</p>
           </div>
