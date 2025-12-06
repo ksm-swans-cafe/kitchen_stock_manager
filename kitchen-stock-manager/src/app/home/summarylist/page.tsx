@@ -1083,6 +1083,7 @@ const SummaryList: React.FC = () => {
         const result = await response.json();
 
 
+
         if (result.success && result.data) {
           setAvailableMenusForLunchbox((prev) => ({
             ...prev,
@@ -1924,9 +1925,9 @@ const SummaryList: React.FC = () => {
 
 
 
-        console.log("✅ [API #1] กำลังส่งข้อมูลไปยัง PATCH /api/edit/cart-menu/summary-list");
-        console.log("🔗 URL:", `/api/edit/cart-menu/summary-list/${cartId}`);
-        console.log("📦 Body:", JSON.stringify({ menuItems: updatedMenuItems }, null, 2));
+
+
+
 
         const response = await fetch(`/api/edit/cart-menu/summary-list/${cartId}`, {
           method: "PATCH",
@@ -1982,11 +1983,10 @@ const SummaryList: React.FC = () => {
           }),
         }));
 
-        // console.log("[Save] PATCH /api/edit/cart", {
-        //   url: `/api/edit/cart/${cartId}`,
-        //   body: { cart_lunchboxes },
-        // });
-        // console.log("[Save] Updated Menu Items with Ingredients:", JSON.stringify(updatedMenuItems, null, 2));
+        console.log("✅ [API #2] กำลังส่งข้อมูลไปยัง PATCH /api/edit/cart");
+        console.log("🔗 URL:", `/api/edit/cart/${cartId}`);
+        console.log("📦 Body:", JSON.stringify({ cart_lunchboxes }, null, 2));
+
         try {
           await fetch(`/api/edit/cart/${cartId}`, {
             method: "PATCH",
