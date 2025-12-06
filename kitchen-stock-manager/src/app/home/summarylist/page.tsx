@@ -2492,10 +2492,8 @@ const SummaryList: React.FC = () => {
                                   <Dialog
                                     open={editMenuDialog !== null}
                                     onOpenChange={(open) => {
-                                      console.log("📢 Dialog onOpenChange เรียก! open:", open, "isDeleting:", isDeleting, "editMenuDialog:", editMenuDialog);
                                       // Only reset when explicitly closing (not when SweetAlert shows or deleting)
                                       if (!open && editMenuDialog !== null && !isDeleting) {
-                                        console.log("🔒 กำลัง reset editMenuDialog...");
                                         setEditMenuDialog(null);
                                         setShouldFetchMenu(false);
                                         setSelectedLunchboxName("");
@@ -2503,7 +2501,6 @@ const SummaryList: React.FC = () => {
                                         setPreviewLunchbox(null);
                                         setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
                                       } else {
-                                        console.log("⛔ ไม่ reset เพราะ: open =", open, ", isDeleting =", isDeleting, ", editMenuDialog =", editMenuDialog);
                                       }
                                     }}>
                                     <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
@@ -2610,7 +2607,6 @@ const SummaryList: React.FC = () => {
                                                               size='sm'
                                                               variant='destructive'
                                                               onClick={() => {
-                                                                console.log("🔴 ปุ่มลบกล่องถูกคลิก! Index:", lunchboxIdx);
                                                                 handleRemoveLunchbox(lunchboxIdx);
                                                               }}>
                                                               ลบกล่อง
@@ -2634,8 +2630,6 @@ const SummaryList: React.FC = () => {
                                                                     const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
                                                                     const menusForThisBox = availableMenusForLunchbox[key] || [];
                                                                     const newTotalCost = calculateLunchboxCost(lunchbox.lunchbox_menu || [], newTotal, menusForThisBox);
-
-                                                                    console.log(`💰 เปลี่ยนจำนวนกล่อง: ${lunchbox.lunchbox_total} → ${newTotal}, ราคาใหม่: ${newTotalCost} บาท`);
 
                                                                     // อัปเดต cart_lunchbox และ menu_total ของเมนูทั้งหมดใน lunchbox นี้
                                                                     const updatedCartLunchbox = prev.cart_lunchbox.map((lb, idx) => {
@@ -2712,7 +2706,6 @@ const SummaryList: React.FC = () => {
                                                                 await fetchMenusForLunchbox(lunchbox.lunchbox_name, lunchbox.lunchbox_set_name, lunchboxIdx);
                                                               }}
                                                               onChange={(e) => {
-                                                                console.log("🔵 เลือกเมนู! lunchboxIdx:", lunchboxIdx, "value:", e.target.value);
                                                                 setSelectedMenuForLunchbox((prev) => ({
                                                                   ...prev,
                                                                   [lunchboxIdx]: e.target.value,
@@ -2749,15 +2742,6 @@ const SummaryList: React.FC = () => {
                                                                   });
                                                                 }
 
-                                                                console.log("🔍 Dropdown Render - lunchboxIdx:", lunchboxIdx);
-                                                                console.log("🔍 Menu count:", currentMenuCount, "/", lunchboxLimit);
-                                                                console.log("🔍 Is unlimited:", isUnlimited);
-                                                                console.log("🔍 Selected categories:", Array.from(selectedCategories));
-                                                                console.log(
-                                                                  "🔍 Available menus:",
-                                                                  menusForThisBox.map((m: any) => `${m.menu_name} (${m.lunchbox_menu_category || "no category"})`)
-                                                                );
-
                                                                 const filteredMenus = menusForThisBox.filter((menu: any) => {
                                                                   // ถ้าเป็น Custom unlimited ให้ไม่กรอง category ซ้ำ
                                                                   if (isUnlimited) {
@@ -2766,15 +2750,8 @@ const SummaryList: React.FC = () => {
                                                                   // ตรวจสอบว่า category นี้ถูกเลือกไปแล้วหรือไม่
                                                                   const menuCategory = menu.lunchbox_menu_category;
                                                                   const isCategorySelected = menuCategory && selectedCategories.has(menuCategory);
-
-                                                                  console.log(`🔍 Menu "${menu.menu_name}" (${menuCategory}): category selected = ${isCategorySelected}`);
                                                                   return !isCategorySelected;
                                                                 });
-
-                                                                console.log(
-                                                                  "🔍 Filtered menus:",
-                                                                  filteredMenus.map((m: any) => m.menu_name)
-                                                                );
 
                                                                 if (filteredMenus.length === 0) {
                                                                   return (
@@ -2811,11 +2788,6 @@ const SummaryList: React.FC = () => {
                                                                 const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
                                                                 const menusForThisBox = availableMenusForLunchbox[key] || [];
 
-                                                                console.log("🔵 กดปุ่มเพิ่มเมนู! lunchboxIdx:", lunchboxIdx);
-                                                                console.log("🔵 menusForThisBox:", menusForThisBox);
-                                                                console.log("🔵 selectedMenuForLunchbox:", selectedMenuForLunchbox);
-                                                                console.log("🔵 selected value for this lunchbox:", selectedMenuForLunchbox[lunchboxIdx]);
-
                                                                 if (menusForThisBox.length === 0) {
                                                                   Swal.fire({
                                                                     icon: "warning",
@@ -2830,9 +2802,7 @@ const SummaryList: React.FC = () => {
                                                                 const selectedValue = selectedMenuForLunchbox[lunchboxIdx];
                                                                 if (selectedValue && selectedValue !== "") {
                                                                   const selectedIdx = parseInt(selectedValue);
-                                                                  console.log("🔵 selectedIdx:", selectedIdx);
                                                                   if (!isNaN(selectedIdx) && selectedIdx >= 0 && selectedIdx < menusForThisBox.length) {
-                                                                    console.log("🔵 กำลังเพิ่มเมนู:", menusForThisBox[selectedIdx]);
                                                                     handleAddMenuToLunchbox(lunchboxIdx, menusForThisBox[selectedIdx]);
                                                                     // Clear selection after adding
                                                                     setSelectedMenuForLunchbox((prev) => ({
@@ -2840,7 +2810,6 @@ const SummaryList: React.FC = () => {
                                                                       [lunchboxIdx]: "",
                                                                     }));
                                                                   } else {
-                                                                    console.log("❌ selectedIdx ไม่ถูกต้อง!");
                                                                     Swal.fire({
                                                                       icon: "error",
                                                                       title: "เกิดข้อผิดพลาด",
@@ -2850,7 +2819,6 @@ const SummaryList: React.FC = () => {
                                                                     });
                                                                   }
                                                                 } else {
-                                                                  console.log("❌ ยังไม่ได้เลือกเมนู!");
                                                                   Swal.fire({
                                                                     icon: "warning",
                                                                     title: "กรุณาเลือกเมนู",
@@ -2879,7 +2847,6 @@ const SummaryList: React.FC = () => {
                                                                   variant='ghost'
                                                                   className='text-red-600 hover:text-red-800 hover:bg-red-50'
                                                                   onClick={() => {
-                                                                    console.log("🔴 ปุ่มลบเมนูถูกคลิก!", { lunchboxIdx, menuIdx, menuName: menu.menu_name });
                                                                     handleRemoveMenuFromLunchbox(lunchboxIdx, menuIdx, menu.menu_name);
                                                                   }}>
                                                                   ลบ
@@ -3008,7 +2975,17 @@ const SummaryList: React.FC = () => {
                                                 onClick={() => {
                                                   // เรียกใช้ฟังก์ชัน handleEdit.Menu
                                                   if (editMenuDialog) {
-                                                    handleEdit.Menu(editMenuDialog.cart_id, editMenuDialog.menuItems, editMenuDialog.cart_lunchbox);
+                                                    console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
+                                                    console.log("📦 cart_id:", editMenuDialog.cart_id);
+                                                    console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
+                                                    console.log("🍱 cart_lunchbox:", JSON.stringify(editMenuDialog.cart_lunchbox, null, 2));
+
+                                                    handleEdit.Menu
+                                                      (
+                                                        editMenuDialog.cart_id,
+                                                        editMenuDialog.menuItems,
+                                                        editMenuDialog.cart_lunchbox
+                                                      );
                                                   }
                                                 }}
                                                 disabled={isSaving !== null}>
