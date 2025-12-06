@@ -1081,7 +1081,7 @@ const SummaryList: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log(`✅ ดึงเมนูสำเร็จ:`, result);
+
 
         if (result.success && result.data) {
           setAvailableMenusForLunchbox((prev) => ({
@@ -1175,7 +1175,7 @@ const SummaryList: React.FC = () => {
       if (!prev) return prev;
       return {
         ...prev,
-        cart_lunchbox: [...prev.cart_lunchbox, newLunchbox],
+        cart_lunchbox: [newLunchbox, ...prev.cart_lunchbox],
       };
     });
 
@@ -1183,6 +1183,8 @@ const SummaryList: React.FC = () => {
     setSelectedLunchboxName("");
     setSelectedLunchboxSet("");
     setPreviewLunchbox(null);
+    setSelectedMenuForLunchbox({});
+    setAvailableMenusForLunchbox({});
 
     Swal.fire({
       icon: "success",
@@ -1194,14 +1196,14 @@ const SummaryList: React.FC = () => {
 
   // Remove lunchbox from cart
   const handleRemoveLunchbox = (lunchboxIdx: number) => {
-    console.log("🟡 handleRemoveLunchbox เรียก! Index:", lunchboxIdx, "editMenuDialog:", editMenuDialog);
+
     if (!editMenuDialog) {
-      console.log("❌ editMenuDialog is null!");
+
       return;
     }
 
     setIsDeleting(true); // Set flag to prevent dialog reset
-    console.log("🟢 กำลังแสดง SweetAlert...");
+
     Swal.fire({
       title: "ยืนยันการลบ",
       text: "คุณต้องการลบกล่องอาหารนี้หรือไม่?",
@@ -1216,14 +1218,14 @@ const SummaryList: React.FC = () => {
         popup: "swal-high-zindex",
       },
       didOpen: () => {
-        console.log("🔵 SweetAlert didOpen เรียก!");
+
         const container = document.querySelector(".swal2-container");
         const popup = document.querySelector(".swal2-popup");
         const actions = document.querySelector(".swal2-actions");
         const confirmBtn = document.querySelector(".swal2-confirm");
         const cancelBtn = document.querySelector(".swal2-cancel");
 
-        console.log("Element found:", { container: !!container, popup: !!popup, actions: !!actions, confirmBtn: !!confirmBtn, cancelBtn: !!cancelBtn });
+
 
         if (container) {
           (container as HTMLElement).style.zIndex = "99999";
@@ -1247,30 +1249,29 @@ const SummaryList: React.FC = () => {
         }
       },
     }).then((result) => {
-      console.log("🟣 SweetAlert result:", result);
+
       if (result.isConfirmed) {
-        console.log("✅ ผู้ใช้ยืนยันการลบกล่องอาหาร!");
-        console.log("🔧 กำลังเรียก setEditMenuDialog...");
+
 
         setEditMenuDialog((prev) => {
-          console.log("🔧 setEditMenuDialog callback ถูกเรียก! prev:", prev);
+
           if (!prev) {
-            console.log("❌ prev is null, returning...");
+
             return prev;
           }
 
           // Get menus from the lunchbox to be removed
           const removedLunchbox = prev.cart_lunchbox[lunchboxIdx];
-          console.log("🔧 removedLunchbox:", removedLunchbox);
+
 
           const menuNamesToDecrement = (removedLunchbox?.lunchbox_menu || []).map((m) => m.menu_name);
-          console.log("🔧 menuNamesToDecrement:", menuNamesToDecrement);
+
 
           // Update menuItems: decrease menu_total or remove if total becomes 0
           const updatedMenuItems = prev.menuItems
             .map((m) => {
               if (menuNamesToDecrement.includes(m.menu_name)) {
-                console.log(`📝 ลด menu_total ของ "${m.menu_name}" จาก ${m.menu_total} เป็น ${m.menu_total - 1}`);
+
                 return { ...m, menu_total: m.menu_total - 1 };
               }
               return m;
@@ -1283,18 +1284,12 @@ const SummaryList: React.FC = () => {
             menuItems: updatedMenuItems,
           };
 
-          console.log("✨ After delete lunchbox:", {
-            removed: removedLunchbox,
-            menuNamesToDecrement,
-            remainingLunchboxes: updatedState.cart_lunchbox.length,
-            remainingMenus: updatedState.menuItems.length,
-            newState: updatedState,
-          });
+
 
           return updatedState;
         });
 
-        console.log("🔧 setEditMenuDialog เรียกเสร็จแล้ว!");
+
 
         Swal.fire({
           icon: "success",
@@ -1315,25 +1310,23 @@ const SummaryList: React.FC = () => {
   const handleAddMenuToLunchbox = async (lunchboxIdx: number, selectedMenu: any) => {
     if (!editMenuDialog || !selectedMenu) return;
 
-    console.log("🟢 handleAddMenuToLunchbox called");
-    console.log("🟢 lunchboxIdx:", lunchboxIdx);
-    console.log("🟢 selectedMenu:", selectedMenu);
+
 
     // ตรวจสอบว่า category นี้เลือกไปแล้วหรือไม่
     const currentLunchbox = editMenuDialog.cart_lunchbox[lunchboxIdx];
     const selectedMenuCategory = selectedMenu.lunchbox_menu_category;
 
-    console.log("🟢 Selected menu category:", selectedMenuCategory);
+
 
     // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs lunchbox_limit
     const currentMenuCount = currentLunchbox.lunchbox_menu?.length || 0;
     const lunchboxLimit = currentLunchbox.lunchbox_limit ?? 0;
     const isUnlimited = lunchboxLimit <= 0;
 
-    console.log(`🟢 Current menu count: ${currentMenuCount}/${isUnlimited ? "∞" : lunchboxLimit}`);
+
 
     if (!isUnlimited && currentMenuCount >= lunchboxLimit) {
-      console.log("❌ Lunchbox is full! Blocking...");
+
       Swal.fire({
         icon: "warning",
         title: "เลือกเมนูครบแล้ว",
@@ -1357,14 +1350,14 @@ const SummaryList: React.FC = () => {
           const existingMenuData = menusForThisBox.find((m: any) => m.menu_name === existingMenu.menu_name);
           const existingCategory = existingMenuData?.lunchbox_menu_category;
 
-          console.log(`🟢 Checking existing menu "${existingMenu.menu_name}" (${existingCategory}) vs new menu category (${selectedMenuCategory})`);
+
 
           // ถ้า category ตรงกัน แสดงว่ามีเมนูประเภทนี้อยู่แล้ว
           return existingCategory && selectedMenuCategory && existingCategory === selectedMenuCategory;
         }) || false;
 
       if (hasSameCategoryMenu) {
-        console.log("❌ Category already selected! Blocking...");
+
         Swal.fire({
           icon: "warning",
           title: "เลือกประเภทนี้ไปแล้ว",
@@ -1375,10 +1368,10 @@ const SummaryList: React.FC = () => {
         return;
       }
     } else {
-      console.log("✅ Custom unlimited - สามารถเลือก category ซ้ำได้");
+
     }
 
-    console.log("✅ Menu can be added!");
+
 
     try {
       // Fetch menu details including ingredients
@@ -1545,42 +1538,7 @@ const SummaryList: React.FC = () => {
         return c !== phrikChar && c.charCodeAt(0) !== 32 && c.charCodeAt(0) !== 160; // ไม่ใช่ space
       });
 
-      console.log("🍚 Auto Rice Check:", {
-        lunchboxLimit,
-        isUnlimited: lunchboxLimit <= 0,
-        selectedMenuCategory,
-        normalizedSelectedCategory,
-        isInAutoAddList,
-        checkOriginal: selectedCheck,
-        checkNormalized: normalizedCheck,
-        directCheck,
-        trimmedSelectedCategory,
-        trimmedSelectedCategoryLength: trimmedSelectedCategory.length,
-        trimmedSelectedChars,
-        trimmedSelectedCharCodes,
-        hasZeroWidthInTrimmed,
-        hasDoubleE,
-        normalizedPhrikKaeng,
-        normalizedPhrikEKaeng,
-        trimmedNormalizedCategory,
-        trimmedNormalizedCategoryLength: trimmedNormalizedCategory.length,
-        comparisonResults,
-        selectedLength,
-        normalizedLength,
-        phrikKaengLength,
-        selectedChars,
-        normalizedChars,
-        phrikKaengChars,
-        selectedCharCodes,
-        normalizedCharCodes,
-        phrikKaengCharCodes,
-        diffChars,
-        autoAddRiceCategories,
-        autoAddRiceCategoriesString: JSON.stringify(autoAddRiceCategories),
-        hasPhrikKaeng: directCheck,
-        menusForThisBoxLength: menusForThisBox.length,
-        currentMenus: currentLunchbox.lunchbox_menu?.map((m: any) => m.menu_name),
-      });
+
 
       // นับจำนวนเมนูในหมวดหมู่ที่กำหนด (รวมเมนูใหม่ที่กำลังจะเพิ่ม)
       const countAutoAddRiceMenus =
@@ -1590,7 +1548,7 @@ const SummaryList: React.FC = () => {
           return autoAddRiceCategories.includes(menuCategory);
         }).length + 1; // +1 เพราะกำลังจะเพิ่มเมนูใหม่
 
-      console.log("🍚 Count of auto-add-rice category menus:", countAutoAddRiceMenus);
+
 
       // หาเมนูข้าวที่มีอยู่แล้ว
       const existingRiceMenu = currentLunchbox.lunchbox_menu?.find((menu: any) => {
@@ -1598,13 +1556,13 @@ const SummaryList: React.FC = () => {
         return menuData?.lunchbox_menu_category === "ข้าว";
       });
 
-      console.log("🍚 Existing rice menu:", existingRiceMenu ? existingRiceMenu.menu_name : "none");
+
 
       const shouldAddOrUpdateRice =
         lunchboxLimit <= 0 && // Custom unlimited
         isInAutoAddList; // Category อยู่ในรายการที่ต้องเพิ่มข้าว
 
-      console.log("🍚 Should add/update rice:", shouldAddOrUpdateRice);
+
 
       // Fetch ข้าวอัตโนมัติถ้าต้องการ
       let autoRiceMenu: any = null;
@@ -1613,7 +1571,7 @@ const SummaryList: React.FC = () => {
       if (shouldAddOrUpdateRice) {
         const riceMenu = menusForThisBox.find((m: any) => m.lunchbox_menu_category === "ข้าว");
         if (riceMenu) {
-          console.log("🍚 Fetching rice menu:", riceMenu.menu_name);
+
           try {
             const riceMenuRes = await fetch(`/api/get/menu/${riceMenu.menu_id}`);
             if (riceMenuRes.ok) {
@@ -1633,7 +1591,7 @@ const SummaryList: React.FC = () => {
                   ...existingRiceMenu,
                   menu_total: countAutoAddRiceMenus, // อัปเดตจำนวนให้เท่ากับจำนวนเมนูในหมวดหมู่
                 };
-                console.log("🍚 Updating existing rice menu quantity to:", countAutoAddRiceMenus);
+
               } else {
                 // ถ้ายังไม่มีข้าว ให้สร้างใหม่
                 autoRiceMenu = {
@@ -1651,7 +1609,7 @@ const SummaryList: React.FC = () => {
                     ingredient_status: false,
                   })),
                 };
-                console.log("🍚 Creating new rice menu with quantity:", countAutoAddRiceMenus);
+
               }
             }
           } catch (riceErr) {
@@ -1670,7 +1628,7 @@ const SummaryList: React.FC = () => {
         if (existingMenuIndex >= 0) {
           // Menu exists, increment menu_total
           updatedMenuItems = prev.menuItems.map((m, idx) => (idx === existingMenuIndex ? { ...m, menu_total: m.menu_total + 1 } : m));
-          console.log(`📝 เมนู "${newMenu.menu_name}" มีอยู่แล้ว เพิ่ม menu_total จาก ${prev.menuItems[existingMenuIndex].menu_total} เป็น ${prev.menuItems[existingMenuIndex].menu_total + 1}`);
+
         } else {
           // New menu, add to menuItems
           updatedMenuItems = [
@@ -1685,7 +1643,7 @@ const SummaryList: React.FC = () => {
               menu_ingredients: newMenu.menu_ingredients,
             },
           ];
-          console.log(`📝 เพิ่มเมนูใหม่ "${newMenu.menu_name}" เข้า menuItems`);
+
         }
 
         // เพิ่ม/อัปเดตข้าวเข้า menuItems ถ้ามี
@@ -1694,7 +1652,7 @@ const SummaryList: React.FC = () => {
           if (existingRiceIndex >= 0) {
             // อัปเดตจำนวนข้าวให้เท่ากับจำนวนเมนูในหมวดหมู่ที่กำหนด
             updatedMenuItems = updatedMenuItems.map((m, idx) => (idx === existingRiceIndex ? { ...m, menu_total: autoRiceMenu.menu_total } : m));
-            console.log(`🍚 อัปเดตจำนวนข้าวใน menuItems เป็น: ${autoRiceMenu.menu_total}`);
+
           } else {
             // เพิ่มข้าวใหม่
             updatedMenuItems = [
@@ -1709,12 +1667,12 @@ const SummaryList: React.FC = () => {
                 menu_ingredients: autoRiceMenu.menu_ingredients,
               },
             ];
-            console.log(`🍚 เพิ่มข้าวใหม่ใน menuItems จำนวน: ${autoRiceMenu.menu_total}`);
+
           }
         }
 
         // สร้างรายการเมนูสุดท้าย (รวมข้าวถ้ามี)
-        let finalMenus = [...currentLunchbox.lunchbox_menu, newMenu];
+        let finalMenus = [newMenu, ...currentLunchbox.lunchbox_menu];
 
         if (autoRiceMenu) {
           // หาว่ามีข้าวอยู่ใน lunchbox_menu แล้วหรือไม่
@@ -1729,16 +1687,16 @@ const SummaryList: React.FC = () => {
               ...finalMenus[existingRiceMenuIndex],
               menu_total: autoRiceMenu.menu_total,
             };
-            console.log(`🍚 อัปเดตจำนวนข้าวใน lunchbox_menu เป็น: ${autoRiceMenu.menu_total}`);
+
           } else {
             // เพิ่มข้าวใหม่
             finalMenus = [...finalMenus, autoRiceMenu];
-            console.log(`🍚 เพิ่มข้าวใหม่ใน lunchbox_menu จำนวน: ${autoRiceMenu.menu_total}`);
+
           }
         }
 
         const newCost = calculateLunchboxCost(finalMenus, currentLunchbox.lunchbox_total, menusForThisBox);
-        console.log(`💰 คำนวณราคาใหม่: ${newCost} บาท (เมนู ${finalMenus.length} รายการ × ${currentLunchbox.lunchbox_total} กล่อง)`);
+
 
         return {
           ...prev,
@@ -1779,14 +1737,14 @@ const SummaryList: React.FC = () => {
 
   // Remove menu from lunchbox
   const handleRemoveMenuFromLunchbox = (lunchboxIdx: number, menuIdx: number, menuName: string) => {
-    console.log("🟡 handleRemoveMenuFromLunchbox เรียก!", { lunchboxIdx, menuIdx, menuName, editMenuDialog });
+
     if (!editMenuDialog) {
-      console.log("❌ editMenuDialog is null!");
+
       return;
     }
 
     setIsDeleting(true); // Set flag to prevent dialog reset
-    console.log("🟢 กำลังแสดง SweetAlert...");
+
     Swal.fire({
       title: "ยืนยันการลบ",
       text: `คุณต้องการลบเมนู ${menuName} หรือไม่?`,
@@ -1801,14 +1759,14 @@ const SummaryList: React.FC = () => {
         popup: "swal-high-zindex",
       },
       didOpen: () => {
-        console.log("🔵 SweetAlert didOpen เรียก! (Delete Menu)");
+
         const container = document.querySelector(".swal2-container");
         const popup = document.querySelector(".swal2-popup");
         const actions = document.querySelector(".swal2-actions");
         const confirmBtn = document.querySelector(".swal2-confirm");
         const cancelBtn = document.querySelector(".swal2-cancel");
 
-        console.log("Element found:", { container: !!container, popup: !!popup, actions: !!actions, confirmBtn: !!confirmBtn, cancelBtn: !!cancelBtn });
+
 
         if (container) {
           (container as HTMLElement).style.zIndex = "99999";
@@ -1832,15 +1790,14 @@ const SummaryList: React.FC = () => {
         }
       },
     }).then((result) => {
-      console.log("🟣 SweetAlert result (Delete Menu):", result);
+
       if (result.isConfirmed) {
-        console.log("✅ ผู้ใช้ยืนยันการลบเมนู!");
-        console.log("🔧 กำลังเรียก setEditMenuDialog... (Delete Menu)");
+
 
         setEditMenuDialog((prev) => {
-          console.log("🔧 setEditMenuDialog callback ถูกเรียก! (Delete Menu) prev:", prev);
+
           if (!prev) {
-            console.log("❌ prev is null, returning... (Delete Menu)");
+
             return prev;
           }
 
@@ -1851,11 +1808,11 @@ const SummaryList: React.FC = () => {
           if (menuItem && menuItem.menu_total > 1) {
             // Decrease menu_total by 1
             updatedMenuItems = prev.menuItems.map((m) => (m.menu_name === menuName ? { ...m, menu_total: m.menu_total - 1 } : m));
-            console.log(`📝 ลด menu_total ของ "${menuName}" จาก ${menuItem.menu_total} เป็น ${menuItem.menu_total - 1}`);
+
           } else {
             // Remove menu completely if menu_total is 1 or not found
             updatedMenuItems = prev.menuItems.filter((m) => m.menu_name !== menuName);
-            console.log(`📝 ลบเมนู "${menuName}" ออกจาก menuItems ทั้งหมด`);
+
           }
 
           // คำนวณราคาใหม่หลังลบเมนู
@@ -1868,7 +1825,7 @@ const SummaryList: React.FC = () => {
               if (idx === lunchboxIdx) {
                 const updatedMenus = (lb.lunchbox_menu || []).filter((_, mIdx) => mIdx !== menuIdx);
                 const newCost = calculateLunchboxCost(updatedMenus, lb.lunchbox_total, menusForThisBox);
-                console.log(`💰 คำนวณราคาใหม่หลังลบ: ${newCost} บาท (เมนู ${updatedMenus.length} รายการ × ${lb.lunchbox_total} กล่อง)`);
+
                 return {
                   ...lb,
                   lunchbox_menu: updatedMenus,
@@ -1880,19 +1837,12 @@ const SummaryList: React.FC = () => {
             menuItems: updatedMenuItems,
           };
 
-          console.log("✨ After delete menu:", {
-            lunchboxIdx,
-            menuIdx,
-            menuName,
-            remainingMenusInLunchbox: updatedState.cart_lunchbox[lunchboxIdx]?.lunchbox_menu?.length || 0,
-            totalMenuItems: updatedState.menuItems.length,
-            newState: updatedState,
-          });
+
 
           return updatedState;
         });
 
-        console.log("🔧 setEditMenuDialog เรียกเสร็จแล้ว! (Delete Menu)");
+
 
         Swal.fire({
           icon: "success",
@@ -1922,7 +1872,7 @@ const SummaryList: React.FC = () => {
         return;
       }
 
-      // console.log("Sending menuItems to API:", JSON.stringify(menuItems, null, 2));
+
 
       setIsSaving(cartId);
       try {
@@ -1971,9 +1921,9 @@ const SummaryList: React.FC = () => {
           };
         });
 
-        console.log("✅ [API #1] กำลังส่งข้อมูลไปยัง PATCH /api/edit/cart-menu/summary-list");
-        console.log("🔗 URL:", `/api/edit/cart-menu/summary-list/${cartId}`);
-        console.log("📦 Body:", JSON.stringify({ menuItems: updatedMenuItems }, null, 2));
+
+
+
 
         const response = await fetch(`/api/edit/cart-menu/summary-list/${cartId}`, {
           method: "PATCH",
@@ -2029,9 +1979,9 @@ const SummaryList: React.FC = () => {
           }),
         }));
 
-        console.log("✅ [API #2] กำลังส่งข้อมูลไปยัง PATCH /api/edit/cart");
-        console.log("🔗 URL:", `/api/edit/cart/${cartId}`);
-        console.log("📦 Body:", JSON.stringify({ cart_lunchboxes }, null, 2));
+
+
+
 
         try {
           await fetch(`/api/edit/cart/${cartId}`, {
