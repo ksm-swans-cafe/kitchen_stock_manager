@@ -629,14 +629,14 @@ export default function Page() {
       {dialog && (
         <div className='modal is-active'>
           <div className='modal-background' onClick={() => setDialog(false)}></div>
-          <div className='modal-card' style={{ width: "90%", maxWidth: "900px", backgroundColor: "white" }}>
-            <header className='modal-card-head' style={{ backgroundColor: "#48c78e", color: "white" }}>
+          <div className='modal-card' style={{ width: "90%", maxWidth: "900px", backgroundColor: "white", borderRadius: "4px", overflow: "hidden" }}>
+            <header className='modal-card-head' style={{ backgroundColor: "#48c78e", color: "white", borderTopLeftRadius: "4px", borderTopRightRadius: "4px" }}>
               <p className='modal-card-title' style={{ color: "white" }}>
                 {editMenuId ? "แก้ไขเมนู" : "เพิ่มเมนูใหม่"}
               </p>
               <button className='delete' aria-label='close' onClick={() => setDialog(false)}></button>
             </header>
-            <section className='modal-card-body' style={{ backgroundColor: "white" }}>
+            <section className='modal-card-body' style={{ backgroundColor: "white", borderTopLeftRadius: "4px", borderTopRightRadius: "4px" }}>
               <form onSubmit={handleSubmit}>
                 <div className='columns'>
                   <div className='column'>
