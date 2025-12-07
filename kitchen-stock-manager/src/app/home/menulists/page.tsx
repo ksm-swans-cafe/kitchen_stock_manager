@@ -435,6 +435,32 @@ export default function Page() {
             </div>
           </div>
           <div className='level-right'>
+
+            {/* ช่องค้นหา */}
+            <div className='level-item'>
+              <div className='field mb-0 mr-3'>
+                <div className='control has-icons-left has-icons-right'>
+                  <input
+                    type='text'
+                    className='input !bg-white !text-black min-w-[250px] max-w-[350px] w-full'
+                    placeholder='ค้นหาเมนูอาหาร'
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ color: '#000000' }}
+                  />
+                  <span className='icon is-small is-left text-[#7a7a7a]'>
+                    <Search size={16} className='block' />
+                  </span>
+                  {searchQuery && (
+                    <span className='icon is-small is-right cursor-pointer' onClick={() => setSearchQuery("")}>
+                      <i className='fas fa-times'></i>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ปุ่มเพิ่มเมนูใหม่ */}
             <div className='level-item'>
               <button
                 onClick={() => {
@@ -455,33 +481,6 @@ export default function Page() {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Search Field */}
-        <div className='field mb-5'>
-          <div className='control has-icons-left has-icons-right'>
-            <input
-              type='text'
-              className='input'
-              placeholder='ค้นหาเมนูอาหาร'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ backgroundColor: "white", color: "#363636" }}
-            />
-            <span className='icon is-small is-left' style={{ color: "#7a7a7a" }}>
-              <Search size={16} style={{ display: "block" }} />
-            </span>
-            {searchQuery && (
-              <span className='icon is-small is-right' style={{ cursor: "pointer" }} onClick={() => setSearchQuery("")}>
-                <i className='fas fa-times'></i>
-              </span>
-            )}
-          </div>
-          {searchQuery && (
-            <p className='help mt-2'>
-              ค้นหา &ldquo;{searchQuery}&rdquo; - พบ {filteredMenuItems.length} รายการ
-            </p>
-          )}
         </div>
 
         {/* Error Message */}
