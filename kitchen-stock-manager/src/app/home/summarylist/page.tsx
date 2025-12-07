@@ -126,7 +126,7 @@ const SummaryList: React.FC = () => {
 
   // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, });
   }, [currentPage]);
 
   const handleSummaryprice = () => {

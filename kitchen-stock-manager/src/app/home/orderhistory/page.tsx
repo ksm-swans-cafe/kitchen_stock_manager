@@ -82,11 +82,6 @@ const OrderHistory = () => {
     }
   };
 
-  // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [currentPage]);
-
   useEffect(() => {
     if (!cartsData || !ingredientData) return;
 

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import useSWR from "swr";
 import { create } from "zustand";
+import { Search } from "lucide-react";
 import PaginationComponent from "@/components/ui/Totalpage";
 import { Ingredient, IngredientOption, MenuItem, IngredientUnit, MenuLunchbox } from "@/models/menu_list/MenuList";
 
@@ -67,6 +68,7 @@ const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 export default function Page() {
   const [isMinimumLoading, setIsMinimumLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const {
     currentPage,
@@ -126,10 +128,67 @@ export default function Page() {
     keepPreviousData: true,
   });
 
-  const uniqueIngredients = menuData?.data
+  // Fetch all menus when searching (no pagination)
+  const {
+    data: allMenuData,
+    error: allMenuError,
+    isLoading: allMenuLoading,
+  } = useSWR<MenuItem[]>(
+    searchQuery.trim() ? "/api/get/menu/list" : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      refreshInterval: 0,
+      dedupingInterval: 5000,
+      keepPreviousData: true,
+    }
+  );
+
+  // Use all menu data when searching, otherwise use paginated data
+  const menuItemsToUse = searchQuery.trim() ? (allMenuData || []) : (menuData?.data || []);
+  
+  const menuItems = menuItemsToUse;
+  const totalPagesFromData = menuData?.pagination?.totalPages || 1;
+  const currentError = searchQuery.trim() ? (allMenuError?.message || null) : (menuError?.message || null);
+
+  const shouldShowLoading = useMemo(() => {
+    if (searchQuery.trim()) {
+      return ((allMenuLoading && !allMenuData) || isSubmitting || isMinimumLoading) && !allMenuData;
+    }
+    return ((menuLoading && !menuData) || isSubmitting || isMinimumLoading) && !menuData;
+  }, [searchQuery, menuLoading, menuData, allMenuLoading, allMenuData, isSubmitting, isMinimumLoading]);
+
+  const normalizeThaiText = (text: string): string => {
+    if (!text) return "";
+    return text.replace(/เเ/g, "แ");
+  };
+
+  // Filter menus based on search query
+  const filteredMenuItems = useMemo(() => {
+    if (!searchQuery.trim()) return menuItems;
+
+    const query = searchQuery.toLowerCase();
+    const normalizedQuery = normalizeThaiText(query);
+
+    return menuItems.filter((item: MenuItem) => {
+      const normalizedMenuName = normalizeThaiText(item.menu_name?.toLowerCase() || "");
+      const normalizedMenuSubname = normalizeThaiText(item.menu_subname?.toLowerCase() || "");
+      const normalizedMenuCategory = normalizeThaiText(item.menu_category?.toLowerCase() || "");
+
+      return (
+        normalizedMenuName.includes(normalizedQuery) ||
+        normalizedMenuSubname.includes(normalizedQuery) ||
+        normalizedMenuCategory.includes(normalizedQuery) ||
+        item.menu_cost?.toString().includes(query)
+      );
+    });
+  }, [menuItems, searchQuery]);
+
+  // Calculate unique ingredients from filtered menu items
+  const uniqueIngredients = filteredMenuItems.length > 0
     ? Array.from(
       new Set(
-        menuData.data.flatMap((item: MenuItem) => {
+        filteredMenuItems.flatMap((item: MenuItem) => {
           try {
             const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
             return ingredients.map((ing: Ingredient) => ing.ingredient_name?.trim().toLowerCase()).filter(Boolean);
@@ -147,14 +206,6 @@ export default function Page() {
     keepPreviousData: true,
   });
 
-  const menuItems = menuData?.data || [];
-  const totalPagesFromData = menuData?.pagination?.totalPages || 1;
-  const currentError = menuError?.message || null;
-
-  const shouldShowLoading = useMemo(() => {
-    return ((menuLoading && !menuData) || isSubmitting || isMinimumLoading) && !menuData;
-  }, [menuLoading, menuData, isSubmitting, isMinimumLoading]);
-
   const ingredientUnits = useMemo(() => {
     if (!ingredientUnitsData) return {};
     const unitMap: Record<string, string> = {};
@@ -166,7 +217,7 @@ export default function Page() {
 
   // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0,});
   }, [currentPage]);
 
   useEffect(() => {
@@ -406,6 +457,33 @@ export default function Page() {
           </div>
         </div>
 
+        {/* Search Field */}
+        <div className='field mb-5'>
+          <div className='control has-icons-left has-icons-right'>
+            <input
+              type='text'
+              className='input'
+              placeholder='ค้นหาเมนูอาหาร'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ backgroundColor: "white", color: "#363636" }}
+            />
+            <span className='icon is-small is-left' style={{ color: "#7a7a7a" }}>
+              <Search size={16} style={{ display: "block" }} />
+            </span>
+            {searchQuery && (
+              <span className='icon is-small is-right' style={{ cursor: "pointer" }} onClick={() => setSearchQuery("")}>
+                <i className='fas fa-times'></i>
+              </span>
+            )}
+          </div>
+          {searchQuery && (
+            <p className='help mt-2'>
+              ค้นหา &ldquo;{searchQuery}&rdquo; - พบ {filteredMenuItems.length} รายการ
+            </p>
+          )}
+        </div>
+
         {/* Error Message */}
         {currentError && (
           <div className='notification is-danger is-light mb-5'>
@@ -478,20 +556,29 @@ export default function Page() {
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "white" }}>
-                  {menuItems.length === 0 ? (
+                  {filteredMenuItems.length === 0 ? (
                     <tr>
                       <td colSpan={6} className='has-text-centered' style={{ backgroundColor: "white" }}>
                         <div className='content p-6'>
                           <span className='icon is-large has-text-grey-light'>
                             <i className='fas fa-file-alt fa-3x'></i>
                           </span>
-                          <p className='has-text-weight-medium'>ไม่มีเมนูอาหาร</p>
-                          <p className='has-text-grey'>เริ่มต้นด้วยการเพิ่มเมนูอาหารใหม่</p>
+                          <p className='has-text-weight-medium'>
+                            {searchQuery ? `ไม่พบเมนูที่ค้นหา "${searchQuery}"` : "ไม่มีเมนูอาหาร"}
+                          </p>
+                          <p className='has-text-grey'>
+                            {searchQuery ? "ลองค้นหาด้วยคำอื่น" : "เริ่มต้นด้วยการเพิ่มเมนูอาหารใหม่"}
+                          </p>
+                          {searchQuery && (
+                            <button className='button is-light mt-3' onClick={() => setSearchQuery("")}>
+                              ล้างการค้นหา
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    menuItems.map((item: MenuItem) => (
+                    filteredMenuItems.map((item: MenuItem) => (
                       <tr key={item.menu_id} style={{ backgroundColor: "white" }}>
                         <td>
                           <p className='has-text-weight-medium has-text-dark'>{item.menu_name}</p>
@@ -530,8 +617,8 @@ export default function Page() {
           )}
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Pagination - Hide when searching */}
+        {!searchQuery.trim() && totalPages >= 1 && (
           <div className='mt-5'>
             <PaginationComponent totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />
           </div>
