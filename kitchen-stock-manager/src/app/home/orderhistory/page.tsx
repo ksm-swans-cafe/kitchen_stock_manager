@@ -274,6 +274,10 @@ const OrderHistory = () => {
     setCalendarEvents(events);
   }, [cartsData]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [currentPage]);
+
   const convertThaiDateToISO = (thaiDate: string | undefined): string | null => {
     if (!thaiDate) return null;
     const [day, month, year] = thaiDate.split("/");
@@ -847,28 +851,17 @@ const OrderHistory = () => {
       return;
     }
 
-    // สร้าง map เพื่อเก็บ cart_create_date จาก cartsData
-    const cartCreateDateMap = new Map<string, string>();
-    if (cartsData && Array.isArray(cartsData)) {
-      cartsData.forEach((rawCart: any) => {
-        if (rawCart.cart_id && rawCart.cart_create_date) {
-          cartCreateDateMap.set(rawCart.cart_id, rawCart.cart_create_date);
-        }
-      });
-    }
-
-    const worksheetData = ordersToExport.flatMap((cart) => {
+    const worksheetData = ordersToExport.flatMap((cart, orderIndex) => {
       const foodPrice =
         cart.cart_lunchbox && cart.cart_lunchbox.length > 0
           ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
-      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
-
-      // ดึง cart_create_date จาก map
-      const cartCreateDate = cartCreateDateMap.get(cart.id);
+      
       const formattedDeliveryDate = formatDeliveryDate(cart.cart_delivery_date);
-      const formattedCreateDate = formatCreateDate(cartCreateDate);
-
+      const orderNumber = orderIndex + 1; // ลำดับ order (1, 2, 3, ...)
+      const exportTime = cart.cart_export_time ? `${cart.cart_export_time} น.` : "ไม่ระบุ";
+      const receiveTime = cart.cart_receive_time ? `${cart.cart_receive_time} น.` : "ไม่ระบุ";
+      
       // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
       const menuRows: any[] = [];
 
@@ -879,14 +872,13 @@ const OrderHistory = () => {
             lunchbox.lunchbox_menu.forEach((menu: any) => {
               if (menu.menu_name) {
                 menuRows.push({
-                  "เลขที่ออเดอร์": cart.id,
+                  "ลำดับ": "",
                   "ชื่อเมนู": menu.menu_name,
-                  "คำอธิบายเมนู": menuDescriptions,
-                  "วันที่สร้างรายการ": formattedCreateDate,
                   "วันที่จัดส่ง": formattedDeliveryDate,
-                  "เวลา": cart.time,
+                  "เวลาจัดส่ง": exportTime,
+                  "เวลารับอาหาร": receiveTime,
                   "จำนวน Set": menu.menu_total || 0,
-                  "ราคาอาหาร(บาท)": foodPrice,
+                  "ราคาอาหาร(บาท)": Number(menu.menu_cost || 0),
                   "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
                   "สถานะ": getStatusText(cart.status),
                   "ผู้สร้าง": cart.createdBy,
@@ -900,12 +892,11 @@ const OrderHistory = () => {
       // ถ้าไม่มี cart_lunchbox หรือไม่มีเมนู ให้ใช้ข้อมูลเดิม
       if (menuRows.length === 0) {
         menuRows.push({
-          "เลขที่ออเดอร์": cart.id,
+          "ลำดับ": orderNumber,
           "ชื่อเมนู": cart.name || "ไม่มีชื่อเมนู",
-          "คำอธิบายเมนู": menuDescriptions,
-          "วันที่สร้างรายการ": formattedCreateDate,
           "วันที่จัดส่ง": formattedDeliveryDate,
-          "เวลา": cart.time,
+          "เวลาจัดส่ง": exportTime,
+          "เวลารับอาหาร": receiveTime,
           "จำนวน Set": cart.sets,
           "ราคาอาหาร(บาท)": foodPrice,
           "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
@@ -919,35 +910,37 @@ const OrderHistory = () => {
       menuRows.forEach((row) => {
         const menuName = row["ชื่อเมนู"];
         if (menuGroupMap.has(menuName)) {
-          // ถ้ามีชื่อเมนูซ้ำ ให้รวมจำนวน Set
+          // ถ้ามีชื่อเมนูซ้ำ ให้รวมจำนวน Set และราคา
           const existingRow = menuGroupMap.get(menuName);
           existingRow["จำนวน Set"] = (existingRow["จำนวน Set"] || 0) + (row["จำนวน Set"] || 0);
+          existingRow["ราคาอาหาร(บาท)"] = (Number(existingRow["ราคาอาหาร(บาท)"]) || 0) + (Number(row["ราคาอาหาร(บาท)"]) || 0);
         } else {
-          // ถ้ายังไม่มี ให้เพิ่มเข้าไป (ไม่ใส่เลขที่ออเดอร์และราคาอาหารใน row ข้อมูลเมนู)
+          // ถ้ายังไม่มี ให้เพิ่มเข้าไป
           menuGroupMap.set(menuName, {
             ...row,
-            "เลขที่ออเดอร์": "", // ไม่แสดงเลขที่ออเดอร์ใน row ข้อมูลเมนู
-            "ราคาอาหาร(บาท)": "", // ไม่แสดงราคาอาหารใน row ข้อมูลเมนู
           });
         }
       });
 
       // แปลง Map กลับเป็น array
       const groupedMenuRows = Array.from(menuGroupMap.values());
-
-      // แสดงเลขที่ออเดอร์แค่ใน row แรกของแต่ละ order
+      
+      // แสดงลำดับแค่ใน row แรกของแต่ละ order
       if (groupedMenuRows.length > 0) {
-        groupedMenuRows[0]["เลขที่ออเดอร์"] = cart.id;
+        groupedMenuRows[0]["ลำดับ"] = orderNumber;
+        // ลบลำดับออกจาก row อื่นๆ
+        for (let i = 1; i < groupedMenuRows.length; i++) {
+          groupedMenuRows[i]["ลำดับ"] = "";
+        }
       }
-
-      // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงเลขที่ออเดอร์และราคาอาหาร)
+      
+      // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงราคาอาหาร)
       groupedMenuRows.push({
-        "เลขที่ออเดอร์": "",
+        "ลำดับ": "",
         "ชื่อเมนู": "รวม",
-        "คำอธิบายเมนู": "",
-        "วันที่สร้างรายการ": "",
         "วันที่จัดส่ง": "",
-        "เวลา": "",
+        "เวลาจัดส่ง": "",
+        "เวลารับอาหาร": "",
         "จำนวน Set": "",
         "ราคาอาหาร(บาท)": foodPrice,
         "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
@@ -968,12 +961,11 @@ const OrderHistory = () => {
 
     // เพิ่ม row สรุปที่ท้ายสุด
     const summaryRow = {
-      "เลขที่ออเดอร์": "รวม",
-      "ชื่อเมนู": "",
-      "คำอธิบายเมนู": "",
+      "ลำดับ": "",
+      "ชื่อเมนู": "รวม",
       "วันที่จัดส่ง": "",
-      "วันที่สร้างรายการ": "",
-      "เวลา": "",
+      "เวลาจัดส่ง": "",
+      "เวลารับอาหาร": "",
       "จำนวน Set": "",
       "ราคาอาหาร(บาท)": totalFoodPrice,
       "ค่าจัดส่ง(บาท)": "",
@@ -1019,15 +1011,22 @@ const OrderHistory = () => {
 
       // ถ้าเป็น row สรุป (row ที่มี "ชื่อเมนู" = "รวม") ให้กำหนด styling
       if (row["ชื่อเมนู"] === "รวม") {
-        addedRow.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF1F4E78" }
-        };
-        addedRow.font = {
-          color: { argb: "FFFFFFFF" },
-          bold: true
-        };
+        // ตรวจสอบว่าเป็น row สรุปรวมทั้งหมด (row สุดท้าย) หรือ row สรุปแต่ละ order
+        const isTotalSummaryRow = index === worksheetData.length - 1;
+        const fillColor = isTotalSummaryRow ? "FF006400" : "FF228B22"; // สีเขียวแก่สำหรับรวมทั้งหมด, สีเขียวสำหรับแต่ละ order
+        
+        // กำหนดสีให้ทุก cell ใน row
+        addedRow.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: fillColor }
+          };
+          cell.font = {
+            color: { argb: "FFFFFFFF" },
+            bold: true
+          };
+        });
       }
     });
 
@@ -1074,28 +1073,17 @@ const OrderHistory = () => {
       });
     }
 
-    // สร้าง map เพื่อเก็บ cart_create_date จาก cartsData
-    const cartCreateDateMap = new Map<string, string>();
-    if (cartsData && Array.isArray(cartsData)) {
-      cartsData.forEach((rawCart: any) => {
-        if (rawCart.cart_id && rawCart.cart_create_date) {
-          cartCreateDateMap.set(rawCart.cart_id, rawCart.cart_create_date);
-        }
-      });
-    }
-
-    const worksheetData = ordersToExport.flatMap((cart) => {
+    const worksheetData = ordersToExport.flatMap((cart, orderIndex) => {
       const foodPrice =
         cart.cart_lunchbox && cart.cart_lunchbox.length > 0
           ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
-      const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
-
-      // ดึง cart_create_date จาก map
-      const cartCreateDate = cartCreateDateMap.get(cart.id);
+      
       const formattedDeliveryDate = formatDeliveryDate(cart.cart_delivery_date);
-      const formattedCreateDate = formatCreateDate(cartCreateDate);
-
+      const orderNumber = orderIndex + 1; // ลำดับ order (1, 2, 3, ...)
+      const exportTime = cart.cart_export_time ? `${cart.cart_export_time} น.` : "ไม่ระบุ";
+      const receiveTime = cart.cart_receive_time ? `${cart.cart_receive_time} น.` : "ไม่ระบุ";
+      
       // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
       const menuRows: any[] = [];
 
@@ -1106,14 +1094,13 @@ const OrderHistory = () => {
             lunchbox.lunchbox_menu.forEach((menu: any) => {
               if (menu.menu_name) {
                 menuRows.push({
-                  "เลขที่ออเดอร์": cart.id,
+                  "ลำดับ": "",
                   "ชื่อเมนู": menu.menu_name,
-                  "คำอธิบายเมนู": menuDescriptions,
-                  "วันที่สร้างรายการ": formattedCreateDate,
                   "วันที่จัดส่ง": formattedDeliveryDate,
-                  "เวลา": cart.time,
+                  "เวลาจัดส่ง": exportTime,
+                  "เวลารับอาหาร": receiveTime,
                   "จำนวน Set": menu.menu_total || 0,
-                  "ราคาอาหาร(บาท)": foodPrice,
+                  "ราคาอาหาร(บาท)": Number(menu.menu_cost || 0),
                   "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
                   "สถานะ": getStatusText(cart.status),
                   "ผู้สร้าง": cart.createdBy,
@@ -1127,12 +1114,11 @@ const OrderHistory = () => {
       // ถ้าไม่มี cart_lunchbox หรือไม่มีเมนู ให้ใช้ข้อมูลเดิม
       if (menuRows.length === 0) {
         menuRows.push({
-          "เลขที่ออเดอร์": cart.id,
+          "ลำดับ": orderNumber,
           "ชื่อเมนู": cart.name || "ไม่มีชื่อเมนู",
-          "คำอธิบายเมนู": menuDescriptions,
-          "วันที่สร้างรายการ": formattedCreateDate,
           "วันที่จัดส่ง": formattedDeliveryDate,
-          "เวลา": cart.time,
+          "เวลาจัดส่ง": exportTime,
+          "เวลารับอาหาร": receiveTime,
           "จำนวน Set": cart.sets,
           "ราคาอาหาร(บาท)": foodPrice,
           "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
@@ -1146,35 +1132,35 @@ const OrderHistory = () => {
       menuRows.forEach((row) => {
         const menuName = row["ชื่อเมนู"];
         if (menuGroupMap.has(menuName)) {
-          // ถ้ามีชื่อเมนูซ้ำ ให้รวมจำนวน Set
+          // ถ้ามีชื่อเมนูซ้ำ ให้รวมจำนวน Set และราคา
           const existingRow = menuGroupMap.get(menuName);
           existingRow["จำนวน Set"] = (existingRow["จำนวน Set"] || 0) + (row["จำนวน Set"] || 0);
+          existingRow["ราคาอาหาร(บาท)"] = (Number(existingRow["ราคาอาหาร(บาท)"]) || 0) + (Number(row["ราคาอาหาร(บาท)"]) || 0);
         } else {
-          // ถ้ายังไม่มี ให้เพิ่มเข้าไป (ไม่ใส่เลขที่ออเดอร์และราคาอาหารใน row ข้อมูลเมนู)
+          // ถ้ายังไม่มี ให้เพิ่มเข้าไป
           menuGroupMap.set(menuName, {
             ...row,
-            "เลขที่ออเดอร์": "", // ไม่แสดงเลขที่ออเดอร์ใน row ข้อมูลเมนู
-            "ราคาอาหาร(บาท)": "", // ไม่แสดงราคาอาหารใน row ข้อมูลเมนู
           });
         }
       });
 
       // แปลง Map กลับเป็น array
       const groupedMenuRows = Array.from(menuGroupMap.values());
-
-      // แสดงเลขที่ออเดอร์แค่ใน row แรกของแต่ละ order
+      // แสดงลำดับแค่ใน row แรกของแต่ละ order
       if (groupedMenuRows.length > 0) {
-        groupedMenuRows[0]["เลขที่ออเดอร์"] = cart.id;
+        groupedMenuRows[0]["ลำดับ"] = orderNumber;
+        // ลบลำดับออกจาก row อื่นๆ
+        for (let i = 1; i < groupedMenuRows.length; i++) {
+          groupedMenuRows[i]["ลำดับ"] = "";
+        }
       }
-
-      // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงเลขที่ออเดอร์และราคาอาหาร)
+      // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงราคาอาหาร)
       groupedMenuRows.push({
-        "เลขที่ออเดอร์": "",
+        "ลำดับ": "",
         "ชื่อเมนู": "รวม",
-        "คำอธิบายเมนู": "",
-        "วันที่สร้างรายการ": "",
         "วันที่จัดส่ง": "",
-        "เวลา": "",
+        "เวลาจัดส่ง": "",
+        "เวลารับอาหาร": "",
         "จำนวน Set": "",
         "ราคาอาหาร(บาท)": foodPrice,
         "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
@@ -1195,12 +1181,11 @@ const OrderHistory = () => {
 
     // เพิ่ม row สรุปที่ท้ายสุด
     const summaryRow = {
-      "เลขที่ออเดอร์": "รวม",
-      "ชื่อเมนู": "",
-      "คำอธิบายเมนู": "",
+      "ลำดับ": "",
+      "ชื่อเมนู": "รวม",
       "วันที่จัดส่ง": "",
-      "วันที่สร้างรายการ": "",
-      "เวลา": "",
+      "เวลาจัดส่ง": "",
+      "เวลารับอาหาร": "",
       "จำนวน Set": "",
       "ราคาอาหาร(บาท)": totalFoodPrice,
       "ค่าจัดส่ง(บาท)": "",
@@ -1247,15 +1232,22 @@ const OrderHistory = () => {
 
       // ถ้าเป็น row สรุป (row ที่มี "ชื่อเมนู" = "รวม") ให้กำหนด styling
       if (row["ชื่อเมนู"] === "รวม") {
-        addedRow.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF1F4E78" }
-        };
-        addedRow.font = {
-          color: { argb: "FFFFFFFF" },
-          bold: true
-        };
+        // ตรวจสอบว่าเป็น row สรุปรวมทั้งหมด (row สุดท้าย) หรือ row สรุปแต่ละ order
+        const isTotalSummaryRow = index === worksheetData.length - 1;
+        const fillColor = isTotalSummaryRow ? "FF006400" : "FF228B22"; // สีเขียวแก่สำหรับรวมทั้งหมด, สีเขียวสำหรับแต่ละ order
+        
+        // กำหนดสีให้ทุก cell ใน row
+        addedRow.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: fillColor }
+          };
+          cell.font = {
+            color: { argb: "FFFFFFFF" },
+            bold: true
+          };
+        });
       }
     });
 
