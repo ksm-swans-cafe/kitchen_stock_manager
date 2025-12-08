@@ -95,7 +95,7 @@ const OrderHistory = () => {
         const formattedOrders: Cart[] = cartsData.map((cart: RawCart) => {
           if (!cart.cart_create_date) {
             console.warn(`Cart ${cart.cart_id} has no cart_create_date`);
-            
+
             // Parse cart_lunchbox for fallback case
             let cartLunchboxFallback: any[] = [];
             if (cart.cart_lunchbox) {
@@ -110,7 +110,7 @@ const OrderHistory = () => {
                 cartLunchboxFallback = cart.cart_lunchbox;
               }
             }
-            
+
             return {
               id: cart.cart_id || "no-id",
               orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
@@ -141,7 +141,7 @@ const OrderHistory = () => {
           const [year, month, day] = rawDate.split("-");
           const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
           const formattedDate = dateObjectForLocale
-            .toLocaleDateString("th-TH", {day: "numeric",month: "short",year: "numeric",})
+            .toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", })
             .replace(/ /g, " ");
           const date = new Date(cart.cart_create_date);
           const formattedDateISO = date.toISOString().split("T")[0];
@@ -172,7 +172,7 @@ const OrderHistory = () => {
           }));
 
           const orderNumber = `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
-          
+
           // Parse cart_lunchbox if it's a string
           let cartLunchbox: any[] = [];
           if (cart.cart_lunchbox) {
@@ -187,7 +187,7 @@ const OrderHistory = () => {
               cartLunchbox = cart.cart_lunchbox;
             }
           }
-          
+
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -300,7 +300,7 @@ const OrderHistory = () => {
     setIsDatePickerOpen(false);
     setCarts(filteredOrders);
     if (filteredOrders.length === 0) {
-      setError(`ไม่มีออเดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), {year: "numeric",month: "short",day: "numeric",locale: "th",timeZone: "Asia/Bangkok",})}`);
+      setError(`ไม่มีออเดอร์สำหรับวันที่ ${formatDate(new Date(selectedDateStr), { year: "numeric", month: "short", day: "numeric", locale: "th", timeZone: "Asia/Bangkok", })}`);
     } else {
       setError(null);
     }
@@ -339,12 +339,13 @@ const OrderHistory = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-                ...cart,
-                menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
-                allIngredients: cart.allIngredients.map((group) =>
-                  group.menuName === cleanedMenuName
-                    ? {...group,ingredients: group.ingredients.map((ing) => ({...ing,calculatedTotal: ing.useItem * editTotalBox,})),}: group),sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),}: cart));
-      Swal.fire({icon: "success",title: "อัปเดตจำนวนกล่องเรียบร้อย!",text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`, showConfirmButton: false,timer: 3000,});
+              ...cart,
+              menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
+              allIngredients: cart.allIngredients.map((group) =>
+                group.menuName === cleanedMenuName
+                  ? { ...group, ingredients: group.ingredients.map((ing) => ({ ...ing, calculatedTotal: ing.useItem * editTotalBox, })), } : group), sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
+            } : cart));
+      Swal.fire({ icon: "success", title: "อัปเดตจำนวนกล่องเรียบร้อย!", text: `เมนู: ${cleanedMenuName}, จำนวนกล่อง: ${editTotalBox}`, showConfirmButton: false, timer: 3000, });
       mutateCarts();
       setEditingMenu(null);
     } catch (err) {
@@ -357,7 +358,8 @@ const OrderHistory = () => {
 
   const handleEditTimes = (cartId: string, exportTime: string, receiveTime: string) => {
     const formatToThaiTime = (time: string) => (time ? time.replace(":", ".") + " น." : "00.00 น.");
-    setEditingTimes({cartId, exportTime: formatToThaiTime(exportTime),receiveTime: formatToThaiTime(receiveTime),});};
+    setEditingTimes({ cartId, exportTime: formatToThaiTime(exportTime), receiveTime: formatToThaiTime(receiveTime), });
+  };
 
   const formatInputTime = (value: string): string => {
     const cleaned = value.replace(/[^0-9.]/g, "");
@@ -416,7 +418,7 @@ const OrderHistory = () => {
       }
       mutateCarts();
       setEditingTimes(null);
-      Swal.fire({icon: "success",title: "อัปเดตเวลาเรียบร้อย!",text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`,showConfirmButton: false,timer: 3000,});
+      Swal.fire({ icon: "success", title: "อัปเดตเวลาเรียบร้อย!", text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`, showConfirmButton: false, timer: 3000, });
     } catch (err) {
       console.error("Error updating times:", err);
       setError(err instanceof Error ? `ไม่สามารถอัปเดตเวลา: ${err.message}` : "เกิดข้อผิดพลาดในการอัปเดตเวลา");
@@ -435,31 +437,31 @@ const OrderHistory = () => {
       prevCarts.map((cart) =>
         targetCarts.some((target) => target.id === cart.id)
           ? {
-              ...cart,
-              // อัปเดต cart_lunchbox ถ้ามี
-              cart_lunchbox: cart.cart_lunchbox && cart.cart_lunchbox.length > 0
-                ? cart.cart_lunchbox.map((lunchbox: any) => ({
-                    ...lunchbox,
-                    lunchbox_menu: lunchbox.lunchbox_menu?.map((menu: any) => ({
-                      ...menu,
-                      menu_ingredients: menu.menu_ingredients?.map((ing: any) => ({
-                        ...ing,
-                        ingredient_status: true,
-                      })) || [],
-                    })) || [],
-                  }))
-                : cart.cart_lunchbox,
-              // อัปเดต allIngredients สำหรับ fallback
-              allIngredients: cart.allIngredients.map((group) => ({
-                ...group,
-                ingredients: group.ingredients.map((ing) => ({
-                  ...ing,
-                  isChecked: true,
-                  ingredient_status: true,
-                })),
+            ...cart,
+            // อัปเดต cart_lunchbox ถ้ามี
+            cart_lunchbox: cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+              ? cart.cart_lunchbox.map((lunchbox: any) => ({
+                ...lunchbox,
+                lunchbox_menu: lunchbox.lunchbox_menu?.map((menu: any) => ({
+                  ...menu,
+                  menu_ingredients: menu.menu_ingredients?.map((ing: any) => ({
+                    ...ing,
+                    ingredient_status: true,
+                  })) || [],
+                })) || [],
+              }))
+              : cart.cart_lunchbox,
+            // อัปเดต allIngredients สำหรับ fallback
+            allIngredients: cart.allIngredients.map((group) => ({
+              ...group,
+              ingredients: group.ingredients.map((ing) => ({
+                ...ing,
+                isChecked: true,
                 ingredient_status: true,
               })),
-            }
+              ingredient_status: true,
+            })),
+          }
           : cart
       )
     );
@@ -550,7 +552,8 @@ const OrderHistory = () => {
     }, {} as { [key: string]: Cart[] });
 
     Object.values(groupedByDate).forEach((orders) => {
-      orders.sort((a, b) => { const orderNumA = parseInt(a.order_number || "0");  const orderNumB = parseInt(b.order_number || "0");  return orderNumA - orderNumB; }); });
+      orders.sort((a, b) => { const orderNumA = parseInt(a.order_number || "0"); const orderNumB = parseInt(b.order_number || "0"); return orderNumA - orderNumB; });
+    });
 
     const currentDate = new Date();
     const sortedDates = Object.keys(groupedByDate).sort((dateA, dateB) => {
@@ -569,10 +572,11 @@ const OrderHistory = () => {
       const deliveryDateISO = convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {  day: "numeric", month: "short",  year: "numeric",  })  .replace(/ /g, " "): "ไม่มีวันที่จัดส่ง";(acc[dateDisplay] = acc[dateDisplay] || []).push(cart);return acc;}, {} as { [key: string]: Cart[] });
+          .toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", }).replace(/ /g, " ") : "ไม่มีวันที่จัดส่ง"; (acc[dateDisplay] = acc[dateDisplay] || []).push(cart); return acc;
+    }, {} as { [key: string]: Cart[] });
     const currentDate = new Date();
     const currentDateDisplay = currentDate
-      .toLocaleDateString("th-TH", {  day: "numeric",  month: "short",  year: "numeric",}).replace(/ /g, " ");
+      .toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", }).replace(/ /g, " ");
 
     const currentDateGroup: [string, Cart[]][] = grouped[currentDateDisplay] ? [[currentDateDisplay, grouped[currentDateDisplay]]] : [];
     const otherDateGroups = Object.entries(grouped).filter(([date]) => date !== currentDateDisplay);
@@ -759,7 +763,7 @@ const OrderHistory = () => {
     const monthSet = new Set<string>();
     // กรองเฉพาะ cart ที่มี status เป็น success หรือ cancelled (เหมือนกับที่ใช้ใน handleExportExcel)
     const validCarts = allCarts.filter((cart) => cart.status === "success" || cart.status === "cancelled");
-    
+
     validCarts.forEach((cart) => {
       if (cart.cart_delivery_date) {
         const isoDate = convertThaiDateToISO(cart.cart_delivery_date);
@@ -775,7 +779,7 @@ const OrderHistory = () => {
         }
       }
     });
-    
+
     // แปลงเป็น array และเรียงลำดับ
     return Array.from(monthSet)
       .sort()
@@ -819,11 +823,11 @@ const OrderHistory = () => {
     const normalizedDate = isoDateString.replace('T', ' ');
     const [rawDate, timePart] = normalizedDate.split(" ");
     if (!rawDate) return "ไม่ระบุ";
-    
+
     const [year, month, day] = rawDate.split("-");
     const date = new Date(Number(year), Number(month) - 1, Number(day));
     if (isNaN(date.getTime())) return "ไม่ระบุ";
-    
+
     const thaiMonthNames = [
       "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
       "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
@@ -835,7 +839,7 @@ const OrderHistory = () => {
   const handleExportExcelForDate = async (dateISO: string, orders: Cart[]) => {
     // กรองเฉพาะ orders ที่มี status success หรือ cancelled
     const ordersToExport = orders.filter((cart) => cart.status === "success" || cart.status === "cancelled");
-    
+
     if (ordersToExport.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -860,7 +864,7 @@ const OrderHistory = () => {
       
       // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
       const menuRows: any[] = [];
-      
+
       if (cart.cart_lunchbox && cart.cart_lunchbox.length > 0) {
         // วน loop ผ่าน cart_lunchbox และ lunchbox_menu เพื่อสร้าง row ใหม่สำหรับแต่ละ menu
         cart.cart_lunchbox.forEach((lunchbox: any) => {
@@ -884,7 +888,7 @@ const OrderHistory = () => {
           }
         });
       }
-      
+
       // ถ้าไม่มี cart_lunchbox หรือไม่มีเมนู ให้ใช้ข้อมูลเดิม
       if (menuRows.length === 0) {
         menuRows.push({
@@ -900,7 +904,7 @@ const OrderHistory = () => {
           "ผู้สร้าง": cart.createdBy,
         });
       }
-      
+
       // จัดกลุ่มตามชื่อเมนูและรวมจำนวน Set
       const menuGroupMap = new Map<string, any>();
       menuRows.forEach((row) => {
@@ -917,7 +921,7 @@ const OrderHistory = () => {
           });
         }
       });
-      
+
       // แปลง Map กลับเป็น array
       const groupedMenuRows = Array.from(menuGroupMap.values());
       
@@ -943,7 +947,7 @@ const OrderHistory = () => {
         "สถานะ": "",
         "ผู้สร้าง": "",
       });
-      
+
       return groupedMenuRows;
     });
 
@@ -1004,7 +1008,7 @@ const OrderHistory = () => {
     worksheetData.forEach((row, index) => {
       const rowData = headers.map((header) => row[header] ?? "");
       const addedRow = worksheet.addRow(rowData);
-      
+
       // ถ้าเป็น row สรุป (row ที่มี "ชื่อเมนู" = "รวม") ให้กำหนด styling
       if (row["ชื่อเมนู"] === "รวม") {
         // ตรวจสอบว่าเป็น row สรุปรวมทั้งหมด (row สุดท้าย) หรือ row สรุปแต่ละ order
@@ -1042,7 +1046,7 @@ const OrderHistory = () => {
     link.download = `${fileName}.xlsx`;
     link.click();
     window.URL.revokeObjectURL(url);
-    
+
     Swal.fire({
       icon: "success",
       title: "Export สำเร็จ",
@@ -1055,7 +1059,7 @@ const OrderHistory = () => {
   const handleExportExcel = async (selectedMonth?: string) => {
     // กรองข้อมูลตามเดือนที่เลือก (ใช้ cart_delivery_date)
     let ordersToExport = allCarts.filter((cart) => cart.status === "success" || cart.status === "cancelled");
-    
+
     if (selectedMonth) {
       ordersToExport = ordersToExport.filter((cart) => {
         if (!cart.cart_delivery_date) return false;
@@ -1082,7 +1086,7 @@ const OrderHistory = () => {
       
       // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
       const menuRows: any[] = [];
-      
+
       if (cart.cart_lunchbox && cart.cart_lunchbox.length > 0) {
         // วน loop ผ่าน cart_lunchbox และ lunchbox_menu เพื่อสร้าง row ใหม่สำหรับแต่ละ menu
         cart.cart_lunchbox.forEach((lunchbox: any) => {
@@ -1106,7 +1110,7 @@ const OrderHistory = () => {
           }
         });
       }
-      
+
       // ถ้าไม่มี cart_lunchbox หรือไม่มีเมนู ให้ใช้ข้อมูลเดิม
       if (menuRows.length === 0) {
         menuRows.push({
@@ -1122,7 +1126,7 @@ const OrderHistory = () => {
           "ผู้สร้าง": cart.createdBy,
         });
       }
-      
+
       // จัดกลุ่มตามชื่อเมนูและรวมจำนวน Set
       const menuGroupMap = new Map<string, any>();
       menuRows.forEach((row) => {
@@ -1139,10 +1143,9 @@ const OrderHistory = () => {
           });
         }
       });
-      
+
       // แปลง Map กลับเป็น array
       const groupedMenuRows = Array.from(menuGroupMap.values());
-      
       // แสดงลำดับแค่ใน row แรกของแต่ละ order
       if (groupedMenuRows.length > 0) {
         groupedMenuRows[0]["ลำดับ"] = orderNumber;
@@ -1151,7 +1154,6 @@ const OrderHistory = () => {
           groupedMenuRows[i]["ลำดับ"] = "";
         }
       }
-      
       // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงราคาอาหาร)
       groupedMenuRows.push({
         "ลำดับ": "",
@@ -1165,7 +1167,7 @@ const OrderHistory = () => {
         "สถานะ": "",
         "ผู้สร้าง": "",
       });
-      
+
       return groupedMenuRows;
     });
 
@@ -1227,7 +1229,7 @@ const OrderHistory = () => {
     worksheetData.forEach((row, index) => {
       const rowData = headers.map((header) => row[header] ?? "");
       const addedRow = worksheet.addRow(rowData);
-      
+
       // ถ้าเป็น row สรุป (row ที่มี "ชื่อเมนู" = "รวม") ให้กำหนด styling
       if (row["ชื่อเมนู"] === "รวม") {
         // ตรวจสอบว่าเป็น row สรุปรวมทั้งหมด (row สุดท้าย) หรือ row สรุปแต่ละ order
@@ -1307,11 +1309,12 @@ const OrderHistory = () => {
             <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    locale: "th",
-                    timeZone: "Asia/Bangkok",})}`: "เลือกวันที่ที่ต้องการ"}
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  locale: "th",
+                  timeZone: "Asia/Bangkok",
+                })}` : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
             <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
@@ -1426,7 +1429,7 @@ const OrderHistory = () => {
 
         <div className='space-y-6'>
           {isLoading ? (
-            <Loading context="หน้าประวัติการสั่งซื้อ" icon={HistoryIcon.src} color="green"/>
+            <Loading context="หน้าประวัติการสั่งซื้อ" icon={HistoryIcon.src} color="green" />
           ) : combinedError ? (
             <Card>
               <CardContent className='text-center py-12'>
@@ -1463,7 +1466,8 @@ const OrderHistory = () => {
                                       value={editingTimes?.exportTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) => prev? {...prev,exportTime: formattedValue,}: prev);}}
+                                        setEditingTimes((prev) => prev ? { ...prev, exportTime: formattedValue, } : prev);
+                                      }}
                                       placeholder='14.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit export time'
@@ -1476,7 +1480,8 @@ const OrderHistory = () => {
                                       value={editingTimes?.receiveTime || ""}
                                       onChange={(e) => {
                                         const formattedValue = formatInputTime(e.target.value);
-                                        setEditingTimes((prev) => prev? {...prev,receiveTime: formattedValue,}: prev);}}
+                                        setEditingTimes((prev) => prev ? { ...prev, receiveTime: formattedValue, } : prev);
+                                      }}
                                       placeholder='19.00'
                                       className='w-24 h-8 text-sm rounded-md border-gray-300'
                                       aria-label='Edit receive time'
@@ -1566,9 +1571,9 @@ const OrderHistory = () => {
                                 <Accordion type='multiple' className='space-y-3'>
                                   {cart.cart_lunchbox && cart.cart_lunchbox.length > 0 ? (
                                     cart.cart_lunchbox.map((lunchbox: any, lunchboxIdx: number) => (
-                                      <AccordionItem 
-                                        key={lunchboxIdx} 
-                                        value={`lunchbox-${lunchboxIdx}`} 
+                                      <AccordionItem
+                                        key={lunchboxIdx}
+                                        value={`lunchbox-${lunchboxIdx}`}
                                         className="rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50"
                                       >
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
@@ -1586,15 +1591,15 @@ const OrderHistory = () => {
                                             </div>
                                           </div>
                                         </AccordionTrigger>
-                                        
+
                                         <AccordionContent className='pt-3 space-y-2'>
                                           <h5 className='font-medium text-blue-800 mb-2 text-xs'>เมนูในกล่อง:</h5>
                                           {lunchbox.lunchbox_menu.map((menu: any, menuIdx: number) => {
                                             const allIngredientsChecked = menu.menu_ingredients?.every((ing: any) => ing.ingredient_status) ?? false;
-                                            
+
                                             return (
-                                              <div 
-                                                key={menuIdx} 
+                                              <div
+                                                key={menuIdx}
                                                 className={`rounded-lg border p-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
                                               >
                                                 <div className='mb-2'>
@@ -1610,12 +1615,12 @@ const OrderHistory = () => {
                                                     </div>
                                                   )}
                                                 </div>
-                                                
+
                                                 <div className='space-y-1 mt-2'>
                                                   <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
                                                   {menu.menu_ingredients?.map((ing: any, idx: number) => (
-                                                    <div 
-                                                      key={idx} 
+                                                    <div
+                                                      key={idx}
                                                       className='flex items-center justify-between text-xs text-gray-600 py-1'
                                                     >
                                                       <span>• {ing.ingredient_name}</span>
@@ -1756,7 +1761,7 @@ const OrderHistory = () => {
         <Dialog open={isExcelMonthDialogOpen} onOpenChange={setIsExcelMonthDialogOpen}>
           <DialogContent className='max-w-lg'>
             <div className='space-y-4'>
-            <DialogTitle className='text-xl mb-4 text-black !font-bold'>เลือกเดือนสำหรับ Export Excel</DialogTitle>
+              <DialogTitle className='text-xl mb-4 text-black !font-bold'>เลือกเดือนสำหรับ Export Excel</DialogTitle>
               <div className='flex flex-col gap-2'>
                 {/* <label className='text-sm font-medium text-gray-700'>เลือกเดือน</label> */}
                 <Select value={selectedMonthForExcel} onValueChange={setSelectedMonthForExcel}>
@@ -1784,7 +1789,7 @@ const OrderHistory = () => {
                   }}>
                   ยกเลิก
                 </Button>
-                
+
                 <Button
                   variant='default'
                   style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
