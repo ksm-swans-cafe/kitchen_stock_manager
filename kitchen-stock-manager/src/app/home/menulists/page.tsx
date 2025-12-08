@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import useSWR from "swr";
 import { create } from "zustand";
+import { Search } from "lucide-react";
 import PaginationComponent from "@/components/ui/Totalpage";
 import { Ingredient, IngredientOption, MenuItem, IngredientUnit, MenuLunchbox } from "@/models/menu_list/MenuList";
 
@@ -67,6 +68,7 @@ const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 export default function Page() {
   const [isMinimumLoading, setIsMinimumLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const {
     currentPage,
@@ -126,19 +128,76 @@ export default function Page() {
     keepPreviousData: true,
   });
 
-  const uniqueIngredients = menuData?.data
+  // Fetch all menus when searching (no pagination)
+  const {
+    data: allMenuData,
+    error: allMenuError,
+    isLoading: allMenuLoading,
+  } = useSWR<MenuItem[]>(
+    searchQuery.trim() ? "/api/get/menu/list" : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      refreshInterval: 0,
+      dedupingInterval: 5000,
+      keepPreviousData: true,
+    }
+  );
+
+  // Use all menu data when searching, otherwise use paginated data
+  const menuItemsToUse = searchQuery.trim() ? (allMenuData || []) : (menuData?.data || []);
+  
+  const menuItems = menuItemsToUse;
+  const totalPagesFromData = menuData?.pagination?.totalPages || 1;
+  const currentError = searchQuery.trim() ? (allMenuError?.message || null) : (menuError?.message || null);
+
+  const shouldShowLoading = useMemo(() => {
+    if (searchQuery.trim()) {
+      return ((allMenuLoading && !allMenuData) || isSubmitting || isMinimumLoading) && !allMenuData;
+    }
+    return ((menuLoading && !menuData) || isSubmitting || isMinimumLoading) && !menuData;
+  }, [searchQuery, menuLoading, menuData, allMenuLoading, allMenuData, isSubmitting, isMinimumLoading]);
+
+  const normalizeThaiText = (text: string): string => {
+    if (!text) return "";
+    return text.replace(/เเ/g, "แ");
+  };
+
+  // Filter menus based on search query
+  const filteredMenuItems = useMemo(() => {
+    if (!searchQuery.trim()) return menuItems;
+
+    const query = searchQuery.toLowerCase();
+    const normalizedQuery = normalizeThaiText(query);
+
+    return menuItems.filter((item: MenuItem) => {
+      const normalizedMenuName = normalizeThaiText(item.menu_name?.toLowerCase() || "");
+      const normalizedMenuSubname = normalizeThaiText(item.menu_subname?.toLowerCase() || "");
+      const normalizedMenuCategory = normalizeThaiText(item.menu_category?.toLowerCase() || "");
+
+      return (
+        normalizedMenuName.includes(normalizedQuery) ||
+        normalizedMenuSubname.includes(normalizedQuery) ||
+        normalizedMenuCategory.includes(normalizedQuery) ||
+        item.menu_cost?.toString().includes(query)
+      );
+    });
+  }, [menuItems, searchQuery]);
+
+  // Calculate unique ingredients from filtered menu items
+  const uniqueIngredients = filteredMenuItems.length > 0
     ? Array.from(
-        new Set(
-          menuData.data.flatMap((item: MenuItem) => {
-            try {
-              const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
-              return ingredients.map((ing: Ingredient) => ing.ingredient_name?.trim().toLowerCase()).filter(Boolean);
-            } catch {
-              return [];
-            }
-          })
-        )
+      new Set(
+        filteredMenuItems.flatMap((item: MenuItem) => {
+          try {
+            const ingredients = typeof item.menu_ingredients === "string" ? JSON.parse(item.menu_ingredients) : item.menu_ingredients;
+            return ingredients.map((ing: Ingredient) => ing.ingredient_name?.trim().toLowerCase()).filter(Boolean);
+          } catch {
+            return [];
+          }
+        })
       )
+    )
     : [];
 
   const { data: ingredientUnitsData } = useSWR(uniqueIngredients.length > 0 ? `/api/get/ingredients/list?names=${encodeURIComponent(uniqueIngredients.join(","))}` : null, fetcher, {
@@ -146,14 +205,6 @@ export default function Page() {
     refreshInterval: 60000,
     keepPreviousData: true,
   });
-
-  const menuItems = menuData?.data || [];
-  const totalPagesFromData = menuData?.pagination?.totalPages || 1;
-  const currentError = menuError?.message || null;
-
-  const shouldShowLoading = useMemo(() => {
-    return ((menuLoading && !menuData) || isSubmitting || isMinimumLoading) && !menuData;
-  }, [menuLoading, menuData, isSubmitting, isMinimumLoading]);
 
   const ingredientUnits = useMemo(() => {
     if (!ingredientUnitsData) return {};
@@ -163,6 +214,11 @@ export default function Page() {
     });
     return unitMap;
   }, [ingredientUnitsData]);
+
+  // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
+  useEffect(() => {
+    window.scrollTo({ top: 0,});
+  }, [currentPage]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -379,6 +435,32 @@ export default function Page() {
             </div>
           </div>
           <div className='level-right'>
+
+            {/* ช่องค้นหา */}
+            <div className='level-item'>
+              <div className='field mb-0 mr-3'>
+                <div className='control has-icons-left has-icons-right'>
+                  <input
+                    type='text'
+                    className='input !bg-white !text-black min-w-[250px] max-w-[350px] w-full'
+                    placeholder='ค้นหาเมนูอาหาร'
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ color: '#000000' }}
+                  />
+                  <span className='icon is-small is-left text-[#7a7a7a]'>
+                    <Search size={16} className='block' />
+                  </span>
+                  {searchQuery && (
+                    <span className='icon is-small is-right cursor-pointer' onClick={() => setSearchQuery("")}>
+                      <i className='fas fa-times'></i>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ปุ่มเพิ่มเมนูใหม่ */}
             <div className='level-item'>
               <button
                 onClick={() => {
@@ -404,7 +486,7 @@ export default function Page() {
         {/* Error Message */}
         {currentError && (
           <div className='notification is-danger is-light mb-5'>
-            <button className='delete' onClick={() => {}}></button>
+            <button className='delete' onClick={() => { }}></button>
             <strong>เกิดข้อผิดพลาด</strong>
             <p>{currentError}</p>
           </div>
@@ -473,20 +555,29 @@ export default function Page() {
                   </tr>
                 </thead>
                 <tbody style={{ backgroundColor: "white" }}>
-                  {menuItems.length === 0 ? (
+                  {filteredMenuItems.length === 0 ? (
                     <tr>
                       <td colSpan={6} className='has-text-centered' style={{ backgroundColor: "white" }}>
                         <div className='content p-6'>
                           <span className='icon is-large has-text-grey-light'>
                             <i className='fas fa-file-alt fa-3x'></i>
                           </span>
-                          <p className='has-text-weight-medium'>ไม่มีเมนูอาหาร</p>
-                          <p className='has-text-grey'>เริ่มต้นด้วยการเพิ่มเมนูอาหารใหม่</p>
+                          <p className='has-text-weight-medium'>
+                            {searchQuery ? `ไม่พบเมนูที่ค้นหา "${searchQuery}"` : "ไม่มีเมนูอาหาร"}
+                          </p>
+                          <p className='has-text-grey'>
+                            {searchQuery ? "ลองค้นหาด้วยคำอื่น" : "เริ่มต้นด้วยการเพิ่มเมนูอาหารใหม่"}
+                          </p>
+                          {searchQuery && (
+                            <button className='button is-light mt-3' onClick={() => setSearchQuery("")}>
+                              ล้างการค้นหา
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    menuItems.map((item: MenuItem) => (
+                    filteredMenuItems.map((item: MenuItem) => (
                       <tr key={item.menu_id} style={{ backgroundColor: "white" }}>
                         <td>
                           <p className='has-text-weight-medium has-text-dark'>{item.menu_name}</p>
@@ -525,8 +616,8 @@ export default function Page() {
           )}
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Pagination - Hide when searching */}
+        {!searchQuery.trim() && totalPages >= 1 && (
           <div className='mt-5'>
             <PaginationComponent totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />
           </div>
@@ -537,14 +628,14 @@ export default function Page() {
       {dialog && (
         <div className='modal is-active'>
           <div className='modal-background' onClick={() => setDialog(false)}></div>
-          <div className='modal-card' style={{ width: "90%", maxWidth: "900px", backgroundColor: "white" }}>
-            <header className='modal-card-head' style={{ backgroundColor: "#48c78e", color: "white" }}>
+          <div className='modal-card' style={{ width: "90%", maxWidth: "900px", backgroundColor: "white", borderRadius: "4px", overflow: "hidden" }}>
+            <header className='modal-card-head' style={{ backgroundColor: "#48c78e", color: "white", borderTopLeftRadius: "4px", borderTopRightRadius: "4px" }}>
               <p className='modal-card-title' style={{ color: "white" }}>
                 {editMenuId ? "แก้ไขเมนู" : "เพิ่มเมนูใหม่"}
               </p>
               <button className='delete' aria-label='close' onClick={() => setDialog(false)}></button>
             </header>
-            <section className='modal-card-body' style={{ backgroundColor: "white" }}>
+            <section className='modal-card-body' style={{ backgroundColor: "white", borderTopLeftRadius: "4px", borderTopRightRadius: "4px" }}>
               <form onSubmit={handleSubmit}>
                 <div className='columns'>
                   <div className='column'>
