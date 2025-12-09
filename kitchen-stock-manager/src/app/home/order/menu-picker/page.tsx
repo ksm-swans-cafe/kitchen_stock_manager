@@ -1432,7 +1432,26 @@ export default function Order() {
                           return groups;
                         }, {} as Record<string, typeof availableMenus>);
 
-                        const sortedCategories = Object.keys(groupedMenus).sort((a, b) => a.localeCompare(b, "th"));
+                        // กำหนดลำดับ category แบบกำหนดเอง
+                        const categoryOrder = 
+                        [
+                          "ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", 
+                          "ผัด", "พริกเเกง", "แกง", "ต้ม", 
+                          "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", 
+                          "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"
+                        ];
+                        const sortedCategories = Object.keys(groupedMenus).sort((a, b) => {
+                          const indexA = categoryOrder.indexOf(a);
+                          const indexB = categoryOrder.indexOf(b);
+                          // ถ้าทั้งคู่อยู่ใน categoryOrder ให้เรียงตามลำดับที่กำหนด
+                          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                          // ถ้า a อยู่ใน categoryOrder แต่ b ไม่อยู่ ให้ a มาก่อน
+                          if (indexA !== -1) return -1;
+                          // ถ้า b อยู่ใน categoryOrder แต่ a ไม่อยู่ ให้ b มาก่อน
+                          if (indexB !== -1) return 1;
+                          // ถ้าทั้งคู่ไม่อยู่ใน categoryOrder ให้เรียงตามตัวอักษรภาษาไทยและแสดงต่อท้าย
+                          return a.localeCompare(b, "th");
+                        });
 
                         return sortedCategories.map((category) => {
                           const menusInCategory = groupedMenus[category].sort((a, b) => a.menu_name.localeCompare(b.menu_name, "th"));
