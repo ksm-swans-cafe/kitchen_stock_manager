@@ -68,11 +68,13 @@ type MenuMenuIngredients {
 }
 
 type MenuMenuLunchbox {
+  lunchbox_menuid String?
   lunchbox_cost     BigInt?
   lunchbox_name     String
   lunchbox_set_name String
   lunchbox_menu_category String?
   lunchbox_showPrice Boolean?
+  lunchbox_AutoRice Boolean?
 }
 
 model cart {
@@ -132,10 +134,12 @@ model ingredients {
 }
 
 model lunchbox {
-  id                String @id @default(auto()) @map("_id") @db.ObjectId
-  lunchbox_limit    Int
-  lunchbox_name     String
-  lunchbox_set_name String
+  id                      String  @id @default(auto()) @map("_id") @db.ObjectId
+  lunchbox_limit          Int
+  lunchbox_name           String
+  lunchbox_name_image     String?
+  lunchbox_set_name       String
+  lunchbox_set_name_image String?
 }
 
 model menu {

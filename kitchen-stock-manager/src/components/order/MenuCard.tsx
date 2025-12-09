@@ -13,8 +13,8 @@ export type MenuCardProps = {
   image?: string;
 
   selected?: boolean;
-  forced?: boolean; 
-  duplicate?: boolean; 
+  forced?: boolean;
+  duplicate?: boolean;
   disabled?: boolean;
 
   onClick?: (menuId: string) => void;
@@ -27,9 +27,9 @@ export type MenuCardProps = {
 };
 
 const sizeMap: Record<MenuCardSize, { media: string; emoji: string }> = {
-  sm: { media: "h-56", emoji: "text-lg" },   // ขยายขึ้นเล็กน้อย
-  md: { media: "h-60", emoji: "text-xl" },   // ขยายขึ้นเล็กน้อย
-  lg: { media: "h-64", emoji: "text-2xl" },  // ขยายขึ้นเล็กน้อย
+  sm: { media: "h-56", emoji: "text-lg" }, // ขยายขึ้นเล็กน้อย
+  md: { media: "h-60", emoji: "text-xl" }, // ขยายขึ้นเล็กน้อย
+  lg: { media: "h-64", emoji: "text-2xl" }, // ขยายขึ้นเล็กน้อย
 };
 
 const defaultEmojiByCategory: Record<string, string> = {
@@ -102,20 +102,14 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
 
       {/* Media / Emoji or Image */}
       <div className={cn(sizeConf.media, "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]", "flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.02]")} aria-hidden>
-        {image ? (
-          <img src={image} className="w-3/4 h-3/4 object-contain p-2" alt={name} />
-        ) : (
-          <span className={cn(sizeConf.emoji)}>{getEmoji(emoji, category || undefined)}</span>
-        )}
+        {image ? <img src={image} className='w-3/4 h-3/4 object-contain p-2' alt={name} /> : <span className={cn(sizeConf.emoji)}>{getEmoji(emoji, category || undefined)}</span>}
       </div>
-      
+
       {/* Body */}
       <div className='p-2 h-24 text-center'>
-        <div className={cn("font-bold p-1 text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>
-          เมนู{name}
-        </div>
+        <div className={cn("font-bold p-1 text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>เมนู{name}</div>
 
-        {showPrice && typeof price === "number" && price > 0 && <div className='mt-1 text-sm text-black'>ราคา {price} บาท</div>}
+        {showPrice && typeof price === "number" && <div className='mt-1 text-sm text-black'>ราคา {price} บาท</div>}
       </div>
 
       {/* Focus ring accent sweep (subtle visual polish) */}
