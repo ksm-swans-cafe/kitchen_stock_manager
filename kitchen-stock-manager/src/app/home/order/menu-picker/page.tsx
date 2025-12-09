@@ -20,7 +20,7 @@ import SetFoodIcon from "@/assets/setfood.png";
 import FoodMenuSetIcon from "@/assets/food-menu.png";
 import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 
-type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null };
+type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null; lunchbox_showPrice?: boolean };
 
 interface LunchBoxFromAPI {
   lunchbox_name: string;
@@ -54,6 +54,9 @@ export default function Order() {
   // helper สำหรับสร้าง key ที่ไม่ซ้ำระหว่างเมนูที่ชื่อซ้ำแต่หมวดต่างกัน
   const buildMenuKey = (menu: Partial<MenuItemWithAutoRice>) => menu.lunchbox_menuid ?? `${menu.menu_id ?? ""}-${menu.lunchbox_menu_category ?? ""}-${menu.menu_name ?? ""}`;
 
+  // unified price helper (ใช้เฉพาะ lunchbox_cost)
+  const getPrice = (menu?: Partial<MenuItemWithAutoRice>) => menu?.lunchbox_cost ?? 0;
+
   // Edit mode states
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
@@ -67,6 +70,9 @@ export default function Order() {
     const match = setName.match(/(\d+)\s*baht/i);
     return match ? parseInt(match[1], 10) : null;
   };
+
+  // Locale-aware sorter (EN/TH + numeric)
+  const sortStrings = (values: string[]) => [...values].sort((a, b) => a.localeCompare(b, "th", { numeric: true, sensitivity: "base" }));
 
   // Check for edit mode and manage loading state
   useEffect(() => {
@@ -121,12 +127,12 @@ export default function Order() {
         const data = await response.json();
         console.log("Lunchbox data:", data);
 
-        const items = Array.isArray(data) ? data : data?.data;
+        const items = (Array.isArray(data) ? data : data?.data) as LunchBoxFromAPI[] | undefined;
         if (items) {
           setLunchboxData(items);
 
           // Extract unique food sets (ชุดอาหาร)
-          const uniqueFoodSets = [...new Set(items.map((item: LunchBoxFromAPI) => item.lunchbox_name))] as string[];
+          const uniqueFoodSets = sortStrings([...new Set(items.map((item: LunchBoxFromAPI) => item.lunchbox_name))]);
           console.log("Available food sets:", uniqueFoodSets);
           setAvailableFoodSets(uniqueFoodSets);
         }
@@ -151,7 +157,7 @@ export default function Order() {
   useEffect(() => {
     if (selectedFoodSet && lunchboxData.length > 0) {
       const availableSets = lunchboxData.filter((item) => item.lunchbox_name === selectedFoodSet);
-      const uniqueSetMenus = [...new Set(availableSets.map((item) => item.lunchbox_set_name))] as string[];
+      const uniqueSetMenus = sortStrings([...new Set(availableSets.map((item) => item.lunchbox_set_name))]);
       console.log("Available set menus for", selectedFoodSet, ":", uniqueSetMenus);
       console.log("Filtered sets data:", availableSets);
       setAvailableSetMenus(uniqueSetMenus);
@@ -188,8 +194,7 @@ export default function Order() {
             menu_name: menu.menu_name || "",
             menu_subname: menu.menu_subname || "",
             menu_category: menu.menu_category || "",
-            menu_cost: menu.menu_cost ?? 0,
-            lunchbox_cost: menu.lunchbox_cost ?? null,
+            lunchbox_cost: Number(menu.lunchbox_cost) || 0,
             menu_ingredients: menu.menu_ingredients || [],
             menu_description: menu.menu_description || "",
             lunchbox_menu_category: menu.lunchbox_menu_category || null,
@@ -264,7 +269,7 @@ export default function Order() {
       const normalizedMenuDescription = normalizeThaiText(menu.menu_description?.toLowerCase() || "");
       const normalizedMenuCategory = normalizeThaiText(menu.lunchbox_menu_category?.toLowerCase() || "");
 
-      return normalizedMenuName.includes(normalizedQuery) || normalizedMenuSubname.includes(normalizedQuery) || menu.menu_cost?.toString().includes(query) || normalizedMenuDescription.includes(normalizedQuery) || normalizedMenuCategory.includes(normalizedQuery);
+      return normalizedMenuName.includes(normalizedQuery) || normalizedMenuSubname.includes(normalizedQuery) || (menu.lunchbox_cost ?? 0).toString().includes(query) || normalizedMenuDescription.includes(normalizedQuery) || normalizedMenuCategory.includes(normalizedQuery);
     });
   }, [availableMenus, searchQuery]);
 
@@ -509,7 +514,7 @@ export default function Order() {
         let totalCost: number;
         const setPrice = extractPriceFromSetName(selectedSetMenu);
         if (setPrice !== null) totalCost = setPrice;
-        else totalCost = selectedMenuObjects.reduce((total, menu) => total + (menu.menu_cost || 0), 0);
+        else totalCost = selectedMenuObjects.reduce((total, menu) => total + (menu.lunchbox_cost ?? 0), 0);
 
         const newLunchbox = {
           lunchbox_name: selectedFoodSet,
@@ -1513,7 +1518,7 @@ export default function Order() {
                                       key={menu.menu_id || index}
                                       menuId={menu.menu_id || String(index)}
                                       name={menu.menu_name}
-                                      price={menu.lunchbox_cost ?? menu.menu_cost ?? 0}
+                                      price={getPrice(menu)}
                                       category={menu.lunchbox_menu_category || undefined}
                                       emoji={menu.lunchbox_menu_category === "ข้าว" ? "🍚" : "🍜"}
                                       image={FoodMenuIcon.src}
@@ -1521,7 +1526,7 @@ export default function Order() {
                                       forced={isAutoSelectedRice && !isUnlimited} // แก้ไข: ไม่บังคับถ้าเป็นเซต unlimited
                                       duplicate={!!isLunchboxCategoryTaken}
                                       size={isMobile ? "sm" : "md"}
-                                      showPrice={menu.lunchbox_showPrice ?? true} // เพิ่มบรรทัดนี้
+                                      showPrice={menu.lunchbox_showPrice ?? true} // แสดงราคาตาม lunchbox_isPrice
                                       onClick={() => {
                                         if (!isLunchboxCategoryTaken) {
                                           handle.MenuSelection(menuKey);
@@ -1582,7 +1587,7 @@ export default function Order() {
                 return setPrice;
               }
 
-              return availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m))).reduce((sum, m) => sum + (m.menu_cost || 0), 0);
+              return availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m))).reduce((sum, m) => sum + (m.lunchbox_cost ?? 0), 0);
             })()}
             onSubmit={handle.Submit}
             onReset={() => {
