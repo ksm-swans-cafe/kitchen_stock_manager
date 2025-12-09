@@ -20,6 +20,8 @@ import SetFoodIcon from "@/assets/setfood.png";
 import FoodMenuSetIcon from "@/assets/food-menu.png";
 import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 
+type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null };
+
 interface LunchBoxFromAPI {
   lunchbox_name: string;
   lunchbox_set_name: string;
@@ -46,8 +48,11 @@ export default function Order() {
   const [lunchboxData, setLunchboxData] = useState<LunchBoxFromAPI[]>([]);
   const [availableFoodSets, setAvailableFoodSets] = useState<string[]>([]);
   const [availableSetMenus, setAvailableSetMenus] = useState<string[]>([]);
-  const [availableMenus, setAvailableMenus] = useState<MenuItem[]>([]);
+  const [availableMenus, setAvailableMenus] = useState<MenuItemWithAutoRice[]>([]);
   const [note, setNote] = useState<string>("");
+
+  // helper สำหรับสร้าง key ที่ไม่ซ้ำระหว่างเมนูที่ชื่อซ้ำแต่หมวดต่างกัน
+  const buildMenuKey = (menu: Partial<MenuItemWithAutoRice>) => menu.lunchbox_menuid ?? `${menu.menu_id ?? ""}-${menu.lunchbox_menu_category ?? ""}-${menu.menu_name ?? ""}`;
 
   // Edit mode states
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -58,22 +63,9 @@ export default function Order() {
   const [isLoadingLunchboxData, setIsLoadingLunchboxData] = useState<boolean>(true); // เพิ่ม state นี้
   const dots = useLoadingDots();
 
-  const Unlimited = {
-    lunchbox_name: "Custom",
-    lunchbox_set_name: ["มีข้าวอยู่ในนั้น", "ไม่มีข้าวอยู่ในนั้น"],
-    lunchbox_limit: 0,
-  };
-
   const extractPriceFromSetName = (setName: string): number | null => {
     const match = setName.match(/(\d+)\s*baht/i);
     return match ? parseInt(match[1], 10) : null;
-  };
-
-  const AddRiceAuto = {
-    lunchbox_name: "Custom",
-    lunchbox_set_name: ["มีข้าวอยู่ในนั้น", "ไม่มีข้าวอยู่ในนั้น"],
-    lunchbox_limit: 0,
-    lunchbox_menu_categoty: ["พะเเนง", "คั่วกลิ้ง", "ทอดกระเทียม", "กะเพรา", "ผัดผงกะหรี่", "ผัดพริกเเกงใต้"],
   };
 
   // Check for edit mode and manage loading state
@@ -99,8 +91,8 @@ export default function Order() {
 
           // Set selected menu items
           if (editingData.selected_menus && editingData.selected_menus.length > 0) {
-            const menuNames = editingData.selected_menus.map((menu: MenuItem) => menu.menu_name);
-            setSelectedMenuItems(menuNames);
+            const menuKeys = editingData.selected_menus.map((menu: MenuItemWithAutoRice) => buildMenuKey(menu));
+            setSelectedMenuItems(menuKeys);
           }
 
           console.log("Loading edit data:", editingData);
@@ -191,16 +183,19 @@ export default function Order() {
         console.log("Menu data received:", data);
 
         if (data.success && data.data) {
-          const menuItems: MenuItem[] = data.data.map((menu: MenuItem) => ({
+          const menuItems: MenuItemWithAutoRice[] = data.data.map((menu: MenuItemWithAutoRice) => ({
             menu_id: menu.menu_id?.toString() || "",
             menu_name: menu.menu_name || "",
             menu_subname: menu.menu_subname || "",
             menu_category: menu.menu_category || "",
-            menu_cost: menu.menu_cost || 0,
+            menu_cost: menu.menu_cost ?? 0,
+            lunchbox_cost: menu.lunchbox_cost ?? null,
             menu_ingredients: menu.menu_ingredients || [],
             menu_description: menu.menu_description || "",
             lunchbox_menu_category: menu.lunchbox_menu_category || null,
             lunchbox_showPrice: menu.lunchbox_showPrice ?? true,
+            lunchbox_AutoRice: menu.lunchbox_AutoRice ?? false,
+            lunchbox_menuid: menu.lunchbox_menuid || menu.lunchbox_menuid === "" ? menu.lunchbox_menuid : undefined,
           }));
           console.log("Processed menu items:", menuItems);
           setAvailableMenus(menuItems);
@@ -231,11 +226,13 @@ export default function Order() {
         const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว");
 
         if (riceMenus.length > 0) {
-          const riceMenuName = riceMenus[0].menu_name;
+          const riceMenuKey = buildMenuKey(riceMenus[0]);
 
           setSelectedMenuItems((prev) => {
-            if (!prev.includes(riceMenuName)) {
-              return [...prev, riceMenuName];
+            if (!prev.includes(riceMenuKey)) {
+              // สำหรับชุดที่บังคับมีข้าว ให้ตั้งจำนวนข้าวอย่างน้อย 1
+              if (riceQuantity < 1) setRiceQuantity(1);
+              return [...prev, riceMenuKey];
             }
             return prev;
           });
@@ -271,11 +268,28 @@ export default function Order() {
     });
   }, [availableMenus, searchQuery]);
 
+  // รวมจำนวนเมนูที่เลือก (นับข้าวให้ถูกต้อง และรองรับ key ที่ใช้ buildMenuKey)
+  const selectionCount = useMemo(() => {
+    const resolvedMenus = selectedMenuItems.map((key) => availableMenus.find((m) => buildMenuKey(m) === key)).filter((m): m is MenuItemWithAutoRice => !!m);
+
+    const riceCountFromItems = resolvedMenus.filter((m) => m.lunchbox_menu_category === "ข้าว").length;
+    const nonRiceCount = resolvedMenus.filter((m) => m.lunchbox_menu_category !== "ข้าว").length;
+
+    // ถ้ามี riceQuantity ให้ใช้ค่านั้น (สำหรับ unlimited), ถ้าไม่มีให้ใช้จำนวนข้าวที่เจอใน items
+    const riceCount = riceQuantity > 0 ? riceQuantity : riceCountFromItems;
+
+    return {
+      nonRiceCount,
+      riceCount,
+      total: nonRiceCount + riceCount,
+    };
+  }, [selectedMenuItems, availableMenus, riceQuantity]);
+
   const handle = {
-    MenuSelection: (menuName: string) => {
+    MenuSelection: (menuKey: string) => {
       const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
       const limit = setData?.lunchbox_limit ?? 0;
-      const selectedMenu = availableMenus.find((menu) => menu.menu_name === menuName);
+      const selectedMenu = availableMenus.find((menu) => buildMenuKey(menu) === menuKey);
       if (!selectedMenu) return;
 
       const isRiceMenu = selectedMenu.lunchbox_menu_category === "ข้าว";
@@ -293,20 +307,19 @@ export default function Order() {
       // เพิ่มการตรวจสอบหมวด "กับข้าว"
       const isMainDishCategory = selectedMenu.lunchbox_menu_category === "กับข้าวที่ 1";
 
-      // ตรวจสอบว่าเมนูนี้อยู่ใน category ที่กำหนดใน AddRiceAuto หรือไม่
-      const addRiceCategories = AddRiceAuto.lunchbox_menu_categoty || [];
-      const isInAddRiceCategory = addRiceCategories.includes(selectedMenu.lunchbox_menu_category || "");
+      // ใช้ flag จากข้อมูลเมนูเพื่อกำหนดการเพิ่มข้าวอัตโนมัติ
+      const shouldAutoAddRice = selectedMenu.lunchbox_AutoRice === true;
 
       setSelectedMenuItems((prev) => {
-        const isSelected = prev.includes(menuName);
+        const isSelected = prev.includes(menuKey);
 
         if (isSelected) {
-          // ถ้าเป็น Custom unlimited และเป็นเมนูใน category ใดๆ (ไม่ใช่ข้าว)
-          if (isCustomUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && isInAddRiceCategory) {
-            let newPrev = prev.filter((item) => item !== menuName);
+          // ถ้าเป็นเซต unlimited และเมนูนี้ถูกตั้งให้เพิ่มข้าวอัตโนมัติ (ไม่ใช่ข้าว)
+          if (isUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && shouldAutoAddRice) {
+            let newPrev = prev.filter((item) => item !== menuKey);
 
             // นับจำนวนเมนูใน category เดียวกันที่เหลืออยู่ (ไม่นับข้าว)
-            const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && newPrev.includes(menu.menu_name));
+            const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && newPrev.includes(buildMenuKey(menu)));
 
             // หาข้าวที่เพิ่มอัตโนมัติ
             const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว");
@@ -330,9 +343,9 @@ export default function Order() {
             return newPrev;
           }
 
-          // ถ้าเป็น Custom unlimited และเป็นข้าว
-          if (isRiceMenu && isCustomUnlimited) {
-            const allSelectedMenus = availableMenus.filter((menu) => prev.includes(menu.menu_name) && menu.lunchbox_menu_category !== "ข้าว");
+          // ถ้าเป็นเซต unlimited และเป็นข้าว
+          if (isRiceMenu && isUnlimited) {
+            const allSelectedMenus = availableMenus.filter((menu) => prev.includes(buildMenuKey(menu)) && menu.lunchbox_menu_category !== "ข้าว");
             const totalMenuCount = allSelectedMenus.length;
 
             // ถ้ายังมีเมนูเหลืออยู่และข้าวยังไม่พอ ให้แจ้งเตือน
@@ -344,22 +357,22 @@ export default function Order() {
             // ลด quantity ของข้าว หรือเอาออกถ้า quantity = 0
             if (riceQuantity > 1) {
               setRiceQuantity(riceQuantity - 1);
-              return prev.filter((item) => item !== menuName);
+              return prev.filter((item) => item !== menuKey);
             } else {
               setRiceQuantity(0);
-              return prev.filter((item) => item !== menuName);
+              return prev.filter((item) => item !== menuKey);
             }
-          } else if (isRiceMenu && !isCustomUnlimited) {
+          } else if (isRiceMenu && !isUnlimited) {
             alert("ไม่สามารถยกเลิกการเลือกข้าวได้ เนื่องจากข้าวเป็นส่วนประกอบหลักของชุดอาหาร");
             return prev;
           }
 
-          return prev.filter((item) => item !== menuName);
+          return prev.filter((item) => item !== menuKey);
         } else {
-          const currentSelectedMenus = availableMenus.filter((menu) => prev.includes(menu.menu_name));
+          const currentSelectedMenus = availableMenus.filter((menu) => prev.includes(buildMenuKey(menu)));
 
-          // ถ้าเป็น Custom unlimited ให้อนุญาตให้เลือกหมวดเดียวกันซ้ำได้
-          if (!isCustomUnlimited) {
+          // ถ้าไม่ใช่เซต unlimited (limit > 0) ให้บล็อกหมวดที่เลือกไปแล้ว
+          if (!isUnlimited) {
             const existingLunchboxCategories = currentSelectedMenus.map((menu) => menu.lunchbox_menu_category).filter((category) => category);
 
             // กรณีพิเศษ: Premium Lunch Set "379 baht" - ให้เลือกเครื่องเคียงได้ 3 อย่าง
@@ -400,15 +413,15 @@ export default function Order() {
             }
           }
 
-          // ถ้าเป็น Custom unlimited และเลือกเมนูใหม่ (ไม่ใช่ข้าว)
+          // ถ้าเป็นเซต unlimited และเมนูนี้ถูกตั้งให้เพิ่มข้าวอัตโนมัติ (ไม่ใช่ข้าว)
           // ให้เพิ่มจำนวนข้าวตามจำนวนเมนูใน category เดียวกัน
-          if (isCustomUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && isInAddRiceCategory) {
+          if (isUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && shouldAutoAddRice) {
             const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว");
             if (riceMenus.length > 0) {
-              const riceMenuName = riceMenus[0].menu_name;
+              const riceMenuKey = buildMenuKey(riceMenus[0]);
 
               // นับจำนวนเมนูใน category เดียวกันที่เลือกไว้แล้ว (ไม่นับข้าว)
-              const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && prev.includes(menu.menu_name));
+              const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && prev.includes(buildMenuKey(menu)));
 
               // คำนวณจำนวนข้าวที่ต้องการ (1 ข้าวต่อ 1 เมนูใน category)
               const requiredRiceCount = menusInCategory.length + 1; // +1 เพราะกำลังจะเพิ่มเมนูใหม่
@@ -416,19 +429,19 @@ export default function Order() {
               setRiceQuantity(requiredRiceCount);
 
               // ถ้ายังไม่มีข้าวในรายการ ให้เพิ่มข้าว
-              if (!prev.includes(riceMenuName)) {
-                return [...prev, riceMenuName, menuName];
+              if (!prev.includes(riceMenuKey)) {
+                return [...prev, riceMenuKey, menuKey];
               } else {
-                return [...prev, menuName];
+                return [...prev, menuKey];
               }
             }
           }
 
           // ถ้า limit = 0 (ไม่จำกัด) หรือ Custom unlimited ให้เลือกได้เลย
           if (isUnlimited || prev.length < limit) {
-            return [...prev, menuName];
+            return [...prev, menuKey];
           } else {
-            const newSelection = [...prev.slice(1), menuName];
+            const newSelection = [...prev.slice(1), menuKey];
             return newSelection;
           }
         }
@@ -457,32 +470,32 @@ export default function Order() {
       try {
         // นับจำนวนเมนูแต่ละตัว (รวมข้าวที่ซ้ำกัน)
         const menuCountMap = new Map<string, number>();
-        selectedMenuItems.forEach((menuName) => {
-          const menu = availableMenus.find((m) => m.menu_name === menuName);
+        selectedMenuItems.forEach((menuKey) => {
+          const menu = availableMenus.find((m) => buildMenuKey(m) === menuKey);
           // ถ้าเป็นข้าว ให้ใช้ quantity จาก state
-          if (menu?.lunchbox_menu_category === "ข้าว") menuCountMap.set(menuName, riceQuantity);
-          else menuCountMap.set(menuName, (menuCountMap.get(menuName) || 0) + 1);
+          if (menu?.lunchbox_menu_category === "ข้าว") menuCountMap.set(menuKey, riceQuantity);
+          else menuCountMap.set(menuKey, (menuCountMap.get(menuKey) || 0) + 1);
         });
 
         // สร้าง selectedMenuObjects โดยไม่ซ้ำกัน แต่เก็บ quantity ไว้
         // สำหรับ Custom unlimited เก็บเป็น array ที่มี menu objects ตามจำนวนที่เลือก
-        const selectedMenuObjects: MenuItem[] = [];
+        const selectedMenuObjects: MenuItemWithAutoRice[] = [];
         const processedMenuNames = new Set<string>();
 
-        for (const menuName of selectedMenuItems) {
-          if (!processedMenuNames.has(menuName)) {
-            const menu = availableMenus.find((m) => m.menu_name === menuName);
+        for (const menuKey of selectedMenuItems) {
+          if (!processedMenuNames.has(menuKey)) {
+            const menu = availableMenus.find((m) => buildMenuKey(m) === menuKey);
             if (menu) {
-              const quantity = menuCountMap.get(menuName) || 1;
+              const quantity = menuCountMap.get(menuKey) || 1;
               // สำหรับ Custom unlimited (limit = 0) ให้สร้าง menu objects ตามจำนวนที่เลือก
               // สำหรับแบบอื่น ให้สร้างแค่ 1 object ต่อ menu name
               const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
               const objectsToCreate = isCustomUnlimited ? quantity : 1;
 
               for (let i = 0; i < objectsToCreate; i++) selectedMenuObjects.push({ ...menu });
-              processedMenuNames.add(menuName);
+              processedMenuNames.add(menuKey);
             } else {
-              console.warn(`Menu not found: ${menuName}`);
+              console.warn(`Menu not found: ${menuKey}`);
             }
           }
         }
@@ -662,7 +675,7 @@ export default function Order() {
               <div className='flex items-center space-x-3 xl:space-x-4 truncate '>
                 <div
                   className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold truncate ${
-                    selectedSetMenu ? "bg-green-500 text-white truncate" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white truncate" : selectedFoodSet ? "bg-gray-400 text-white truncate " : "bg-gray-300 text-gray-500 truncate" 
+                    selectedSetMenu ? "bg-green-500 text-white truncate" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white truncate" : selectedFoodSet ? "bg-gray-400 text-white truncate " : "bg-gray-300 text-gray-500 truncate"
                   }`}>
                   2
                 </div>
@@ -693,15 +706,16 @@ export default function Order() {
           {/* Step 3: เลือกเมนูอาหาร - Similar improvements */}
           <button
             onClick={() => {
-              if (selectedMenuItems.length > 0) {
+              if (selectionCount.total > 0) {
                 setSelectedMenuItems([]);
+                setRiceQuantity(0);
               }
             }}
             disabled={!selectedSetMenu}
             className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-              selectedMenuItems.length > 0
+              selectionCount.total > 0
                 ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                : selectedSetMenu && selectedMenuItems.length === 0
+                : selectedSetMenu
                 ? "bg-orange-100 border-2 border-orange-300"
                 : selectedSetMenu
                 ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
@@ -710,38 +724,23 @@ export default function Order() {
             {/* Similar structure with responsive improvements */}
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-3 xl:space-x-4'>
-                <div
-                  className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                    selectedMenuItems.length > 0 ? "bg-green-500 text-white" : selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : selectedSetMenu ? "bg-gray-400 text-white" : "bg-gray-300 text-gray-500"
-                  }`}>
+                <div className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectionCount.total > 0 ? "bg-green-500 text-white" : selectedSetMenu ? "bg-orange-500 text-white" : "bg-gray-300 text-gray-500"}`}>
                   3
                 </div>
                 <div className='flex-1 min-w-0'>
                   <div className='font-medium text-gray-800 text-sm md:text-base xl:text-lg'>เลือกเมนูอาหาร</div>
                   <div className='text-xs md:text-sm xl:text-base text-gray-500'>
-                    {selectedMenuItems.length > 0
-                      ? (() => {
-                          // นับจำนวนเมนูจริงๆ (รวม quantity ของข้าว)
-                          const nonRiceCount = selectedMenuItems.filter((name) => {
-                            const menu = availableMenus.find((m) => m.menu_name === name);
-                            return menu?.lunchbox_menu_category !== "ข้าว";
-                          }).length;
-                          const totalCount = nonRiceCount + riceQuantity;
-                          return `เลือกแล้ว ${totalCount} เมนู${riceQuantity > 0 ? ` (ข้าว ${riceQuantity})` : ""}`;
-                        })()
-                      : selectedSetMenu
-                      ? "คลิกเพื่อเลือกเมนูอาหาร"
-                      : "เลือก Set อาหารก่อน"}
+                    {selectionCount.total > 0 ? `เลือกแล้ว ${selectionCount.total} เมนู${selectionCount.riceCount > 0 ? ` (ข้าว ${selectionCount.riceCount})` : ""}` : selectedSetMenu ? "คลิกเพื่อเลือกเมนูอาหาร" : "เลือก Set อาหารก่อน"}
                   </div>
                 </div>
               </div>
-              {selectedMenuItems.length > 0 && <span className='text-green-600 text-lg md:text-xl xl:text-2xl'>✓</span>}
+              {selectionCount.total > 0 && <span className='text-green-600 text-lg md:text-xl xl:text-2xl'>✓</span>}
             </div>
           </button>
         </div>
 
         {/* Note Section - Improved responsive design */}
-        {selectedMenuItems.length > 0 && (
+        {selectionCount.total > 0 && (
           <div className='mt-4 xl:mt-6 space-y-3 xl:space-y-4'>
             <div>
               <label className='block text-xs md:text-sm xl:text-base font-medium text-gray-700 mb-2'>หมายเหตุ (ไม่บังคับ)</label>
@@ -759,23 +758,23 @@ export default function Order() {
               onClick={handle.Submit}
               disabled={(() => {
                 if (isSaving) return true;
-                if (selectedMenuItems.length === 0) return true;
+                if (selectionCount.total === 0) return true;
 
                 // ตรวจสอบว่าเลือกครบตาม limit หรือไม่
                 const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                 const limit = setData?.lunchbox_limit ?? 0;
 
                 // ถ้า limit > 0 ต้องเลือกครบ, ถ้า limit = 0 (ไม่จำกัด) เลือกอย่างน้อย 1 เมนูก็ได้
-                if (limit > 0) return selectedMenuItems.length !== limit;
+                if (limit > 0) return selectionCount.total !== limit;
                 return false; // limit = 0 (ไม่จำกัด)
               })()}
               className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${
                 isSaving ||
                 (() => {
-                  if (selectedMenuItems.length === 0) return true;
+                  if (selectionCount.total === 0) return true;
                   const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                   const limit = setData?.lunchbox_limit ?? 0;
-                  return limit > 0 && selectedMenuItems.length !== limit;
+                  return limit > 0 && selectionCount.total !== limit;
                 })()
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transform hover:scale-105 hover:shadow-xl"
@@ -799,11 +798,12 @@ export default function Order() {
         {(selectedFoodSet || selectedSetMenu || selectedMenuItems.length > 0) && (
           <button
             onClick={() => {
-              const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว").map((menu) => menu.menu_name);
+              const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว").map((menu) => buildMenuKey(menu));
 
               setSelectedFoodSet("");
               setSelectedSetMenu("");
               setSelectedMenuItems(riceMenus);
+              setRiceQuantity(riceMenus.length > 0 ? 1 : 0);
               setNote("");
             }}
             className='w-full mt-3 xl:mt-4 px-4 py-3 md:px-5 md:py-4 xl:px-6 xl:py-5 bg-red-500 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl hover:bg-red-600 transition-colors min-h-[45px] md:min-h-[50px] xl:min-h-[60px]'>
@@ -1062,9 +1062,9 @@ export default function Order() {
                   }}
                   disabled={!selectedSetMenu}
                   className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectedMenuItems.length > 0
+                    selectionCount.total > 0
                       ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                      : selectedSetMenu && selectedMenuItems.length === 0
+                      : selectedSetMenu
                       ? "bg-orange-100 border-2 border-orange-300"
                       : selectedSetMenu
                       ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
@@ -1072,37 +1072,23 @@ export default function Order() {
                   }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
-                      <div
-                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                          selectedMenuItems.length > 0 ? "bg-green-500 text-white" : selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : selectedSetMenu ? "bg-gray-400 text-white" : "bg-gray-300 text-gray-500"
-                        }`}>
+                      <div className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectionCount.total > 0 ? "bg-green-500 text-white" : selectedSetMenu ? "bg-orange-500 text-white" : "bg-gray-300 text-gray-500"}`}>
                         3
                       </div>
                       <div className='flex-1 min-w-0'>
                         <div className='font-medium text-gray-800 text-sm md:text-base xl:text-lg'>เลือกเมนูอาหาร</div>
                         <div className='text-xs md:text-sm xl:text-base text-gray-500'>
-                          {selectedMenuItems.length > 0
-                            ? (() => {
-                                const nonRiceCount = selectedMenuItems.filter((name) => {
-                                  const menu = availableMenus.find((m) => m.menu_name === name);
-                                  return menu?.lunchbox_menu_category !== "ข้าว";
-                                }).length;
-                                const totalCount = nonRiceCount + riceQuantity;
-                                return `เลือกแล้ว ${totalCount} เมนู${riceQuantity > 0 ? ` (ข้าว ${riceQuantity})` : ""}`;
-                              })()
-                            : selectedSetMenu
-                            ? "คลิกเพื่อเลือกเมนูอาหาร"
-                            : "เลือก Set อาหารก่อน"}
+                          {selectionCount.total > 0 ? `เลือกแล้ว ${selectionCount.total} เมนู${selectionCount.riceCount > 0 ? ` (ข้าว ${selectionCount.riceCount})` : ""}` : selectedSetMenu ? "คลิกเพื่อเลือกเมนูอาหาร" : "เลือก Set อาหารก่อน"}
                         </div>
                       </div>
                     </div>
-                    {selectedMenuItems.length > 0 && <span className='text-green-600 text-lg md:text-xl xl:text-2xl'>✓</span>}
+                    {selectionCount.total > 0 && <span className='text-green-600 text-lg md:text-xl xl:text-2xl'>✓</span>}
                   </div>
                 </button>
               </div>
 
               {/* Note  Section */}
-              {selectedMenuItems.length > 0 && (
+              {selectionCount.total > 0 && (
                 <div className='mt-4 xl:mt-6 space-y-3 xl:space-y-4'>
                   <div>
                     <label className='block text-xs md:text-sm xl:text-base font-medium text-gray-700 mb-2'>หมายเหตุ (ไม่บังคับ)</label>
@@ -1120,19 +1106,19 @@ export default function Order() {
                     onClick={handle.Submit}
                     disabled={(() => {
                       if (isSaving) return true;
-                      if (selectedMenuItems.length === 0) return true;
+                      if (selectionCount.total === 0) return true;
                       const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                       const limit = setData?.lunchbox_limit ?? 0;
-                      if (limit > 0) return selectedMenuItems.length !== limit;
+                      if (limit > 0) return selectionCount.total !== limit;
                       return false;
                     })()}
                     className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${
                       isSaving ||
                       (() => {
-                        if (selectedMenuItems.length === 0) return true;
+                        if (selectionCount.total === 0) return true;
                         const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                         const limit = setData?.lunchbox_limit ?? 0;
-                        return limit > 0 && selectedMenuItems.length !== limit;
+                        return limit > 0 && selectionCount.total !== limit;
                       })()
                         ? "!bg-gray-200 !cursor-not-allowed"
                         : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
@@ -1156,10 +1142,11 @@ export default function Order() {
               {(selectedFoodSet || selectedSetMenu || selectedMenuItems.length > 0) && (
                 <button
                   onClick={() => {
-                    const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว").map((menu) => menu.menu_name);
+                    const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว").map((menu) => buildMenuKey(menu));
                     setSelectedFoodSet("");
                     setSelectedSetMenu("");
                     setSelectedMenuItems(riceMenus);
+                    setRiceQuantity(riceMenus.length > 0 ? 1 : 0);
                     setNote("");
                   }}
                   className='w-full mt-3 xl:mt-4 px-4 py-3 md:px-5 md:py-4 xl:px-6 xl:py-5 bg-red-500 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl hover:bg-red-600 transition-colors min-h-[45px] md:min-h-[50px] xl:min-h-[60px]'>
@@ -1177,7 +1164,7 @@ export default function Order() {
             <TopStepper
               step1={selectedFoodSet || null}
               step2={selectedSetMenu || null}
-              step3Count={selectedMenuItems.length}
+              step3Count={selectionCount.total}
               showEdit={isEditMode}
               editingIndex={editingIndex}
               timeLabel={
@@ -1376,7 +1363,7 @@ export default function Order() {
                     {(() => {
                       const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                       const limit = setData?.lunchbox_limit || 0;
-                      const selected = selectedMenuItems.length;
+                      const selected = selectionCount.total;
                       const isUnlimited = limit === 0;
 
                       return (
@@ -1454,11 +1441,13 @@ export default function Order() {
                               {/* Menus Grid for this category - Improved responsive layout แก้ตรงนี้*/}
                               <div className='responsive-grid'>
                                 {menusInCategory.map((menu, index) => {
-                                  const isSelected = selectedMenuItems.includes(menu.menu_name);
+                                  const menuKey = buildMenuKey(menu);
+                                  const isSelected = selectedMenuItems.includes(menuKey);
 
                                   // ตรวจสอบว่าเป็น Custom unlimited หรือไม่
                                   const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                                   const limit = setData?.lunchbox_limit ?? 0;
+                                  const isUnlimited = limit === 0;
                                   const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
 
                                   // ตรวจสอบว่าเป็น Lunch Box Set E หรือ F หรือ อาหารเจ Set D หรือ Premium Lunch Set "270 baht" และเป็นหมวด "เครื่องเคียง" หรือไม่
@@ -1471,11 +1460,11 @@ export default function Order() {
                                   const isPremium379 = selectedFoodSet === "Premium Lunch" && selectedSetMenu === "379 baht";
                                   const isMainDishCategory = menu.lunchbox_menu_category === "กับข้าวที่ 1";
 
-                                  // ถ้าเป็น Custom unlimited ให้อนุญาตให้เลือกหมวดเดียวกันซ้ำได้
+                                  // ถ้าไม่ใช่เซต unlimited (limit > 0) ให้บล็อกหมวดที่เลือกไปแล้ว
                                   let isLunchboxCategoryTaken = false;
-                                  if (!isCustomUnlimited) {
+                                  if (!isUnlimited) {
                                     const selectedLunchboxCategories = availableMenus
-                                      .filter((m) => selectedMenuItems.includes(m.menu_name))
+                                      .filter((m) => selectedMenuItems.includes(buildMenuKey(m)))
                                       .map((m) => m.lunchbox_menu_category)
                                       .filter((category) => category);
 
@@ -1495,7 +1484,7 @@ export default function Order() {
                                       isSidedishCategory
                                     ) {
                                       // นับจำนวนเมนูในหมวด "เครื่องเคียง" ที่เลือกไว้แล้ว
-                                      const sidedishCount = availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name) && m.lunchbox_menu_category === "เครื่องเคียง").length;
+                                      const sidedishCount = availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m)) && m.lunchbox_menu_category === "เครื่องเคียง").length;
 
                                       // ถ้าเลือกครบ 2 อย่างแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
                                       isLunchboxCategoryTaken = sidedishCount >= 2 && !isSelected;
@@ -1503,7 +1492,7 @@ export default function Order() {
                                     // เพิ่มเงื่อนไขสำหรับ Premium Lunch Set "379 baht" - ให้เลือกกับข้าวได้ 2 อย่าง
                                     else if (isPremium379 && isMainDishCategory) {
                                       // นับจำนวนเมนูในหมวด "กับข้าว" ที่เลือกไว้แล้ว
-                                      const mainDishCount = availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name) && m.lunchbox_menu_category === "กับข้าว").length;
+                                      const mainDishCount = availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m)) && m.lunchbox_menu_category === "กับข้าว").length;
 
                                       // ถ้าเลือกครบ 2 อย่างแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
                                       isLunchboxCategoryTaken = mainDishCount >= 2 && !isSelected;
@@ -1515,10 +1504,8 @@ export default function Order() {
 
                                   const isAutoSelectedRice = menu.lunchbox_menu_category === "ข้าว" && isSelected;
 
-                                  // ตรวจสอบว่าเป็นข้าวที่เพิ่มอัตโนมัติจาก category พิเศษหรือไม่
-                                  const addRiceCategories = AddRiceAuto.lunchbox_menu_categoty || [];
-                                  const isInAddRiceCategory = addRiceCategories.includes(menu.lunchbox_menu_category || "");
-                                  const isAutoRiceFromCategory = isCustomUnlimited && isInAddRiceCategory && isAutoSelectedRice;
+                                  // ตรวจสอบว่าเป็นข้าวที่เพิ่มอัตโนมัติจาก flag บนเมนูหรือไม่
+                                  const shouldAutoAddRice = menu.lunchbox_AutoRice === true;
 
                                   return (
                                     <MenuCard
@@ -1526,18 +1513,18 @@ export default function Order() {
                                       key={menu.menu_id || index}
                                       menuId={menu.menu_id || String(index)}
                                       name={menu.menu_name}
-                                      price={menu.menu_cost || 0}
+                                      price={menu.lunchbox_cost ?? menu.menu_cost ?? 0}
                                       category={menu.lunchbox_menu_category || undefined}
                                       emoji={menu.lunchbox_menu_category === "ข้าว" ? "🍚" : "🍜"}
                                       image={FoodMenuIcon.src}
                                       selected={isSelected}
-                                      forced={isAutoSelectedRice && !isCustomUnlimited} // แก้ไข: ไม่บังคับถ้าเป็น Custom unlimited
+                                      forced={isAutoSelectedRice && !isUnlimited} // แก้ไข: ไม่บังคับถ้าเป็นเซต unlimited
                                       duplicate={!!isLunchboxCategoryTaken}
                                       size={isMobile ? "sm" : "md"}
                                       showPrice={menu.lunchbox_showPrice ?? true} // เพิ่มบรรทัดนี้
                                       onClick={() => {
                                         if (!isLunchboxCategoryTaken) {
-                                          handle.MenuSelection(menu.menu_name);
+                                          handle.MenuSelection(menuKey);
                                         }
                                       }}
                                     />
@@ -1574,28 +1561,28 @@ export default function Order() {
           {/* Mobile Action Bar - Sticky Bottom */}
           <MobileActionBar
             canSubmit={(() => {
-              if (selectedMenuItems.length === 0) return false;
+              if (selectionCount.total === 0) return false;
 
               // ตรวจสอบว่าเลือกครบตาม limit หรือไม่
               const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
               const limit = setData?.lunchbox_limit ?? 0;
 
               if (limit > 0) {
-                return selectedMenuItems.length === limit;
+                return selectionCount.total === limit;
               }
               return true;
             })()}
             saving={isSaving}
             editMode={isEditMode}
             totalCost={(() => {
-              if (selectedMenuItems.length === 0) return null;
+              if (selectionCount.total === 0) return null;
 
               const setPrice = extractPriceFromSetName(selectedSetMenu);
               if (setPrice !== null) {
                 return setPrice;
               }
 
-              return availableMenus.filter((m) => selectedMenuItems.includes(m.menu_name)).reduce((sum, m) => sum + (m.menu_cost || 0), 0);
+              return availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m))).reduce((sum, m) => sum + (m.menu_cost || 0), 0);
             })()}
             onSubmit={handle.Submit}
             onReset={() => {

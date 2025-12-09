@@ -1674,12 +1674,12 @@ export namespace Prisma {
     name: "CartCartMenuItemsMenuIngredients"
     objects: {}
     scalars: {
-      ingredient_name: string
+      ingredient_name: string | null
       ingredient_status: boolean | null
       /**
        * Multiple data types found: Int: 98.6%, BigInt: 1.4% out of 2659 sampled entries
        */
-      useItem: Prisma.JsonValue
+      useItem: Prisma.JsonValue | null
     }
     composites: {}
   }
@@ -1854,34 +1854,40 @@ export namespace Prisma {
 
 
   export type MenuMenuLunchboxSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    lunchbox_menuid?: boolean
     lunchbox_cost?: boolean
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
     lunchbox_menu_category?: boolean
     lunchbox_showPrice?: boolean
+    lunchbox_AutoRice?: boolean
   }, ExtArgs["result"]["menuMenuLunchbox"]>
 
 
 
   export type MenuMenuLunchboxSelectScalar = {
+    lunchbox_menuid?: boolean
     lunchbox_cost?: boolean
     lunchbox_name?: boolean
     lunchbox_set_name?: boolean
     lunchbox_menu_category?: boolean
     lunchbox_showPrice?: boolean
+    lunchbox_AutoRice?: boolean
   }
 
-  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_cost" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_menu_category" | "lunchbox_showPrice", ExtArgs["result"]["menuMenuLunchbox"]>
+  export type MenuMenuLunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lunchbox_menuid" | "lunchbox_cost" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_menu_category" | "lunchbox_showPrice" | "lunchbox_AutoRice", ExtArgs["result"]["menuMenuLunchbox"]>
 
   export type $MenuMenuLunchboxPayload = {
     name: "MenuMenuLunchbox"
     objects: {}
     scalars: {
+      lunchbox_menuid: string | null
       lunchbox_cost: bigint | null
       lunchbox_name: string
       lunchbox_set_name: string
       lunchbox_menu_category: string | null
       lunchbox_showPrice: boolean | null
+      lunchbox_AutoRice: boolean | null
     }
     composites: {}
   }
@@ -1896,11 +1902,13 @@ export namespace Prisma {
    * Fields of the MenuMenuLunchbox model
    */
   interface MenuMenuLunchboxFieldRefs {
+    readonly lunchbox_menuid: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_cost: FieldRef<"MenuMenuLunchbox", 'BigInt'>
     readonly lunchbox_name: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_menu_category: FieldRef<"MenuMenuLunchbox", 'String'>
     readonly lunchbox_showPrice: FieldRef<"MenuMenuLunchbox", 'Boolean'>
+    readonly lunchbox_AutoRice: FieldRef<"MenuMenuLunchbox", 'Boolean'>
   }
     
 
@@ -6028,21 +6036,27 @@ export namespace Prisma {
     id: string | null
     lunchbox_limit: number | null
     lunchbox_name: string | null
+    lunchbox_name_image: string | null
     lunchbox_set_name: string | null
+    lunchbox_set_name_image: string | null
   }
 
   export type LunchboxMaxAggregateOutputType = {
     id: string | null
     lunchbox_limit: number | null
     lunchbox_name: string | null
+    lunchbox_name_image: string | null
     lunchbox_set_name: string | null
+    lunchbox_set_name_image: string | null
   }
 
   export type LunchboxCountAggregateOutputType = {
     id: number
     lunchbox_limit: number
     lunchbox_name: number
+    lunchbox_name_image: number
     lunchbox_set_name: number
+    lunchbox_set_name_image: number
     _all: number
   }
 
@@ -6059,21 +6073,27 @@ export namespace Prisma {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_set_name_image?: true
   }
 
   export type LunchboxMaxAggregateInputType = {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_set_name_image?: true
   }
 
   export type LunchboxCountAggregateInputType = {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_set_name_image?: true
     _all?: true
   }
 
@@ -6167,7 +6187,9 @@ export namespace Prisma {
     id: string
     lunchbox_limit: number
     lunchbox_name: string
+    lunchbox_name_image: string | null
     lunchbox_set_name: string
+    lunchbox_set_name_image: string | null
     _count: LunchboxCountAggregateOutputType | null
     _avg: LunchboxAvgAggregateOutputType | null
     _sum: LunchboxSumAggregateOutputType | null
@@ -6193,7 +6215,9 @@ export namespace Prisma {
     id?: boolean
     lunchbox_limit?: boolean
     lunchbox_name?: boolean
+    lunchbox_name_image?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_set_name_image?: boolean
   }, ExtArgs["result"]["lunchbox"]>
 
 
@@ -6202,10 +6226,12 @@ export namespace Prisma {
     id?: boolean
     lunchbox_limit?: boolean
     lunchbox_name?: boolean
+    lunchbox_name_image?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_set_name_image?: boolean
   }
 
-  export type lunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lunchbox_limit" | "lunchbox_name" | "lunchbox_set_name", ExtArgs["result"]["lunchbox"]>
+  export type lunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lunchbox_limit" | "lunchbox_name" | "lunchbox_name_image" | "lunchbox_set_name" | "lunchbox_set_name_image", ExtArgs["result"]["lunchbox"]>
 
   export type $lunchboxPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "lunchbox"
@@ -6214,7 +6240,9 @@ export namespace Prisma {
       id: string
       lunchbox_limit: number
       lunchbox_name: string
+      lunchbox_name_image: string | null
       lunchbox_set_name: string
+      lunchbox_set_name_image: string | null
     }, ExtArgs["result"]["lunchbox"]>
     composites: {}
   }
@@ -6610,7 +6638,9 @@ export namespace Prisma {
     readonly id: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_limit: FieldRef<"lunchbox", 'Int'>
     readonly lunchbox_name: FieldRef<"lunchbox", 'String'>
+    readonly lunchbox_name_image: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"lunchbox", 'String'>
+    readonly lunchbox_set_name_image: FieldRef<"lunchbox", 'String'>
   }
     
 
@@ -8066,7 +8096,9 @@ export namespace Prisma {
     id: 'id',
     lunchbox_limit: 'lunchbox_limit',
     lunchbox_name: 'lunchbox_name',
-    lunchbox_set_name: 'lunchbox_set_name'
+    lunchbox_name_image: 'lunchbox_name_image',
+    lunchbox_set_name: 'lunchbox_set_name',
+    lunchbox_set_name_image: 'lunchbox_set_name_image'
   };
 
   export type LunchboxScalarFieldEnum = (typeof LunchboxScalarFieldEnum)[keyof typeof LunchboxScalarFieldEnum]
@@ -8514,14 +8546,18 @@ export namespace Prisma {
     id?: StringFilter<"lunchbox"> | string
     lunchbox_limit?: IntFilter<"lunchbox"> | number
     lunchbox_name?: StringFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringFilter<"lunchbox"> | string
+    lunchbox_set_name_image?: StringNullableFilter<"lunchbox"> | string | null
   }
 
   export type lunchboxOrderByWithRelationInput = {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_set_name_image?: SortOrder
   }
 
   export type lunchboxWhereUniqueInput = Prisma.AtLeast<{
@@ -8531,14 +8567,18 @@ export namespace Prisma {
     NOT?: lunchboxWhereInput | lunchboxWhereInput[]
     lunchbox_limit?: IntFilter<"lunchbox"> | number
     lunchbox_name?: StringFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringFilter<"lunchbox"> | string
+    lunchbox_set_name_image?: StringNullableFilter<"lunchbox"> | string | null
   }, "id">
 
   export type lunchboxOrderByWithAggregationInput = {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_set_name_image?: SortOrder
     _count?: lunchboxCountOrderByAggregateInput
     _avg?: lunchboxAvgOrderByAggregateInput
     _max?: lunchboxMaxOrderByAggregateInput
@@ -8553,7 +8593,9 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"lunchbox"> | string
     lunchbox_limit?: IntWithAggregatesFilter<"lunchbox"> | number
     lunchbox_name?: StringWithAggregatesFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringWithAggregatesFilter<"lunchbox"> | string
+    lunchbox_set_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
   }
 
   export type menuWhereInput = {
@@ -9006,45 +9048,59 @@ export namespace Prisma {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_set_name_image?: string | null
   }
 
   export type lunchboxUncheckedCreateInput = {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_set_name_image?: string | null
   }
 
   export type lunchboxUpdateInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type lunchboxUncheckedUpdateInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type lunchboxCreateManyInput = {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_set_name_image?: string | null
   }
 
   export type lunchboxUpdateManyMutationInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type lunchboxUncheckedUpdateManyInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type menuCreateInput = {
@@ -9448,7 +9504,9 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_set_name_image?: SortOrder
   }
 
   export type lunchboxAvgOrderByAggregateInput = {
@@ -9459,14 +9517,18 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_set_name_image?: SortOrder
   }
 
   export type lunchboxMinOrderByAggregateInput = {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_set_name_image?: SortOrder
   }
 
   export type lunchboxSumOrderByAggregateInput = {
@@ -9508,11 +9570,13 @@ export namespace Prisma {
   }
 
   export type MenuMenuLunchboxObjectEqualityInput = {
+    lunchbox_menuid?: string | null
     lunchbox_cost?: bigint | number | null
     lunchbox_name: string
     lunchbox_set_name: string
     lunchbox_menu_category?: string | null
     lunchbox_showPrice?: boolean | null
+    lunchbox_AutoRice?: boolean | null
   }
 
   export type MenuMenuIngredientsOrderByCompositeAggregateInput = {
@@ -9644,11 +9708,13 @@ export namespace Prisma {
   }
 
   export type MenuMenuLunchboxCreateInput = {
+    lunchbox_menuid?: string | null
     lunchbox_cost?: bigint | number | null
     lunchbox_name: string
     lunchbox_set_name: string
     lunchbox_menu_category?: string | null
     lunchbox_showPrice?: boolean | null
+    lunchbox_AutoRice?: boolean | null
   }
 
   export type MenuMenuIngredientsListUpdateEnvelopeInput = {
@@ -9730,9 +9796,9 @@ export namespace Prisma {
   }
 
   export type CartCartMenuItemsMenuIngredientsObjectEqualityInput = {
-    ingredient_name: string
+    ingredient_name?: string | null
     ingredient_status?: boolean | null
-    useItem: InputJsonValue
+    useItem?: InputJsonValue | null
   }
 
   export type CartCartMenuItemsMenuNotesObjectEqualityInput = {
@@ -9837,11 +9903,13 @@ export namespace Prisma {
     AND?: MenuMenuLunchboxWhereInput | MenuMenuLunchboxWhereInput[]
     OR?: MenuMenuLunchboxWhereInput[]
     NOT?: MenuMenuLunchboxWhereInput | MenuMenuLunchboxWhereInput[]
+    lunchbox_menuid?: StringNullableFilter<"MenuMenuLunchbox"> | string | null
     lunchbox_cost?: BigIntNullableFilter<"MenuMenuLunchbox"> | bigint | number | null
     lunchbox_name?: StringFilter<"MenuMenuLunchbox"> | string
     lunchbox_set_name?: StringFilter<"MenuMenuLunchbox"> | string
     lunchbox_menu_category?: StringNullableFilter<"MenuMenuLunchbox"> | string | null
     lunchbox_showPrice?: BoolNullableFilter<"MenuMenuLunchbox"> | boolean | null
+    lunchbox_AutoRice?: BoolNullableFilter<"MenuMenuLunchbox"> | boolean | null
   }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -9867,9 +9935,9 @@ export namespace Prisma {
   }
 
   export type CartCartMenuItemsMenuIngredientsCreateInput = {
-    ingredient_name: string
+    ingredient_name?: string | null
     ingredient_status?: boolean | null
-    useItem: InputJsonValue
+    useItem?: InputJsonValue | null
   }
 
   export type CartCartMenuItemsMenuNotesCreateInput = {
@@ -10006,11 +10074,13 @@ export namespace Prisma {
   }
 
   export type MenuMenuLunchboxUpdateInput = {
+    lunchbox_menuid?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_cost?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     lunchbox_name?: StringFieldUpdateOperationsInput | string
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
     lunchbox_menu_category?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_showPrice?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    lunchbox_AutoRice?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
   export type CartCartLunchboxLunchboxMenuWhereInput = {
@@ -10043,9 +10113,9 @@ export namespace Prisma {
     AND?: CartCartMenuItemsMenuIngredientsWhereInput | CartCartMenuItemsMenuIngredientsWhereInput[]
     OR?: CartCartMenuItemsMenuIngredientsWhereInput[]
     NOT?: CartCartMenuItemsMenuIngredientsWhereInput | CartCartMenuItemsMenuIngredientsWhereInput[]
-    ingredient_name?: StringFilter<"CartCartMenuItemsMenuIngredients"> | string
+    ingredient_name?: StringNullableFilter<"CartCartMenuItemsMenuIngredients"> | string | null
     ingredient_status?: BoolNullableFilter<"CartCartMenuItemsMenuIngredients"> | boolean | null
-    useItem?: JsonFilter<"CartCartMenuItemsMenuIngredients">
+    useItem?: JsonNullableFilter<"CartCartMenuItemsMenuIngredients">
   }
 
   export type CartCartMenuItemsMenuNotesWhereInput = {
@@ -10114,6 +10184,18 @@ export namespace Prisma {
     isEmpty?: boolean
     isSet?: boolean
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    isSet?: boolean
+  }
 
   export type CartCartLunchboxLunchboxMenuUpdateManyInput = {
     where: CartCartLunchboxLunchboxMenuWhereInput
@@ -10163,9 +10245,9 @@ export namespace Prisma {
   }
 
   export type CartCartMenuItemsMenuIngredientsUpdateInput = {
-    ingredient_name?: StringFieldUpdateOperationsInput | string
+    ingredient_name?: NullableStringFieldUpdateOperationsInput | string | null
     ingredient_status?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    useItem?: InputJsonValue | InputJsonValue
+    useItem?: InputJsonValue | InputJsonValue | null
   }
 
   export type CartCartMenuItemsMenuNotesUpdateInput = {
