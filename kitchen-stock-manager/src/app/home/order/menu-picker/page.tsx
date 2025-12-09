@@ -1453,8 +1453,73 @@ export default function Order() {
                           return a.localeCompare(b, "th");
                         });
 
+                        // ฟังก์ชันตรวจสอบประเภทเนื้อสัตว์จากชื่อเมนู
+                        const getMeatType = (menuName: string): "หมู" | "ไก่" | "หมึก" | "ทะเล" | null => {
+                          if (menuName.includes("หมู")) return "หมู";
+                          if (menuName.includes("ไก่")) return "ไก่";
+                          if (menuName.includes("หมึก")) return "หมึก";
+                          if (menuName.includes("กุ้ง") || menuName.includes("ทะเล")) return "ทะเล";
+                          return null;
+                        };
+
+                        // ฟังก์ชันตรวจสอบประเภทอาหารจากชื่อเมนู
+                        const getDishType = (menuName: string): string | null => {
+                          if (menuName.includes("กะเพรา") || menuName.includes("กระเพรา")) return "กะเพรา";
+                          if (menuName.includes("กระเทียม")) return "กระเทียม";
+                          if (menuName.includes("พริกแกง") || menuName.includes("พริกเเกง")) return "พริกแกง";
+                          if (menuName.includes("คั่วกลิ้ง")) return "คั่วกลิ้ง";
+                          if (menuName.includes("ผัดผงกะหรี่")) return "ผัดผงกะหรี่";
+                          return null;
+                        };
+
+                        // ลำดับความสำคัญของประเภทอาหาร
+                        const dishOrder = ["กะเพรา", "กระเทียม", "พริกแกง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
+                        // ลำดับความสำคัญของประเภทเนื้อสัตว์
+                        const meatOrder = ["หมู", "ไก่", "หมึก", "ทะเล"];
+
                         return sortedCategories.map((category) => {
-                          const menusInCategory = groupedMenus[category].sort((a, b) => a.menu_name.localeCompare(b.menu_name, "th"));
+                          // เรียงลำดับเมนูตามประเภทอาหารก่อน แล้วตามประเภทเนื้อสัตว์ แล้วค่อยเรียงตามตัวอักษร
+                          const menusInCategory = groupedMenus[category].sort((a, b) => {
+                            const dishA = getDishType(a.menu_name);
+                            const dishB = getDishType(b.menu_name);
+                            const dishIndexA = dishA ? dishOrder.indexOf(dishA) : -1;
+                            const dishIndexB = dishB ? dishOrder.indexOf(dishB) : -1;
+                            
+                            // เรียงตามประเภทอาหารก่อน
+                            if (dishIndexA !== -1 && dishIndexB !== -1) {
+                              if (dishIndexA !== dishIndexB) return dishIndexA - dishIndexB;
+                              // ถ้าประเภทอาหารเดียวกัน ให้เรียงตามประเภทเนื้อสัตว์
+                              const meatA = getMeatType(a.menu_name);
+                              const meatB = getMeatType(b.menu_name);
+                              const meatIndexA = meatA ? meatOrder.indexOf(meatA) : -1;
+                              const meatIndexB = meatB ? meatOrder.indexOf(meatB) : -1;
+                              if (meatIndexA !== -1 && meatIndexB !== -1) {
+                                if (meatIndexA !== meatIndexB) return meatIndexA - meatIndexB;
+                              }
+                              if (meatIndexA !== -1) return -1;
+                              if (meatIndexB !== -1) return 1;
+                              return a.menu_name.localeCompare(b.menu_name, "th");
+                            }
+                            // ถ้า a มีประเภทอาหาร แต่ b ไม่มี ให้ a มาก่อน
+                            if (dishIndexA !== -1) return -1;
+                            // ถ้า b มีประเภทอาหาร แต่ a ไม่มี ให้ b มาก่อน
+                            if (dishIndexB !== -1) return 1;
+                            
+                            // ถ้าไม่มีประเภทอาหาร ให้เรียงตามประเภทเนื้อสัตว์
+                            const meatA = getMeatType(a.menu_name);
+                            const meatB = getMeatType(b.menu_name);
+                            const indexA = meatA ? meatOrder.indexOf(meatA) : -1;
+                            const indexB = meatB ? meatOrder.indexOf(meatB) : -1;
+                            
+                            if (indexA !== -1 && indexB !== -1) {
+                              if (indexA !== indexB) return indexA - indexB;
+                              return a.menu_name.localeCompare(b.menu_name, "th");
+                            }
+                            if (indexA !== -1) return -1;
+                            if (indexB !== -1) return 1;
+                            // ถ้าทั้งคู่ไม่มีประเภทเนื้อสัตว์ ให้เรียงตามตัวอักษร
+                            return a.menu_name.localeCompare(b.menu_name, "th");
+                          });
 
                           // ตรวจสอบว่าเป็น Custom unlimited หรือไม่
                           const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
@@ -1539,6 +1604,9 @@ export default function Order() {
                                   const isInAddRiceCategory = addRiceCategories.includes(menu.lunchbox_menu_category || "");
                                   const isAutoRiceFromCategory = isCustomUnlimited && isInAddRiceCategory && isAutoSelectedRice;
 
+                                  // ตรวจสอบประเภทเนื้อสัตว์สำหรับแสดงสี
+                                  const menuMeatType = getMeatType(menu.menu_name);
+
                                   return (
                                     <MenuCard
                                       className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
@@ -1549,6 +1617,7 @@ export default function Order() {
                                       category={menu.lunchbox_menu_category || undefined}
                                       emoji={menu.lunchbox_menu_category === "ข้าว" ? "🍚" : "🍜"}
                                       image={FoodMenuIcon.src}
+                                      meatType={menuMeatType}
                                       selected={isSelected}
                                       forced={isAutoSelectedRice && !isCustomUnlimited} // แก้ไข: ไม่บังคับถ้าเป็น Custom unlimited
                                       duplicate={!!isLunchboxCategoryTaken}

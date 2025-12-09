@@ -4,6 +4,8 @@ import React, { KeyboardEvent, forwardRef, memo } from "react";
 
 export type MenuCardSize = "sm" | "md" | "lg";
 
+export type MeatType = "หมู" | "ไก่" | "หมึก" | "ทะเล" | null;
+
 export type MenuCardProps = {
   menuId: string;
   name: string;
@@ -11,6 +13,7 @@ export type MenuCardProps = {
   category?: string | null;
   emoji?: string;
   image?: string;
+  meatType?: MeatType;
 
   selected?: boolean;
   forced?: boolean; 
@@ -49,7 +52,17 @@ function getEmoji(emoji?: string, category?: string | null) {
   return "🍽️";
 }
 
-const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard({ menuId, name, price, category, emoji, image, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title }, ref) {
+// กำหนดสีพื้นหลังตามประเภทเนื้อสัตว์
+const meatTypeGradients: Record<string, string> = {
+  "หมู": "bg-[linear-gradient(to_bottom_right,theme(colors.pink.100),theme(colors.pink.200),theme(colors.pink.300))]",
+  "ไก่": "bg-[linear-gradient(to_bottom_right,theme(colors.yellow.100),theme(colors.yellow.200),theme(colors.yellow.300))]",
+  "หมึก": "bg-[linear-gradient(to_bottom_right,theme(colors.purple.100),theme(colors.purple.200),theme(colors.purple.300))]",
+  "ทะเล": "bg-[linear-gradient(to_bottom_right,theme(colors.orange.100),theme(colors.orange.200),theme(colors.orange.300))]",
+};
+
+const defaultGradient = "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]";
+
+const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard({ menuId, name, price, category, emoji, image, meatType, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title }, ref) {
   const sizeConf = sizeMap[size] || sizeMap.md;
   const isDisabled = disabled || (!!duplicate && !selected);
 
@@ -101,7 +114,7 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       )}
 
       {/* Media / Emoji or Image */}
-      <div className={cn(sizeConf.media, "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]", "flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.02]")} aria-hidden>
+      <div className={cn(sizeConf.media, meatType && meatTypeGradients[meatType] ? meatTypeGradients[meatType] : defaultGradient, "flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.02]")} aria-hidden>
         {image ? (
           <img src={image} className="w-3/4 h-3/4 object-contain p-2" alt={name} />
         ) : (
