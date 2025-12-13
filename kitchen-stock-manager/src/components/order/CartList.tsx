@@ -12,6 +12,9 @@ import { th } from "date-fns/locale/th";
 
 import { LunchBox } from "@/stores/store";
 
+import SetFoodSelect from "@/assets/set_food_select.png";
+import Edit from "@/assets/edit.png";
+
 import { create } from "zustand";
 
 registerLocale("th", th);
@@ -408,7 +411,7 @@ export default function CartList() {
     <main className='min-h-screen text-black'>
       {/* Success Notification Toast - Top Right */}
       {success && (
-        <div className={`fixed top-4 right-4 z-50 flex w-3/4 max-w-96 h-24 bg-white rounded-xl overflow-hidden shadow-lg transition-all duration-300 ease-in-out ${isSuccessVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"}`}>
+        <div className={`fixed top-4 right-4 z-50 flex w-3/4 max-w-96 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${isSuccessVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"}`}>
           <svg width='16' height='96' xmlns='http://www.w3.org/2000/svg'>
             <path
               d='M 8 0 
@@ -731,71 +734,77 @@ export default function CartList() {
         {/* Selected Lunchboxes */}
         {selected_lunchboxes.length > 0 && (
           <div className='space-y-3 mb-4'>
-            <h3 className='font-bold'>📦 ชุดอาหารที่เลือก</h3>
-            {selected_lunchboxes.slice().reverse().map((lunchbox, reversedIndex) => {
-              // คำนวณ index จริงจาก reversed index
-              const actualIndex = selected_lunchboxes.length - 1 - reversedIndex;
-              const menuGroups = groupMenusByLimit(lunchbox.selected_menus, lunchbox.lunchbox_limit);
+            <div className='flex items-end'>
+              <img className='w-8 h-8' src={SetFoodSelect.src} alt='' />
+              <h3 className='ml-2 !font-bold'>ชุดอาหารที่เลือก</h3>
+            </div>
+            {selected_lunchboxes
+              .slice()
+              .reverse()
+              .map((lunchbox, reversedIndex) => {
+                // คำนวณ index จริงจาก reversed index
+                const actualIndex = selected_lunchboxes.length - 1 - reversedIndex;
+                const menuGroups = groupMenusByLimit(lunchbox.selected_menus, lunchbox.lunchbox_limit);
 
-              return (
-                <div key={actualIndex} className='border p-4 rounded bg-gray-50'>
-                  <div className='flex justify-between items-start mb-2'>
-                    <div>
-                      <h4 className='font-medium'>
-                        {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set}
-                      </h4>
-                      <p className='text-sm text-gray-600'>เลือกได้ {lunchbox.lunchbox_limit} อย่าง</p>
+                return (
+                  <div key={actualIndex} className='border p-4 rounded bg-gray-50'>
+                    <div className='flex justify-between items-start mb-2'>
+                      <div>
+                        <h4 className='font-medium'>
+                          {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set}
+                        </h4>
+                        <p className='text-sm text-gray-600'>เลือกได้ {lunchbox.lunchbox_limit} อย่าง</p>
+                      </div>
+                      <button onClick={() => removeLunchbox(actualIndex)} className='px-2 py-1 w-auto !bg-red-500 !text-white rounded text-sm hover:!font-semibold hover:!bg-red-700'>
+                        ลบ
+                      </button>
                     </div>
-                    <button onClick={() => removeLunchbox(actualIndex)} className='px-2 py-1 bg-red-500 text-white rounded text-sm'>
-                      ลบ
+
+                    <div className='flex items-center gap-2 mb-2'>
+                      <label className='text-sm'>จำนวน:</label>
+                      <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(actualIndex, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
+                    </div>
+
+                    <div className='flex items-center gap-2 mb-2'>
+                      <label className='text-sm'>ราคารวม:</label>
+                      <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(actualIndex, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
+                      <span className='text-sm text-gray-500'>บาท</span>
+                    </div>
+
+                    <div className='mb-2'>
+                      <p className='text-sm font-medium'>เมนูที่เลือก:</p>
+                      {menuGroups.length > 0 ? (
+                        menuGroups.map((group, groupIndex) => (
+                          <div key={groupIndex} className='mb-2'>
+                            <p className='text-xs text-gray-600'>ชุดที่ {groupIndex + 1}:</p>
+                            <div className='flex flex-wrap gap-1 mt-1'>
+                              {group.map((menu, menuIndex) => (
+                                <span key={menuIndex} className='bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs'>
+                                  {menu.menu_name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className='text-sm text-gray-500'>ยังไม่ได้เลือกเมนู</p>
+                      )}
+                    </div>
+
+                    {/* แสดง Note ถ้ามี */}
+                    {lunchbox.note && (
+                      <div className='mb-2'>
+                        <p className='text-sm font-medium text-green-600'>📝 หมายเหตุ:</p>
+                        <p className='text-sm text-gray-700 bg-green-50 p-2 rounded border-l-4 border-green-200'>{lunchbox.note}</p>
+                      </div>
+                    )}
+
+                    <button onClick={() => handleEditLunchbox(actualIndex)} className='w-auto mx-auto flex !items-center !justify-center gap-2 px-3 py-2 rounded hover:!bg-gray-300 hover:!font-semibold text-sm'>
+                      <img className='w-7 h-7' src={Edit.src} alt='' /> แก้ไขทั้งหมด
                     </button>
                   </div>
-
-                  <div className='flex items-center gap-2 mb-2'>
-                    <label className='text-sm'>จำนวน:</label>
-                    <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(actualIndex, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
-                  </div>
-
-                  <div className='flex items-center gap-2 mb-2'>
-                    <label className='text-sm'>ราคารวม:</label>
-                    <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handleLunchboxTotalCostChange(actualIndex, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
-                    <span className='text-sm text-gray-500'>บาท</span>
-                  </div>
-
-                  <div className='mb-2'>
-                    <p className='text-sm font-medium'>เมนูที่เลือก:</p>
-                    {menuGroups.length > 0 ? (
-                      menuGroups.map((group, groupIndex) => (
-                        <div key={groupIndex} className='mb-2'>
-                          <p className='text-xs text-gray-600'>ชุดที่ {groupIndex + 1}:</p>
-                          <div className='flex flex-wrap gap-1 mt-1'>
-                            {group.map((menu, menuIndex) => (
-                              <span key={menuIndex} className='bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs'>
-                                {menu.menu_name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className='text-sm text-gray-500'>ยังไม่ได้เลือกเมนู</p>
-                    )}
-                  </div>
-
-                  {/* แสดง Note ถ้ามี */}
-                  {lunchbox.note && (
-                    <div className='mb-2'>
-                      <p className='text-sm font-medium text-green-600'>📝 หมายเหตุ:</p>
-                      <p className='text-sm text-gray-700 bg-green-50 p-2 rounded border-l-4 border-green-200'>{lunchbox.note}</p>
-                    </div>
-                  )}
-
-                  <button onClick={() => handleEditLunchbox(actualIndex)} className='w-full text-center px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm'>
-                    🔧 แก้ไขทั้งหมด
-                  </button>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         )}
 
@@ -819,7 +828,7 @@ export default function CartList() {
             cursor: loading ? "not-allowed" : "pointer",
             color: "white",
           }}
-          className={`w-full py-2 rounded font-bold transition ${loading ? "" : errors.length === 0 ? "hover:bg-green-400" : "hover:bg-red-400"}`}>
+          className={`w-full py-2 rounded font-bold transition ${loading ? "" : errors.length === 0 ? "hover:!bg-green-400" : "hover:bg-red-400"}`}>
           {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
         </button>
 
