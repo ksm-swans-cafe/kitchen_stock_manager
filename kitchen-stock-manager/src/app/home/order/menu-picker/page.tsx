@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-
+import useSWR from "swr";
 import { Search, Filter, Grid3X3, List, Send } from "lucide-react";
 
 import { useRouter } from "next/navigation";
+import { fetcher } from "@/lib/utils";
 
 import { useCartStore } from "@/stores/store";
 
