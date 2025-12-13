@@ -14,6 +14,8 @@ export interface MenuLunchbox {
   lunchbox_set_name: string;
   lunchbox_cost: number;
   lunchbox_menu_category: string;
+  lunchbox_showPrice?: boolean;
+  lunchbox_AutoRice?: boolean;
 }
 
 export interface MenuItem {
