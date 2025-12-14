@@ -39,8 +39,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "รูปแบบข้อมูลกล่องอาหารไม่ถูกต้อง" }, { status: 400 });
     }
 
+    // ใช้ select เพื่อเลือกเฉพาะ menu_id เพื่อหลีกเลี่ยงปัญหา menu_cost เป็น null
     const lastMenu = await prisma.menu.findFirst({
       orderBy: { menu_id: "desc" },
+      select: {
+        menu_id: true,
+      },
     });
     const newMenuId = lastMenu ? lastMenu.menu_id + 1 : 1;
 
