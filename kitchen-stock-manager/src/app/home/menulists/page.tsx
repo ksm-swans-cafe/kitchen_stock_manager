@@ -278,6 +278,16 @@ export default function Page() {
               </span>
               {lb.lunchbox_cost && <span className='tag is-success is-light'>{lb.lunchbox_cost} บาท</span>}
               {lb.lunchbox_menu_category && <span className='tag is-link is-light'>{lb.lunchbox_menu_category}</span>}
+              {(lb.lunchbox_showPrice === false) && (
+                <span className='tag is-warning is-light' title='ไม่แสดงราคา'>
+                  <i className='fas fa-eye-slash'></i>
+                </span>
+              )}
+              {lb.lunchbox_AutoRice && (
+                <span className='tag is-info is-light' title='ใส่ข้าวอัตโนมัติ'>
+                  <i className='fas fa-rice-bowl'></i>
+                </span>
+              )}
             </div>
           </div>
         ))}
@@ -377,6 +387,8 @@ export default function Page() {
         lunchbox_set_name: "",
         lunchbox_cost: 0,
         lunchbox_menu_category: "",
+        lunchbox_showPrice: true,
+        lunchbox_AutoRice: false,
       },
     ]);
   };
@@ -386,10 +398,11 @@ export default function Page() {
     setMenuLunchbox(updated);
   };
 
-  const updateLunchbox = (index: number, field: "lunchbox_name" | "lunchbox_set_name" | "lunchbox_cost" | "lunchbox_menu_category", value: string | number) => {
+  const updateLunchbox = (index: number, field: "lunchbox_name" | "lunchbox_set_name" | "lunchbox_cost" | "lunchbox_menu_category" | "lunchbox_showPrice" | "lunchbox_AutoRice", value: string | number | boolean) => {
     const updated = [...menuLunchbox];
 
     if (field === "lunchbox_cost") updated[index] = { ...updated[index], [field]: Number(value) || 0 };
+    else if (field === "lunchbox_showPrice" || field === "lunchbox_AutoRice") updated[index] = { ...updated[index], [field]: Boolean(value) };
     else updated[index] = { ...updated[index], [field]: value };
 
     if (field === "lunchbox_name") updated[index].lunchbox_set_name = "";
@@ -818,6 +831,54 @@ export default function Page() {
                               </label>
                               <div className='control'>
                                 <input className='input' type='text' value={lb.lunchbox_menu_category || ""} onChange={(e) => updateLunchbox(idx, "lunchbox_menu_category", e.target.value)} disabled={!lb.lunchbox_name} style={{ backgroundColor: "white", color: "#363636" }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className='column is-half'>
+                            <div className='field'>
+                              <label className='label is-small' style={{ color: "#363636" }}>
+                                <span className='icon-text'>
+                                  <span className='icon has-text-info is-small'>
+                                    <i className='fas fa-eye'></i>
+                                  </span>
+                                  <span>แสดงราคา</span>
+                                </span>
+                              </label>
+                              <div className='control'>
+                                <label className='checkbox'>
+                                  <input
+                                    type='checkbox'
+                                    checked={lb.lunchbox_showPrice ?? true}
+                                    onChange={(e) => updateLunchbox(idx, "lunchbox_showPrice", e.target.checked)}
+                                    disabled={!lb.lunchbox_name}
+                                  />
+                                  <span className='ml-2'>แสดงราคา</span>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className='column is-half'>
+                            <div className='field'>
+                              <label className='label is-small' style={{ color: "#363636" }}>
+                                <span className='icon-text'>
+                                  <span className='icon has-text-warning is-small'>
+                                    <i className='fas fa-rice-bowl'></i>
+                                  </span>
+                                  <span>ใส่ข้าวอัตโนมัติ</span>
+                                </span>
+                              </label>
+                              <div className='control'>
+                                <label className='checkbox'>
+                                  <input
+                                    type='checkbox'
+                                    checked={lb.lunchbox_AutoRice ?? false}
+                                    onChange={(e) => updateLunchbox(idx, "lunchbox_AutoRice", e.target.checked)}
+                                    disabled={!lb.lunchbox_name}
+                                  />
+                                  <span className='ml-2'>ใส่ข้าวอัตโนมัติ</span>
+                                </label>
                               </div>
                             </div>
                           </div>

@@ -172,7 +172,9 @@ exports.Prisma.LunchboxScalarFieldEnum = {
   id: 'id',
   lunchbox_limit: 'lunchbox_limit',
   lunchbox_name: 'lunchbox_name',
-  lunchbox_set_name: 'lunchbox_set_name'
+  lunchbox_name_image: 'lunchbox_name_image',
+  lunchbox_set_name: 'lunchbox_set_name',
+  lunchbox_set_name_image: 'lunchbox_set_name_image'
 };
 
 exports.Prisma.MenuScalarFieldEnum = {

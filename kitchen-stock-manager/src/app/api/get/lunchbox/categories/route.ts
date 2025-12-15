@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
 
+const safeJson = (data: unknown) => JSON.parse(JSON.stringify(data, (_, value) => (typeof value === "bigint" ? value.toString() : value)));
+
 export async function GET(request: NextRequest) {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
