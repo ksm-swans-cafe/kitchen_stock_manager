@@ -40,10 +40,13 @@ export async function GET(request: NextRequest) {
         menu_subname: menu.menu_subname,
         menu_category: menu.menu_category,
         menu_cost: menu.menu_cost ?? 0,
+        lunchbox_cost: matchingLunchbox?.lunchbox_cost ?? menu.menu_cost ?? 0,
         menu_ingredients: menu.menu_ingredients || [],
         menu_description: "",
         lunchbox_menu_category: matchingLunchbox?.lunchbox_menu_category || null,
         lunchbox_showPrice: matchingLunchbox?.lunchbox_showPrice ?? true,
+        lunchbox_AutoRice: matchingLunchbox?.lunchbox_AutoRice ?? false,
+        lunchbox_menuid: matchingLunchbox?.lunchbox_menuid || "",
       };
     });
 
