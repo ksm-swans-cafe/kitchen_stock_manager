@@ -21,10 +21,6 @@ import SetFoodIcon from "@/assets/setfood.png";
 import FoodMenuSetIcon from "@/assets/food-menu.png";
 import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 
-// ==================== Constants ====================
-const BLOB_STORE_BASE_URL = "https://hvusvym1gfn5yabw.public.blob.vercel-storage.com";
-const LUNCHBOX_IMAGE_PATH = "img/lunchbox-set-img";
-
 // ==================== Types ====================
 type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null; lunchbox_showPrice?: boolean };
 
@@ -40,6 +36,11 @@ export default function Order() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [Optional, setOptional] = useState<object>({
+    lunchbox_name: "Drinks",
+    lunchbox_set_name: "เครื่องดื่ม",
+    lunchbox_limit: 0,
+  });
 
   // Add responsive state
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -58,50 +59,30 @@ export default function Order() {
   const [availableSetMenus, setAvailableSetMenus] = useState<string[]>([]);
   const [availableMenus, setAvailableMenus] = useState<MenuItemWithAutoRice[]>([]);
   const [note, setNote] = useState<string>("");
-
   // helper สำหรับสร้าง key ที่ไม่ซ้ำระหว่างเมนูที่ชื่อซ้ำแต่หมวดต่างกัน
   const buildMenuKey = (menu: Partial<MenuItemWithAutoRice>) => menu.lunchbox_menuid ?? `${menu.menu_id ?? ""}-${menu.lunchbox_menu_category ?? ""}-${menu.menu_name ?? ""}`;
-
   // unified price helper (ใช้เฉพาะ lunchbox_cost)
   const getPrice = (menu?: Partial<MenuItemWithAutoRice>) => menu?.lunchbox_cost ?? 0;
 
   // ==================== Helper Functions ====================
   // หา set data จาก lunchboxData
-  const getSetData = (foodSet: string, setMenu: string) => 
-    lunchboxData.find((item) => item.lunchbox_name === foodSet && item.lunchbox_set_name === setMenu);
+  const getSetData = (foodSet: string, setMenu: string) => lunchboxData.find((item) => item.lunchbox_name === foodSet && item.lunchbox_set_name === setMenu);
 
   // หา limit จาก set data
-  const getSetLimit = (foodSet: string, setMenu: string) => 
-    getSetData(foodSet, setMenu)?.lunchbox_limit ?? 0;
+  const getSetLimit = (foodSet: string, setMenu: string) => getSetData(foodSet, setMenu)?.lunchbox_limit ?? 0;
 
   // สร้าง Blob Store URL
-  const buildBlobImageUrl = (imageName?: string | null) => 
-    imageName ? `${BLOB_STORE_BASE_URL}/${LUNCHBOX_IMAGE_PATH}/${imageName}` : null;
+  const buildBlobImageUrl = (imageName?: string | null) => (imageName ? `${process.env.NEXT_PUBLIC_BLOB_STORE_BASE_URL}/${process.env.NEXT_PUBLIC_LUNCHBOX_IMAGE_PATH}/${imageName}` : null);
 
   // ==================== Image Component ====================
-  const LunchboxImage = ({ 
-    imageName, 
-    alt, 
-    fallbackIcon 
-  }: { 
-    imageName?: string | null; 
-    alt: string; 
-    fallbackIcon: React.ReactNode;
-  }) => {
+  const LunchboxImage = ({ imageName, alt, fallbackIcon }: { imageName?: string | null; alt: string; fallbackIcon: React.ReactNode }) => {
     const imageUrl = buildBlobImageUrl(imageName);
-    
+
     if (!imageUrl || failedImages.has(imageUrl)) {
       return <>{fallbackIcon}</>;
     }
-    
-    return (
-      <img 
-        src={imageUrl} 
-        alt={alt}
-        className='min-w-full min-h-full object-cover object-center'
-        onError={() => setFailedImages(prev => new Set(prev).add(imageUrl))}
-      />
-    );
+
+    return <img src={imageUrl} alt={alt} className='min-w-full min-h-full object-cover object-center' onError={() => setFailedImages((prev) => new Set(prev).add(imageUrl))} />;
   };
 
   // Edit mode states
@@ -144,16 +125,10 @@ export default function Order() {
           setSelectedSetMenu(editingData.lunchbox_set);
           setNote(editingData.note || "");
 
-          // Set selected menu items
           if (editingData.selected_menus && editingData.selected_menus.length > 0) {
             const menuKeys = editingData.selected_menus.map((menu: MenuItemWithAutoRice) => buildMenuKey(menu));
             setSelectedMenuItems(menuKeys);
           }
-
-          console.log("Loading edit data:", editingData);
-          console.log("Set selectedFoodSet to:", editingData.lunchbox_name);
-          console.log("Set selectedSetMenu to:", editingData.lunchbox_set);
-          console.log("Available lunchboxData:", lunchboxData);
 
           setTimeout(() => {
             setIsLoadingEditData(false);
@@ -170,19 +145,16 @@ export default function Order() {
 
   useEffect(() => {
     const fetchLunchboxData = async () => {
-      setIsLoadingLunchboxData(true); // เริ่ม loading
+      setIsLoadingLunchboxData(true);
       try {
         const response = await fetch("/api/get/lunchbox");
         const data = await response.json();
-        console.log("Lunchbox data:", data);
 
         const items = (Array.isArray(data) ? data : data?.data) as LunchBoxFromAPI[] | undefined;
         if (items) {
           setLunchboxData(items);
 
-          // Extract unique food sets (ชุดอาหาร)
           const uniqueFoodSets = sortStrings([...new Set(items.map((item: LunchBoxFromAPI) => item.lunchbox_name))]);
-          console.log("Available food sets:", uniqueFoodSets);
           setAvailableFoodSets(uniqueFoodSets);
         }
       } catch (error) {
@@ -199,7 +171,6 @@ export default function Order() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
 
-    // cleanup
     return () => clearInterval(interval);
   }, []);
 
@@ -207,8 +178,6 @@ export default function Order() {
     if (selectedFoodSet && lunchboxData.length > 0) {
       const availableSets = lunchboxData.filter((item) => item.lunchbox_name === selectedFoodSet);
       const uniqueSetMenus = sortStrings([...new Set(availableSets.map((item) => item.lunchbox_set_name))]);
-      console.log("Available set menus for", selectedFoodSet, ":", uniqueSetMenus);
-      console.log("Filtered sets data:", availableSets);
       setAvailableSetMenus(uniqueSetMenus);
     } else {
       setAvailableSetMenus([]);
@@ -360,6 +329,10 @@ export default function Order() {
       // เพิ่มการตรวจสอบหมวด "กับข้าว"
       const isMainDishCategory = selectedMenu.lunchbox_menu_category === "กับข้าวที่ 1";
 
+      // เพิ่มการตรวจสอบว่าเป็น Drinks set และ set_name เป็น "เครื่องดื่ม"
+      const isDrinksSet = selectedFoodSet === "Drinks" && selectedSetMenu === "เครื่องดื่ม";
+      const isOtherCategory = selectedMenu.lunchbox_menu_category === "อื่นๆ";
+
       // ใช้ flag จากข้อมูลเมนูเพื่อกำหนดการเพิ่มข้าวอัตโนมัติ
       const shouldAutoAddRice = selectedMenu.lunchbox_AutoRice === true;
 
@@ -424,8 +397,8 @@ export default function Order() {
         } else {
           const currentSelectedMenus = availableMenus.filter((menu) => prev.includes(buildMenuKey(menu)));
 
-          // ถ้าไม่ใช่เซต unlimited (limit > 0) ให้บล็อกหมวดที่เลือกไปแล้ว
-          if (!isUnlimited) {
+          // ถ้าไม่ใช่เซต unlimited (limit > 0) หรือเป็น Drinks set ให้บล็อกหมวดที่เลือกไปแล้ว
+          if (!isUnlimited || isDrinksSet) {
             const existingLunchboxCategories = currentSelectedMenus.map((menu) => menu.lunchbox_menu_category).filter((category) => category);
 
             // กรณีพิเศษ: Premium Lunch Set "379 baht" - ให้เลือกเครื่องเคียงได้ 3 อย่าง
@@ -460,7 +433,14 @@ export default function Order() {
                 alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "กับข้าว" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ครบ 2 อย่างแล้ว`);
                 return prev;
               }
-            } else if (selectedMenu.lunchbox_menu_category && existingLunchboxCategories.includes(selectedMenu.lunchbox_menu_category)) {
+            }
+            // เพิ่มเงื่อนไขสำหรับ Drinks set - ให้เลือกได้ 1 อย่างต่อ 1 หมวด ยกเว้นหมวด "อื่นๆ"
+            else if (isDrinksSet && !isOtherCategory && selectedMenu.lunchbox_menu_category && existingLunchboxCategories.includes(selectedMenu.lunchbox_menu_category)) {
+              alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "${selectedMenu.lunchbox_menu_category}" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ไว้แล้ว`);
+              return prev;
+            }
+            // กรณีปกติ: ถ้าหมวดนั้นถูกเลือกไปแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก (ยกเว้น Drinks set ที่เป็นหมวด "อื่นๆ")
+            else if (selectedMenu.lunchbox_menu_category && existingLunchboxCategories.includes(selectedMenu.lunchbox_menu_category) && !(isDrinksSet && isOtherCategory)) {
               alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "${selectedMenu.lunchbox_menu_category}" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ไว้แล้ว`);
               return prev;
             }
@@ -1306,7 +1286,10 @@ export default function Order() {
                           <path style={{ fill: "#FFCA66" }} d='M20.358,402.712h312.426c11.244,0,20.358-9.114,20.358-20.358V175.886c0-11.244-9.114-20.358-20.358-20.358H20.358C9.114,155.528,0,164.643,0,175.886v206.468C0,393.598,9.114,402.712,20.358,402.712z' />
                           <path style={{ fill: "#FF8095" }} d='M295.214,199.283H57.93c-7.829,0-14.176,6.347-14.176,14.176v131.326c0,7.829,6.347,14.176,14.176,14.176h237.284c7.829,0,14.176-6.347,14.176-14.176V213.458C309.39,205.628,303.043,199.283,295.214,199.283z' />
                           <circle style={{ fill: "#D9576D" }} cx='363.526' cy='378.12' r='71.742' />
-                          <path style={{ opacity: 0.15, fill: "#333333" }} d='M316.405,378.118c0-35.419,25.677-64.823,59.427-70.664c-4.002-0.693-8.111-1.075-12.311-1.075c-39.62,0-71.738,32.119-71.738,71.738c0,39.62,32.118,71.738,71.738,71.738c4.2,0,8.309-0.382,12.311-1.073C342.082,442.941,316.405,413.537,316.405,378.118z' />
+                          <path
+                            style={{ opacity: 0.15, fill: "#333333" }}
+                            d='M316.405,378.118c0-35.419,25.677-64.823,59.427-70.664c-4.002-0.693-8.111-1.075-12.311-1.075c-39.62,0-71.738,32.119-71.738,71.738c0,39.62,32.118,71.738,71.738,71.738c4.2,0,8.309-0.382,12.311-1.073C342.082,442.941,316.405,413.537,316.405,378.118z'
+                          />
                           <path style={{ fill: "#8AE6A1" }} d='M331.519,270.708c-3.873,9.849-1.834,21.483,6.127,29.443c7.96,7.96,19.596,9.999,29.443,6.127c3.873-9.849,1.834-21.483-6.127-29.443C353.001,268.874,341.366,266.836,331.519,270.708z' />
                         </svg>
                       );
@@ -1317,11 +1300,7 @@ export default function Order() {
                           className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
                           onClick={() => setSelectedFoodSet(foodSet)}>
                           <div className='aspect-square bg-[linear-gradient(to_bottom_right,var(--color-orange-100),var(--color-orange-200),var(--color-orange-300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden'>
-                            <LunchboxImage 
-                              imageName={foodSetImageName} 
-                              alt={`ชุด ${foodSet}`}
-                              fallbackIcon={FoodSetFallbackIcon}
-                            />
+                            <LunchboxImage imageName={foodSetImageName} alt={`ชุด ${foodSet}`} fallbackIcon={FoodSetFallbackIcon} />
                           </div>
                           <div className='text-center p-2 sm:p-3 lg:p-4'>
                             <h3 className='font-semibold text-gray-800 text-xs sm:text-sm lg:text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2'>ชุด {foodSet}</h3>
@@ -1348,9 +1327,7 @@ export default function Order() {
                       // หาภาพ lunchbox_set_name_image จาก lunchboxData
                       const setMenuImageName = setData?.lunchbox_set_name_image;
                       // สร้าง URL เต็มจาก Blob Store
-                      const setMenuImage = setMenuImageName
-                        ? `https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/img/lunchbox-set-img/${setMenuImageName}`
-                        : null;
+                      const setMenuImage = setMenuImageName ? `${process.env.NEXT_PUBLIC_BLOB_STORE_BASE_URL}/${process.env.NEXT_PUBLIC_LUNCHBOX_IMAGE_PATH}/${setMenuImageName}` : null;
 
                       return (
                         <div
@@ -1359,12 +1336,12 @@ export default function Order() {
                           onClick={() => setSelectedSetMenu(setMenu)}>
                           <div className='aspect-square bg-[linear-gradient(to_bottom_right,theme(colors.blue.100),theme(colors.blue.200),theme(colors.blue.300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden'>
                             {setMenuImage && !failedImages.has(setMenuImage) ? (
-                              <img 
-                                src={setMenuImage} 
+                              <img
+                                src={setMenuImage}
                                 alt={`Set ${setMenu}`}
                                 className='min-w-full min-h-full object-cover object-center'
                                 onError={() => {
-                                  setFailedImages(prev => new Set(prev).add(setMenuImage));
+                                  setFailedImages((prev) => new Set(prev).add(setMenuImage));
                                 }}
                               />
                             ) : (
@@ -1454,13 +1431,7 @@ export default function Order() {
                         }, {} as Record<string, typeof availableMenus>);
 
                         // กำหนดลำดับ category แบบกำหนดเอง
-                        const categoryOrder = 
-                        [
-                          "ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", 
-                          "ผัด", "พริกเเกง", "แกง", "ต้ม", 
-                          "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", 
-                          "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"
-                        ];
+                        const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
                         const sortedCategories = Object.keys(groupedMenus).sort((a, b) => {
                           const indexA = categoryOrder.indexOf(a);
                           const indexB = categoryOrder.indexOf(b);
@@ -1505,7 +1476,7 @@ export default function Order() {
                             const dishB = getDishType(b.menu_name);
                             const dishIndexA = dishA ? dishOrder.indexOf(dishA) : -1;
                             const dishIndexB = dishB ? dishOrder.indexOf(dishB) : -1;
-                            
+
                             // เรียงตามประเภทอาหารก่อน
                             if (dishIndexA !== -1 && dishIndexB !== -1) {
                               if (dishIndexA !== dishIndexB) return dishIndexA - dishIndexB;
@@ -1525,13 +1496,13 @@ export default function Order() {
                             if (dishIndexA !== -1) return -1;
                             // ถ้า b มีประเภทอาหาร แต่ a ไม่มี ให้ b มาก่อน
                             if (dishIndexB !== -1) return 1;
-                            
+
                             // ถ้าไม่มีประเภทอาหาร ให้เรียงตามประเภทเนื้อสัตว์
                             const meatA = getMeatType(a.menu_name);
                             const meatB = getMeatType(b.menu_name);
                             const indexA = meatA ? meatOrder.indexOf(meatA) : -1;
                             const indexB = meatB ? meatOrder.indexOf(meatB) : -1;
-                            
+
                             if (indexA !== -1 && indexB !== -1) {
                               if (indexA !== indexB) return indexA - indexB;
                               return a.menu_name.localeCompare(b.menu_name, "th");
@@ -1578,9 +1549,13 @@ export default function Order() {
                                   const isPremium379 = selectedFoodSet === "Premium Lunch" && selectedSetMenu === "379 baht";
                                   const isMainDishCategory = menu.lunchbox_menu_category === "กับข้าวที่ 1";
 
-                                  // ถ้าไม่ใช่เซต unlimited (limit > 0) ให้บล็อกหมวดที่เลือกไปแล้ว
+                                  // เพิ่มการตรวจสอบว่าเป็น Drinks set และ set_name เป็น "เครื่องดื่ม"
+                                  const isDrinksSet = selectedFoodSet === "Drinks" && selectedSetMenu === "เครื่องดื่ม";
+                                  const isOtherCategory = menu.lunchbox_menu_category === "อื่นๆ";
+
+                                  // ถ้าไม่ใช่เซต unlimited (limit > 0) หรือเป็น Drinks set ให้บล็อกหมวดที่เลือกไปแล้ว
                                   let isLunchboxCategoryTaken = false;
-                                  if (!isUnlimited) {
+                                  if (!isUnlimited || isDrinksSet) {
                                     const selectedLunchboxCategories = availableMenus
                                       .filter((m) => selectedMenuItems.includes(buildMenuKey(m)))
                                       .map((m) => m.lunchbox_menu_category)
@@ -1614,9 +1589,14 @@ export default function Order() {
 
                                       // ถ้าเลือกครบ 2 อย่างแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
                                       isLunchboxCategoryTaken = mainDishCount >= 2 && !isSelected;
-                                    } else {
-                                      // กรณีปกติ: ถ้าหมวดนั้นถูกเลือกไปแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก
-                                      isLunchboxCategoryTaken = !!menu.lunchbox_menu_category && selectedLunchboxCategories.includes(menu.lunchbox_menu_category) && !isSelected;
+                                    }
+                                    // เพิ่มเงื่อนไขสำหรับ Drinks set - ให้เลือกได้ 1 อย่างต่อ 1 หมวด ยกเว้นหมวด "อื่นๆ"
+                                    else if (isDrinksSet && !isOtherCategory && menu.lunchbox_menu_category && selectedLunchboxCategories.includes(menu.lunchbox_menu_category) && !isSelected) {
+                                      isLunchboxCategoryTaken = true;
+                                    }
+                                    // กรณีปกติ: ถ้าหมวดนั้นถูกเลือกไปแล้ว และเมนูนี้ยังไม่ได้เลือก ให้บล็อก (ยกเว้น Drinks set ที่เป็นหมวด "อื่นๆ")
+                                    else if (menu.lunchbox_menu_category && selectedLunchboxCategories.includes(menu.lunchbox_menu_category) && !isSelected && !(isDrinksSet && isOtherCategory)) {
+                                      isLunchboxCategoryTaken = true;
                                     }
                                   }
 
