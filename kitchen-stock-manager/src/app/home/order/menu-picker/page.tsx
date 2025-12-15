@@ -1327,7 +1327,7 @@ export default function Order() {
                       // หาภาพ lunchbox_set_name_image จาก lunchboxData
                       const setMenuImageName = setData?.lunchbox_set_name_image;
                       // สร้าง URL เต็มจาก Blob Store
-                      const setMenuImage = setMenuImageName ? `https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/img/lunchbox-set-img/${setMenuImageName}` : null;
+                      const setMenuImage = setMenuImageName ? `${process.env.NEXT_PUBLIC_BLOB_STORE_BASE_URL}/${process.env.NEXT_PUBLIC_LUNCHBOX_IMAGE_PATH}/${setMenuImageName}` : null;
 
                       return (
                         <div
