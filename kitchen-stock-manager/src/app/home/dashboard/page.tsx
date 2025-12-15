@@ -176,6 +176,46 @@ export default function Dashboard() {
           return acc;
         }, [] as DayItem[]);
 
+        // Sort items by category order (ใช้ includes เพื่อจับคู่คำที่มีอยู่ในชื่อ)
+        const topKeywords = ["ข้าว", "กับข้าวหลัก", "กับข้าวรอง"];
+        const bottomKeywords = ["เครื่องเคียง", "ผลไม้", "ขนม", "น้ำ"];
+
+        const getTopIndex = (name: string) => topKeywords.findIndex((keyword) => name.includes(keyword));
+        const getBottomIndex = (name: string) => bottomKeywords.findIndex((keyword) => name.includes(keyword));
+
+        const sortedItems = aggregatedItems.sort((a, b) => {
+          const aTopIndex = getTopIndex(a.name);
+          const bTopIndex = getTopIndex(b.name);
+          const aBottomIndex = getBottomIndex(a.name);
+          const bBottomIndex = getBottomIndex(b.name);
+
+          const aIsTop = aTopIndex !== -1;
+          const bIsTop = bTopIndex !== -1;
+          const aIsBottom = aBottomIndex !== -1;
+          const bIsBottom = bBottomIndex !== -1;
+
+          // Both are top items - sort by keyword order first, then by name (ก-ฮ)
+          if (aIsTop && bIsTop) {
+            if (aTopIndex !== bTopIndex) return aTopIndex - bTopIndex;
+            return a.name.localeCompare(b.name, "th");
+          }
+          // Both are bottom items - sort by keyword order first, then by name (ก-ฮ)
+          if (aIsBottom && bIsBottom) {
+            if (aBottomIndex !== bBottomIndex) return aBottomIndex - bBottomIndex;
+            return a.name.localeCompare(b.name, "th");
+          }
+          // a is top, b is not - a comes first
+          if (aIsTop) return -1;
+          // b is top, a is not - b comes first
+          if (bIsTop) return 1;
+          // a is bottom, b is not - b comes first (a goes to bottom)
+          if (aIsBottom) return 1;
+          // b is bottom, a is not - a comes first (b goes to bottom)
+          if (bIsBottom) return -1;
+          // Both are middle items - sort by name (ก-ฮ)
+          return a.name.localeCompare(b.name, "th");
+        });
+
         const minutesToSend = calculateMinutesToSend(item.date, item.sendTime);
 
         return {
@@ -185,7 +225,7 @@ export default function Dashboard() {
           sendPlace: item.location,
           sendTime: item.sendTime + " น.",
           receiveTime: item.receiveTime + " น.",
-          items: aggregatedItems,
+          items: sortedItems,
           totalText: `รวม ${totalQty} ชุด`,
           isPinned: false,
           minutesToSend,
