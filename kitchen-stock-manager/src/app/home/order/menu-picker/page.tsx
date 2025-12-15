@@ -24,6 +24,8 @@ interface LunchBoxFromAPI {
   lunchbox_name: string;
   lunchbox_set_name: string;
   lunchbox_limit: number;
+  lunchbox_name_image?: string;
+  lunchbox_set_name_image?: string;
 }
 
 export default function Order() {
@@ -56,6 +58,8 @@ export default function Order() {
   const [isLoadingMenus, setIsLoadingMenus] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLoadingLunchboxData, setIsLoadingLunchboxData] = useState<boolean>(true); // เพิ่ม state นี้
+  // State สำหรับเก็บรายการรูปที่โหลดไม่สำเร็จ
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const dots = useLoadingDots();
 
   const Unlimited = {
@@ -1254,76 +1258,97 @@ export default function Order() {
                   </h2>
 
                   <div className='responsive-grid'>
-                    {availableFoodSets.map((foodSet, index) => (
-                      <div
-                        key={index}
-                        className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
-                        onClick={() => setSelectedFoodSet(foodSet)}>
-                        <div className='aspect-square bg-[linear-gradient(to_bottom_right,var(--color-orange-100),var(--color-orange-200),var(--color-orange-300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300'>
-                          {/* <span className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'> */}
-                          <svg width={100} height={100} version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
-                            <path
-                              style={{ fill: "#4DA3FF" }}
-                              d='M379.089,134.898v247.18c0,11.396,9.238,20.634,20.634,20.634h91.643
-	c11.396,0,20.634-9.238,20.634-20.634v-247.18C512,134.898,379.089,134.898,379.089,134.898z'
-                            />
-                            <rect x='379.087' y='134.902' style={{ opacity: 0.3, fill: "#333333" }} width='132.913' height='20.756' />
-                            <rect x='379.087' y='62.138' style={{ fill: "#8AE6A1" }} width='132.913' height='72.76' />
-                            {/* <g> */}
-                            <path
-                              style={{ opacity: 0.15, fill: "#333333" }}
-                              d='M405.899,382.078v-247.18h-26.81v247.18
-	                                c0,11.396,9.238,20.634,20.634,20.634h26.81C415.137,402.712,405.899,393.474,405.899,382.078z'
-                            />
-                            <rect
-                              x='379.087'
-                              y='62.138'
-                              width='26.81'
-                              height='72.76'
-                              style={{ opacity: 0.15, fill: "#333333" }}
-                              d='M210.43,209.417h-67.717c-33.582,0-60.904-27.321-60.904-60.904s27.321-60.904,60.904-60.904h67.717
-	c33.582,0,60.903,27.321,60.903,60.904S244.012,209.417,210.43,209.417z M142.713,125.893c-12.473,0-22.619,10.147-22.619,22.619
-	s10.147,22.619,22.619,22.619h67.717c12.473,0,22.619-10.147,22.619-22.619s-10.147-22.619-22.619-22.619
-	C210.43,125.893,142.713,125.893,142.713,125.893z'
-                            />
-                            <path
-                              style={{ opacity: 0.15, fill: "#333333" }}
-                              d='M233.049,148.513c0,12.473-10.146,22.619-22.619,22.619
-	h-67.716c-12.473,0-22.619-10.146-22.619-22.619c0-5.165,1.744-9.929,4.669-13.741H83.392c-1.023,4.419-1.582,9.015-1.582,13.741
-	c0,33.582,27.321,60.904,60.904,60.904h67.716c33.582,0,60.903-27.321,60.903-60.904c0-4.726-0.559-9.321-1.582-13.741H228.38
-	C231.305,138.584,233.049,143.348,233.049,148.513z'
-                            />
-                            <path
-                              style={{ fill: "#FFCA66" }}
-                              d='M20.358,402.712h312.426c11.244,0,20.358-9.114,20.358-20.358V175.886
-	c0-11.244-9.114-20.358-20.358-20.358H20.358C9.114,155.528,0,164.643,0,175.886v206.468C0,393.598,9.114,402.712,20.358,402.712z'
-                            />
-                            <path
-                              style={{ fill: "#FF8095" }}
-                              d='M295.214,199.283H57.93c-7.829,0-14.176,6.347-14.176,14.176v131.326
-	c0,7.829,6.347,14.176,14.176,14.176h237.284c7.829,0,14.176-6.347,14.176-14.176V213.458
-	C309.39,205.628,303.043,199.283,295.214,199.283z'
-                            />
-                            <circle style={{ fill: "#D9576D" }} cx='363.526' cy='378.12' r='71.742' />
-                            <path
-                              style={{ opacity: 0.15, fill: "#333333" }}
-                              d='M316.405,378.118c0-35.419,25.677-64.823,59.427-70.664
-	c-4.002-0.693-8.111-1.075-12.311-1.075c-39.62,0-71.738,32.119-71.738,71.738c0,39.62,32.118,71.738,71.738,71.738
-	c4.2,0,8.309-0.382,12.311-1.073C342.082,442.941,316.405,413.537,316.405,378.118z'
-                            />
-                            <path
-                              style={{ fill: "#8AE6A1" }}
-                              d='M331.519,270.708c-3.873,9.849-1.834,21.483,6.127,29.443c7.96,7.96,19.596,9.999,29.443,6.127
-	c3.873-9.849,1.834-21.483-6.127-29.443C353.001,268.874,341.366,266.836,331.519,270.708z'
-                            />
-                          </svg>
-                          {/* </span> */}
+                    {availableFoodSets.map((foodSet, index) => {
+                      // หาภาพ lunchbox_name_image จาก lunchboxData
+                      const foodSetData = lunchboxData.find((item) => item.lunchbox_name === foodSet);
+                      const foodSetImageName = foodSetData?.lunchbox_name_image;
+                      // สร้าง URL เต็มจาก Blob Store
+                      const foodSetImage = foodSetImageName 
+                        ? `https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/img/lunchbox-set-img/${foodSetImageName}`
+                        : null;
+                      
+                      // Debug log
+                      console.log(`FoodSet: ${foodSet}, ImageName: ${foodSetImageName}, ImageURL: ${foodSetImage}`);
+
+                      return (
+                        <div
+                          key={index}
+                          className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
+                          onClick={() => setSelectedFoodSet(foodSet)}>
+                          <div className='aspect-square bg-[linear-gradient(to_bottom_right,var(--color-orange-100),var(--color-orange-200),var(--color-orange-300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden'>
+                            {foodSetImage && !failedImages.has(foodSetImage) ? (
+                              <img 
+                                src={foodSetImage} 
+                                alt={`ชุด ${foodSet}`}
+                                className='min-w-full min-h-full object-cover object-center'
+                                onError={() => {
+                                  setFailedImages(prev => new Set(prev).add(foodSetImage));
+                                }}
+                              />
+                            ) : (
+                              <svg width={100} height={100} version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
+                                <path
+                                  style={{ fill: "#4DA3FF" }}
+                                  d='M379.089,134.898v247.18c0,11.396,9.238,20.634,20.634,20.634h91.643
+    c11.396,0,20.634-9.238,20.634-20.634v-247.18C512,134.898,379.089,134.898,379.089,134.898z'
+                                />
+                                <rect x='379.087' y='134.902' style={{ opacity: 0.3, fill: "#333333" }} width='132.913' height='20.756' />
+                                <rect x='379.087' y='62.138' style={{ fill: "#8AE6A1" }} width='132.913' height='72.76' />
+                                <path
+                                  style={{ opacity: 0.15, fill: "#333333" }}
+                                  d='M405.899,382.078v-247.18h-26.81v247.18
+                                    c0,11.396,9.238,20.634,20.634,20.634h26.81C415.137,402.712,405.899,393.474,405.899,382.078z'
+                                />
+                                <rect
+                                  x='379.087'
+                                  y='62.138'
+                                  width='26.81'
+                                  height='72.76'
+                                  style={{ opacity: 0.15, fill: "#333333" }}
+                                  d='M210.43,209.417h-67.717c-33.582,0-60.904-27.321-60.904-60.904s27.321-60.904,60.904-60.904h67.717
+    c33.582,0,60.903,27.321,60.903,60.904S244.012,209.417,210.43,209.417z M142.713,125.893c-12.473,0-22.619,10.147-22.619,22.619
+    s10.147,22.619,22.619,22.619h67.717c12.473,0,22.619-10.147,22.619-22.619s-10.147-22.619-22.619-22.619
+    C210.43,125.893,142.713,125.893,142.713,125.893z'
+                                />
+                                <path
+                                  style={{ opacity: 0.15, fill: "#333333" }}
+                                  d='M233.049,148.513c0,12.473-10.146,22.619-22.619,22.619
+    h-67.716c-12.473,0-22.619-10.146-22.619-22.619c0-5.165,1.744-9.929,4.669-13.741H83.392c-1.023,4.419-1.582,9.015-1.582,13.741
+    c0,33.582,27.321,60.904,60.904,60.904h67.716c33.582,0,60.903-27.321,60.903-60.904c0-4.726-0.559-9.321-1.582-13.741H228.38
+    C231.305,138.584,233.049,143.348,233.049,148.513z'
+                                />
+                                <path
+                                  style={{ fill: "#FFCA66" }}
+                                  d='M20.358,402.712h312.426c11.244,0,20.358-9.114,20.358-20.358V175.886
+    c0-11.244-9.114-20.358-20.358-20.358H20.358C9.114,155.528,0,164.643,0,175.886v206.468C0,393.598,9.114,402.712,20.358,402.712z'
+                                />
+                                <path
+                                  style={{ fill: "#FF8095" }}
+                                  d='M295.214,199.283H57.93c-7.829,0-14.176,6.347-14.176,14.176v131.326
+    c0,7.829,6.347,14.176,14.176,14.176h237.284c7.829,0,14.176-6.347,14.176-14.176V213.458
+    C309.39,205.628,303.043,199.283,295.214,199.283z'
+                                />
+                                <circle style={{ fill: "#D9576D" }} cx='363.526' cy='378.12' r='71.742' />
+                                <path
+                                  style={{ opacity: 0.15, fill: "#333333" }}
+                                  d='M316.405,378.118c0-35.419,25.677-64.823,59.427-70.664
+    c-4.002-0.693-8.111-1.075-12.311-1.075c-39.62,0-71.738,32.119-71.738,71.738c0,39.62,32.118,71.738,71.738,71.738
+    c4.2,0,8.309-0.382,12.311-1.073C342.082,442.941,316.405,413.537,316.405,378.118z'
+                                />
+                                <path
+                                  style={{ fill: "#8AE6A1" }}
+                                  d='M331.519,270.708c-3.873,9.849-1.834,21.483,6.127,29.443c7.96,7.96,19.596,9.999,29.443,6.127
+    c3.873-9.849,1.834-21.483-6.127-29.443C353.001,268.874,341.366,266.836,331.519,270.708z'
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <div className='text-center p-2 sm:p-3 lg:p-4'>
+                            <h3 className='font-semibold text-gray-800 text-xs sm:text-sm lg:text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2'>ชุด {foodSet}</h3>
+                          </div>
                         </div>
-                        <div className='text-center p-2 sm:p-3 lg:p-4'>
-                          <h3 className='font-semibold text-gray-800 text-xs sm:text-sm lg:text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2'>ชุด {foodSet}</h3>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1340,15 +1365,31 @@ export default function Order() {
                     {availableSetMenus.map((setMenu, index) => {
                       const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === setMenu);
                       const limit = setData?.lunchbox_limit || 0;
+                      // หาภาพ lunchbox_set_name_image จาก lunchboxData
+                      const setMenuImageName = setData?.lunchbox_set_name_image;
+                      // สร้าง URL เต็มจาก Blob Store
+                      const setMenuImage = setMenuImageName
+                        ? `https://hvusvym1gfn5yabw.public.blob.vercel-storage.com/img/lunchbox-set-img/${setMenuImageName}`
+                        : null;
 
                       return (
                         <div
                           key={index}
                           className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
                           onClick={() => setSelectedSetMenu(setMenu)}>
-                          <div className='aspect-square bg-[linear-gradient(to_bottom_right,theme(colors.blue.100),theme(colors.blue.200),theme(colors.blue.300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300'>
-                            {/* <span className='text-xl sm:text-2xl lg:text-3xl xl:text-4xl'></span> */}
-                            <img src={FoodMenuSetIcon.src} className='w-[100px] h-[100px]' alt='' />
+                          <div className='aspect-square bg-[linear-gradient(to_bottom_right,theme(colors.blue.100),theme(colors.blue.200),theme(colors.blue.300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden'>
+                            {setMenuImage && !failedImages.has(setMenuImage) ? (
+                              <img 
+                                src={setMenuImage} 
+                                alt={`Set ${setMenu}`}
+                                className='min-w-full min-h-full object-cover object-center'
+                                onError={() => {
+                                  setFailedImages(prev => new Set(prev).add(setMenuImage));
+                                }}
+                              />
+                            ) : (
+                              <img src={FoodMenuSetIcon.src} className='w-[100px] h-[100px]' alt='' />
+                            )}
                           </div>
 
                           <div className='text-center p-2 sm:p-3 lg:p-4'>

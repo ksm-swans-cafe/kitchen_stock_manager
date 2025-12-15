@@ -15,36 +15,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Missing required parameters" }, { status: 400 });
     }
 
-    const result = await prisma.menu.findMany({
-      where: {
+    // ใช้ $runCommandRaw เพื่อหลีกเลี่ยงปัญหา null ใน menu_cost
+    const menus = await prisma.menu.findRaw({
+      filter: {
         menu_lunchbox: {
-          some: {
+          $elemMatch: {
             lunchbox_name: lunchbox_name,
             lunchbox_set_name: lunchbox_set_name,
           },
         },
       },
-      select: {
-        menu_id: true,
-        menu_name: true,
-        menu_subname: true,
-        menu_category: true,
-        menu_cost: true,
-        menu_ingredients: true,
-        menu_lunchbox: true,
-      },
     });
 
-    const processedResult = result.map((menu) => {
-      const matchingLunchbox = menu.menu_lunchbox.find((lb) => lb.lunchbox_name === lunchbox_name && lb.lunchbox_set_name === lunchbox_set_name);
+    const result = (menus as any[]).map((menu: any) => {
+      const matchingLunchbox = menu.menu_lunchbox?.find(
+        (lb: any) => lb.lunchbox_name === lunchbox_name && lb.lunchbox_set_name === lunchbox_set_name
+      );
 
       return {
         menu_id: menu.menu_id,
         menu_name: menu.menu_name,
         menu_subname: menu.menu_subname,
         menu_category: menu.menu_category,
-        menu_cost: menu.menu_cost,
-        menu_ingredients: menu.menu_ingredients,
+        menu_cost: menu.menu_cost ?? 0,
+        menu_ingredients: menu.menu_ingredients || [],
         menu_description: "",
         lunchbox_menu_category: matchingLunchbox?.lunchbox_menu_category || null,
         lunchbox_showPrice: matchingLunchbox?.lunchbox_showPrice ?? true,
@@ -53,8 +47,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: processedResult,
-      count: processedResult.length,
+      data: result,
+      count: result.length,
       filters: {
         lunchbox_name: lunchbox_name,
         lunchbox_set_name: lunchbox_set_name,
