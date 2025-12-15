@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const result = (menus as any[]).map((menu: any) => {
+    const result = (menus as unknown as any[]).map((menu: any) => {
       const matchingLunchbox = menu.menu_lunchbox?.find(
         (lb: any) => lb.lunchbox_name === lunchbox_name && lb.lunchbox_set_name === lunchbox_set_name
       );
