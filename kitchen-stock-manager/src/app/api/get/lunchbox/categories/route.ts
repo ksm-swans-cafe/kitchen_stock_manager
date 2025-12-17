@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Missing required parameters" }, { status: 400 });
     }
 
-    // ใช้ $runCommandRaw เพื่อหลีกเลี่ยงปัญหา null ใน menu_cost
+    // ใช้ $runCommandRaw เพื่อหลีกเลี่ยงปัญหา null ใน menu_cost กับ Prisma
     const menus = await prisma.menu.findRaw({
       filter: {
         menu_lunchbox: {
