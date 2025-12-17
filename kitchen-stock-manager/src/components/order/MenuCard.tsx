@@ -4,7 +4,7 @@ import React, { KeyboardEvent, forwardRef, memo } from "react";
 
 export type MenuCardSize = "sm" | "md" | "lg";
 
-export type MeatType = "หมู" | "ไก่" | "หมึก" | "ทะเล" | null;
+export type MeatType = "หมู" | "ไก่" | "หมึก" | "กุ้ง" | "ทะเล" | null;
 
 export type MenuCardProps = {
   menuId: string;
@@ -57,7 +57,8 @@ const meatTypeGradients: Record<string, string> = {
   "หมู": "bg-[linear-gradient(to_bottom_right,theme(colors.pink.100),theme(colors.pink.200),theme(colors.pink.300))]",
   "ไก่": "bg-[linear-gradient(to_bottom_right,theme(colors.yellow.100),theme(colors.yellow.200),theme(colors.yellow.300))]",
   "หมึก": "bg-[linear-gradient(to_bottom_right,theme(colors.purple.100),theme(colors.purple.200),theme(colors.purple.300))]",
-  "ทะเล": "bg-[linear-gradient(to_bottom_right,theme(colors.orange.100),theme(colors.orange.200),theme(colors.orange.300))]",
+  "กุ้ง": "bg-[linear-gradient(to_bottom_right,theme(colors.orange.100),theme(colors.orange.200),theme(colors.orange.300))]",
+  "ทะเล": "bg-[linear-gradient(to_bottom_right,theme(colors.cyan.100),theme(colors.cyan.200),theme(colors.cyan.300))]",
 };
 
 const defaultGradient = "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]";

@@ -1446,11 +1446,12 @@ export default function Order() {
                         });
 
                         // ฟังก์ชันตรวจสอบประเภทเนื้อสัตว์จากชื่อเมนู
-                        const getMeatType = (menuName: string): "หมู" | "ไก่" | "หมึก" | "ทะเล" | null => {
+                        const getMeatType = (menuName: string): "หมู" | "ไก่" | "หมึก" | "กุ้ง" | "ทะเล" | null => {
                           if (menuName.includes("หมู")) return "หมู";
                           if (menuName.includes("ไก่")) return "ไก่";
                           if (menuName.includes("หมึก")) return "หมึก";
-                          if (menuName.includes("กุ้ง") || menuName.includes("ทะเล")) return "ทะเล";
+                          if (menuName.includes("กุ้ง")) return "กุ้ง";
+                          if (menuName.includes("ทะเล")) return "ทะเล";
                           return null;
                         };
 
@@ -1467,7 +1468,7 @@ export default function Order() {
                         // ลำดับความสำคัญของประเภทอาหาร
                         const dishOrder = ["กะเพรา", "กระเทียม", "พริกแกง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
                         // ลำดับความสำคัญของประเภทเนื้อสัตว์
-                        const meatOrder = ["หมู", "ไก่", "หมึก", "ทะเล"];
+                        const meatOrder = ["หมู", "ไก่", "หมึก", "กุ้ง", "ทะเล"];
 
                         return sortedCategories.map((category) => {
                           // เรียงลำดับเมนูตามประเภทอาหารก่อน แล้วตามประเภทเนื้อสัตว์ แล้วค่อยเรียงตามตัวอักษร
