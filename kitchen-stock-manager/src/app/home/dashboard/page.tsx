@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { MapPin, Clock, Maximize2, Minimize2, Star } from "lucide-react";
+import { MapPin, Clock, Maximize2, Minimize2, Star, List, X, Edit } from "lucide-react";
 import { Button } from "@/share/ui/button";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 
 import { Loading } from "@/components/loading/loading";
-
 import DashboardIcon from "@/assets/dashboard.png";
 
+// --- Interfaces ---
 interface DayItem {
   name: string;
   qty: number | string;
@@ -34,7 +34,7 @@ interface ApiResponse {
   result: Array<{
     id: string;
     dayOfWeek: string;
-    date: string; // เพิ่มกลับมา
+    date: string;
     location: string;
     sendTime: string;
     receiveTime: string;
@@ -50,6 +50,7 @@ interface ApiResponse {
   }>;
 }
 
+// --- Constants & Helpers ---
 const dayColor: Record<string, string> = {
   จันทร์: "from-yellow-400 to-yellow-500",
   อังคาร: "from-pink-400 to-pink-500",
@@ -111,15 +112,19 @@ const getTimeAlertInfo = (minutes?: number) => {
   };
 };
 
+// --- Main Component ---
 export default function Dashboard() {
   const [fullscreen, setFullscreen] = useState(false);
+  
+  // State สำหรับเก็บ ID ของการ์ดที่ User เลือกปักหมุดเอง
+  const [manualPinnedId, setManualPinnedId] = useState<number | null>(null);
+  const [showPinSelector, setShowPinSelector] = useState(false);
 
   // Calculate minutes until send time
   const calculateMinutesToSend = (date: string, sendTime: string): number => {
     const [day, month, year] = date.split("/").map(Number);
     const [hours, minutes] = sendTime.split(":").map(Number);
 
-    // Create date object for Thai calendar date
     const gregorianYear = year - 543;
     const sendDateTime = new Date(gregorianYear, month - 1, day, hours, minutes, 0);
     const now = new Date();
@@ -127,7 +132,7 @@ export default function Dashboard() {
     const diffMs = sendDateTime.getTime() - now.getTime();
     const diffMinutes = Math.round(diffMs / (1000 * 60));
 
-    return Math.max(diffMinutes, -999); // Return negative if past
+    return Math.max(diffMinutes, -999);
   };
 
   const {
@@ -141,6 +146,7 @@ export default function Dashboard() {
     dedupingInterval: 5000,
   });
 
+  // Process Data
   const allCards = useMemo<DayCard[]>(() => {
     if (!apiData || apiData.status !== "success") {
       return [];
@@ -152,7 +158,6 @@ export default function Dashboard() {
         const [day, month, year] = dateStr.split("/");
         const dayNum = parseInt(day, 10);
 
-        // คำนวณจำนวนชุดทั้งหมด
         const totalQty = item.items.reduce((sum, lunchbox) => sum + lunchbox.quantity, 0);
 
         const menuItems: DayItem[] = [];
@@ -165,7 +170,6 @@ export default function Dashboard() {
           });
         });
 
-        // Aggregate items with the same name
         const aggregatedItems = menuItems.reduce((acc, item) => {
           const existingItem = acc.find((i) => i.name === item.name);
           if (existingItem) {
@@ -176,7 +180,6 @@ export default function Dashboard() {
           return acc;
         }, [] as DayItem[]);
 
-        // Sort items by category order (ใช้ includes เพื่อจับคู่คำที่มีอยู่ในชื่อ)
         const topKeywords = ["ข้าว", "กับข้าวหลัก", "กับข้าวรอง"];
         const bottomKeywords = ["เครื่องเคียง", "ผลไม้", "ขนม", "น้ำ"];
 
@@ -194,32 +197,25 @@ export default function Dashboard() {
           const aIsBottom = aBottomIndex !== -1;
           const bIsBottom = bBottomIndex !== -1;
 
-          // Both are top items - sort by keyword order first, then by name (ก-ฮ)
           if (aIsTop && bIsTop) {
             if (aTopIndex !== bTopIndex) return aTopIndex - bTopIndex;
             return a.name.localeCompare(b.name, "th");
           }
-          // Both are bottom items - sort by keyword order first, then by name (ก-ฮ)
           if (aIsBottom && bIsBottom) {
             if (aBottomIndex !== bBottomIndex) return aBottomIndex - bBottomIndex;
             return a.name.localeCompare(b.name, "th");
           }
-          // a is top, b is not - a comes first
           if (aIsTop) return -1;
-          // b is top, a is not - b comes first
           if (bIsTop) return 1;
-          // a is bottom, b is not - b comes first (a goes to bottom)
           if (aIsBottom) return 1;
-          // b is bottom, a is not - a comes first (b goes to bottom)
           if (bIsBottom) return -1;
-          // Both are middle items - sort by name (ก-ฮ)
           return a.name.localeCompare(b.name, "th");
         });
 
         const minutesToSend = calculateMinutesToSend(item.date, item.sendTime);
 
         return {
-          id: index + 1,
+          id: index + 1, // แนะนำให้ใช้ ID จริงจาก API ถ้ามี เพื่อความแม่นยำในการระบุตัวตน
           dayOfWeek: item.dayOfWeek,
           dateTitle: `วัน${item.dayOfWeek}ที่ ${dayNum} ${getMonthName(month)} พ.ศ.${year}`,
           sendPlace: item.location,
@@ -227,17 +223,15 @@ export default function Dashboard() {
           receiveTime: item.receiveTime + " น.",
           items: sortedItems,
           totalText: `รวม ${totalQty} ชุด`,
-          isPinned: false,
+          isPinned: false, // สามารถรับค่านี้จาก API ได้ถ้ามี
           minutesToSend,
         };
       })
-      .filter((card) => card.minutesToSend >= 0); // Filter out past times
+      .filter((card) => card.minutesToSend >= 0);
   }, [apiData]);
 
+  // Fullscreen Handlers
   useEffect(() => {
-    document.body.style.overflow = fullscreen ? "hidden" : "auto";
-
-    // Hide/show Menubar and Navigatebar in fullscreen mode
     const menubar = document.querySelector('div[class*="bg-card"]') as HTMLElement;
     const navigatebar = document.querySelector('nav[class*="bg-gray-200"]') as HTMLElement;
 
@@ -256,7 +250,6 @@ export default function Dashboard() {
         setFullscreen(false);
       }
     };
-
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
@@ -271,32 +264,128 @@ export default function Dashboard() {
     }
   };
 
-  // แยกการ์ดปักหมุด / ปกติ
-  const pinnedCard = allCards.find((c) => c.isPinned);
-  const normalCards = allCards.filter((c) => !c.isPinned);
-  const displayedNormalCards = normalCards.slice(0, 3);
+  // --- [LOGIC ใหม่] การจัดการ Layout และข้อมูล ---
+  
+  // 1. หาการ์ดที่จะปักหมุด (Active Pinned Card)
+  // ลำดับ: เลือกเอง > API ปักหมุด > null (ถ้าไม่มีเลย)
+  const activePinnedCard = 
+    allCards.find((c) => c.id === manualPinnedId) || 
+    allCards.find((c) => c.isPinned) ||              
+    null;
 
-  // ถ้าไม่มีปักหมุด ให้ใช้ใบที่ 4 ของปกติแทน
-  const fallbackForPinned = !pinnedCard && normalCards.length > 3 ? normalCards[3] : undefined;
+  // 2. รายการที่จะอยู่ในส่วน Scroll (Scrollable List)
+  // คือการ์ดทั้งหมด "ยกเว้น" ใบที่ถูกปักหมุดอยู่
+  const scrollableCards = activePinnedCard
+    ? allCards.filter(c => c.id !== activePinnedCard.id)
+    : allCards;
 
-  const cardForPinnedSlot = pinnedCard || fallbackForPinned || null;
 
-  // ฟังก์ชัน render การ์ด
+  // --- Modal Component ---
+  const renderPinSelectorModal = () => {
+    if (!showPinSelector) return null;
+    
+    // รายการให้เลือก = รายการทั้งหมดที่ยังไม่ถูกเลือกโดย User
+    const options = allCards.filter(c => c.id !== manualPinnedId);
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+          <div className="bg-gray-100 px-4 py-3 border-b flex justify-between items-center shrink-0">
+            <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800">
+              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+              เลือกรายการปักหมุด
+            </h3>
+            <button onClick={() => setShowPinSelector(false)} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
+              <X className="w-6 h-6 text-gray-500" />
+            </button>
+          </div>
+          <div className="overflow-y-auto p-2 flex-1">
+            {options.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                <List className="w-10 h-10 mb-2 opacity-20" />
+                <p>ไม่มีรายการอื่นๆ ให้เลือก</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {options.map((card) => (
+                  <button
+                    key={card.id}
+                    onClick={() => {
+                      setManualPinnedId(card.id);
+                      setShowPinSelector(false);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg border transition-all flex justify-between items-center group
+                      ${activePinnedCard?.id === card.id
+                        ? "bg-blue-50 border-blue-500 ring-1 ring-blue-500" 
+                        : "bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300"}
+                    `}
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="font-semibold text-gray-900 truncate">{card.dateTitle}</div>
+                      <div className="flex flex-wrap gap-x-3 text-sm text-gray-600 mt-1">
+                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3"/> {card.sendPlace}</span>
+                         <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {card.sendTime}</span>
+                      </div>
+                      <div className="text-xs text-red-600 font-medium mt-1">{card.totalText}</div>
+                    </div>
+                    {(activePinnedCard?.id === card.id) && <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="bg-gray-50 px-4 py-3 border-t flex justify-end shrink-0">
+            <Button variant="outline" size="sm" onClick={() => {
+                setManualPinnedId(null);
+                setShowPinSelector(false);
+            }}>
+              ยกเลิกปักหมุด
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // --- Card Renderer ---
   const renderDayCard = (day: DayCard, asPinnedSlot = false) => {
     if (!day) return null;
 
     const headerGradient = dayColor[day.dayOfWeek] || "from-teal-400 to-teal-500";
     const timeAlert = getTimeAlertInfo(day.minutesToSend);
+    const isUserSelected = manualPinnedId === day.id;
 
     return (
-      <div key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")} className={`bg-white rounded-2xl shadow overflow-hidden flex flex-col ${asPinnedSlot && timeAlert ? "ring-2 ring-amber-300" : ""}`}>
-        {/* HEADER */}
-        <div className={`relative bg-gradient-to-r ${headerGradient} text-white p-4 pb-5`}>
-          {/* Badge ปักหมุดเฉพาะการ์ดช่องปักหมุด */}
+      <div 
+        key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")} 
+        // Logic ความสูง: h-full เพื่อให้ยืดตาม Container, min-w เพื่อกำหนดความกว้างขั้นต่ำ
+        className={`bg-white rounded-2xl shadow overflow-hidden flex flex-col h-full 
+          min-w-[300px] 
+          ${asPinnedSlot && timeAlert ? "ring-4 ring-amber-300" : ""}
+          ${asPinnedSlot ? "shadow-2xl border-2 border-yellow-400/50" : "shadow"}
+        `}
+      >
+        {/* HEADER (Fixed) */}
+        <div className={`relative flex-none bg-gradient-to-r ${headerGradient} text-white p-4 pb-5`}>
+          
+          {/* ส่วนแสดงสถานะปักหมุด (เฉพาะการ์ดที่ปักหมุด) */}
           {asPinnedSlot && (
-            <div className='absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/25 text-[11px] font-semibold'>
-              <Star className='w-3 h-3 fill-yellow-300 text-yellow-100' />
-              ปักหมุด
+            <div className='absolute top-2 right-2 flex items-center gap-1'>
+               {/* ปุ่มเปลี่ยน */}
+               {!fullscreen && (
+                  <button 
+                    onClick={() => setShowPinSelector(true)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[11px] font-semibold backdrop-blur-sm transition-colors cursor-pointer mr-1 border border-white/10"
+                    title="เปลี่ยนรายการ"
+                  >
+                    <List className="w-3 h-3" />
+                    เปลี่ยน
+                  </button>
+               )}
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold ${isUserSelected ? "bg-blue-600 text-white" : "bg-black/25 text-white"}`}>
+                <Star className={`w-3 h-3 ${isUserSelected ? "fill-white text-white" : "fill-yellow-300 text-yellow-100"}`} />
+                {isUserSelected ? "เลือกเอง" : "ปักหมุด"}
+              </div>
             </div>
           )}
 
@@ -304,7 +393,6 @@ export default function Dashboard() {
             <h2 className='!text-base lg:!text-xl !font-semibold drop-shadow !text-black'>{day.dateTitle}</h2>
           </div>
 
-          {/* สถานที่ */}
           <div className='flex justify-start mb-2'>
             <div className='inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 whitespace-normal break-words'>
               <MapPin className='w-4 h-4 shrink-0 !text-black' />
@@ -312,16 +400,12 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* เวลาส่ง + เวลารับ */}
           <div className='flex flex-wrap gap-3 mt-2'>
-            {/* เวลาส่ง */}
             <div className='flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[100px] lg:min-w-[150px]'>
               <Clock className='w-4 h-4 !text-black' />
               <span className='text-xs lg:text-sm font-semibold whitespace-nowrap !text-black'>เวลาส่ง</span>
               <span className='whitespace-nowrap text-xs lg:text-sm !text-black'>{cleanTime(day.sendTime)}</span>
             </div>
-
-            {/* เวลารับ */}
             <div className='flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[100px] lg:min-w-[150px]'>
               <Clock className='w-4 h-4 !text-black' />
               <span className='text-xs lg:text-sm font-semibold whitespace-nowrap !text-black'>เวลารับ</span>
@@ -329,7 +413,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* แถบแจ้งเตือนเวลา ข้อ 5) */}
           {timeAlert && (
             <div className='mt-3 flex justify-start'>
               <div className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium ${timeAlert.className}`}>{timeAlert.label}</div>
@@ -337,15 +420,15 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ตารางรายการ */}
-        <div className='flex-1 bg-white'>
+        {/* CONTENT (Scrollable Y) */}
+        <div className='flex-1 bg-white overflow-y-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'>
           <table className='w-full table-fixed'>
             <colgroup>
               <col className='w-[70%]' />
               <col className='w-[30%]' />
             </colgroup>
-            <thead>
-              <tr className='bg-gray-100'>
+            <thead className="sticky top-0 bg-gray-100 shadow-sm z-10">
+              <tr>
                 <th className='px-4 py-2 text-left font-semibold !text-black'>รายการ</th>
                 <th className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center font-semibold !text-black'>จำนวน</th>
               </tr>
@@ -359,24 +442,25 @@ export default function Dashboard() {
               ))}
             </tbody>
           </table>
+        </div>
 
-          {/* รวมชุด */}
-          <div className='border-t bg-white py-3'>
-            <p className='text-center font-semibold text-red-600'>{day.totalText}</p>
-          </div>
+        {/* FOOTER (Fixed) */}
+        <div className='flex-none border-t bg-white py-3'>
+          <p className='text-center font-semibold text-red-600'>{day.totalText}</p>
         </div>
       </div>
     );
   };
 
   return (
-    <div className={`p-4 sm:p-6 ${fullscreen ? "h-screen" : "min-h-screen"}`}>
+    // Main Container: ความสูงเท่าหน้าจอ (h-screen) และห้าม Scroll ที่ตัวแม่ (overflow-hidden)
+    <div className={`p-4 sm:p-6 h-screen flex flex-col overflow-hidden bg-gray-50`}>
       {/* Loading State */}
-      {isLoading && <Loading context='หน้าแดชบอร์ด' icon={DashboardIcon.src} color="blue"/>}
+      {isLoading && <Loading context='หน้าแดชบอร์ด' icon={DashboardIcon.src} />}
 
       {/* Error State */}
       {error && !isLoading && (
-        <div className='flex items-center justify-center min-h-screen'>
+        <div className='flex items-center justify-center flex-1'>
           <div className='bg-red-50 border border-red-300 rounded-lg p-6 text-center'>
             <p className='text-red-700 font-semibold'>เกิดข้อผิดพลาด</p>
             <p className='text-red-600 text-sm mt-2'>{error instanceof Error ? error.message : "Unknown error"}</p>
@@ -386,7 +470,7 @@ export default function Dashboard() {
 
       {/* No Data State */}
       {!isLoading && !error && allCards.length === 0 && (
-        <div className='flex items-center justify-center min-h-screen'>
+        <div className='flex items-center justify-center flex-1'>
           <div className='text-center'>
             <p className='text-gray-600'>ไม่มีข้อมูลออเดอร์</p>
           </div>
@@ -396,60 +480,108 @@ export default function Dashboard() {
       {/* Main Content */}
       {!isLoading && !error && allCards.length > 0 && (
         <>
-          {/* Header ปกติ (ข้อ 6: ซ่อนเวลา Fullscreen เพื่อให้ TV โล่ง) */}
-          {!fullscreen && (
-            <div className='mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
-              {/* Legend สีวัน (ข้อ 7) */}
-              <div className='hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs'>
-                {dayColorLegend.map((day) => (
-                  <div key={day.label} className='flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100'>
-                    <span className={`w-2.5 h-2.5 rounded-full ${day.className}`} />
-                    <span>{day.label}</span>
-                  </div>
-                ))}
+          {/* Header Bar (Legend & Toggle) - Fixed Height */}
+          <div className="flex-none transition-all">
+            {!fullscreen && (
+              <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
+                <div className='hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs'>
+                  {dayColorLegend.map((day) => (
+                    <div key={day.label} className='flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100'>
+                      <span className={`w-2.5 h-2.5 rounded-full ${day.className}`} />
+                      <span>{day.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button className='hidden lg:flex items-center gap-2' size='sm' onClick={toggleFullscreen}>
+                  <Maximize2 className='w-4 h-4' />
+                  FullScreen
+                </Button>
               </div>
+            )}
 
-              <Button className='hidden lg:flex items-center gap-2' size='sm' onClick={toggleFullscreen}>
-                <Maximize2 className='w-4 h-4' />
-                FullScreen
-              </Button>
-            </div>
-          )}
-
-          {/* ปุ่มออก fullscreen (ข้อ 6) */}
-          {fullscreen && (
-            <div className='flex justify-end mb-2 sm:mb-3'>
-              <button onClick={toggleFullscreen} className='flex items-center gap-1 text-[11px] sm:text-xs text-white/80 bg-black/40 px-3 py-1.5 rounded-full'>
-                <Minimize2 className='w-4 h-4' />
-                ออกจากโหมดเต็มจอ
-              </button>
-            </div>
-          )}
-
-          {/* Legend สีวันในโหมด TV (ย่อให้เล็กลงหน่อย) */}
-          {fullscreen && (
-            <div className='mb-2 flex justify-end'>
-              <div className='flex flex-wrap gap-1 text-[10px] text-white/90 bg-black/30 px-2 py-1 rounded-full'>
-                {dayColorLegend.map((day) => (
-                  <div key={day.label} className='flex items-center gap-1'>
-                    <span className={`w-2 h-2 rounded-full ${day.className}`} />
-                    <span>{day.label}</span>
+            {fullscreen && (
+              <div className='flex justify-end mb-2'>
+                <button onClick={toggleFullscreen} className='flex items-center gap-1 text-[11px] sm:text-xs text-white/80 bg-black/40 px-3 py-1.5 rounded-full mr-2 hover:bg-black/60 transition-colors'>
+                  <Minimize2 className='w-4 h-4' />
+                  ออกจากโหมดเต็มจอ
+                </button>
+                 <div className='flex items-center gap-1 text-[10px] text-white/90 bg-black/30 px-2 py-1 rounded-full'>
+                    {dayColorLegend.map((day) => (
+                      <div key={day.label} className='flex items-center gap-1'>
+                        <span className={`w-2 h-2 rounded-full ${day.className}`} />
+                        <span>{day.label}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
               </div>
+            )}
+          </div>
+
+          {/* [LAYOUT หลัก] แบ่งส่วน Scroll และ Fixed */}
+          <div className='flex-1 flex gap-4 overflow-hidden'>
+            
+            {/* ZONE 1: Scrollable List Area (ส่วนซ้ายเลื่อนแนวนอน) */}
+            <div className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden pb-2 snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2`}>
+              {scrollableCards.length > 0 ? (
+                scrollableCards.map((day) => (
+                  // Logic การกำหนดความกว้าง (Width)
+                  // - ถ้ามีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 3 ใบ (ใบละ ~32%)
+                  // - ถ้าไม่มีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 4 ใบ (ใบละ ~24%)
+                  <div 
+                    key={day.id} 
+                    className={`h-full flex-none transition-all duration-300
+                      ${activePinnedCard 
+                        ? "w-[85vw] sm:w-[45vw] md:w-[40vw] lg:w-[32%]" // Case มีปักหมุด
+                        : "w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]" // Case ไม่มีปักหมุด
+                      }
+                    `}
+                  >
+                    {renderDayCard(day, false)}
+                  </div>
+                ))
+              ) : (
+                // กรณีไม่มีข้อมูลใน list (เช่น มีการ์ดใบเดียวแล้วถูกปักหมุดไปแล้ว)
+                !activePinnedCard && (
+                   <div className="flex flex-col items-center justify-center w-full text-gray-400 h-full border-2 border-dashed rounded-xl">
+                     <p>ไม่มีรายการออเดอร์</p>
+                   </div>
+                )
+              )}
             </div>
-          )}
 
-          {/* การ์ดทั้งหมด 4 ใบ (3 ปกติ + 1 ช่องปักหมุด) */}
-          <div className='grid grid-cols-1  md:grid-cols-2 lg:grid-cols-4 gap-4'>
-            {/* 3 การ์ดปกติ */}
-            {displayedNormalCards.map((day) => renderDayCard(day, false))}
+            {/* ZONE 2: Pinned Card Area (ส่วนขวาตรึงอยู่กับที่) */}
+            {/* แสดงเฉพาะเมื่อมีการปักหมุด */}
+            {activePinnedCard && (
+              <div className="hidden lg:block w-[25%] min-w-[320px] flex-none border-l-2 border-gray-200 pl-4 bg-gray-50/50 relative">
+                 <div className="h-full">
+                    {renderDayCard(activePinnedCard, true)}
+                 </div>
+              </div>
+            )}
+            
+            {/* ปุ่มลอย (Floating Button) สำหรับเปิด Modal กรณีไม่มีการปักหมุดเลย */}
+            {!activePinnedCard && allCards.length > 0 && (
+               <button 
+                 onClick={() => setShowPinSelector(true)}
+                 className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 bg-gray-900 text-white p-3 pr-5 rounded-full shadow-xl hover:bg-black transition-all hover:scale-105 z-50 flex items-center gap-2 group border border-gray-700"
+               >
+                 <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors">
+                    <Star className="w-5 h-5 fill-white"/>
+                 </div>
+                 <div className="flex flex-col items-start">
+                    <span className="font-bold text-sm leading-tight">ปักหมุดรายการ</span>
+                    <span className="text-[10px] text-gray-300 leading-tight">แสดงรายการสำคัญค้างไว้</span>
+                 </div>
+               </button>
+            )}
 
-            {/* ช่องปักหมุด ถ้าไม่มีปักหมุดก็ใช้ออเดอร์อื่นแทน */}
-            {cardForPinnedSlot && renderDayCard(cardForPinnedSlot, true)}
           </div>
         </>
       )}
+
+      {/* Modal Popup */}
+      {renderPinSelectorModal()}
     </div>
   );
 }
