@@ -83,9 +83,6 @@ export async function GET() {
           },
         },
         {
-          $limit: 5,
-        },
-        {
           $project: {
             cart_id: 1,
             cart_location_send: 1,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { MapPin, Clock, Maximize2, Minimize2, Star, List, X, Edit } from "lucide-react";
+import { MapPin, Clock, Maximize2, Minimize2, Star, List, X, Edit, GripVertical } from "lucide-react";
 import { Button } from "@/share/ui/button";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
@@ -117,8 +117,24 @@ export default function Dashboard() {
   const [fullscreen, setFullscreen] = useState(false);
   
   // State สำหรับเก็บ ID ของการ์ดที่ User เลือกปักหมุดเอง
-  const [manualPinnedId, setManualPinnedId] = useState<number | null>(null);
-  const [showPinSelector, setShowPinSelector] = useState(false);
+  const [pinnedIds, setPinnedIds] = useState<number[]>([]);
+  
+  // State สำหรับควบคุมความกว้างของ pinned area (เป็น %)
+  const [pinnedAreaWidth, setPinnedAreaWidth] = useState(35);
+  const [isResizing, setIsResizing] = useState(false);
+
+  // ฟังก์ชันสำหรับ toggle ปักหมุด
+  const togglePin = (id: number) => {
+    setPinnedIds((prev) => {
+      if (prev.includes(id)) {
+        // ถ้าปักอยู่แล้ว ให้ถอนออก
+        return prev.filter((pinnedId) => pinnedId !== id);
+      } else {
+        // ถ้ายังไม่ปัก ให้เพิ่ม (ไม่จำกัดจำนวน)
+        return [...prev, id];
+      }
+    });
+  };
 
   // Calculate minutes until send time
   const calculateMinutesToSend = (date: string, sendTime: string): number => {
@@ -266,86 +282,12 @@ export default function Dashboard() {
 
   // --- [LOGIC ใหม่] การจัดการ Layout และข้อมูล ---
   
-  // 1. หาการ์ดที่จะปักหมุด (Active Pinned Card)
-  // ลำดับ: เลือกเอง > API ปักหมุด > null (ถ้าไม่มีเลย)
-  const activePinnedCard = 
-    allCards.find((c) => c.id === manualPinnedId) || 
-    allCards.find((c) => c.isPinned) ||              
-    null;
+  // 1. หาการ์ดที่ถูกปักหมุด (Pinned Cards) - สูงสุด 2 ใบ
+  const pinnedCards = allCards.filter((c) => pinnedIds.includes(c.id));
 
   // 2. รายการที่จะอยู่ในส่วน Scroll (Scrollable List)
   // คือการ์ดทั้งหมด "ยกเว้น" ใบที่ถูกปักหมุดอยู่
-  const scrollableCards = activePinnedCard
-    ? allCards.filter(c => c.id !== activePinnedCard.id)
-    : allCards;
-
-
-  // --- Modal Component ---
-  const renderPinSelectorModal = () => {
-    if (!showPinSelector) return null;
-    
-    // รายการให้เลือก = รายการทั้งหมดที่ยังไม่ถูกเลือกโดย User
-    const options = allCards.filter(c => c.id !== manualPinnedId);
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
-          <div className="bg-gray-100 px-4 py-3 border-b flex justify-between items-center shrink-0">
-            <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800">
-              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-              เลือกรายการปักหมุด
-            </h3>
-            <button onClick={() => setShowPinSelector(false)} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
-              <X className="w-6 h-6 text-gray-500" />
-            </button>
-          </div>
-          <div className="overflow-y-auto p-2 flex-1">
-            {options.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-500">
-                <List className="w-10 h-10 mb-2 opacity-20" />
-                <p>ไม่มีรายการอื่นๆ ให้เลือก</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {options.map((card) => (
-                  <button
-                    key={card.id}
-                    onClick={() => {
-                      setManualPinnedId(card.id);
-                      setShowPinSelector(false);
-                    }}
-                    className={`w-full text-left p-3 rounded-lg border transition-all flex justify-between items-center group
-                      ${activePinnedCard?.id === card.id
-                        ? "bg-blue-50 border-blue-500 ring-1 ring-blue-500" 
-                        : "bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300"}
-                    `}
-                  >
-                    <div className="flex-1 min-w-0 pr-2">
-                      <div className="font-semibold text-gray-900 truncate">{card.dateTitle}</div>
-                      <div className="flex flex-wrap gap-x-3 text-sm text-gray-600 mt-1">
-                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3"/> {card.sendPlace}</span>
-                         <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {card.sendTime}</span>
-                      </div>
-                      <div className="text-xs text-red-600 font-medium mt-1">{card.totalText}</div>
-                    </div>
-                    {(activePinnedCard?.id === card.id) && <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="bg-gray-50 px-4 py-3 border-t flex justify-end shrink-0">
-            <Button variant="outline" size="sm" onClick={() => {
-                setManualPinnedId(null);
-                setShowPinSelector(false);
-            }}>
-              ยกเลิกปักหมุด
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const scrollableCards = allCards.filter((c) => !pinnedIds.includes(c.id));
 
   // --- Card Renderer ---
   const renderDayCard = (day: DayCard, asPinnedSlot = false) => {
@@ -353,7 +295,7 @@ export default function Dashboard() {
 
     const headerGradient = dayColor[day.dayOfWeek] || "from-teal-400 to-teal-500";
     const timeAlert = getTimeAlertInfo(day.minutesToSend);
-    const isUserSelected = manualPinnedId === day.id;
+    const isPinned = pinnedIds.includes(day.id);
 
     return (
       <div 
@@ -368,26 +310,27 @@ export default function Dashboard() {
         {/* HEADER (Fixed) */}
         <div className={`relative flex-none bg-gradient-to-r ${headerGradient} text-white p-4 pb-5`}>
           
-          {/* ส่วนแสดงสถานะปักหมุด (เฉพาะการ์ดที่ปักหมุด) */}
-          {asPinnedSlot && (
-            <div className='absolute top-2 right-2 flex items-center gap-1'>
-               {/* ปุ่มเปลี่ยน */}
-               {!fullscreen && (
-                  <button 
-                    onClick={() => setShowPinSelector(true)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[11px] font-semibold backdrop-blur-sm transition-colors cursor-pointer mr-1 border border-white/10"
-                    title="เปลี่ยนรายการ"
-                  >
-                    <List className="w-3 h-3" />
-                    เปลี่ยน
-                  </button>
-               )}
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold ${isUserSelected ? "bg-blue-600 text-white" : "bg-black/25 text-white"}`}>
-                <Star className={`w-3 h-3 ${isUserSelected ? "fill-white text-white" : "fill-yellow-300 text-yellow-100"}`} />
-                {isUserSelected ? "เลือกเอง" : "ปักหมุด"}
-              </div>
-            </div>
-          )}
+          {/* ปุ่มดาวปักหมุด - มุมขวาบนของทุก Card */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePin(day.id);
+            }}
+            className={`absolute top-2 right-2 p-2 rounded-full transition-all
+              ${isPinned 
+                ? "bg-yellow-400 hover:bg-yellow-500 shadow-lg" 
+                : "bg-white/20 hover:bg-white/40 backdrop-blur-sm"}
+            `}
+            title={isPinned ? "ถอนหมุด" : "ปักหมุด"}
+          >
+            <Star 
+              className={`w-5 h-5 transition-all
+                ${isPinned 
+                  ? "text-white fill-white" 
+                  : "text-white/80"}
+              `} 
+            />
+          </button>
 
           <div className='text-center mb-3 mt-5 lg:mt-6'>
             <h2 className='!text-base lg:!text-xl !font-semibold drop-shadow !text-black'>{day.dateTitle}</h2>
@@ -531,7 +474,7 @@ export default function Dashboard() {
                   <div 
                     key={day.id} 
                     className={`h-full flex-none transition-all duration-300
-                      ${activePinnedCard 
+                      ${pinnedCards.length > 0 
                         ? "w-[85vw] sm:w-[45vw] md:w-[40vw] lg:w-[32%]" // Case มีปักหมุด
                         : "w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]" // Case ไม่มีปักหมุด
                       }
@@ -541,8 +484,8 @@ export default function Dashboard() {
                   </div>
                 ))
               ) : (
-                // กรณีไม่มีข้อมูลใน list (เช่น มีการ์ดใบเดียวแล้วถูกปักหมุดไปแล้ว)
-                !activePinnedCard && (
+                // กรณีไม่มีข้อมูลใน list (เช่น การ์ดทั้งหมดถูกปักหมุดหมดแล้ว)
+                pinnedCards.length === 0 && (
                    <div className="flex flex-col items-center justify-center w-full text-gray-400 h-full border-2 border-dashed rounded-xl">
                      <p>ไม่มีรายการออเดอร์</p>
                    </div>
@@ -550,38 +493,82 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* ZONE 2: Pinned Card Area (ส่วนขวาตรึงอยู่กับที่) */}
+            {/* ZONE 2: Pinned Cards Area (ส่วนขวาตรึงอยู่กับที่ - ปรับขนาดได้) */}
             {/* แสดงเฉพาะเมื่อมีการปักหมุด */}
-            {activePinnedCard && (
-              <div className="hidden lg:block w-[25%] min-w-[320px] flex-none border-l-2 border-gray-200 pl-4 bg-gray-50/50 relative">
-                 <div className="h-full">
-                    {renderDayCard(activePinnedCard, true)}
-                 </div>
+            {pinnedCards.length > 0 && (
+              <div 
+                className="hidden lg:flex flex-none relative"
+                style={{ width: `${pinnedAreaWidth}%`, minWidth: '320px', maxWidth: '70%' }}
+              >
+                {/* Resize Handle (ลากขอบซ้าย) */}
+                <div
+                  className={`absolute left-0 top-0 bottom-0 w-3 cursor-col-resize flex items-center justify-center z-20 group
+                    ${isResizing ? 'bg-blue-200' : 'hover:bg-gray-200'}
+                    transition-colors rounded-l-lg
+                  `}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setIsResizing(true);
+                    
+                    const startX = e.clientX;
+                    const startWidth = pinnedAreaWidth;
+                    const containerWidth = (e.target as HTMLElement).closest('.flex-1.flex.gap-4')?.getBoundingClientRect().width || window.innerWidth;
+                    
+                    const handleMouseMove = (moveEvent: MouseEvent) => {
+                      const deltaX = startX - moveEvent.clientX;
+                      const deltaPercent = (deltaX / containerWidth) * 100;
+                      const newWidth = Math.min(70, Math.max(20, startWidth + deltaPercent));
+                      setPinnedAreaWidth(newWidth);
+                    };
+                    
+                    const handleMouseUp = () => {
+                      setIsResizing(false);
+                      document.removeEventListener('mousemove', handleMouseMove);
+                      document.removeEventListener('mouseup', handleMouseUp);
+                    };
+                    
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                  }}
+                >
+                  <GripVertical className={`w-4 h-4 ${isResizing ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} transition-colors`} />
+                </div>
+                
+                {/* Pinned Content Area */}
+                <div className="flex-1 flex flex-col border-l-2 border-gray-200 pl-4 ml-3 bg-gray-50/50">
+                  {/* Header */}
+                  <div className="flex-none flex items-center justify-between pb-2 border-b border-gray-200 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      <span className="text-sm font-semibold text-gray-700">ปักหมุด ({pinnedCards.length})</span>
+                    </div>
+                    <button
+                      onClick={() => setPinnedIds([])}
+                      className="text-xs text-gray-500 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50"
+                    >
+                      ล้างทั้งหมด
+                    </button>
+                  </div>
+                  
+                  {/* Scrollable Pinned Cards */}
+                  <div className="flex-1 overflow-x-auto overflow-y-hidden pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                    <div className="flex gap-4 h-full">
+                      {pinnedCards.map((card) => (
+                        <div key={card.id} className="flex-none h-full" style={{ width: '300px' }}>
+                          {renderDayCard(card, true)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             
-            {/* ปุ่มลอย (Floating Button) สำหรับเปิด Modal กรณีไม่มีการปักหมุดเลย */}
-            {!activePinnedCard && allCards.length > 0 && (
-               <button 
-                 onClick={() => setShowPinSelector(true)}
-                 className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 bg-gray-900 text-white p-3 pr-5 rounded-full shadow-xl hover:bg-black transition-all hover:scale-105 z-50 flex items-center gap-2 group border border-gray-700"
-               >
-                 <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors">
-                    <Star className="w-5 h-5 fill-white"/>
-                 </div>
-                 <div className="flex flex-col items-start">
-                    <span className="font-bold text-sm leading-tight">ปักหมุดรายการ</span>
-                    <span className="text-[10px] text-gray-300 leading-tight">แสดงรายการสำคัญค้างไว้</span>
-                 </div>
-               </button>
-            )}
-
           </div>
         </>
       )}
 
-      {/* Modal Popup */}
-      {renderPinSelectorModal()}
+
     </div>
   );
 }
