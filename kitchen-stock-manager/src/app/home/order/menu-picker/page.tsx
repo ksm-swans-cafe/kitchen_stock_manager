@@ -593,7 +593,9 @@ export default function Order() {
 
     handleResize();
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   // Show loading overlay when loading edit data
@@ -962,8 +964,8 @@ export default function Order() {
       `}</style>
 
       <div className='flex min-h-[100svh]'>
-        {/* Desktop Sidebar - Rendered inline to prevent re-render issues */}
-        <div className='hidden lg:block w-72 xl:w-80 2xl:w-96 bg-white border-r border-gray-200 sticky top-[52px] h-[calc(100vh-52px)] overflow-y-auto'>
+        {/* Desktop Sidebar - Using sticky positioning to follow after Navigatebar */}
+        <div className='hidden lg:block w-72 xl:w-80 2xl:w-96 bg-white border-r border-gray-200 sticky top-[48px] h-[calc(100vh-48px)] overflow-y-auto z-30 flex-shrink-0'>
           <div className='p-3 md:p-4 xl:p-6'>
             {/* Mode Indicator */}
             {isEditMode && (

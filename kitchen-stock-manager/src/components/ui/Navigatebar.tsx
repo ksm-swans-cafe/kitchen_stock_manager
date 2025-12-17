@@ -78,7 +78,7 @@ export default function Navigatebar() {
   const totalQuantity = items.reduce((sum: number, item: { menu_total: number }) => sum + item.menu_total, 0);
 
   return (
-    <nav className={`w-full bg-gray-200 py-3 px-4 ${isScrolled ? "fixed top-0 left-0 right-0 z-50 shadow-md animate-slideDown" : ""}`}>
+    <nav className='w-full bg-gray-200 py-3 px-4 sticky top-0 z-40 shadow-sm'>
       <div className='mx-auto max-w-[1200px] relative'>
         <ul className='flex gap-2 items-center text-gray-700 flex-wrap'>
           {!isHomePage && (

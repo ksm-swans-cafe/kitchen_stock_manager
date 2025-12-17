@@ -1,7 +1,7 @@
 // components/Menubar.tsx
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Button } from "@/share/ui/button";
@@ -12,6 +12,28 @@ export default function Menubar() {
   const { userRole, userName, logout, isLoading, checkAuth } = useAuth();
   const isLoginPage = pathname === "/login";
   const router = useRouter();
+  const [isHidden, setIsHidden] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollThreshold = 100;
+      
+      if (currentScrollY > scrollThreshold && currentScrollY > lastScrollY) {
+        // Scrolling down and past threshold - hide
+        setIsHidden(true);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up - show
+        setIsHidden(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
   const getRoleName = (role: string | null) => {
     switch (role) {
