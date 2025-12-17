@@ -1862,7 +1862,53 @@ const SummaryList: React.FC = () => {
 
   const handleEdit = {
     Menu: async (cartId: string, menuItems: MenuItem[], updatedLunchboxes?: any[]) => {
-      if (!cartId || !menuItems || !Array.isArray(menuItems) || menuItems.some((m) => !m.menu_name || m.menu_total < 0 || !Array.isArray(m.menu_ingredients) || m.menu_ingredients.some((ing) => !ing.ingredient_name || ing.useItem < 0))) {
+      // เตรียมข้อมูลเมนูให้ปลอดภัยก่อนตรวจสอบ:
+      // - ถ้าเมนูไหนไม่มีวัตถุดิบที่ valid เลย ให้เติมวัตถุดิบเริ่มต้น "ข้าว" useItem = 1
+      //   เพื่อหลีกเลี่ยง error และให้บันทึกลงหลังบ้านได้
+      const normalizedMenuItems: MenuItem[] = (menuItems || []).map((m) => {
+        const rawIngredients = Array.isArray(m.menu_ingredients) ? m.menu_ingredients : [];
+
+        // กรองเฉพาะวัตถุดิบที่มีชื่อและจำนวน > 0
+        const validIngredients = rawIngredients.filter(
+          (ing: any) =>
+            ing &&
+            typeof ing.ingredient_name === "string" &&
+            ing.ingredient_name.trim() !== "" &&
+            typeof ing.useItem === "number" &&
+            ing.useItem > 0
+        );
+
+        // ถ้าไม่มีวัตถุดิบที่ valid เลย ให้เติมวัตถุดิบ default
+        const finalIngredients =
+          validIngredients.length > 0
+            ? validIngredients
+            : [
+                {
+                  ingredient_name: "ข้าว",
+                  useItem: 1,
+                  ingredient_status: false,
+                },
+              ];
+
+        return {
+          ...m,
+          menu_ingredients: finalIngredients as any,
+        };
+      });
+
+      // ตรวจสอบความถูกต้องของข้อมูลหลังจาก normalize แล้ว
+      if (
+        !cartId ||
+        !normalizedMenuItems ||
+        !Array.isArray(normalizedMenuItems) ||
+        normalizedMenuItems.some(
+          (m) =>
+            !m.menu_name ||
+            m.menu_total < 0 ||
+            !Array.isArray(m.menu_ingredients) ||
+            m.menu_ingredients.some((ing) => !ing.ingredient_name || ing.useItem < 0)
+        )
+      ) {
         Swal.fire({
           icon: "error",
           title: "เกิดข้อผิดพลาด",
@@ -1872,8 +1918,6 @@ const SummaryList: React.FC = () => {
         });
         return;
       }
-
-
 
       setIsSaving(cartId);
       try {
@@ -1894,10 +1938,10 @@ const SummaryList: React.FC = () => {
         });
 
         const MenusMap = new globalThis.Map<String, MenuItem>();
-        menuItems.forEach((item) => {
+        normalizedMenuItems.forEach((item) => {
           MenusMap.set(item.menu_name, item);
         });
-        const updatedMenuItems = menuItems.map((item) => {
+        const updatedMenuItems = normalizedMenuItems.map((item) => {
           // Use menu_ingredients from the item that was edited by the user
           const menuIngredients = (item.menu_ingredients || []).map((ing: { useItem?: number; quantity?: number; ingredient_name?: string; name?: string; ingredient_status?: boolean }) => {
             const ingredientName = ing.ingredient_name ?? ing.name ?? "ไม่ระบุวัตถุดิบ";
