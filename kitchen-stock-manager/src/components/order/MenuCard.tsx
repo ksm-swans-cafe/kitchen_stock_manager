@@ -1,6 +1,7 @@
 "use client";
 
 import React, { KeyboardEvent, forwardRef, memo } from "react";
+import { GlassWater, CakeSlice, Candy, Apple, } from "lucide-react";
 
 export type MenuCardSize = "sm" | "md" | "lg";
 
@@ -30,16 +31,22 @@ export type MenuCardProps = {
 };
 
 const sizeMap: Record<MenuCardSize, { media: string; emoji: string }> = {
-  sm: { media: "h-56", emoji: "text-lg" }, // ขยายขึ้นเล็กน้อย
-  md: { media: "h-60", emoji: "text-xl" }, // ขยายขึ้นเล็กน้อย
-  lg: { media: "h-64", emoji: "text-2xl" }, // ขยายขึ้นเล็กน้อย
+  sm: { media: "h-56", emoji: "text-8xl" }, // ขยายขึ้นเล็กน้อย
+  md: { media: "h-60", emoji: "text-8xl" }, // ขยายขึ้นเล็กน้อย
+  lg: { media: "h-64", emoji: "text-8xl" }, // ขยายขึ้นเล็กน้อย
 };
 
-const defaultEmojiByCategory: Record<string, string> = {
+const defaultEmojiByCategory: Record<string, React.ReactNode> = {
   ข้าว: "🍚",
   noodle: "🍜",
-  drink: "🥤",
+  drink: <GlassWater size={100} />,
   dessert: "🍮",
+  เค้ก: <CakeSlice size={100} />,
+  ของหวาน: <Candy size={100} />,
+  เครื่องดื่ม: <GlassWater size={100} />,
+  น้ำแข็งสำหรับเครื่องดื่ม: <GlassWater size={100} />,
+  อุปกรณ์เสริม: <GlassWater size={100} />,
+  ผลไม้: <Apple size={100} />,
 };
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -85,8 +92,8 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       ? "bg-yellow-50 border-2 border-yellow-400 ring-1 ring-yellow-200"
       : "bg-green-50 border-2 border-green-300 ring-1 ring-green-200"
     : duplicate
-    ? "bg-red-50 border-2 border-red-200 opacity-60 cursor-not-allowed"
-    : "bg-white border border-gray-100 hover:border-green-200 hover:shadow-md";
+      ? "bg-red-50 border-2 border-red-200 opacity-60 cursor-not-allowed"
+      : "bg-white border border-gray-100 hover:border-green-200 hover:shadow-md";
 
   const indicatorClass = forced ? "bg-yellow-500" : "bg-green-500";
 
