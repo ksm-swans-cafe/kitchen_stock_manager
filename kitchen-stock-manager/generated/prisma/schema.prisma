@@ -137,8 +137,8 @@ model lunchbox {
   id                      String  @id @default(auto()) @map("_id") @db.ObjectId
   lunchbox_limit          Int
   lunchbox_name           String
-  lunchbox_name_image     String?
   lunchbox_set_name       String
+  lunchbox_name_image     String?
   lunchbox_set_name_image String?
 }
 

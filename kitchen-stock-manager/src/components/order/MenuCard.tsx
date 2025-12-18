@@ -1,7 +1,7 @@
 "use client";
 
 import React, { KeyboardEvent, forwardRef, memo } from "react";
-import { GlassWater, CakeSlice, Candy, Apple, } from "lucide-react";
+import { GlassWater, CakeSlice, Candy, Apple } from "lucide-react";
 
 export type MenuCardSize = "sm" | "md" | "lg";
 
@@ -39,14 +39,14 @@ const sizeMap: Record<MenuCardSize, { media: string; emoji: string }> = {
 const defaultEmojiByCategory: Record<string, React.ReactNode> = {
   ข้าว: "🍚",
   noodle: "🍜",
-  drink: <GlassWater size={100} />,
+  drink: <GlassWater size={100} color='white' />,
   dessert: "🍮",
-  เค้ก: <CakeSlice size={100} />,
-  ของหวาน: <Candy size={100} />,
-  เครื่องดื่ม: <GlassWater size={100} />,
-  น้ำแข็งสำหรับเครื่องดื่ม: <GlassWater size={100} />,
-  อุปกรณ์เสริม: <GlassWater size={100} />,
-  ผลไม้: <Apple size={100} />,
+  เค้ก: <CakeSlice size={100} color='white' />,
+  ของหวาน: <Candy size={100} color='white' />,
+  เครื่องดื่ม: <GlassWater size={100} color='white' />,
+  น้ำแข็งสำหรับเครื่องดื่ม: <GlassWater size={100} color='white' />,
+  อุปกรณ์เสริม: <GlassWater size={100} color='white' />,
+  ผลไม้: <Apple size={100} color='white' />,
 };
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -61,11 +61,11 @@ function getEmoji(emoji?: string, category?: string | null) {
 
 // กำหนดสีพื้นหลังตามประเภทเนื้อสัตว์
 const meatTypeGradients: Record<string, string> = {
-  "หมู": "bg-[linear-gradient(to_bottom_right,theme(colors.pink.100),theme(colors.pink.200),theme(colors.pink.300))]",
-  "ไก่": "bg-[linear-gradient(to_bottom_right,theme(colors.yellow.100),theme(colors.yellow.200),theme(colors.yellow.300))]",
-  "หมึก": "bg-[linear-gradient(to_bottom_right,theme(colors.purple.100),theme(colors.purple.200),theme(colors.purple.300))]",
-  "กุ้ง": "bg-[linear-gradient(to_bottom_right,theme(colors.orange.100),theme(colors.orange.200),theme(colors.orange.300))]",
-  "ทะเล": "bg-[linear-gradient(to_bottom_right,theme(colors.cyan.100),theme(colors.cyan.200),theme(colors.cyan.300))]",
+  หมู: "bg-[linear-gradient(to_bottom_right,theme(colors.pink.100),theme(colors.pink.200),theme(colors.pink.300))]",
+  ไก่: "bg-[linear-gradient(to_bottom_right,theme(colors.yellow.100),theme(colors.yellow.200),theme(colors.yellow.300))]",
+  หมึก: "bg-[linear-gradient(to_bottom_right,theme(colors.purple.100),theme(colors.purple.200),theme(colors.purple.300))]",
+  กุ้ง: "bg-[linear-gradient(to_bottom_right,theme(colors.orange.100),theme(colors.orange.200),theme(colors.orange.300))]",
+  ทะเล: "bg-[linear-gradient(to_bottom_right,theme(colors.cyan.100),theme(colors.cyan.200),theme(colors.cyan.300))]",
 };
 
 const defaultGradient = "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]";
@@ -92,8 +92,8 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       ? "bg-yellow-50 border-2 border-yellow-400 ring-1 ring-yellow-200"
       : "bg-green-50 border-2 border-green-300 ring-1 ring-green-200"
     : duplicate
-      ? "bg-red-50 border-2 border-red-200 opacity-60 cursor-not-allowed"
-      : "bg-white border border-gray-100 hover:border-green-200 hover:shadow-md";
+    ? "bg-red-50 border-2 border-red-200 opacity-60 cursor-not-allowed"
+    : "bg-white border border-gray-100 hover:border-green-200 hover:shadow-md";
 
   const indicatorClass = forced ? "bg-yellow-500" : "bg-green-500";
 
@@ -123,11 +123,7 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
 
       {/* Media / Emoji or Image */}
       <div className={cn(sizeConf.media, meatType && meatTypeGradients[meatType] ? meatTypeGradients[meatType] : defaultGradient, "flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.02]")} aria-hidden>
-        {image ? (
-          <img src={image} className="w-3/4 h-3/4 object-contain p-2" alt={name} />
-        ) : (
-          <span className={cn(sizeConf.emoji)}>{getEmoji(emoji, category || undefined)}</span>
-        )}
+        {image ? <img src={image} className='w-3/4 h-3/4 object-contain p-2' alt={name} /> : <span className={cn(sizeConf.emoji)}>{getEmoji(emoji, category || undefined)}</span>}
       </div>
 
       {/* Body */}

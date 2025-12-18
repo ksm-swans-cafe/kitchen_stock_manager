@@ -6036,8 +6036,8 @@ export namespace Prisma {
     id: string | null
     lunchbox_limit: number | null
     lunchbox_name: string | null
-    lunchbox_name_image: string | null
     lunchbox_set_name: string | null
+    lunchbox_name_image: string | null
     lunchbox_set_name_image: string | null
   }
 
@@ -6045,8 +6045,8 @@ export namespace Prisma {
     id: string | null
     lunchbox_limit: number | null
     lunchbox_name: string | null
-    lunchbox_name_image: string | null
     lunchbox_set_name: string | null
+    lunchbox_name_image: string | null
     lunchbox_set_name_image: string | null
   }
 
@@ -6054,8 +6054,8 @@ export namespace Prisma {
     id: number
     lunchbox_limit: number
     lunchbox_name: number
-    lunchbox_name_image: number
     lunchbox_set_name: number
+    lunchbox_name_image: number
     lunchbox_set_name_image: number
     _all: number
   }
@@ -6073,8 +6073,8 @@ export namespace Prisma {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
-    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name_image?: true
   }
 
@@ -6082,8 +6082,8 @@ export namespace Prisma {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
-    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name_image?: true
   }
 
@@ -6091,8 +6091,8 @@ export namespace Prisma {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
-    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name_image?: true
     _all?: true
   }
@@ -6187,8 +6187,8 @@ export namespace Prisma {
     id: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image: string | null
     lunchbox_set_name: string
+    lunchbox_name_image: string | null
     lunchbox_set_name_image: string | null
     _count: LunchboxCountAggregateOutputType | null
     _avg: LunchboxAvgAggregateOutputType | null
@@ -6215,8 +6215,8 @@ export namespace Prisma {
     id?: boolean
     lunchbox_limit?: boolean
     lunchbox_name?: boolean
-    lunchbox_name_image?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_name_image?: boolean
     lunchbox_set_name_image?: boolean
   }, ExtArgs["result"]["lunchbox"]>
 
@@ -6226,12 +6226,12 @@ export namespace Prisma {
     id?: boolean
     lunchbox_limit?: boolean
     lunchbox_name?: boolean
-    lunchbox_name_image?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_name_image?: boolean
     lunchbox_set_name_image?: boolean
   }
 
-  export type lunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lunchbox_limit" | "lunchbox_name" | "lunchbox_name_image" | "lunchbox_set_name" | "lunchbox_set_name_image", ExtArgs["result"]["lunchbox"]>
+  export type lunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lunchbox_limit" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_name_image" | "lunchbox_set_name_image", ExtArgs["result"]["lunchbox"]>
 
   export type $lunchboxPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "lunchbox"
@@ -6240,8 +6240,8 @@ export namespace Prisma {
       id: string
       lunchbox_limit: number
       lunchbox_name: string
-      lunchbox_name_image: string | null
       lunchbox_set_name: string
+      lunchbox_name_image: string | null
       lunchbox_set_name_image: string | null
     }, ExtArgs["result"]["lunchbox"]>
     composites: {}
@@ -6638,8 +6638,8 @@ export namespace Prisma {
     readonly id: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_limit: FieldRef<"lunchbox", 'Int'>
     readonly lunchbox_name: FieldRef<"lunchbox", 'String'>
-    readonly lunchbox_name_image: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"lunchbox", 'String'>
+    readonly lunchbox_name_image: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_set_name_image: FieldRef<"lunchbox", 'String'>
   }
     
@@ -8096,8 +8096,8 @@ export namespace Prisma {
     id: 'id',
     lunchbox_limit: 'lunchbox_limit',
     lunchbox_name: 'lunchbox_name',
-    lunchbox_name_image: 'lunchbox_name_image',
     lunchbox_set_name: 'lunchbox_set_name',
+    lunchbox_name_image: 'lunchbox_name_image',
     lunchbox_set_name_image: 'lunchbox_set_name_image'
   };
 
@@ -8546,8 +8546,8 @@ export namespace Prisma {
     id?: StringFilter<"lunchbox"> | string
     lunchbox_limit?: IntFilter<"lunchbox"> | number
     lunchbox_name?: StringFilter<"lunchbox"> | string
-    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name_image?: StringNullableFilter<"lunchbox"> | string | null
   }
 
@@ -8555,8 +8555,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 
@@ -8567,8 +8567,8 @@ export namespace Prisma {
     NOT?: lunchboxWhereInput | lunchboxWhereInput[]
     lunchbox_limit?: IntFilter<"lunchbox"> | number
     lunchbox_name?: StringFilter<"lunchbox"> | string
-    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name_image?: StringNullableFilter<"lunchbox"> | string | null
   }, "id">
 
@@ -8576,8 +8576,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
     _count?: lunchboxCountOrderByAggregateInput
     _avg?: lunchboxAvgOrderByAggregateInput
@@ -8593,8 +8593,8 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"lunchbox"> | string
     lunchbox_limit?: IntWithAggregatesFilter<"lunchbox"> | number
     lunchbox_name?: StringWithAggregatesFilter<"lunchbox"> | string
-    lunchbox_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringWithAggregatesFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
     lunchbox_set_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
   }
 
@@ -9048,8 +9048,8 @@ export namespace Prisma {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name_image?: string | null
   }
 
@@ -9057,24 +9057,24 @@ export namespace Prisma {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name_image?: string | null
   }
 
   export type lunchboxUpdateInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type lunchboxUncheckedUpdateInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -9082,24 +9082,24 @@ export namespace Prisma {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name_image?: string | null
   }
 
   export type lunchboxUpdateManyMutationInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type lunchboxUncheckedUpdateManyInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -9504,8 +9504,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 
@@ -9517,8 +9517,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 
@@ -9526,8 +9526,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 

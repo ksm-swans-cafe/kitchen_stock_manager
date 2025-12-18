@@ -753,7 +753,7 @@ export default function CartList() {
                         <h4 className='font-medium'>
                           {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set}
                         </h4>
-                        <p className='text-sm text-gray-600'>เลือกได้ {lunchbox.lunchbox_limit} อย่าง</p>
+                        {/* <p className='text-sm text-gray-600'>เลือกได้ {lunchbox.lunchbox_limit} อย่าง</p> */}
                       </div>
                       <button onClick={() => removeLunchbox(actualIndex)} className='px-2 py-1 w-auto !bg-red-500 !text-white rounded text-sm hover:!font-semibold hover:!bg-red-700'>
                         ลบ
