@@ -633,24 +633,24 @@ export default function Order() {
           วันที่{" "}
           {currentTime
             ? (() => {
-                const date = currentTime;
-                const day = date.toLocaleDateString("th-TH", { day: "2-digit" });
-                const month = date.toLocaleDateString("th-TH", { month: "long" });
-                const year = date.toLocaleDateString("th-TH", { year: "numeric" });
+              const date = currentTime;
+              const day = date.toLocaleDateString("th-TH", { day: "2-digit" });
+              const month = date.toLocaleDateString("th-TH", { month: "long" });
+              const year = date.toLocaleDateString("th-TH", { year: "numeric" });
 
-                return `${day} ${month} ${year}`;
-              })()
+              return `${day} ${month} ${year}`;
+            })()
             : "วัน เดือน พ.ศ."}
         </div>
         <div className='text-sm md:text-base xl:text-lg font-bold text-black'>
           เวลา{" "}
           {currentTime
             ? currentTime.toLocaleTimeString("th-TH", {
-                hour12: false,
-                hour: "2-digit",
-                minute: "2-digit",
-                // second: "2-digit",
-              })
+              hour12: false,
+              hour: "2-digit",
+              minute: "2-digit",
+              // second: "2-digit",
+            })
             : "--:--"}{" "}
           น.
         </div>
@@ -667,15 +667,13 @@ export default function Order() {
               setSelectedSetMenu("");
               setSelectedMenuItems([]);
             }}
-            className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-              selectedFoodSet ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-100 border-2 border-orange-300" : "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-            }`}>
+            className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectedFoodSet ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-100 border-2 border-orange-300" : "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+              }`}>
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-3 xl:space-x-4'>
                 <div
-                  className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                    selectedFoodSet ? "bg-green-500 text-white" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : "bg-gray-400 text-white"
-                  }`}>
+                  className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectedFoodSet ? "bg-green-500 text-white" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : "bg-gray-400 text-white"
+                    }`}>
                   1
                 </div>
                 <div className='flex-1 min-w-0'>
@@ -696,22 +694,20 @@ export default function Order() {
               }
             }}
             disabled={!selectedFoodSet}
-            className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-              selectedSetMenu
-                ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                : selectedFoodSet && !selectedSetMenu
+            className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectedSetMenu
+              ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+              : selectedFoodSet && !selectedSetMenu
                 ? "bg-orange-100 border-2 border-orange-300"
                 : selectedFoodSet
-                ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
-            }`}>
+                  ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+                  : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
+              }`}>
             {/* Similar structure to Step 1 with responsive improvements */}
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-3 xl:space-x-4 truncate '>
                 <div
-                  className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold truncate ${
-                    selectedSetMenu ? "bg-green-500 text-white truncate" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white truncate" : selectedFoodSet ? "bg-gray-400 text-white truncate " : "bg-gray-300 text-gray-500 truncate"
-                  }`}>
+                  className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold truncate ${selectedSetMenu ? "bg-green-500 text-white truncate" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white truncate" : selectedFoodSet ? "bg-gray-400 text-white truncate " : "bg-gray-300 text-gray-500 truncate"
+                    }`}>
                   2
                 </div>
                 <div className='flex-1 min-w-0 truncate'>
@@ -747,15 +743,14 @@ export default function Order() {
               }
             }}
             disabled={!selectedSetMenu}
-            className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-              selectionCount.total > 0
-                ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                : selectedSetMenu
+            className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectionCount.total > 0
+              ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+              : selectedSetMenu
                 ? "bg-orange-100 border-2 border-orange-300"
                 : selectedSetMenu
-                ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
-            }`}>
+                  ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+                  : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
+              }`}>
             {/* Similar structure with responsive improvements */}
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-3 xl:space-x-4'>
@@ -803,17 +798,16 @@ export default function Order() {
                 if (limit > 0) return selectionCount.total !== limit;
                 return false; // limit = 0 (ไม่จำกัด)
               })()}
-              className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${
-                isSaving ||
+              className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${isSaving ||
                 (() => {
                   if (selectionCount.total === 0) return true;
                   const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                   const limit = setData?.lunchbox_limit ?? 0;
                   return limit > 0 && selectionCount.total !== limit;
                 })()
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transform hover:scale-105 hover:shadow-xl"
-              }`}>
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transform hover:scale-105 hover:shadow-xl"
+                }`}>
               {isSaving ? (
                 <>
                   <div className='animate-spin w-4 h-4 md:w-5 md:h-5 xl:w-6 xl:h-6 border-2 border-white border-t-transparent rounded-full'></div>
@@ -981,23 +975,23 @@ export default function Order() {
                 วันที่{" "}
                 {currentTime
                   ? (() => {
-                      const date = currentTime;
-                      const day = date.toLocaleDateString("th-TH", { day: "2-digit" });
-                      const month = date.toLocaleDateString("th-TH", { month: "long" });
-                      const year = date.toLocaleDateString("th-TH", { year: "numeric" });
+                    const date = currentTime;
+                    const day = date.toLocaleDateString("th-TH", { day: "2-digit" });
+                    const month = date.toLocaleDateString("th-TH", { month: "long" });
+                    const year = date.toLocaleDateString("th-TH", { year: "numeric" });
 
-                      return `${day} ${month} ${year}`;
-                    })()
+                    return `${day} ${month} ${year}`;
+                  })()
                   : "วัน เดือน พ.ศ."}
               </div>
               <div className='text-sm md:text-base xl:text-lg font-bold text-black'>
                 เวลา{" "}
                 {currentTime
                   ? currentTime.toLocaleTimeString("th-TH", {
-                      hour12: false,
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                    hour12: false,
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                   : "--:--"}{" "}
                 น.
               </div>
@@ -1014,19 +1008,17 @@ export default function Order() {
                     setSelectedSetMenu("");
                     setSelectedMenuItems([]);
                   }}
-                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectedFoodSet
-                      ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                      : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0
+                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectedFoodSet
+                    ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+                    : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0
                       ? "bg-orange-100 border-2 border-orange-300"
                       : "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                  }`}>
+                    }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
                       <div
-                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                          selectedFoodSet ? "bg-green-500 text-white" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : "bg-gray-400 text-white"
-                        }`}>
+                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectedFoodSet ? "bg-green-500 text-white" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : "bg-gray-400 text-white"
+                          }`}>
                         1
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -1047,21 +1039,19 @@ export default function Order() {
                     }
                   }}
                   disabled={!selectedFoodSet}
-                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectedSetMenu
-                      ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                      : selectedFoodSet && !selectedSetMenu
+                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectedSetMenu
+                    ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+                    : selectedFoodSet && !selectedSetMenu
                       ? "bg-orange-100 border-2 border-orange-300"
                       : selectedFoodSet
-                      ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                      : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
-                  }`}>
+                        ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+                        : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
+                    }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
                       <div
-                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                          selectedSetMenu ? "bg-green-500 text-white" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white" : selectedFoodSet ? "bg-gray-400 text-white" : "bg-gray-300 text-gray-500"
-                        }`}>
+                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectedSetMenu ? "bg-green-500 text-white" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white" : selectedFoodSet ? "bg-gray-400 text-white" : "bg-gray-300 text-gray-500"
+                          }`}>
                         2
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -1095,15 +1085,14 @@ export default function Order() {
                     }
                   }}
                   disabled={!selectedSetMenu}
-                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectionCount.total > 0
-                      ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                      : selectedSetMenu
+                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectionCount.total > 0
+                    ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+                    : selectedSetMenu
                       ? "bg-orange-100 border-2 border-orange-300"
                       : selectedSetMenu
-                      ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                      : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
-                  }`}>
+                        ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+                        : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
+                    }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
                       <div className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectionCount.total > 0 ? "bg-green-500 text-white" : selectedSetMenu ? "bg-orange-500 text-white" : "bg-gray-300 text-gray-500"}`}>
@@ -1145,16 +1134,15 @@ export default function Order() {
                       if (limit > 0) return selectionCount.total !== limit;
                       return false;
                     })()}
-                    className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${
-                      isSaving ||
+                    className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${isSaving ||
                       (() => {
                         if (selectionCount.total === 0) return true;
                         const limit = getSetLimit(selectedFoodSet, selectedSetMenu);
                         return limit > 0 && selectionCount.total !== limit;
                       })()
-                        ? "!bg-gray-200 !cursor-not-allowed"
-                        : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
-                    }`}>
+                      ? "!bg-gray-200 !cursor-not-allowed"
+                      : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
+                      }`}>
                     {isSaving ? (
                       <>
                         <div className='animate-spin w-4 h-4 md:w-5 md:h-5 xl:w-6 xl:h-6 border-2 border-white border-t-transparent rounded-full'></div>
@@ -1202,12 +1190,12 @@ export default function Order() {
               timeLabel={
                 currentTime
                   ? `${currentTime
-                      .toLocaleDateString("th-TH", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "2-digit",
-                      })
-                      .replace(/\//g, "/")} ${currentTime.toLocaleTimeString("th-TH", {
+                    .toLocaleDateString("th-TH", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                    })
+                    .replace(/\//g, "/")} ${currentTime.toLocaleTimeString("th-TH", {
                       hour12: false,
                       hour: "2-digit",
                       minute: "2-digit",
@@ -1619,9 +1607,10 @@ export default function Order() {
                                       name={menu.menu_name}
                                       price={getPrice(menu)}
                                       category={menu.lunchbox_menu_category || undefined}
-                                      emoji={menu.lunchbox_menu_category === "ข้าว" ? "🍚" : "🍜"}
-                                      image={FoodMenuIcon.src}
+                                      emoji={undefined}
+                                      image={undefined}
                                       meatType={menuMeatType}
+
                                       selected={isSelected}
                                       forced={isAutoSelectedRice && !isUnlimited} // แก้ไข: ไม่บังคับถ้าเป็นเซต unlimited
                                       duplicate={!!isLunchboxCategoryTaken}
