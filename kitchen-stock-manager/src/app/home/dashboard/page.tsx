@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { MapPin, Clock, Maximize2, Minimize2, Star, List, X, Edit, GripVertical } from "lucide-react";
+import { MapPin, Clock, Maximize2, Minimize2, Star, List, X, Edit } from "lucide-react";
 import { Button } from "@/share/ui/button";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
@@ -11,7 +11,7 @@ import DashboardIcon from "@/assets/dashboard.png";
 
 // --- Interfaces ---
 interface DayItem {
-  name: string;
+ name: string;
   qty: number | string;
 }
 
@@ -82,7 +82,6 @@ const getMonthName = (monthNum: string | number): string => {
 
 const getTimeAlertInfo = (minutes?: number) => {
   if (minutes == null) return null;
-
   if (minutes <= 30) {
     return {
       label: `ใกล้เวลาส่ง (${minutes} นาที)`,
@@ -115,14 +114,8 @@ const getTimeAlertInfo = (minutes?: number) => {
 // --- Main Component ---
 export default function Dashboard() {
   const [fullscreen, setFullscreen] = useState(false);
-  
   // State สำหรับเก็บ ID ของการ์ดที่ User เลือกปักหมุดเอง
   const [pinnedIds, setPinnedIds] = useState<number[]>([]);
-  
-  // State สำหรับควบคุมความกว้างของ pinned area (เป็น %)
-  const [pinnedAreaWidth, setPinnedAreaWidth] = useState(35);
-  const [isResizing, setIsResizing] = useState(false);
-
   // ฟังก์ชันสำหรับ toggle ปักหมุด
   const togglePin = (id: number) => {
     setPinnedIds((prev) => {
@@ -130,7 +123,6 @@ export default function Dashboard() {
         // ถ้าปักอยู่แล้ว ให้ถอนออก
         return prev.filter((pinnedId) => pinnedId !== id);
       } else {
-        // ถ้ายังไม่ปัก ให้เพิ่ม (ไม่จำกัดจำนวน)
         return [...prev, id];
       }
     });
@@ -281,7 +273,7 @@ export default function Dashboard() {
   };
 
   // --- [LOGIC ใหม่] การจัดการ Layout และข้อมูล ---
-  
+
   // 1. หาการ์ดที่ถูกปักหมุด (Pinned Cards) - สูงสุด 2 ใบ
   const pinnedCards = allCards.filter((c) => pinnedIds.includes(c.id));
 
@@ -298,18 +290,16 @@ export default function Dashboard() {
     const isPinned = pinnedIds.includes(day.id);
 
     return (
-      <div 
-        key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")} 
+      <div
+        key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")}
         // Logic ความสูง: h-full เพื่อให้ยืดตาม Container, min-w เพื่อกำหนดความกว้างขั้นต่ำ
         className={`bg-white rounded-2xl shadow overflow-hidden flex flex-col h-full 
           min-w-[300px] 
           ${asPinnedSlot && timeAlert ? "ring-4 ring-amber-300" : ""}
           ${asPinnedSlot ? "shadow-2xl border-2 border-yellow-400/50" : "shadow"}
-        `}
-      >
+        `}>
         {/* HEADER (Fixed) */}
         <div className={`relative flex-none bg-gradient-to-r ${headerGradient} text-white p-4 pb-5`}>
-          
           {/* ปุ่มดาวปักหมุด - มุมขวาบนของทุก Card */}
           <button
             onClick={(e) => {
@@ -317,18 +307,13 @@ export default function Dashboard() {
               togglePin(day.id);
             }}
             className={`absolute top-2 right-2 p-2 rounded-full transition-all
-              ${isPinned 
-                ? "bg-yellow-400 hover:bg-yellow-500 shadow-lg" 
-                : "bg-white/20 hover:bg-white/40 backdrop-blur-sm"}
+              ${isPinned ? "bg-yellow-400 hover:bg-yellow-500 shadow-lg" : "bg-white/20 hover:bg-white/40 backdrop-blur-sm"}
             `}
-            title={isPinned ? "ถอนหมุด" : "ปักหมุด"}
-          >
-            <Star 
+            title={isPinned ? "ถอนหมุด" : "ปักหมุด"}>
+            <Star
               className={`w-5 h-5 transition-all
-                ${isPinned 
-                  ? "text-white fill-white" 
-                  : "text-white/80"}
-              `} 
+                ${isPinned ? "text-white fill-white" : "text-white/80"}
+              `}
             />
           </button>
 
@@ -370,7 +355,7 @@ export default function Dashboard() {
               <col className='w-[70%]' />
               <col className='w-[30%]' />
             </colgroup>
-            <thead className="sticky top-0 bg-gray-100 shadow-sm z-10">
+            <thead className='sticky top-0 bg-gray-100 shadow-sm z-10'>
               <tr>
                 <th className='px-4 py-2 text-left font-semibold !text-black'>รายการ</th>
                 <th className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center font-semibold !text-black'>จำนวน</th>
@@ -424,7 +409,7 @@ export default function Dashboard() {
       {!isLoading && !error && allCards.length > 0 && (
         <>
           {/* Header Bar (Legend & Toggle) - Fixed Height */}
-          <div className="flex-none transition-all">
+          <div className='flex-none transition-all'>
             {!fullscreen && (
               <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
                 <div className='hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs'>
@@ -449,112 +434,69 @@ export default function Dashboard() {
                   <Minimize2 className='w-4 h-4' />
                   ออกจากโหมดเต็มจอ
                 </button>
-                 <div className='flex items-center gap-1 text-[10px] text-white/90 bg-black/30 px-2 py-1 rounded-full'>
-                    {dayColorLegend.map((day) => (
-                      <div key={day.label} className='flex items-center gap-1'>
-                        <span className={`w-2 h-2 rounded-full ${day.className}`} />
-                        <span>{day.label}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className='flex items-center gap-1 text-[10px] text-white/90 bg-black/30 px-2 py-1 rounded-full'>
+                  {dayColorLegend.map((day) => (
+                    <div key={day.label} className='flex items-center gap-1'>
+                      <span className={`w-2 h-2 rounded-full ${day.className}`} />
+                      <span>{day.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           {/* [LAYOUT หลัก] แบ่งส่วน Scroll และ Fixed */}
           <div className='flex-1 flex gap-4 overflow-hidden'>
-            
             {/* ZONE 1: Scrollable List Area (ส่วนซ้ายเลื่อนแนวนอน) */}
             <div className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden pb-2 snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2`}>
-              {scrollableCards.length > 0 ? (
-                scrollableCards.map((day) => (
-                  // Logic การกำหนดความกว้าง (Width)
-                  // - ถ้ามีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 3 ใบ (ใบละ ~32%)
-                  // - ถ้าไม่มีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 4 ใบ (ใบละ ~24%)
-                  <div 
-                    key={day.id} 
-                    className={`h-full flex-none transition-all duration-300
-                      ${pinnedCards.length > 0 
-                        ? "w-[85vw] sm:w-[45vw] md:w-[40vw] lg:w-[32%]" // Case มีปักหมุด
-                        : "w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]" // Case ไม่มีปักหมุด
+              {scrollableCards.length > 0
+                ? scrollableCards.map((day) => (
+                    // Logic การกำหนดความกว้าง (Width)
+                    // - ถ้ามีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 3 ใบ (ใบละ ~32%)
+                    // - ถ้าไม่มีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 4 ใบ (ใบละ ~24%)
+                    <div
+                      key={day.id}
+                      className={`h-full flex-none transition-all duration-300
+                      ${
+                        pinnedCards.length > 0
+                          ? "w-[85vw] sm:w-[45vw] md:w-[40vw] lg:w-[32%]" // Case มีปักหมุด
+                          : "w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]" // Case ไม่มีปักหมุด
                       }
-                    `}
-                  >
-                    {renderDayCard(day, false)}
-                  </div>
-                ))
-              ) : (
-                // กรณีไม่มีข้อมูลใน list (เช่น การ์ดทั้งหมดถูกปักหมุดหมดแล้ว)
-                pinnedCards.length === 0 && (
-                   <div className="flex flex-col items-center justify-center w-full text-gray-400 h-full border-2 border-dashed rounded-xl">
-                     <p>ไม่มีรายการออเดอร์</p>
-                   </div>
-                )
-              )}
+                    `}>
+                      {renderDayCard(day, false)}
+                    </div>
+                  ))
+                : // กรณีไม่มีข้อมูลใน list (เช่น การ์ดทั้งหมดถูกปักหมุดหมดแล้ว)
+                  pinnedCards.length === 0 && (
+                    <div className='flex flex-col items-center justify-center w-full text-gray-400 h-full border-2 border-dashed rounded-xl'>
+                      <p>ไม่มีรายการออเดอร์</p>
+                    </div>
+                  )}
             </div>
 
-            {/* ZONE 2: Pinned Cards Area (ส่วนขวาตรึงอยู่กับที่ - ปรับขนาดได้) */}
+            {/* ZONE 2: Pinned Cards Area (ส่วนขวาตรึงอยู่กับที่ - ขนาดพอดีกับ 1 การ์ด) */}
             {/* แสดงเฉพาะเมื่อมีการปักหมุด */}
             {pinnedCards.length > 0 && (
-              <div 
-                className="hidden lg:flex flex-none relative"
-                style={{ width: `${pinnedAreaWidth}%`, minWidth: '320px', maxWidth: '70%' }}
-              >
-                {/* Resize Handle (ลากขอบซ้าย) */}
-                <div
-                  className={`absolute left-0 top-0 bottom-0 w-3 cursor-col-resize flex items-center justify-center z-20 group
-                    ${isResizing ? 'bg-blue-200' : 'hover:bg-gray-200'}
-                    transition-colors rounded-l-lg
-                  `}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setIsResizing(true);
-                    
-                    const startX = e.clientX;
-                    const startWidth = pinnedAreaWidth;
-                    const containerWidth = (e.target as HTMLElement).closest('.flex-1.flex.gap-4')?.getBoundingClientRect().width || window.innerWidth;
-                    
-                    const handleMouseMove = (moveEvent: MouseEvent) => {
-                      const deltaX = startX - moveEvent.clientX;
-                      const deltaPercent = (deltaX / containerWidth) * 100;
-                      const newWidth = Math.min(70, Math.max(20, startWidth + deltaPercent));
-                      setPinnedAreaWidth(newWidth);
-                    };
-                    
-                    const handleMouseUp = () => {
-                      setIsResizing(false);
-                      document.removeEventListener('mousemove', handleMouseMove);
-                      document.removeEventListener('mouseup', handleMouseUp);
-                    };
-                    
-                    document.addEventListener('mousemove', handleMouseMove);
-                    document.addEventListener('mouseup', handleMouseUp);
-                  }}
-                >
-                  <GripVertical className={`w-4 h-4 ${isResizing ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} transition-colors`} />
-                </div>
-                
+              <div className='hidden lg:flex flex-none' style={{ width: "360px" }}>
                 {/* Pinned Content Area */}
-                <div className="flex-1 flex flex-col border-l-2 border-gray-200 pl-4 ml-3 bg-gray-50/50">
+                <div className='flex-1 flex flex-col border-l-2 border-gray-200 pl-4 ml-3 bg-gray-50/50 min-w-0'>
                   {/* Header */}
-                  <div className="flex-none flex items-center justify-between pb-2 border-b border-gray-200 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span className="text-sm font-semibold text-gray-700">ปักหมุด ({pinnedCards.length})</span>
+                  <div className='flex-none flex items-center justify-between pb-2 border-b border-gray-200 mb-3'>
+                    <div className='flex items-center gap-2'>
+                      <Star className='w-4 h-4 text-yellow-500 fill-yellow-500' />
+                      <span className='text-sm font-semibold text-gray-700'>ปักหมุด ({pinnedCards.length})</span>
                     </div>
-                    <button
-                      onClick={() => setPinnedIds([])}
-                      className="text-xs text-gray-500 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50"
-                    >
+                    <button onClick={() => setPinnedIds([])} className='text-xs text-gray-500 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50'>
                       ล้างทั้งหมด
                     </button>
                   </div>
-                  
+
                   {/* Scrollable Pinned Cards */}
-                  <div className="flex-1 overflow-x-auto overflow-y-hidden pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                    <div className="flex gap-4 h-full">
+                  <div className='flex-1 min-w-0 overflow-x-auto overflow-y-hidden pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent snap-x snap-mandatory'>
+                    <div className='flex gap-4 h-full'>
                       {pinnedCards.map((card) => (
-                        <div key={card.id} className="flex-none h-full" style={{ width: '300px' }}>
+                        <div key={card.id} className='flex-none h-full snap-start' style={{ width: "300px" }}>
                           {renderDayCard(card, true)}
                         </div>
                       ))}
@@ -563,12 +505,9 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
-            
           </div>
         </>
       )}
-
-
     </div>
   );
 }

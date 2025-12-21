@@ -124,11 +124,19 @@ exports.Prisma.CartScalarFieldEnum = {
   cart_id: 'cart_id',
   cart_last_update: 'cart_last_update',
   cart_location_send: 'cart_location_send',
+  cart_total_cost_lunchbox: 'cart_total_cost_lunchbox',
   cart_order_number: 'cart_order_number',
   cart_receive_time: 'cart_receive_time',
+  cart_receive_name: 'cart_receive_name',
   cart_shipping_cost: 'cart_shipping_cost',
   cart_status: 'cart_status',
-  cart_username: 'cart_username'
+  cart_username: 'cart_username',
+  cart_pay_type: 'cart_pay_type',
+  cart_pay_deposit: 'cart_pay_deposit',
+  cart_pay_cost: 'cart_pay_cost',
+  cart_invoice_tex: 'cart_invoice_tex',
+  cart_total_cost: 'cart_total_cost',
+  cart_total_remain: 'cart_total_remain'
 };
 
 exports.Prisma.EmployeeScalarFieldEnum = {
@@ -172,8 +180,8 @@ exports.Prisma.LunchboxScalarFieldEnum = {
   id: 'id',
   lunchbox_limit: 'lunchbox_limit',
   lunchbox_name: 'lunchbox_name',
-  lunchbox_name_image: 'lunchbox_name_image',
   lunchbox_set_name: 'lunchbox_set_name',
+  lunchbox_name_image: 'lunchbox_name_image',
   lunchbox_set_name_image: 'lunchbox_set_name_image'
 };
 

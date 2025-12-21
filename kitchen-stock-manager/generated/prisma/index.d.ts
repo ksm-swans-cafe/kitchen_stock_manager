@@ -29,21 +29,6 @@ export type CartCartLunchboxLunchboxMenu = $Result.DefaultSelection<Prisma.$Cart
  */
 export type CartCartLunchboxLunchboxMenuMenuIngredients = $Result.DefaultSelection<Prisma.$CartCartLunchboxLunchboxMenuMenuIngredientsPayload>
 /**
- * Model CartCartMenuItems
- * 
- */
-export type CartCartMenuItems = $Result.DefaultSelection<Prisma.$CartCartMenuItemsPayload>
-/**
- * Model CartCartMenuItemsMenuIngredients
- * 
- */
-export type CartCartMenuItemsMenuIngredients = $Result.DefaultSelection<Prisma.$CartCartMenuItemsMenuIngredientsPayload>
-/**
- * Model CartCartMenuItemsMenuNotes
- * 
- */
-export type CartCartMenuItemsMenuNotes = $Result.DefaultSelection<Prisma.$CartCartMenuItemsMenuNotesPayload>
-/**
  * Model MenuMenuIngredients
  * 
  */
@@ -53,6 +38,11 @@ export type MenuMenuIngredients = $Result.DefaultSelection<Prisma.$MenuMenuIngre
  * 
  */
 export type MenuMenuLunchbox = $Result.DefaultSelection<Prisma.$MenuMenuLunchboxPayload>
+/**
+ * Model CartCartDescription
+ * 
+ */
+export type CartCartDescription = $Result.DefaultSelection<Prisma.$CartCartDescriptionPayload>
 /**
  * Model cart
  * 
@@ -1563,223 +1553,6 @@ export namespace Prisma {
 
 
   /**
-   * Model CartCartMenuItems
-   */
-
-
-
-
-
-  export type CartCartMenuItemsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    menu_description?: boolean
-    menu_ingredients?: boolean | CartCartMenuItemsMenuIngredientsDefaultArgs<ExtArgs>
-    menu_name?: boolean
-    menu_notes?: boolean | CartCartMenuItemsMenuNotesDefaultArgs<ExtArgs>
-    menu_order_id?: boolean
-    menu_total?: boolean
-  }, ExtArgs["result"]["cartCartMenuItems"]>
-
-
-
-  export type CartCartMenuItemsSelectScalar = {
-    menu_description?: boolean
-    menu_name?: boolean
-    menu_order_id?: boolean
-    menu_total?: boolean
-  }
-
-  export type CartCartMenuItemsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"menu_description" | "menu_ingredients" | "menu_name" | "menu_notes" | "menu_order_id" | "menu_total", ExtArgs["result"]["cartCartMenuItems"]>
-  export type CartCartMenuItemsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-
-  export type $CartCartMenuItemsPayload = {
-    name: "CartCartMenuItems"
-    objects: {}
-    scalars: {
-      menu_description: string | null
-      menu_name: string
-      menu_order_id: number | null
-      /**
-       * Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 683 sampled entries
-       */
-      menu_total: Prisma.JsonValue
-    }
-    composites: {
-      menu_ingredients: Prisma.$CartCartMenuItemsMenuIngredientsPayload[]
-      menu_notes: Prisma.$CartCartMenuItemsMenuNotesPayload[]
-    }
-  }
-
-  type CartCartMenuItemsGetPayload<S extends boolean | null | undefined | CartCartMenuItemsDefaultArgs> = $Result.GetResult<Prisma.$CartCartMenuItemsPayload, S>
-
-
-
-
-
-  /**
-   * Fields of the CartCartMenuItems model
-   */
-  interface CartCartMenuItemsFieldRefs {
-    readonly menu_description: FieldRef<"CartCartMenuItems", 'String'>
-    readonly menu_name: FieldRef<"CartCartMenuItems", 'String'>
-    readonly menu_order_id: FieldRef<"CartCartMenuItems", 'Int'>
-    readonly menu_total: FieldRef<"CartCartMenuItems", 'Json'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * CartCartMenuItems without action
-   */
-  export type CartCartMenuItemsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CartCartMenuItems
-     */
-    select?: CartCartMenuItemsSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CartCartMenuItems
-     */
-    omit?: CartCartMenuItemsOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CartCartMenuItemsInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model CartCartMenuItemsMenuIngredients
-   */
-
-
-
-
-
-  export type CartCartMenuItemsMenuIngredientsSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    ingredient_name?: boolean
-    ingredient_status?: boolean
-    useItem?: boolean
-  }, ExtArgs["result"]["cartCartMenuItemsMenuIngredients"]>
-
-
-
-  export type CartCartMenuItemsMenuIngredientsSelectScalar = {
-    ingredient_name?: boolean
-    ingredient_status?: boolean
-    useItem?: boolean
-  }
-
-  export type CartCartMenuItemsMenuIngredientsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ingredient_name" | "ingredient_status" | "useItem", ExtArgs["result"]["cartCartMenuItemsMenuIngredients"]>
-
-  export type $CartCartMenuItemsMenuIngredientsPayload = {
-    name: "CartCartMenuItemsMenuIngredients"
-    objects: {}
-    scalars: {
-      ingredient_name: string | null
-      ingredient_status: boolean | null
-      /**
-       * Multiple data types found: Int: 98.6%, BigInt: 1.4% out of 2659 sampled entries
-       */
-      useItem: Prisma.JsonValue | null
-    }
-    composites: {}
-  }
-
-  type CartCartMenuItemsMenuIngredientsGetPayload<S extends boolean | null | undefined | CartCartMenuItemsMenuIngredientsDefaultArgs> = $Result.GetResult<Prisma.$CartCartMenuItemsMenuIngredientsPayload, S>
-
-
-
-
-
-  /**
-   * Fields of the CartCartMenuItemsMenuIngredients model
-   */
-  interface CartCartMenuItemsMenuIngredientsFieldRefs {
-    readonly ingredient_name: FieldRef<"CartCartMenuItemsMenuIngredients", 'String'>
-    readonly ingredient_status: FieldRef<"CartCartMenuItemsMenuIngredients", 'Boolean'>
-    readonly useItem: FieldRef<"CartCartMenuItemsMenuIngredients", 'Json'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * CartCartMenuItemsMenuIngredients without action
-   */
-  export type CartCartMenuItemsMenuIngredientsDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CartCartMenuItemsMenuIngredients
-     */
-    select?: CartCartMenuItemsMenuIngredientsSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CartCartMenuItemsMenuIngredients
-     */
-    omit?: CartCartMenuItemsMenuIngredientsOmit<ExtArgs> | null
-  }
-
-
-  /**
-   * Model CartCartMenuItemsMenuNotes
-   */
-
-
-
-
-
-  export type CartCartMenuItemsMenuNotesSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    note?: boolean
-    qty?: boolean
-  }, ExtArgs["result"]["cartCartMenuItemsMenuNotes"]>
-
-
-
-  export type CartCartMenuItemsMenuNotesSelectScalar = {
-    note?: boolean
-    qty?: boolean
-  }
-
-  export type CartCartMenuItemsMenuNotesOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"note" | "qty", ExtArgs["result"]["cartCartMenuItemsMenuNotes"]>
-
-  export type $CartCartMenuItemsMenuNotesPayload = {
-    name: "CartCartMenuItemsMenuNotes"
-    objects: {}
-    scalars: {
-      note: string
-      qty: number
-    }
-    composites: {}
-  }
-
-  type CartCartMenuItemsMenuNotesGetPayload<S extends boolean | null | undefined | CartCartMenuItemsMenuNotesDefaultArgs> = $Result.GetResult<Prisma.$CartCartMenuItemsMenuNotesPayload, S>
-
-
-
-
-
-  /**
-   * Fields of the CartCartMenuItemsMenuNotes model
-   */
-  interface CartCartMenuItemsMenuNotesFieldRefs {
-    readonly note: FieldRef<"CartCartMenuItemsMenuNotes", 'String'>
-    readonly qty: FieldRef<"CartCartMenuItemsMenuNotes", 'Int'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * CartCartMenuItemsMenuNotes without action
-   */
-  export type CartCartMenuItemsMenuNotesDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CartCartMenuItemsMenuNotes
-     */
-    select?: CartCartMenuItemsMenuNotesSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CartCartMenuItemsMenuNotes
-     */
-    omit?: CartCartMenuItemsMenuNotesOmit<ExtArgs> | null
-  }
-
-
-  /**
    * Model MenuMenuIngredients
    */
 
@@ -1929,6 +1702,73 @@ export namespace Prisma {
 
 
   /**
+   * Model CartCartDescription
+   */
+
+
+
+
+
+  export type CartCartDescriptionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    description_id?: boolean
+    description_title?: boolean
+    description_value?: boolean
+  }, ExtArgs["result"]["cartCartDescription"]>
+
+
+
+  export type CartCartDescriptionSelectScalar = {
+    description_id?: boolean
+    description_title?: boolean
+    description_value?: boolean
+  }
+
+  export type CartCartDescriptionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"description_id" | "description_title" | "description_value", ExtArgs["result"]["cartCartDescription"]>
+
+  export type $CartCartDescriptionPayload = {
+    name: "CartCartDescription"
+    objects: {}
+    scalars: {
+      description_id: string | null
+      description_title: string
+      description_value: string
+    }
+    composites: {}
+  }
+
+  type CartCartDescriptionGetPayload<S extends boolean | null | undefined | CartCartDescriptionDefaultArgs> = $Result.GetResult<Prisma.$CartCartDescriptionPayload, S>
+
+
+
+
+
+  /**
+   * Fields of the CartCartDescription model
+   */
+  interface CartCartDescriptionFieldRefs {
+    readonly description_id: FieldRef<"CartCartDescription", 'String'>
+    readonly description_title: FieldRef<"CartCartDescription", 'String'>
+    readonly description_value: FieldRef<"CartCartDescription", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CartCartDescription without action
+   */
+  export type CartCartDescriptionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CartCartDescription
+     */
+    select?: CartCartDescriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CartCartDescription
+     */
+    omit?: CartCartDescriptionOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model cart
    */
 
@@ -1948,11 +1788,19 @@ export namespace Prisma {
     cart_id: string | null
     cart_last_update: string | null
     cart_location_send: string | null
+    cart_total_cost_lunchbox: string | null
     cart_order_number: string | null
     cart_receive_time: string | null
+    cart_receive_name: string | null
     cart_shipping_cost: string | null
     cart_status: string | null
     cart_username: string | null
+    cart_pay_type: string | null
+    cart_pay_deposit: string | null
+    cart_pay_cost: string | null
+    cart_invoice_tex: string | null
+    cart_total_cost: string | null
+    cart_total_remain: string | null
   }
 
   export type CartMaxAggregateOutputType = {
@@ -1965,11 +1813,19 @@ export namespace Prisma {
     cart_id: string | null
     cart_last_update: string | null
     cart_location_send: string | null
+    cart_total_cost_lunchbox: string | null
     cart_order_number: string | null
     cart_receive_time: string | null
+    cart_receive_name: string | null
     cart_shipping_cost: string | null
     cart_status: string | null
     cart_username: string | null
+    cart_pay_type: string | null
+    cart_pay_deposit: string | null
+    cart_pay_cost: string | null
+    cart_invoice_tex: string | null
+    cart_total_cost: string | null
+    cart_total_remain: string | null
   }
 
   export type CartCountAggregateOutputType = {
@@ -1982,11 +1838,19 @@ export namespace Prisma {
     cart_id: number
     cart_last_update: number
     cart_location_send: number
+    cart_total_cost_lunchbox: number
     cart_order_number: number
     cart_receive_time: number
+    cart_receive_name: number
     cart_shipping_cost: number
     cart_status: number
     cart_username: number
+    cart_pay_type: number
+    cart_pay_deposit: number
+    cart_pay_cost: number
+    cart_invoice_tex: number
+    cart_total_cost: number
+    cart_total_remain: number
     _all: number
   }
 
@@ -2001,11 +1865,19 @@ export namespace Prisma {
     cart_id?: true
     cart_last_update?: true
     cart_location_send?: true
+    cart_total_cost_lunchbox?: true
     cart_order_number?: true
     cart_receive_time?: true
+    cart_receive_name?: true
     cart_shipping_cost?: true
     cart_status?: true
     cart_username?: true
+    cart_pay_type?: true
+    cart_pay_deposit?: true
+    cart_pay_cost?: true
+    cart_invoice_tex?: true
+    cart_total_cost?: true
+    cart_total_remain?: true
   }
 
   export type CartMaxAggregateInputType = {
@@ -2018,11 +1890,19 @@ export namespace Prisma {
     cart_id?: true
     cart_last_update?: true
     cart_location_send?: true
+    cart_total_cost_lunchbox?: true
     cart_order_number?: true
     cart_receive_time?: true
+    cart_receive_name?: true
     cart_shipping_cost?: true
     cart_status?: true
     cart_username?: true
+    cart_pay_type?: true
+    cart_pay_deposit?: true
+    cart_pay_cost?: true
+    cart_invoice_tex?: true
+    cart_total_cost?: true
+    cart_total_remain?: true
   }
 
   export type CartCountAggregateInputType = {
@@ -2035,11 +1915,19 @@ export namespace Prisma {
     cart_id?: true
     cart_last_update?: true
     cart_location_send?: true
+    cart_total_cost_lunchbox?: true
     cart_order_number?: true
     cart_receive_time?: true
+    cart_receive_name?: true
     cart_shipping_cost?: true
     cart_status?: true
     cart_username?: true
+    cart_pay_type?: true
+    cart_pay_deposit?: true
+    cart_pay_cost?: true
+    cart_invoice_tex?: true
+    cart_total_cost?: true
+    cart_total_remain?: true
     _all?: true
   }
 
@@ -2125,11 +2013,19 @@ export namespace Prisma {
     cart_id: string
     cart_last_update: string | null
     cart_location_send: string
+    cart_total_cost_lunchbox: string
     cart_order_number: string
     cart_receive_time: string
+    cart_receive_name: string
     cart_shipping_cost: string
     cart_status: string
     cart_username: string
+    cart_pay_type: string
+    cart_pay_deposit: string
+    cart_pay_cost: string
+    cart_invoice_tex: string
+    cart_total_cost: string
+    cart_total_remain: string
     _count: CartCountAggregateOutputType | null
     _min: CartMinAggregateOutputType | null
     _max: CartMaxAggregateOutputType | null
@@ -2160,12 +2056,20 @@ export namespace Prisma {
     cart_last_update?: boolean
     cart_location_send?: boolean
     cart_lunchbox?: boolean | CartCartLunchboxDefaultArgs<ExtArgs>
-    cart_menu_items?: boolean | CartCartMenuItemsDefaultArgs<ExtArgs>
+    cart_total_cost_lunchbox?: boolean
     cart_order_number?: boolean
     cart_receive_time?: boolean
+    cart_receive_name?: boolean
     cart_shipping_cost?: boolean
     cart_status?: boolean
     cart_username?: boolean
+    cart_pay_type?: boolean
+    cart_pay_deposit?: boolean
+    cart_pay_cost?: boolean
+    cart_invoice_tex?: boolean
+    cart_total_cost?: boolean
+    cart_total_remain?: boolean
+    cart_description?: boolean | CartCartDescriptionDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["cart"]>
 
 
@@ -2180,14 +2084,22 @@ export namespace Prisma {
     cart_id?: boolean
     cart_last_update?: boolean
     cart_location_send?: boolean
+    cart_total_cost_lunchbox?: boolean
     cart_order_number?: boolean
     cart_receive_time?: boolean
+    cart_receive_name?: boolean
     cart_shipping_cost?: boolean
     cart_status?: boolean
     cart_username?: boolean
+    cart_pay_type?: boolean
+    cart_pay_deposit?: boolean
+    cart_pay_cost?: boolean
+    cart_invoice_tex?: boolean
+    cart_total_cost?: boolean
+    cart_total_remain?: boolean
   }
 
-  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_menu_items" | "cart_order_number" | "cart_receive_time" | "cart_shipping_cost" | "cart_status" | "cart_username", ExtArgs["result"]["cart"]>
+  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description", ExtArgs["result"]["cart"]>
   export type cartInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $cartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2203,15 +2115,23 @@ export namespace Prisma {
       cart_id: string
       cart_last_update: string | null
       cart_location_send: string
+      cart_total_cost_lunchbox: string
       cart_order_number: string
       cart_receive_time: string
+      cart_receive_name: string
       cart_shipping_cost: string
       cart_status: string
       cart_username: string
+      cart_pay_type: string
+      cart_pay_deposit: string
+      cart_pay_cost: string
+      cart_invoice_tex: string
+      cart_total_cost: string
+      cart_total_remain: string
     }, ExtArgs["result"]["cart"]>
     composites: {
       cart_lunchbox: Prisma.$CartCartLunchboxPayload[]
-      cart_menu_items: Prisma.$CartCartMenuItemsPayload[]
+      cart_description: Prisma.$CartCartDescriptionPayload[]
     }
   }
 
@@ -2612,11 +2532,19 @@ export namespace Prisma {
     readonly cart_id: FieldRef<"cart", 'String'>
     readonly cart_last_update: FieldRef<"cart", 'String'>
     readonly cart_location_send: FieldRef<"cart", 'String'>
+    readonly cart_total_cost_lunchbox: FieldRef<"cart", 'String'>
     readonly cart_order_number: FieldRef<"cart", 'String'>
     readonly cart_receive_time: FieldRef<"cart", 'String'>
+    readonly cart_receive_name: FieldRef<"cart", 'String'>
     readonly cart_shipping_cost: FieldRef<"cart", 'String'>
     readonly cart_status: FieldRef<"cart", 'String'>
     readonly cart_username: FieldRef<"cart", 'String'>
+    readonly cart_pay_type: FieldRef<"cart", 'String'>
+    readonly cart_pay_deposit: FieldRef<"cart", 'String'>
+    readonly cart_pay_cost: FieldRef<"cart", 'String'>
+    readonly cart_invoice_tex: FieldRef<"cart", 'String'>
+    readonly cart_total_cost: FieldRef<"cart", 'String'>
+    readonly cart_total_remain: FieldRef<"cart", 'String'>
   }
     
 
@@ -6036,8 +5964,8 @@ export namespace Prisma {
     id: string | null
     lunchbox_limit: number | null
     lunchbox_name: string | null
-    lunchbox_name_image: string | null
     lunchbox_set_name: string | null
+    lunchbox_name_image: string | null
     lunchbox_set_name_image: string | null
   }
 
@@ -6045,8 +5973,8 @@ export namespace Prisma {
     id: string | null
     lunchbox_limit: number | null
     lunchbox_name: string | null
-    lunchbox_name_image: string | null
     lunchbox_set_name: string | null
+    lunchbox_name_image: string | null
     lunchbox_set_name_image: string | null
   }
 
@@ -6054,8 +5982,8 @@ export namespace Prisma {
     id: number
     lunchbox_limit: number
     lunchbox_name: number
-    lunchbox_name_image: number
     lunchbox_set_name: number
+    lunchbox_name_image: number
     lunchbox_set_name_image: number
     _all: number
   }
@@ -6073,8 +6001,8 @@ export namespace Prisma {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
-    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name_image?: true
   }
 
@@ -6082,8 +6010,8 @@ export namespace Prisma {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
-    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name_image?: true
   }
 
@@ -6091,8 +6019,8 @@ export namespace Prisma {
     id?: true
     lunchbox_limit?: true
     lunchbox_name?: true
-    lunchbox_name_image?: true
     lunchbox_set_name?: true
+    lunchbox_name_image?: true
     lunchbox_set_name_image?: true
     _all?: true
   }
@@ -6187,8 +6115,8 @@ export namespace Prisma {
     id: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image: string | null
     lunchbox_set_name: string
+    lunchbox_name_image: string | null
     lunchbox_set_name_image: string | null
     _count: LunchboxCountAggregateOutputType | null
     _avg: LunchboxAvgAggregateOutputType | null
@@ -6215,8 +6143,8 @@ export namespace Prisma {
     id?: boolean
     lunchbox_limit?: boolean
     lunchbox_name?: boolean
-    lunchbox_name_image?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_name_image?: boolean
     lunchbox_set_name_image?: boolean
   }, ExtArgs["result"]["lunchbox"]>
 
@@ -6226,12 +6154,12 @@ export namespace Prisma {
     id?: boolean
     lunchbox_limit?: boolean
     lunchbox_name?: boolean
-    lunchbox_name_image?: boolean
     lunchbox_set_name?: boolean
+    lunchbox_name_image?: boolean
     lunchbox_set_name_image?: boolean
   }
 
-  export type lunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lunchbox_limit" | "lunchbox_name" | "lunchbox_name_image" | "lunchbox_set_name" | "lunchbox_set_name_image", ExtArgs["result"]["lunchbox"]>
+  export type lunchboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lunchbox_limit" | "lunchbox_name" | "lunchbox_set_name" | "lunchbox_name_image" | "lunchbox_set_name_image", ExtArgs["result"]["lunchbox"]>
 
   export type $lunchboxPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "lunchbox"
@@ -6240,8 +6168,8 @@ export namespace Prisma {
       id: string
       lunchbox_limit: number
       lunchbox_name: string
-      lunchbox_name_image: string | null
       lunchbox_set_name: string
+      lunchbox_name_image: string | null
       lunchbox_set_name_image: string | null
     }, ExtArgs["result"]["lunchbox"]>
     composites: {}
@@ -6638,8 +6566,8 @@ export namespace Prisma {
     readonly id: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_limit: FieldRef<"lunchbox", 'Int'>
     readonly lunchbox_name: FieldRef<"lunchbox", 'String'>
-    readonly lunchbox_name_image: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_set_name: FieldRef<"lunchbox", 'String'>
+    readonly lunchbox_name_image: FieldRef<"lunchbox", 'String'>
     readonly lunchbox_set_name_image: FieldRef<"lunchbox", 'String'>
   }
     
@@ -8036,11 +7964,19 @@ export namespace Prisma {
     cart_id: 'cart_id',
     cart_last_update: 'cart_last_update',
     cart_location_send: 'cart_location_send',
+    cart_total_cost_lunchbox: 'cart_total_cost_lunchbox',
     cart_order_number: 'cart_order_number',
     cart_receive_time: 'cart_receive_time',
+    cart_receive_name: 'cart_receive_name',
     cart_shipping_cost: 'cart_shipping_cost',
     cart_status: 'cart_status',
-    cart_username: 'cart_username'
+    cart_username: 'cart_username',
+    cart_pay_type: 'cart_pay_type',
+    cart_pay_deposit: 'cart_pay_deposit',
+    cart_pay_cost: 'cart_pay_cost',
+    cart_invoice_tex: 'cart_invoice_tex',
+    cart_total_cost: 'cart_total_cost',
+    cart_total_remain: 'cart_total_remain'
   };
 
   export type CartScalarFieldEnum = (typeof CartScalarFieldEnum)[keyof typeof CartScalarFieldEnum]
@@ -8096,8 +8032,8 @@ export namespace Prisma {
     id: 'id',
     lunchbox_limit: 'lunchbox_limit',
     lunchbox_name: 'lunchbox_name',
-    lunchbox_name_image: 'lunchbox_name_image',
     lunchbox_set_name: 'lunchbox_set_name',
+    lunchbox_name_image: 'lunchbox_name_image',
     lunchbox_set_name_image: 'lunchbox_set_name_image'
   };
 
@@ -8225,12 +8161,20 @@ export namespace Prisma {
     cart_last_update?: StringNullableFilter<"cart"> | string | null
     cart_location_send?: StringFilter<"cart"> | string
     cart_lunchbox?: CartCartLunchboxCompositeListFilter | CartCartLunchboxObjectEqualityInput[]
-    cart_menu_items?: CartCartMenuItemsCompositeListFilter | CartCartMenuItemsObjectEqualityInput[]
+    cart_total_cost_lunchbox?: StringFilter<"cart"> | string
     cart_order_number?: StringFilter<"cart"> | string
     cart_receive_time?: StringFilter<"cart"> | string
+    cart_receive_name?: StringFilter<"cart"> | string
     cart_shipping_cost?: StringFilter<"cart"> | string
     cart_status?: StringFilter<"cart"> | string
     cart_username?: StringFilter<"cart"> | string
+    cart_pay_type?: StringFilter<"cart"> | string
+    cart_pay_deposit?: StringFilter<"cart"> | string
+    cart_pay_cost?: StringFilter<"cart"> | string
+    cart_invoice_tex?: StringFilter<"cart"> | string
+    cart_total_cost?: StringFilter<"cart"> | string
+    cart_total_remain?: StringFilter<"cart"> | string
+    cart_description?: CartCartDescriptionCompositeListFilter | CartCartDescriptionObjectEqualityInput[]
   }
 
   export type cartOrderByWithRelationInput = {
@@ -8244,12 +8188,20 @@ export namespace Prisma {
     cart_last_update?: SortOrder
     cart_location_send?: SortOrder
     cart_lunchbox?: CartCartLunchboxOrderByCompositeAggregateInput
-    cart_menu_items?: CartCartMenuItemsOrderByCompositeAggregateInput
+    cart_total_cost_lunchbox?: SortOrder
     cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
+    cart_receive_name?: SortOrder
     cart_shipping_cost?: SortOrder
     cart_status?: SortOrder
     cart_username?: SortOrder
+    cart_pay_type?: SortOrder
+    cart_pay_deposit?: SortOrder
+    cart_pay_cost?: SortOrder
+    cart_invoice_tex?: SortOrder
+    cart_total_cost?: SortOrder
+    cart_total_remain?: SortOrder
+    cart_description?: CartCartDescriptionOrderByCompositeAggregateInput
   }
 
   export type cartWhereUniqueInput = Prisma.AtLeast<{
@@ -8266,12 +8218,20 @@ export namespace Prisma {
     cart_last_update?: StringNullableFilter<"cart"> | string | null
     cart_location_send?: StringFilter<"cart"> | string
     cart_lunchbox?: CartCartLunchboxCompositeListFilter | CartCartLunchboxObjectEqualityInput[]
-    cart_menu_items?: CartCartMenuItemsCompositeListFilter | CartCartMenuItemsObjectEqualityInput[]
+    cart_total_cost_lunchbox?: StringFilter<"cart"> | string
     cart_order_number?: StringFilter<"cart"> | string
     cart_receive_time?: StringFilter<"cart"> | string
+    cart_receive_name?: StringFilter<"cart"> | string
     cart_shipping_cost?: StringFilter<"cart"> | string
     cart_status?: StringFilter<"cart"> | string
     cart_username?: StringFilter<"cart"> | string
+    cart_pay_type?: StringFilter<"cart"> | string
+    cart_pay_deposit?: StringFilter<"cart"> | string
+    cart_pay_cost?: StringFilter<"cart"> | string
+    cart_invoice_tex?: StringFilter<"cart"> | string
+    cart_total_cost?: StringFilter<"cart"> | string
+    cart_total_remain?: StringFilter<"cart"> | string
+    cart_description?: CartCartDescriptionCompositeListFilter | CartCartDescriptionObjectEqualityInput[]
   }, "id">
 
   export type cartOrderByWithAggregationInput = {
@@ -8284,11 +8244,19 @@ export namespace Prisma {
     cart_id?: SortOrder
     cart_last_update?: SortOrder
     cart_location_send?: SortOrder
+    cart_total_cost_lunchbox?: SortOrder
     cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
+    cart_receive_name?: SortOrder
     cart_shipping_cost?: SortOrder
     cart_status?: SortOrder
     cart_username?: SortOrder
+    cart_pay_type?: SortOrder
+    cart_pay_deposit?: SortOrder
+    cart_pay_cost?: SortOrder
+    cart_invoice_tex?: SortOrder
+    cart_total_cost?: SortOrder
+    cart_total_remain?: SortOrder
     _count?: cartCountOrderByAggregateInput
     _max?: cartMaxOrderByAggregateInput
     _min?: cartMinOrderByAggregateInput
@@ -8307,11 +8275,19 @@ export namespace Prisma {
     cart_id?: StringWithAggregatesFilter<"cart"> | string
     cart_last_update?: StringNullableWithAggregatesFilter<"cart"> | string | null
     cart_location_send?: StringWithAggregatesFilter<"cart"> | string
+    cart_total_cost_lunchbox?: StringWithAggregatesFilter<"cart"> | string
     cart_order_number?: StringWithAggregatesFilter<"cart"> | string
     cart_receive_time?: StringWithAggregatesFilter<"cart"> | string
+    cart_receive_name?: StringWithAggregatesFilter<"cart"> | string
     cart_shipping_cost?: StringWithAggregatesFilter<"cart"> | string
     cart_status?: StringWithAggregatesFilter<"cart"> | string
     cart_username?: StringWithAggregatesFilter<"cart"> | string
+    cart_pay_type?: StringWithAggregatesFilter<"cart"> | string
+    cart_pay_deposit?: StringWithAggregatesFilter<"cart"> | string
+    cart_pay_cost?: StringWithAggregatesFilter<"cart"> | string
+    cart_invoice_tex?: StringWithAggregatesFilter<"cart"> | string
+    cart_total_cost?: StringWithAggregatesFilter<"cart"> | string
+    cart_total_remain?: StringWithAggregatesFilter<"cart"> | string
   }
 
   export type employeeWhereInput = {
@@ -8546,8 +8522,8 @@ export namespace Prisma {
     id?: StringFilter<"lunchbox"> | string
     lunchbox_limit?: IntFilter<"lunchbox"> | number
     lunchbox_name?: StringFilter<"lunchbox"> | string
-    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name_image?: StringNullableFilter<"lunchbox"> | string | null
   }
 
@@ -8555,8 +8531,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 
@@ -8567,8 +8543,8 @@ export namespace Prisma {
     NOT?: lunchboxWhereInput | lunchboxWhereInput[]
     lunchbox_limit?: IntFilter<"lunchbox"> | number
     lunchbox_name?: StringFilter<"lunchbox"> | string
-    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableFilter<"lunchbox"> | string | null
     lunchbox_set_name_image?: StringNullableFilter<"lunchbox"> | string | null
   }, "id">
 
@@ -8576,8 +8552,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
     _count?: lunchboxCountOrderByAggregateInput
     _avg?: lunchboxAvgOrderByAggregateInput
@@ -8593,8 +8569,8 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"lunchbox"> | string
     lunchbox_limit?: IntWithAggregatesFilter<"lunchbox"> | number
     lunchbox_name?: StringWithAggregatesFilter<"lunchbox"> | string
-    lunchbox_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
     lunchbox_set_name?: StringWithAggregatesFilter<"lunchbox"> | string
+    lunchbox_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
     lunchbox_set_name_image?: StringNullableWithAggregatesFilter<"lunchbox"> | string | null
   }
 
@@ -8679,12 +8655,20 @@ export namespace Prisma {
     cart_last_update?: string | null
     cart_location_send: string
     cart_lunchbox?: XOR<CartCartLunchboxListCreateEnvelopeInput, CartCartLunchboxCreateInput> | CartCartLunchboxCreateInput[]
-    cart_menu_items?: XOR<CartCartMenuItemsListCreateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_total_cost_lunchbox: string
     cart_order_number: string
     cart_receive_time: string
+    cart_receive_name: string
     cart_shipping_cost: string
     cart_status: string
     cart_username: string
+    cart_pay_type: string
+    cart_pay_deposit: string
+    cart_pay_cost: string
+    cart_invoice_tex: string
+    cart_total_cost: string
+    cart_total_remain: string
+    cart_description?: XOR<CartCartDescriptionListCreateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
   }
 
   export type cartUncheckedCreateInput = {
@@ -8698,12 +8682,20 @@ export namespace Prisma {
     cart_last_update?: string | null
     cart_location_send: string
     cart_lunchbox?: XOR<CartCartLunchboxListCreateEnvelopeInput, CartCartLunchboxCreateInput> | CartCartLunchboxCreateInput[]
-    cart_menu_items?: XOR<CartCartMenuItemsListCreateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_total_cost_lunchbox: string
     cart_order_number: string
     cart_receive_time: string
+    cart_receive_name: string
     cart_shipping_cost: string
     cart_status: string
     cart_username: string
+    cart_pay_type: string
+    cart_pay_deposit: string
+    cart_pay_cost: string
+    cart_invoice_tex: string
+    cart_total_cost: string
+    cart_total_remain: string
+    cart_description?: XOR<CartCartDescriptionListCreateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
   }
 
   export type cartUpdateInput = {
@@ -8716,12 +8708,20 @@ export namespace Prisma {
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
     cart_location_send?: StringFieldUpdateOperationsInput | string
     cart_lunchbox?: XOR<CartCartLunchboxListUpdateEnvelopeInput, CartCartLunchboxCreateInput> | CartCartLunchboxCreateInput[]
-    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_total_cost_lunchbox?: StringFieldUpdateOperationsInput | string
     cart_order_number?: StringFieldUpdateOperationsInput | string
     cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_receive_name?: StringFieldUpdateOperationsInput | string
     cart_shipping_cost?: StringFieldUpdateOperationsInput | string
     cart_status?: StringFieldUpdateOperationsInput | string
     cart_username?: StringFieldUpdateOperationsInput | string
+    cart_pay_type?: StringFieldUpdateOperationsInput | string
+    cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_invoice_tex?: StringFieldUpdateOperationsInput | string
+    cart_total_cost?: StringFieldUpdateOperationsInput | string
+    cart_total_remain?: StringFieldUpdateOperationsInput | string
+    cart_description?: XOR<CartCartDescriptionListUpdateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
   }
 
   export type cartUncheckedUpdateInput = {
@@ -8734,12 +8734,20 @@ export namespace Prisma {
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
     cart_location_send?: StringFieldUpdateOperationsInput | string
     cart_lunchbox?: XOR<CartCartLunchboxListUpdateEnvelopeInput, CartCartLunchboxCreateInput> | CartCartLunchboxCreateInput[]
-    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_total_cost_lunchbox?: StringFieldUpdateOperationsInput | string
     cart_order_number?: StringFieldUpdateOperationsInput | string
     cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_receive_name?: StringFieldUpdateOperationsInput | string
     cart_shipping_cost?: StringFieldUpdateOperationsInput | string
     cart_status?: StringFieldUpdateOperationsInput | string
     cart_username?: StringFieldUpdateOperationsInput | string
+    cart_pay_type?: StringFieldUpdateOperationsInput | string
+    cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_invoice_tex?: StringFieldUpdateOperationsInput | string
+    cart_total_cost?: StringFieldUpdateOperationsInput | string
+    cart_total_remain?: StringFieldUpdateOperationsInput | string
+    cart_description?: XOR<CartCartDescriptionListUpdateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
   }
 
   export type cartCreateManyInput = {
@@ -8753,12 +8761,20 @@ export namespace Prisma {
     cart_last_update?: string | null
     cart_location_send: string
     cart_lunchbox?: XOR<CartCartLunchboxListCreateEnvelopeInput, CartCartLunchboxCreateInput> | CartCartLunchboxCreateInput[]
-    cart_menu_items?: XOR<CartCartMenuItemsListCreateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_total_cost_lunchbox: string
     cart_order_number: string
     cart_receive_time: string
+    cart_receive_name: string
     cart_shipping_cost: string
     cart_status: string
     cart_username: string
+    cart_pay_type: string
+    cart_pay_deposit: string
+    cart_pay_cost: string
+    cart_invoice_tex: string
+    cart_total_cost: string
+    cart_total_remain: string
+    cart_description?: XOR<CartCartDescriptionListCreateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
   }
 
   export type cartUpdateManyMutationInput = {
@@ -8771,12 +8787,20 @@ export namespace Prisma {
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
     cart_location_send?: StringFieldUpdateOperationsInput | string
     cart_lunchbox?: XOR<CartCartLunchboxListUpdateEnvelopeInput, CartCartLunchboxCreateInput> | CartCartLunchboxCreateInput[]
-    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_total_cost_lunchbox?: StringFieldUpdateOperationsInput | string
     cart_order_number?: StringFieldUpdateOperationsInput | string
     cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_receive_name?: StringFieldUpdateOperationsInput | string
     cart_shipping_cost?: StringFieldUpdateOperationsInput | string
     cart_status?: StringFieldUpdateOperationsInput | string
     cart_username?: StringFieldUpdateOperationsInput | string
+    cart_pay_type?: StringFieldUpdateOperationsInput | string
+    cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_invoice_tex?: StringFieldUpdateOperationsInput | string
+    cart_total_cost?: StringFieldUpdateOperationsInput | string
+    cart_total_remain?: StringFieldUpdateOperationsInput | string
+    cart_description?: XOR<CartCartDescriptionListUpdateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
   }
 
   export type cartUncheckedUpdateManyInput = {
@@ -8789,12 +8813,20 @@ export namespace Prisma {
     cart_last_update?: NullableStringFieldUpdateOperationsInput | string | null
     cart_location_send?: StringFieldUpdateOperationsInput | string
     cart_lunchbox?: XOR<CartCartLunchboxListUpdateEnvelopeInput, CartCartLunchboxCreateInput> | CartCartLunchboxCreateInput[]
-    cart_menu_items?: XOR<CartCartMenuItemsListUpdateEnvelopeInput, CartCartMenuItemsCreateInput> | CartCartMenuItemsCreateInput[]
+    cart_total_cost_lunchbox?: StringFieldUpdateOperationsInput | string
     cart_order_number?: StringFieldUpdateOperationsInput | string
     cart_receive_time?: StringFieldUpdateOperationsInput | string
+    cart_receive_name?: StringFieldUpdateOperationsInput | string
     cart_shipping_cost?: StringFieldUpdateOperationsInput | string
     cart_status?: StringFieldUpdateOperationsInput | string
     cart_username?: StringFieldUpdateOperationsInput | string
+    cart_pay_type?: StringFieldUpdateOperationsInput | string
+    cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_invoice_tex?: StringFieldUpdateOperationsInput | string
+    cart_total_cost?: StringFieldUpdateOperationsInput | string
+    cart_total_remain?: StringFieldUpdateOperationsInput | string
+    cart_description?: XOR<CartCartDescriptionListUpdateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
   }
 
   export type employeeCreateInput = {
@@ -9048,8 +9080,8 @@ export namespace Prisma {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name_image?: string | null
   }
 
@@ -9057,24 +9089,24 @@ export namespace Prisma {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name_image?: string | null
   }
 
   export type lunchboxUpdateInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type lunchboxUncheckedUpdateInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -9082,24 +9114,24 @@ export namespace Prisma {
     id?: string
     lunchbox_limit: number
     lunchbox_name: string
-    lunchbox_name_image?: string | null
     lunchbox_set_name: string
+    lunchbox_name_image?: string | null
     lunchbox_set_name_image?: string | null
   }
 
   export type lunchboxUpdateManyMutationInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type lunchboxUncheckedUpdateManyInput = {
     lunchbox_limit?: IntFieldUpdateOperationsInput | number
     lunchbox_name?: StringFieldUpdateOperationsInput | string
-    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name?: StringFieldUpdateOperationsInput | string
+    lunchbox_name_image?: NullableStringFieldUpdateOperationsInput | string | null
     lunchbox_set_name_image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -9232,29 +9264,26 @@ export namespace Prisma {
     lunchbox_total_cost?: bigint | number | null
   }
 
-  export type CartCartMenuItemsCompositeListFilter = {
-    equals?: CartCartMenuItemsObjectEqualityInput[]
-    every?: CartCartMenuItemsWhereInput
-    some?: CartCartMenuItemsWhereInput
-    none?: CartCartMenuItemsWhereInput
+  export type CartCartDescriptionCompositeListFilter = {
+    equals?: CartCartDescriptionObjectEqualityInput[]
+    every?: CartCartDescriptionWhereInput
+    some?: CartCartDescriptionWhereInput
+    none?: CartCartDescriptionWhereInput
     isEmpty?: boolean
     isSet?: boolean
   }
 
-  export type CartCartMenuItemsObjectEqualityInput = {
-    menu_description?: string | null
-    menu_ingredients?: CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
-    menu_name: string
-    menu_notes?: CartCartMenuItemsMenuNotesObjectEqualityInput[]
-    menu_order_id?: number | null
-    menu_total: InputJsonValue
+  export type CartCartDescriptionObjectEqualityInput = {
+    description_id?: string | null
+    description_title: string
+    description_value: string
   }
 
   export type CartCartLunchboxOrderByCompositeAggregateInput = {
     _count?: SortOrder
   }
 
-  export type CartCartMenuItemsOrderByCompositeAggregateInput = {
+  export type CartCartDescriptionOrderByCompositeAggregateInput = {
     _count?: SortOrder
   }
 
@@ -9268,11 +9297,19 @@ export namespace Prisma {
     cart_id?: SortOrder
     cart_last_update?: SortOrder
     cart_location_send?: SortOrder
+    cart_total_cost_lunchbox?: SortOrder
     cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
+    cart_receive_name?: SortOrder
     cart_shipping_cost?: SortOrder
     cart_status?: SortOrder
     cart_username?: SortOrder
+    cart_pay_type?: SortOrder
+    cart_pay_deposit?: SortOrder
+    cart_pay_cost?: SortOrder
+    cart_invoice_tex?: SortOrder
+    cart_total_cost?: SortOrder
+    cart_total_remain?: SortOrder
   }
 
   export type cartMaxOrderByAggregateInput = {
@@ -9285,11 +9322,19 @@ export namespace Prisma {
     cart_id?: SortOrder
     cart_last_update?: SortOrder
     cart_location_send?: SortOrder
+    cart_total_cost_lunchbox?: SortOrder
     cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
+    cart_receive_name?: SortOrder
     cart_shipping_cost?: SortOrder
     cart_status?: SortOrder
     cart_username?: SortOrder
+    cart_pay_type?: SortOrder
+    cart_pay_deposit?: SortOrder
+    cart_pay_cost?: SortOrder
+    cart_invoice_tex?: SortOrder
+    cart_total_cost?: SortOrder
+    cart_total_remain?: SortOrder
   }
 
   export type cartMinOrderByAggregateInput = {
@@ -9302,11 +9347,19 @@ export namespace Prisma {
     cart_id?: SortOrder
     cart_last_update?: SortOrder
     cart_location_send?: SortOrder
+    cart_total_cost_lunchbox?: SortOrder
     cart_order_number?: SortOrder
     cart_receive_time?: SortOrder
+    cart_receive_name?: SortOrder
     cart_shipping_cost?: SortOrder
     cart_status?: SortOrder
     cart_username?: SortOrder
+    cart_pay_type?: SortOrder
+    cart_pay_deposit?: SortOrder
+    cart_pay_cost?: SortOrder
+    cart_invoice_tex?: SortOrder
+    cart_total_cost?: SortOrder
+    cart_total_remain?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -9504,8 +9557,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 
@@ -9517,8 +9570,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 
@@ -9526,8 +9579,8 @@ export namespace Prisma {
     id?: SortOrder
     lunchbox_limit?: SortOrder
     lunchbox_name?: SortOrder
-    lunchbox_name_image?: SortOrder
     lunchbox_set_name?: SortOrder
+    lunchbox_name_image?: SortOrder
     lunchbox_set_name_image?: SortOrder
   }
 
@@ -9650,17 +9703,14 @@ export namespace Prisma {
     lunchbox_total_cost?: bigint | number | null
   }
 
-  export type CartCartMenuItemsListCreateEnvelopeInput = {
-    set?: CartCartMenuItemsCreateInput | CartCartMenuItemsCreateInput[]
+  export type CartCartDescriptionListCreateEnvelopeInput = {
+    set?: CartCartDescriptionCreateInput | CartCartDescriptionCreateInput[]
   }
 
-  export type CartCartMenuItemsCreateInput = {
-    menu_description?: string | null
-    menu_ingredients?: CartCartMenuItemsMenuIngredientsCreateInput | CartCartMenuItemsMenuIngredientsCreateInput[]
-    menu_name: string
-    menu_notes?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
-    menu_order_id?: number | null
-    menu_total: InputJsonValue
+  export type CartCartDescriptionCreateInput = {
+    description_id?: string | null
+    description_title: string
+    description_value: string
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -9679,11 +9729,11 @@ export namespace Prisma {
     deleteMany?: CartCartLunchboxDeleteManyInput
   }
 
-  export type CartCartMenuItemsListUpdateEnvelopeInput = {
-    set?: CartCartMenuItemsCreateInput | CartCartMenuItemsCreateInput[]
-    push?: CartCartMenuItemsCreateInput | CartCartMenuItemsCreateInput[]
-    updateMany?: CartCartMenuItemsUpdateManyInput
-    deleteMany?: CartCartMenuItemsDeleteManyInput
+  export type CartCartDescriptionListUpdateEnvelopeInput = {
+    set?: CartCartDescriptionCreateInput | CartCartDescriptionCreateInput[]
+    push?: CartCartDescriptionCreateInput | CartCartDescriptionCreateInput[]
+    updateMany?: CartCartDescriptionUpdateManyInput
+    deleteMany?: CartCartDescriptionDeleteManyInput
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -9783,27 +9833,13 @@ export namespace Prisma {
     menu_total: InputJsonValue
   }
 
-  export type CartCartMenuItemsWhereInput = {
-    AND?: CartCartMenuItemsWhereInput | CartCartMenuItemsWhereInput[]
-    OR?: CartCartMenuItemsWhereInput[]
-    NOT?: CartCartMenuItemsWhereInput | CartCartMenuItemsWhereInput[]
-    menu_description?: StringNullableFilter<"CartCartMenuItems"> | string | null
-    menu_ingredients?: CartCartMenuItemsMenuIngredientsCompositeListFilter | CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
-    menu_name?: StringFilter<"CartCartMenuItems"> | string
-    menu_notes?: CartCartMenuItemsMenuNotesCompositeListFilter | CartCartMenuItemsMenuNotesObjectEqualityInput[]
-    menu_order_id?: IntNullableFilter<"CartCartMenuItems"> | number | null
-    menu_total?: JsonFilter<"CartCartMenuItems">
-  }
-
-  export type CartCartMenuItemsMenuIngredientsObjectEqualityInput = {
-    ingredient_name?: string | null
-    ingredient_status?: boolean | null
-    useItem?: InputJsonValue | null
-  }
-
-  export type CartCartMenuItemsMenuNotesObjectEqualityInput = {
-    note: string
-    qty: number
+  export type CartCartDescriptionWhereInput = {
+    AND?: CartCartDescriptionWhereInput | CartCartDescriptionWhereInput[]
+    OR?: CartCartDescriptionWhereInput[]
+    NOT?: CartCartDescriptionWhereInput | CartCartDescriptionWhereInput[]
+    description_id?: StringNullableFilter<"CartCartDescription"> | string | null
+    description_title?: StringFilter<"CartCartDescription"> | string
+    description_value?: StringFilter<"CartCartDescription"> | string
   }
 
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
@@ -9934,17 +9970,6 @@ export namespace Prisma {
     menu_total: InputJsonValue
   }
 
-  export type CartCartMenuItemsMenuIngredientsCreateInput = {
-    ingredient_name?: string | null
-    ingredient_status?: boolean | null
-    useItem?: InputJsonValue | null
-  }
-
-  export type CartCartMenuItemsMenuNotesCreateInput = {
-    note: string
-    qty: number
-  }
-
   export type CartCartLunchboxUpdateManyInput = {
     where: CartCartLunchboxWhereInput
     data: CartCartLunchboxUpdateInput
@@ -9954,13 +9979,13 @@ export namespace Prisma {
     where: CartCartLunchboxWhereInput
   }
 
-  export type CartCartMenuItemsUpdateManyInput = {
-    where: CartCartMenuItemsWhereInput
-    data: CartCartMenuItemsUpdateInput
+  export type CartCartDescriptionUpdateManyInput = {
+    where: CartCartDescriptionWhereInput
+    data: CartCartDescriptionUpdateInput
   }
 
-  export type CartCartMenuItemsDeleteManyInput = {
-    where: CartCartMenuItemsWhereInput
+  export type CartCartDescriptionDeleteManyInput = {
+    where: CartCartDescriptionWhereInput
   }
 
   export type MenuMenuIngredientsUpdateManyInput = {
@@ -10008,36 +10033,6 @@ export namespace Prisma {
     useItem: InputJsonValue
   }
 
-  export type CartCartMenuItemsMenuIngredientsCompositeListFilter = {
-    equals?: CartCartMenuItemsMenuIngredientsObjectEqualityInput[]
-    every?: CartCartMenuItemsMenuIngredientsWhereInput
-    some?: CartCartMenuItemsMenuIngredientsWhereInput
-    none?: CartCartMenuItemsMenuIngredientsWhereInput
-    isEmpty?: boolean
-    isSet?: boolean
-  }
-
-  export type CartCartMenuItemsMenuNotesCompositeListFilter = {
-    equals?: CartCartMenuItemsMenuNotesObjectEqualityInput[]
-    every?: CartCartMenuItemsMenuNotesWhereInput
-    some?: CartCartMenuItemsMenuNotesWhereInput
-    none?: CartCartMenuItemsMenuNotesWhereInput
-    isEmpty?: boolean
-    isSet?: boolean
-  }
-
-  export type IntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
-    isSet?: boolean
-  }
-
   export type BoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
@@ -10059,13 +10054,10 @@ export namespace Prisma {
     lunchbox_total_cost?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
-  export type CartCartMenuItemsUpdateInput = {
-    menu_description?: NullableStringFieldUpdateOperationsInput | string | null
-    menu_ingredients?: XOR<CartCartMenuItemsMenuIngredientsListUpdateEnvelopeInput, CartCartMenuItemsMenuIngredientsCreateInput> | CartCartMenuItemsMenuIngredientsCreateInput[]
-    menu_name?: StringFieldUpdateOperationsInput | string
-    menu_notes?: XOR<CartCartMenuItemsMenuNotesListUpdateEnvelopeInput, CartCartMenuItemsMenuNotesCreateInput> | CartCartMenuItemsMenuNotesCreateInput[]
-    menu_order_id?: NullableIntFieldUpdateOperationsInput | number | null
-    menu_total?: InputJsonValue | InputJsonValue
+  export type CartCartDescriptionUpdateInput = {
+    description_id?: NullableStringFieldUpdateOperationsInput | string | null
+    description_title?: StringFieldUpdateOperationsInput | string
+    description_value?: StringFieldUpdateOperationsInput | string
   }
 
   export type MenuMenuIngredientsUpdateInput = {
@@ -10109,23 +10101,6 @@ export namespace Prisma {
     isSet?: boolean
   }
 
-  export type CartCartMenuItemsMenuIngredientsWhereInput = {
-    AND?: CartCartMenuItemsMenuIngredientsWhereInput | CartCartMenuItemsMenuIngredientsWhereInput[]
-    OR?: CartCartMenuItemsMenuIngredientsWhereInput[]
-    NOT?: CartCartMenuItemsMenuIngredientsWhereInput | CartCartMenuItemsMenuIngredientsWhereInput[]
-    ingredient_name?: StringNullableFilter<"CartCartMenuItemsMenuIngredients"> | string | null
-    ingredient_status?: BoolNullableFilter<"CartCartMenuItemsMenuIngredients"> | boolean | null
-    useItem?: JsonNullableFilter<"CartCartMenuItemsMenuIngredients">
-  }
-
-  export type CartCartMenuItemsMenuNotesWhereInput = {
-    AND?: CartCartMenuItemsMenuNotesWhereInput | CartCartMenuItemsMenuNotesWhereInput[]
-    OR?: CartCartMenuItemsMenuNotesWhereInput[]
-    NOT?: CartCartMenuItemsMenuNotesWhereInput | CartCartMenuItemsMenuNotesWhereInput[]
-    note?: StringFilter<"CartCartMenuItemsMenuNotes"> | string
-    qty?: IntFilter<"CartCartMenuItemsMenuNotes"> | number
-  }
-
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
@@ -10148,29 +10123,6 @@ export namespace Prisma {
     unset?: boolean
   }
 
-  export type CartCartMenuItemsMenuIngredientsListUpdateEnvelopeInput = {
-    set?: CartCartMenuItemsMenuIngredientsCreateInput | CartCartMenuItemsMenuIngredientsCreateInput[]
-    push?: CartCartMenuItemsMenuIngredientsCreateInput | CartCartMenuItemsMenuIngredientsCreateInput[]
-    updateMany?: CartCartMenuItemsMenuIngredientsUpdateManyInput
-    deleteMany?: CartCartMenuItemsMenuIngredientsDeleteManyInput
-  }
-
-  export type CartCartMenuItemsMenuNotesListUpdateEnvelopeInput = {
-    set?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
-    push?: CartCartMenuItemsMenuNotesCreateInput | CartCartMenuItemsMenuNotesCreateInput[]
-    updateMany?: CartCartMenuItemsMenuNotesUpdateManyInput
-    deleteMany?: CartCartMenuItemsMenuNotesDeleteManyInput
-  }
-
-  export type NullableIntFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-    unset?: boolean
-  }
-
   export type NullableBoolFieldUpdateOperationsInput = {
     set?: boolean | null
     unset?: boolean
@@ -10184,18 +10136,6 @@ export namespace Prisma {
     isEmpty?: boolean
     isSet?: boolean
   }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    isSet?: boolean
-  }
 
   export type CartCartLunchboxLunchboxMenuUpdateManyInput = {
     where: CartCartLunchboxLunchboxMenuWhereInput
@@ -10204,24 +10144,6 @@ export namespace Prisma {
 
   export type CartCartLunchboxLunchboxMenuDeleteManyInput = {
     where: CartCartLunchboxLunchboxMenuWhereInput
-  }
-
-  export type CartCartMenuItemsMenuIngredientsUpdateManyInput = {
-    where: CartCartMenuItemsMenuIngredientsWhereInput
-    data: CartCartMenuItemsMenuIngredientsUpdateInput
-  }
-
-  export type CartCartMenuItemsMenuIngredientsDeleteManyInput = {
-    where: CartCartMenuItemsMenuIngredientsWhereInput
-  }
-
-  export type CartCartMenuItemsMenuNotesUpdateManyInput = {
-    where: CartCartMenuItemsMenuNotesWhereInput
-    data: CartCartMenuItemsMenuNotesUpdateInput
-  }
-
-  export type CartCartMenuItemsMenuNotesDeleteManyInput = {
-    where: CartCartMenuItemsMenuNotesWhereInput
   }
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsWhereInput = {
@@ -10242,17 +10164,6 @@ export namespace Prisma {
     menu_order_id?: InputJsonValue | InputJsonValue
     menu_subname?: StringFieldUpdateOperationsInput | string
     menu_total?: InputJsonValue | InputJsonValue
-  }
-
-  export type CartCartMenuItemsMenuIngredientsUpdateInput = {
-    ingredient_name?: NullableStringFieldUpdateOperationsInput | string | null
-    ingredient_status?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    useItem?: InputJsonValue | InputJsonValue | null
-  }
-
-  export type CartCartMenuItemsMenuNotesUpdateInput = {
-    note?: StringFieldUpdateOperationsInput | string
-    qty?: IntFieldUpdateOperationsInput | number
   }
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsListUpdateEnvelopeInput = {
