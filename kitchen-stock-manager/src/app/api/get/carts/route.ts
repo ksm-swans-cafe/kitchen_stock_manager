@@ -31,7 +31,6 @@ export async function GET() {
       },
       select: {
         cart_id: true,
-        cart_menu_items: true,
         cart_create_date: true,
         cart_status: true,
         cart_order_number: true,

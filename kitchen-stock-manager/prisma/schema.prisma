@@ -32,6 +32,7 @@ type CartCartLunchboxLunchboxMenu {
   menu_total       Json
 }
 
+
 type CartCartLunchboxLunchboxMenuMenuIngredients {
   ingredient_name   String
   ingredient_status Boolean?
@@ -77,6 +78,12 @@ type MenuMenuLunchbox {
   lunchbox_AutoRice Boolean?
 }
 
+type CartCartDescription {
+  description_id     String?
+  description_title  String
+  description_value  String
+}
+
 model cart {
   id                 String              @id @default(auto()) @map("_id") @db.ObjectId
   cart_create_date   String
@@ -88,12 +95,20 @@ model cart {
   cart_last_update   String?
   cart_location_send String
   cart_lunchbox      CartCartLunchbox[]
-  cart_menu_items    CartCartMenuItems[]
+  cart_total_cost_lunchbox String
   cart_order_number  String
   cart_receive_time  String
+  cart_receive_name  String
   cart_shipping_cost String
   cart_status        String
   cart_username      String
+  cart_pay_type      String
+  cart_pay_deposit   String
+  cart_pay_cost      String
+  cart_invoice_tex  String
+  cart_total_cost    String
+  cart_total_remain  String
+  cart_description   CartCartDescription[]
 }
 
 model employee {

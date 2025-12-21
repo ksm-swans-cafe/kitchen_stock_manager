@@ -27,6 +27,11 @@ interface SelectedLunchbox {
   note?: string; // เพิ่ม note field
 }
 
+interface CartCartDescription {
+  description_id: string;
+  description_title: string;
+  description_value: string;
+}
 interface CartState {
   items: CartItem[];
   cart_customer_name: string;
@@ -44,7 +49,26 @@ interface CartState {
   removeItem: (cartItemId: string) => void;
   setItemQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
-  setCustomerInfo: (info: { name?: string; tel?: string; location?: string; deliveryDate?: string; exportTime?: string; receiveTime?: string; cart_shipping_cost?: string; lunchbox?: string; lunchbox_set?: string }) => void;
+  setCustomerInfo: (info: {
+    name?: string;
+    tel?: string;
+    location?: string;
+    deliveryDate?: string;
+    exportTime?: string;
+    receiveTime?: string;
+    cart_shipping_cost?: string;
+    lunchbox?: string;
+    lunchbox_set?: string;
+    receive_name?: string;
+    invoice_tex?: string;
+    pay_type?: string;
+    pay_deposit?: string;
+    pay_cost?: string;
+    total_remain?: string;
+    total_cost_lunchbox?: string;
+    total_cost?: string;
+    description?: CartCartDescription[];
+  }) => void;
   // เพิ่มฟังก์ชันใหม่
   addLunchbox: (lunchbox: SelectedLunchbox) => void;
   removeLunchbox: (index: number) => void;
@@ -52,11 +76,16 @@ interface CartState {
   updateLunchboxMenus: (index: number, menus: MenuItem[]) => void;
   updateLunchboxTotalCost: (index: number, totalCost: string) => void;
   updateLunchboxNote: (index: number, note: string) => void;
+  cart_receive_name: string;
+  cart_invoice_tex: string;
+  cart_pay_type: string;
+  cart_pay_deposit: string;
+  cart_pay_cost: string;
+  cart_total_cost_lunchbox: string;
+  cart_total_remain: string;
+  cart_total_cost: string;
+  cart_description: CartCartDescription[];
 }
-
-const generateCartItemId = (menuId: string | undefined, description: string) => {
-  return `${menuId || "no-id"}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${description.replace(/\s+/g, "_")}`;
-};
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -73,6 +102,15 @@ export const useCartStore = create<CartState>()(
       cart_lunch_box: "",
       cart_lunch_box_set: "",
       selected_lunchboxes: [],
+      cart_receive_name: "",
+      cart_invoice_tex: "",
+      cart_pay_type: "",
+      cart_pay_deposit: "",
+      cart_pay_cost: "",
+      cart_total_cost_lunchbox: "",
+      cart_total_remain: "",
+      cart_total_cost: "",
+      cart_description: [],
 
       addItem: (item, description = "") => {
         const { items } = get();
@@ -139,6 +177,15 @@ export const useCartStore = create<CartState>()(
           cart_lunch_box: "",
           cart_lunch_box_set: "",
           selected_lunchboxes: [],
+          cart_receive_name: "",
+          cart_invoice_tex: "",
+          cart_pay_type: "",
+          cart_pay_deposit: "",
+          cart_pay_cost: "",
+          cart_total_cost_lunchbox: "",
+          cart_total_remain: "",
+          cart_total_cost: "",
+          cart_description: [],
         });
       },
 
@@ -151,9 +198,18 @@ export const useCartStore = create<CartState>()(
           cart_export_time: info.exportTime ?? state.cart_export_time,
           cart_receive_time: info.receiveTime ?? state.cart_receive_time,
           cart_shipping_cost: info.cart_shipping_cost ?? state.cart_shipping_cost,
-          cart_lunchbox: info.lunchbox ?? state.cart_lunchbox,
-          cart_lunch_box: info.lunchbox ?? state.cart_lunch_box,
+          cart_lunchbox: typeof info.lunchbox === "string" ? state.cart_lunchbox : info.lunchbox ?? state.cart_lunchbox,
+          cart_lunch_box: typeof info.lunchbox === "string" ? info.lunchbox : state.cart_lunch_box,
           cart_lunch_box_set: info.lunchbox_set ?? state.cart_lunch_box_set,
+          cart_receive_name: info.receive_name ?? state.cart_receive_name,
+          cart_invoice_tex: info.invoice_tex ?? state.cart_invoice_tex,
+          cart_pay_type: info.pay_type ?? state.cart_pay_type,
+          cart_pay_deposit: info.pay_deposit ?? state.cart_pay_deposit,
+          cart_pay_cost: info.pay_cost ?? state.cart_pay_cost,
+          cart_total_cost_lunchbox: info.total_cost_lunchbox ?? state.cart_total_cost_lunchbox,
+          cart_total_remain: info.total_remain ?? state.cart_total_remain,
+          cart_total_cost: info.total_cost ?? state.cart_total_cost,
+          cart_description: info.description ?? state.cart_description,
         }));
       },
 
