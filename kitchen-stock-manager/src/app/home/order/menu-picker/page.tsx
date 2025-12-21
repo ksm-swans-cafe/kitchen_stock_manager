@@ -2075,8 +2075,8 @@ const DesktopSidebar = () => (
                                         </div>
 
                                         {/* Menus Grid for this category - Improved responsive layout แก้ตรงนี้*/}
-                                        {/* Menus List (Responsive Grid max 4) */}
-                                        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
+                                        {/* Menus List (Flex Wrap with Fixed Width) */}
+                                        <div className='flex flex-wrap gap-3 sm:gap-4'>
                                           {menusInCategory.map((menu, index) => {
                                             const menuKey = buildMenuKey(menu);
                                             const isSelected = selectedMenuItems.includes(menuKey);
@@ -2158,12 +2158,9 @@ const DesktopSidebar = () => (
                                             // Check if any menu is selected to trigger fade effect
                                             const isAnySelected = selectedMenuItems.length > 0;
 
-                                            // Check if any menu is selected to trigger fade effect
-                                            const isAnySelected = selectedMenuItems.length > 0;
-
                                             return (
                                               <MenuCard
-                                                className='cursor-pointer'
+                                                className='cursor-pointer w-full sm:w-[320px]'
                                                 key={menu.menu_id || index}
                                                 menuId={menu.menu_id || String(index)}
                                                 name={menu.menu_name}
@@ -2174,13 +2171,9 @@ const DesktopSidebar = () => (
                                                 meatType={menuMeatType}
                                                 variant="list"
                                                 faded={isCategoryHasSelection && !isSelected}
-                                                variant="list"
-                                                faded={isCategoryHasSelection && !isSelected}
                                                 selected={isSelected}
                                                 forced={isAutoSelectedRice && !isUnlimited}
-                                                forced={isAutoSelectedRice && !isUnlimited}
                                                 duplicate={!!isLunchboxCategoryTaken}
-                                                showPrice={menu.lunchbox_showPrice ?? true}
                                                 showPrice={menu.lunchbox_showPrice ?? true}
                                                 onClick={() => {
                                                   if (!isLunchboxCategoryTaken) {
