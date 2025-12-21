@@ -1536,7 +1536,8 @@ export default function Order() {
                               </div>
 
                               {/* Menus Grid for this category - Improved responsive layout แก้ตรงนี้*/}
-                              <div className='responsive-grid'>
+                              {/* Menus List (Flex Wrap with Fixed Width) */}
+                              <div className='flex flex-wrap gap-3 sm:gap-4'>
                                 {menusInCategory.map((menu, index) => {
                                   const menuKey = buildMenuKey(menu);
                                   const isSelected = selectedMenuItems.includes(menuKey);
@@ -1618,7 +1619,7 @@ export default function Order() {
 
                                   return (
                                     <MenuCard
-                                      className='group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer min-h-[120px] sm:min-h-[160px] lg:min-h-[180px]'
+                                      className='cursor-pointer'
                                       key={menu.menu_id || index}
                                       menuId={menu.menu_id || String(index)}
                                       name={menu.menu_name}
