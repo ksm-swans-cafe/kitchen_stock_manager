@@ -1346,23 +1346,25 @@ export default function Order() {
                 if (!displayImage || failedImages.has(displayImage)) return null;
 
                 return (
-                  <div className={`relative w-full overflow-hidden transition-all duration-500 ease-in-out ${isScrolled ? "h-0 opacity-0" : "h-40 sm:h-56 lg:h-72 opacity-100"}`}>
+                  <div className={`relative w-full overflow-hidden transition-all duration-700 ease-in-out bg-gray-100/50 ${isScrolled ? "h-0 opacity-0" : "h-64 sm:h-[450px] lg:h-[550px] opacity-100"}`}>
                     <img
                       src={displayImage}
                       alt={`Set ${selectedSetMenu}`}
-                      className="w-full h-full object-cover object-center"
+                      className={`w-full h-full transition-all duration-700 ${isScrolled ? "object-cover" : "object-contain bg-white"}`}
                       onError={() => {
                         setFailedImages((prev) => new Set(prev).add(displayImage));
                       }}
                     />
-                    {/* Gradient Overlay for better contrast */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    {/* Gradient Overlay for better contrast - only show when image is loaded and not scrolled */}
+                    {!isScrolled && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                    )}
 
                     {/* Content on Image */}
-                    <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 text-white">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[2px] text-orange-400 drop-shadow-sm">Selected Set</span>
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-black drop-shadow-xl tracking-tight">SET {selectedSetMenu}</h2>
+                    <div className={`absolute bottom-4 left-4 sm:bottom-8 sm:left-8 text-white transition-all duration-500 ${isScrolled ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-[3px] text-orange-400 drop-shadow-md bg-black/20 w-fit px-2 py-0.5 rounded">Selected Set</span>
+                        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black drop-shadow-2xl tracking-tighter italic">SET {selectedSetMenu}</h2>
                       </div>
                     </div>
                   </div>
