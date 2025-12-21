@@ -1724,8 +1724,8 @@ export default function Order() {
                                   </div>
 
                                   {/* Menus Grid for this category - Improved responsive layout แก้ตรงนี้*/}
-                                  {/* Menus List (Responsive Grid max 4) */}
-                                  <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
+                                  {/* Menus List (Flex Wrap with Fixed Width) */}
+                                  <div className='flex flex-wrap gap-3 sm:gap-4'>
                                     {menusInCategory.map((menu, index) => {
                                       const menuKey = buildMenuKey(menu);
                                       const isSelected = selectedMenuItems.includes(menuKey);
@@ -1802,7 +1802,7 @@ export default function Order() {
 
                                       return (
                                         <MenuCard
-                                          className='cursor-pointer'
+                                          className='cursor-pointer w-full sm:w-[320px]'
                                           key={menu.menu_id || index}
                                           menuId={menu.menu_id || String(index)}
                                           name={menu.menu_name}
