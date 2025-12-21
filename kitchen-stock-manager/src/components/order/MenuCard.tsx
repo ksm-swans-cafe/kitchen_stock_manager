@@ -1,7 +1,7 @@
 "use client";
 
 import React, { KeyboardEvent, forwardRef, memo } from "react";
-import { GlassWater, CakeSlice, Candy, Apple, Check } from "lucide-react";
+import { GlassWater, CakeSlice, Candy, Apple, Check, } from "lucide-react";
 
 export type MenuCardSize = "sm" | "md" | "lg";
 
@@ -30,7 +30,6 @@ export type MenuCardProps = {
   title?: string;
   variant?: "card" | "list";
   faded?: boolean;
-  isAdditionalPrice?: boolean;
 };
 
 const sizeMap: Record<MenuCardSize, { media: string; emoji: string }> = {
@@ -72,10 +71,7 @@ const meatTypeGradients: Record<string, string> = {
 
 const defaultGradient = "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]";
 
-const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard(
-  { menuId, name, price, category, emoji, image, meatType, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title, variant = "card", faded = false, isAdditionalPrice = false },
-  ref
-) {
+const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard({ menuId, name, price, category, emoji, image, meatType, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title, variant = "card", faded = false }, ref) {
   const sizeConf = sizeMap[size] || sizeMap.md;
   const isDisabled = disabled; // นำ duplicate ออกเพื่อให้กดสลับเมนูได้ (Auto-Swap)
 
@@ -97,14 +93,14 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       ? "bg-yellow-50 border-2 border-yellow-400 ring-1 ring-yellow-200"
       : "bg-green-50 border-2 border-green-300 ring-1 ring-green-200"
     : duplicate
-      ? "bg-red-50 border-2 border-red-200 opacity-60" // เอารูปแบบ cursor-not-allowed ออกเพื่อให้กดสลับเมนูได้สะดวก
+      ? "bg-red-50 border-2 border-red-200 opacity-60 cursor-not-allowed"
       : "bg-white border border-gray-100 hover:border-green-200 hover:shadow-md";
 
   const indicatorClass = forced ? "bg-yellow-500" : "bg-green-500";
 
   /* List Variant Rendering */
   if (variant === "list") {
-    // Note: User can pass variant="list" or maybe we repurpose size="list" if cleaner.
+    // Note: User can pass variant="list" or maybe we repurpose size="list" if cleaner. 
     // The plan said add variant prop. Let's use that.
 
     // Using opacity for faded state
@@ -117,17 +113,36 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
         role='button'
         disabled={isDisabled}
         onClick={handleClick}
-        className={cn("w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border text-left bg-white", selected ? "border-orange-500 bg-orange-50 shadow-sm" : "border-gray-100 hover:border-gray-300 hover:bg-gray-50", opacityClass, className)}>
+        className={cn(
+          "w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border text-left bg-white",
+          selected
+            ? "border-orange-500 bg-orange-50 shadow-sm"
+            : "border-gray-100 hover:border-gray-300 hover:bg-gray-50",
+          opacityClass,
+          className
+        )}
+      >
         {/* Checkbox Circle */}
-        <div className={cn("w-6 h-6 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-all", selected ? "bg-orange-500 border-orange-500" : "border-gray-300 bg-white group-hover:border-gray-400")}>
-          {selected && <Check className='text-white w-3.5 h-3.5' strokeWidth={3} />}
+        <div className={cn(
+          "w-6 h-6 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
+          selected
+            ? "bg-orange-500 border-orange-500"
+            : "border-gray-300 bg-white group-hover:border-gray-400"
+        )}>
+          {selected && <Check className="text-white w-3.5 h-3.5" strokeWidth={3} />}
         </div>
 
         {/* Name */}
-        <div className={cn("flex-1 font-bold text-sm sm:text-base text-gray-800", selected ? "text-orange-900" : "")}>{name}</div>
+        <div className={cn("flex-1 font-bold text-sm sm:text-base text-gray-800", selected ? "text-orange-900" : "")}>
+          {name}
+        </div>
 
         {/* Price */}
-        {showPrice && typeof price === "number" && <div className='font-medium text-gray-600 text-sm whitespace-nowrap'>{price > 0 ? (isAdditionalPrice ? `(+${price})` : `${price}.-`) : ""}</div>}
+        {showPrice && typeof price === "number" && (
+          <div className="font-medium text-gray-600 text-sm whitespace-nowrap">
+            {price > 0 ? `${price}.-` : ""}
+          </div>
+        )}
       </button>
     );
   }
