@@ -235,7 +235,7 @@ export default function Order() {
             lunchbox_AutoRice: menu.lunchbox_AutoRice ?? false,
             lunchbox_menuid: menu.lunchbox_menuid || menu.lunchbox_menuid === "" ? menu.lunchbox_menuid : undefined,
           }));
-          setAvailableMenus([]);
+          setAvailableMenus(menuItems);
         }
       } catch (error) {
         console.error("Error fetching menus:", error);
@@ -1103,7 +1103,7 @@ export default function Order() {
               <div className='mb-6 lg:mb-8 xl:mb-12'>
                 {/* Step 1: เลือกชุดอาหาร */}
                 {!selectedFoodSet && (
-                  <div>
+                  <div className='px-4 sm:px-6 lg:px-8'>
                     <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 flex flex-col gap-2'>
                       <span className='bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>1. เลือกชุดอาหาร</span>
                       <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{availableFoodSets.length} รายการ</span>
@@ -1153,7 +1153,7 @@ export default function Order() {
 
                 {/* Step 2: เลือก Set อาหาร */}
                 {selectedFoodSet && !selectedSetMenu && (
-                  <div>
+                  <div className='px-4 sm:px-6 lg:px-8'>
                     <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 flex flex-col gap-2'>
                       <span className='bg-linear-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>2. เลือก Set อาหาร</span>
                       <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{availableSetMenus.length} รายการ</span>
