@@ -72,6 +72,7 @@ export default function Order() {
   const [selectedMenuItems, setSelectedMenuItems] = useState<string[]>([]);
   // เพิ่ม state สำหรับเก็บ quantity ของข้าว
   const [riceQuantity, setRiceQuantity] = useState<number>(0);
+  const [lunchboxQuantity, setLunchboxQuantity] = useState<number>(1);
   const [lunchboxData, setLunchboxData] = useState<LunchBoxFromAPI[]>([]);
   const [availableFoodSets, setAvailableFoodSets] = useState<string[]>([]);
   const [availableSetMenus, setAvailableSetMenus] = useState<string[]>([]);
@@ -333,6 +334,34 @@ export default function Order() {
   }, [availableMenus]);
 
   // รวมจำนวนเมนูที่เลือก (นับข้าวให้ถูกต้อง และรองรับ key ที่ใช้ buildMenuKey)
+  const selectionPrice = useMemo(() => {
+    const resolvedMenus = selectedMenuItems.map((key) => availableMenus.find((m) => buildMenuKey(m) === key)).filter((m): m is MenuItemWithAutoRice => !!m);
+
+    let total = 0;
+    // Separate rice and non-rice for correct quantity multiplication
+    const riceMenu = resolvedMenus.find((m) => m.lunchbox_menu_category === "ข้าว");
+    const nonRiceMenus = resolvedMenus.filter((m) => m.lunchbox_menu_category !== "ข้าว");
+
+    total += nonRiceMenus.reduce((sum, m) => sum + (m.lunchbox_cost ?? 0), 0);
+
+    if (riceMenu) {
+      const riceCount = riceQuantity > 0 ? riceQuantity : 1;
+      total += (riceMenu.lunchbox_cost ?? 0) * riceCount;
+    }
+
+    return total;
+  }, [selectedMenuItems, availableMenus, riceQuantity]);
+
+  const setPriceBudget = useMemo(() => {
+    if (!selectedSetMenu) return null;
+    return extractPriceFromSetName(selectedSetMenu);
+  }, [selectedSetMenu]);
+
+  const remainingBudget = useMemo(() => {
+    if (setPriceBudget === null) return null;
+    return setPriceBudget - selectionPrice;
+  }, [setPriceBudget, selectionPrice]);
+
   const selectionCount = useMemo(() => {
     const resolvedMenus = selectedMenuItems.map((key) => availableMenus.find((m) => buildMenuKey(m) === key)).filter((m): m is MenuItemWithAutoRice => !!m);
 
@@ -588,10 +617,10 @@ export default function Order() {
 
         const newLunchbox = {
           lunchbox_name: selectedFoodSet,
-          lunchbox_set: selectedSetMenu,
+          lunchbox_set: selectedSetMenu.toUpperCase().startsWith("SET") ? selectedSetMenu : `SET ${selectedSetMenu}`,
           lunchbox_limit: limit2,
           selected_menus: selectedMenuObjects,
-          quantity: 1,
+          quantity: lunchboxQuantity,
           lunchbox_total_cost: totalCost.toString(),
           note: note,
         };
@@ -875,7 +904,7 @@ export default function Order() {
                         <div className='text-xs md:text-sm xl:text-base text-gray-500 truncate'>
                           {selectedSetMenu ? (
                             <>
-                              {selectedSetMenu}
+                              {selectedSetMenu.toUpperCase().startsWith("SET") ? selectedSetMenu : `SET ${selectedSetMenu}`}
                               {(() => {
                                 const limit = getSetLimit(selectedFoodSet, selectedSetMenu);
                                 return limit === 0 ? " (ไม่จำกัด)" : limit > 0 ? ` (${limit} เมนู)` : "";
@@ -1052,19 +1081,73 @@ export default function Order() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                     {/* Content on Image */}
-                    <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 text-white transition-all duration-500 opacity-100 scale-100">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-[3px] text-orange-400 drop-shadow-md bg-black/20 w-fit px-2 py-0.5 rounded">Selected Set</span>
-                        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black drop-shadow-2xl tracking-tighter italic">SET {selectedSetMenu}</h2>
+                    <div className="absolute inset-x-0 bottom-4 px-4 sm:bottom-8 sm:px-8 flex items-end justify-between pointer-events-none">
+                      <div className="text-white transition-all duration-500 opacity-100 scale-100 pointer-events-auto">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[3px] text-orange-400 drop-shadow-md bg-black/20 w-fit px-2 py-0.5 rounded">Selected Set</span>
+                          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black drop-shadow-2xl tracking-tighter italic">{selectedSetMenu.toUpperCase().startsWith("SET") ? selectedSetMenu : `SET ${selectedSetMenu}`}</h2>
+                        </div>
+                      </div>
+
+                      {/* Moving Price Selection Box into Image Container at Bottom Right */}
+                      <div className='hidden sm:block lg:w-72 xl:w-80 animate-fade-in-up pointer-events-auto sticky top-4 z-30'>
+                        <div className='bg-[#F7F3ED]/95 backdrop-blur-sm rounded-2xl p-4 xl:p-5 border border-[#E8E2D9] shadow-2xl flex flex-col justify-center relative overflow-hidden min-h-[140px]'>
+                          {/* Decorative Accent */}
+                          <div className="absolute top-0 left-0 w-full h-1 bg-orange-500" />
+
+                          <div className="relative z-10 flex flex-col justify-between h-full">
+                            <div>
+                              <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] mb-0.5 opacity-80'>PREMIUM</div>
+                              <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] opacity-80'>LUNCH BOX</div>
+                            </div>
+
+                            <div className="my-2 xl:my-3 flex items-center gap-3">
+                              <div className="h-[2px] bg-gray-900/10 flex-1" />
+                              <div className="text-2xl xl:text-4xl font-black text-gray-900 tracking-tighter tabular-nums">
+                                {setPriceBudget ? (
+                                  `${setPriceBudget - 20}-${setPriceBudget + 20}`
+                                ) : (
+                                  selectionPrice.toLocaleString()
+                                )}
+                              </div>
+                              <div className="h-[2px] bg-gray-900/10 flex-1" />
+                            </div>
+
+                            <div className="flex items-end justify-between border-t border-gray-900/5 pt-2 mt-1">
+                              <div className="flex flex-col gap-1">
+                                <p className="text-[9px] xl:text-[10px] uppercase font-bold text-gray-400 tracking-wider text-red-500">จำนวนกล่องที่สั่ง</p>
+                                <div className="flex items-center bg-white border border-gray-200 rounded-xl p-0.5 sm:p-1 shadow-md">
+                                  <button
+                                    onClick={() => setLunchboxQuantity(Math.max(1, lunchboxQuantity - 1))}
+                                    className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-all text-gray-700 font-bold active:scale-90"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="px-2 sm:px-3 text-sm sm:text-base font-black text-gray-900 min-w-[28px] text-center">{lunchboxQuantity}</span>
+                                  <button
+                                    onClick={() => setLunchboxQuantity(lunchboxQuantity + 1)}
+                                    className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-orange-500 hover:bg-orange-600 transition-all text-white font-bold shadow-sm shadow-orange-200 active:scale-90"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="text-right pb-1">
+                                <p className="text-[9px] xl:text-[10px] uppercase font-bold text-gray-500 tracking-wider">Selection</p>
+                                <p className="text-xs xl:text-sm font-black text-gray-900 italic">{selectedSetMenu}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })()}
 
-              {/* Search and Filter Section - Static layout */}
-              <div className="bg-white/70 backdrop-blur-md p-3 sm:p-4 lg:p-6 transition-all duration-300 rounded-b-2xl shadow-lg border border-white/20 mb-4">
-                <div className='flex flex-col gap-3 sm:gap-4 lg:gap-6 mb-3 sm:mb-4'>
+              {/* Search Section - Reverted to Clean Full Width */}
+              <div className="bg-white/70 backdrop-blur-md p-3 sm:p-4 lg:p-6 transition-all duration-300 rounded-b-2xl shadow-lg border border-white/20 mb-4 mx-3 sm:mx-4 lg:mx-6">
+                <div className='flex flex-col gap-3 sm:gap-4'>
                   <div className='flex-1 relative w-full'>
                     <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                     <input
@@ -1072,7 +1155,7 @@ export default function Order() {
                       placeholder='ค้นหาเมนูอาหาร'
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className='w-full pl-10 pr-10 py-2.5 sm:py-3 lg:py-4 bg-white/80 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm sm:text-base'
+                      className='w-full pl-10 pr-10 py-2.5 sm:py-3 lg:py-4 bg-white border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-sm sm:text-base shadow-sm'
                     />
                     {searchQuery && (
                       <button onClick={() => setSearchQuery("")} className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1'>
@@ -1081,17 +1164,17 @@ export default function Order() {
                     )}
                   </div>
 
-                  <div className='flex items-center justify-center sm:justify-start gap-2'>
-                    <div className='flex items-center gap-1 bg-gray-100 rounded-lg p-1'>
-                      <button onClick={() => setViewMode("grid")} className={`p-2 rounded-md transition-all duration-200 ${viewMode === "grid" ? "bg-white shadow-sm text-orange-600" : "text-gray-500 hover:text-gray-700"}`}>
+                  <div className='flex items-center gap-2'>
+                    <div className='flex items-center gap-1 bg-gray-50 rounded-lg p-1 border border-gray-100'>
+                      <button onClick={() => setViewMode("grid")} className={`p-2 rounded-md transition-all duration-200 ${viewMode === "grid" ? "bg-white shadow-sm text-orange-600 border border-gray-100" : "text-gray-500 hover:text-gray-700"}`}>
                         <Grid3X3 className='w-4 h-4' />
                       </button>
-                      <button onClick={() => setViewMode("list")} className={`p-2 rounded-md transition-all duration-200 ${viewMode === "list" ? "bg-white shadow-sm text-orange-600" : "text-gray-500 hover:text-gray-700"}`}>
+                      <button onClick={() => setViewMode("list")} className={`p-2 rounded-md transition-all duration-200 ${viewMode === "list" ? "bg-white shadow-sm text-orange-600 border border-gray-100" : "text-gray-500 hover:text-gray-700"}`}>
                         <List className='w-4 h-4' />
                       </button>
                     </div>
 
-                    <button className='flex items-center gap-2 px-3 py-2 bg-white/80 border border-gray-200 rounded-lg hover:bg-white hover:shadow-md transition-all duration-200 text-gray-700'>
+                    <button className='flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg hover:border-orange-300 transition-all duration-200 text-gray-700 shadow-sm'>
                       <Filter className='w-4 h-4' />
                       <span className='text-sm font-medium hidden sm:inline'>ตัวกรอง</span>
                     </button>
@@ -1189,7 +1272,9 @@ export default function Order() {
                             </div>
 
                             <div className='text-center p-2 sm:p-3 lg:p-4'>
-                              <h3 className='font-semibold text-gray-800 text-xs sm:text-sm lg:text-base leading-tight group-hover:text-blue-600 transition-colors duration-200 mb-2 line-clamp-2'>Set {setMenu}</h3>
+                              <h3 className='font-semibold text-gray-800 text-xs sm:text-sm lg:text-base leading-tight group-hover:text-blue-600 transition-colors duration-200 mb-2 line-clamp-2'>
+                                {setMenu.toUpperCase().startsWith("SET") ? setMenu : `SET ${setMenu}`}
+                              </h3>
                               {/* แสดงข้อความแตกต่างกันตาม limit */}
                               {limit === 0 ? (
                                 <div className='bg-purple-500 text-white text-[10px] sm:text-xs px-2 py-1 rounded-full inline-block'>ไม่จำกัดจำนวนเมนู</div>
@@ -1232,6 +1317,7 @@ export default function Order() {
                         );
                       })()}
                     </h2>
+
 
                     {/* Meat Type Filters and Count */}
                     <div className='flex items-center justify-between gap-4 mb-4 sm:mb-6'>
@@ -1534,13 +1620,7 @@ export default function Order() {
               editMode={isEditMode}
               totalCost={(() => {
                 if (selectionCount.total === 0) return null;
-
-                const setPrice = extractPriceFromSetName(selectedSetMenu);
-                if (setPrice !== null) {
-                  return setPrice;
-                }
-
-                return availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m))).reduce((sum, m) => sum + (m.lunchbox_cost ?? 0), 0);
+                return selectionPrice;
               })()}
               onSubmit={handle.Submit}
               onReset={() => {
