@@ -1797,6 +1797,7 @@ export namespace Prisma {
     cart_username: string | null
     cart_pay_type: string | null
     cart_pay_deposit: string | null
+    cart_pay_isdeposit: boolean | null
     cart_pay_cost: string | null
     cart_invoice_tex: string | null
     cart_total_cost: string | null
@@ -1822,6 +1823,7 @@ export namespace Prisma {
     cart_username: string | null
     cart_pay_type: string | null
     cart_pay_deposit: string | null
+    cart_pay_isdeposit: boolean | null
     cart_pay_cost: string | null
     cart_invoice_tex: string | null
     cart_total_cost: string | null
@@ -1847,6 +1849,7 @@ export namespace Prisma {
     cart_username: number
     cart_pay_type: number
     cart_pay_deposit: number
+    cart_pay_isdeposit: number
     cart_pay_cost: number
     cart_invoice_tex: number
     cart_total_cost: number
@@ -1874,6 +1877,7 @@ export namespace Prisma {
     cart_username?: true
     cart_pay_type?: true
     cart_pay_deposit?: true
+    cart_pay_isdeposit?: true
     cart_pay_cost?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
@@ -1899,6 +1903,7 @@ export namespace Prisma {
     cart_username?: true
     cart_pay_type?: true
     cart_pay_deposit?: true
+    cart_pay_isdeposit?: true
     cart_pay_cost?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
@@ -1924,6 +1929,7 @@ export namespace Prisma {
     cart_username?: true
     cart_pay_type?: true
     cart_pay_deposit?: true
+    cart_pay_isdeposit?: true
     cart_pay_cost?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
@@ -2022,6 +2028,7 @@ export namespace Prisma {
     cart_username: string
     cart_pay_type: string
     cart_pay_deposit: string
+    cart_pay_isdeposit: boolean
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -2065,6 +2072,7 @@ export namespace Prisma {
     cart_username?: boolean
     cart_pay_type?: boolean
     cart_pay_deposit?: boolean
+    cart_pay_isdeposit?: boolean
     cart_pay_cost?: boolean
     cart_invoice_tex?: boolean
     cart_total_cost?: boolean
@@ -2093,13 +2101,14 @@ export namespace Prisma {
     cart_username?: boolean
     cart_pay_type?: boolean
     cart_pay_deposit?: boolean
+    cart_pay_isdeposit?: boolean
     cart_pay_cost?: boolean
     cart_invoice_tex?: boolean
     cart_total_cost?: boolean
     cart_total_remain?: boolean
   }
 
-  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description", ExtArgs["result"]["cart"]>
+  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_isdeposit" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description", ExtArgs["result"]["cart"]>
   export type cartInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $cartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2124,6 +2133,7 @@ export namespace Prisma {
       cart_username: string
       cart_pay_type: string
       cart_pay_deposit: string
+      cart_pay_isdeposit: boolean
       cart_pay_cost: string
       cart_invoice_tex: string
       cart_total_cost: string
@@ -2541,6 +2551,7 @@ export namespace Prisma {
     readonly cart_username: FieldRef<"cart", 'String'>
     readonly cart_pay_type: FieldRef<"cart", 'String'>
     readonly cart_pay_deposit: FieldRef<"cart", 'String'>
+    readonly cart_pay_isdeposit: FieldRef<"cart", 'Boolean'>
     readonly cart_pay_cost: FieldRef<"cart", 'String'>
     readonly cart_invoice_tex: FieldRef<"cart", 'String'>
     readonly cart_total_cost: FieldRef<"cart", 'String'>
@@ -7973,6 +7984,7 @@ export namespace Prisma {
     cart_username: 'cart_username',
     cart_pay_type: 'cart_pay_type',
     cart_pay_deposit: 'cart_pay_deposit',
+    cart_pay_isdeposit: 'cart_pay_isdeposit',
     cart_pay_cost: 'cart_pay_cost',
     cart_invoice_tex: 'cart_invoice_tex',
     cart_total_cost: 'cart_total_cost',
@@ -8089,6 +8101,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -8135,13 +8154,6 @@ export namespace Prisma {
    */
   export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
     
-
-
-  /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
   /**
    * Deep Input Types
    */
@@ -8170,6 +8182,7 @@ export namespace Prisma {
     cart_username?: StringFilter<"cart"> | string
     cart_pay_type?: StringFilter<"cart"> | string
     cart_pay_deposit?: StringFilter<"cart"> | string
+    cart_pay_isdeposit?: BoolFilter<"cart"> | boolean
     cart_pay_cost?: StringFilter<"cart"> | string
     cart_invoice_tex?: StringFilter<"cart"> | string
     cart_total_cost?: StringFilter<"cart"> | string
@@ -8197,6 +8210,7 @@ export namespace Prisma {
     cart_username?: SortOrder
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
+    cart_pay_isdeposit?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -8227,6 +8241,7 @@ export namespace Prisma {
     cart_username?: StringFilter<"cart"> | string
     cart_pay_type?: StringFilter<"cart"> | string
     cart_pay_deposit?: StringFilter<"cart"> | string
+    cart_pay_isdeposit?: BoolFilter<"cart"> | boolean
     cart_pay_cost?: StringFilter<"cart"> | string
     cart_invoice_tex?: StringFilter<"cart"> | string
     cart_total_cost?: StringFilter<"cart"> | string
@@ -8253,6 +8268,7 @@ export namespace Prisma {
     cart_username?: SortOrder
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
+    cart_pay_isdeposit?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -8284,6 +8300,7 @@ export namespace Prisma {
     cart_username?: StringWithAggregatesFilter<"cart"> | string
     cart_pay_type?: StringWithAggregatesFilter<"cart"> | string
     cart_pay_deposit?: StringWithAggregatesFilter<"cart"> | string
+    cart_pay_isdeposit?: BoolWithAggregatesFilter<"cart"> | boolean
     cart_pay_cost?: StringWithAggregatesFilter<"cart"> | string
     cart_invoice_tex?: StringWithAggregatesFilter<"cart"> | string
     cart_total_cost?: StringWithAggregatesFilter<"cart"> | string
@@ -8664,6 +8681,7 @@ export namespace Prisma {
     cart_username: string
     cart_pay_type: string
     cart_pay_deposit: string
+    cart_pay_isdeposit: boolean
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -8691,6 +8709,7 @@ export namespace Prisma {
     cart_username: string
     cart_pay_type: string
     cart_pay_deposit: string
+    cart_pay_isdeposit: boolean
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -8717,6 +8736,7 @@ export namespace Prisma {
     cart_username?: StringFieldUpdateOperationsInput | string
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -8743,6 +8763,7 @@ export namespace Prisma {
     cart_username?: StringFieldUpdateOperationsInput | string
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -8770,6 +8791,7 @@ export namespace Prisma {
     cart_username: string
     cart_pay_type: string
     cart_pay_deposit: string
+    cart_pay_isdeposit: boolean
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -8796,6 +8818,7 @@ export namespace Prisma {
     cart_username?: StringFieldUpdateOperationsInput | string
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -8822,6 +8845,7 @@ export namespace Prisma {
     cart_username?: StringFieldUpdateOperationsInput | string
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
+    cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -9264,6 +9288,11 @@ export namespace Prisma {
     lunchbox_total_cost?: bigint | number | null
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type CartCartDescriptionCompositeListFilter = {
     equals?: CartCartDescriptionObjectEqualityInput[]
     every?: CartCartDescriptionWhereInput
@@ -9306,6 +9335,7 @@ export namespace Prisma {
     cart_username?: SortOrder
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
+    cart_pay_isdeposit?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -9331,6 +9361,7 @@ export namespace Prisma {
     cart_username?: SortOrder
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
+    cart_pay_isdeposit?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -9356,6 +9387,7 @@ export namespace Prisma {
     cart_username?: SortOrder
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
+    cart_pay_isdeposit?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -9397,6 +9429,14 @@ export namespace Prisma {
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
     isSet?: boolean
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type employeeCountOrderByAggregateInput = {
@@ -9729,6 +9769,10 @@ export namespace Prisma {
     deleteMany?: CartCartLunchboxDeleteManyInput
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type CartCartDescriptionListUpdateEnvelopeInput = {
     set?: CartCartDescriptionCreateInput | CartCartDescriptionCreateInput[]
     push?: CartCartDescriptionCreateInput | CartCartDescriptionCreateInput[]
@@ -9833,6 +9877,11 @@ export namespace Prisma {
     menu_total: InputJsonValue
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type CartCartDescriptionWhereInput = {
     AND?: CartCartDescriptionWhereInput | CartCartDescriptionWhereInput[]
     OR?: CartCartDescriptionWhereInput[]
@@ -9898,6 +9947,14 @@ export namespace Prisma {
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
     isSet?: boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {

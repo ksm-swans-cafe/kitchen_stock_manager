@@ -63,13 +63,13 @@ interface CartState {
     invoice_tex?: string;
     pay_type?: string;
     pay_deposit?: string;
+    pay_isdeposit?: boolean;
     pay_cost?: string;
     total_remain?: string;
     total_cost_lunchbox?: string;
     total_cost?: string;
     description?: CartCartDescription[];
   }) => void;
-  // เพิ่มฟังก์ชันใหม่
   addLunchbox: (lunchbox: SelectedLunchbox) => void;
   removeLunchbox: (index: number) => void;
   updateLunchboxQuantity: (index: number, quantity: number) => void;
@@ -80,6 +80,7 @@ interface CartState {
   cart_invoice_tex: string;
   cart_pay_type: string;
   cart_pay_deposit: string;
+  cart_pay_isdeposit: boolean;
   cart_pay_cost: string;
   cart_total_cost_lunchbox: string;
   cart_total_remain: string;
@@ -106,6 +107,7 @@ export const useCartStore = create<CartState>()(
       cart_invoice_tex: "",
       cart_pay_type: "",
       cart_pay_deposit: "",
+      cart_pay_isdeposit: false,
       cart_pay_cost: "",
       cart_total_cost_lunchbox: "",
       cart_total_remain: "",
@@ -181,6 +183,7 @@ export const useCartStore = create<CartState>()(
           cart_invoice_tex: "",
           cart_pay_type: "",
           cart_pay_deposit: "",
+          cart_pay_isdeposit: false,
           cart_pay_cost: "",
           cart_total_cost_lunchbox: "",
           cart_total_remain: "",
@@ -205,6 +208,7 @@ export const useCartStore = create<CartState>()(
           cart_invoice_tex: info.invoice_tex ?? state.cart_invoice_tex,
           cart_pay_type: info.pay_type ?? state.cart_pay_type,
           cart_pay_deposit: info.pay_deposit ?? state.cart_pay_deposit,
+          cart_pay_isdeposit: info.pay_isdeposit ?? state.cart_pay_isdeposit,
           cart_pay_cost: info.pay_cost ?? state.cart_pay_cost,
           cart_total_cost_lunchbox: info.total_cost_lunchbox ?? state.cart_total_cost_lunchbox,
           cart_total_remain: info.total_remain ?? state.cart_total_remain,

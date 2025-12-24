@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   if (!authResult.success) return authResult.response!;
   try {
     const body = await request.json();
-    const { cart_username, cart_lunchboxes, cart_customer_name, cart_customer_tel, cart_delivery_date, cart_location_send, cart_export_time, cart_receive_time, cart_receive_name, cart_total_cost_lunchbox, cart_invoice_tex, cart_shipping_cost, cart_pay_type, cart_pay_deposit, cart_pay_cost, cart_total_remain, cart_total_cost } = body;
+    const { cart_username, cart_lunchboxes, cart_customer_name, cart_customer_tel, cart_delivery_date, cart_location_send, cart_export_time, cart_receive_time, cart_receive_name, cart_total_cost_lunchbox, cart_invoice_tex, cart_shipping_cost, cart_pay_type, cart_pay_deposit, cart_pay_isdeposit, cart_pay_cost, cart_total_remain, cart_total_cost } = body;
 
     if (!cart_username || !cart_lunchboxes) {
       return NextResponse.json({ error: "Username and lunchboxes are required" }, { status: 400 });
@@ -61,27 +61,12 @@ export async function POST(request: NextRequest) {
       })),
     }));
 
-    // const rawMenuItems = (cart_menu_items || []).map((item: any) => ({
-    //   menu_name: item.menu_name || "",
-    //   menu_total: parseInt(item.menu_total || "1"),
-    //   menu_ingredients: (item.menu_ingredients || []).map((ingredient: any) => ({
-    //     ingredient_name: ingredient.ingredient_name || "",
-    //     ingredient_status: ingredient.ingredient_status ?? true,
-    //     useItem: parseInt(ingredient.useItem || "0"),
-    //   })),
-    //   menu_description: item.menu_description || "",
-    //   menu_order_id: parseInt(item.menu_order_id || "0"),
-    //   menu_notes: item.menu_notes || [],
-    // }));
-
     const formattedLunchboxes = convertBigIntToNumber(rawLunchboxes);
-    // const formattedMenuItems = convertBigIntToNumber(rawMenuItems);
 
     const cartData = {
       cart_id: cartId,
       cart_username: cart_username,
       cart_lunchbox: formattedLunchboxes,
-      // cart_menu_items: formattedMenuItems,
       cart_create_date: cartCreateDateString,
       cart_order_number: orderNumber,
       cart_customer_name: cart_customer_name || "",
@@ -91,12 +76,13 @@ export async function POST(request: NextRequest) {
       cart_export_time: cart_export_time || "",
       cart_receive_time: cart_receive_time || "",
       cart_shipping_cost: cart_shipping_cost || "",
-      cart_status: "pending",
+      cart_status: cart_pay_isdeposit ? "completed" : "pending",
       cart_receive_name: cart_receive_name || "",
       cart_total_cost_lunchbox: cart_total_cost_lunchbox || "",
       cart_invoice_tex: cart_invoice_tex || "",
       cart_pay_type: cart_pay_type || "",
       cart_pay_deposit: cart_pay_deposit || "",
+      cart_pay_isdeposit: cart_pay_isdeposit || false,
       cart_pay_cost: cart_pay_cost || "",
       cart_total_remain: cart_total_remain || "",
       cart_total_cost: cart_total_cost || "",

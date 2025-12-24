@@ -103,6 +103,7 @@ model cart {
   cart_username            String
   cart_pay_type            String
   cart_pay_deposit         String
+  cart_pay_isdeposit       Boolean
   cart_pay_cost            String
   cart_invoice_tex         String
   cart_total_cost          String
