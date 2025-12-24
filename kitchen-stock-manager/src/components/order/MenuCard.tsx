@@ -128,7 +128,7 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
           "w-6 h-6 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
           selected
             ? "bg-orange-500 border-orange-500"
-            : "border-gray-300 bg-white group-hover:border-gray-400"
+            : "border-gray-300 bg-gray-300 group-hover:border-gray-500 group-hover:bg-gray-200"
         )}>
           {selected && <Check className="text-white w-3.5 h-3.5" strokeWidth={3} />}
         </div>
