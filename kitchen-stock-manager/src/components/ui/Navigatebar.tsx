@@ -78,8 +78,8 @@ export default function Navigatebar() {
 
   // นับจำนวนจากเมนูปกติ
   const itemsQuantity = items.reduce((sum: number, item: { menu_total: number }) => sum + item.menu_total, 0);
-  // นับจำนวนจากชุดอาหาร
-  const lunchboxesQuantity = selected_lunchboxes.reduce((sum: number, lunchbox: { quantity: number }) => sum + lunchbox.quantity, 0);
+  // นับจำนวนชุดอาหารที่เลือก (นับเป็นชุด ไม่นับ quantity)
+  const lunchboxesQuantity = selected_lunchboxes.length;
   // รวมจำนวนทั้งหมด
   const totalQuantity = itemsQuantity + lunchboxesQuantity;
 
