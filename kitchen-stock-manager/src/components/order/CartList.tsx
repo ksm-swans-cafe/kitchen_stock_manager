@@ -70,6 +70,7 @@ export default function CartList() {
     cart_invoice_tex,
     cart_pay_type,
     cart_pay_deposit,
+    cart_pay_isdeposit,
     cart_pay_cost,
     cart_total_remain,
     cart_total_cost,
@@ -181,7 +182,6 @@ export default function CartList() {
 
       if (!cart_invoice_tex.trim()) newErrors.push("กรุณากรอกเลขใบกำกับภาษี");
       else if (cart_invoice_tex.length !== 13) newErrors.push("เลขใบกำกับภาษีต้องเป็น 13 หลักเท่านั้น");
-      
 
       if (selected_lunchboxes.length > 0) {
         if (!cart_pay_type.trim()) {
@@ -280,6 +280,7 @@ export default function CartList() {
         cart_invoice_tex: cart_invoice_tex,
         cart_pay_type: cart_pay_type,
         cart_pay_deposit: cart_pay_deposit,
+        cart_pay_isdeposit: cart_pay_isdeposit,
         cart_total_cost_lunchbox: (Number(cart_total_cost) - Number(cart_shipping_cost)).toString(),
         cart_total_cost: cart_total_cost,
         cart_pay_cost: cart_pay_cost,
@@ -386,11 +387,12 @@ export default function CartList() {
 
     let depositAmount = 0;
     if (cart_pay_deposit === "full") depositAmount = payCostNum;
-    else if (cart_pay_deposit === "percent") depositAmount = Math.round((totalCostNum * payCostNum) / 100);
+    else if (cart_pay_deposit === "percent") depositAmount = (totalCostNum * payCostNum) / 100;
     else if (cart_pay_deposit === "no") depositAmount = 0;
 
     const remaining = totalCostNum - depositAmount;
-    setCustomerInfo({ total_remain: remaining >= 0 ? remaining.toLocaleString("th-TH") : "0" });
+    const formattedRemaining = remaining >= 0 ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
+    setCustomerInfo({ total_remain: formattedRemaining });
   }, [cart_total_cost, cart_pay_deposit, cart_pay_cost]);
 
   useEffect(() => {
@@ -933,10 +935,10 @@ export default function CartList() {
                     <label className='font-bold'>รูปแบบการมัดจำ</label>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <input type='radio' id='deposit-full' name='deposit' value='full' checked={cart_pay_deposit === "full"} onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value })} />
+                    <input type='radio' id='deposit-full' name='deposit' value='full' checked={cart_pay_deposit === "full" && cart_pay_isdeposit === true} onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })} />
                     <label htmlFor='deposit-full'>จำนวนเต็ม</label>
 
-                    <input type='radio' id='deposit-percent' name='deposit' value='percent' checked={cart_pay_deposit === "percent"} onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value })} />
+                    <input type='radio' id='deposit-percent' name='deposit' value='percent' checked={cart_pay_deposit === "percent" && cart_pay_isdeposit === true} onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })} />
                     <label htmlFor='deposit-percent'>%</label>
 
                     <input
@@ -944,9 +946,9 @@ export default function CartList() {
                       id='deposit-none'
                       name='deposit'
                       value='no'
-                      checked={cart_pay_deposit === "no"}
+                      checked={cart_pay_deposit === "no" && cart_pay_isdeposit === false}
                       onChange={(e) => {
-                        setCustomerInfo({ pay_deposit: e.target.value, pay_cost: "" });
+                        setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: false, pay_cost: "" });
                       }}
                     />
                     <label htmlFor='deposit-none'>ไม่มัดจำ</label>
@@ -1000,14 +1002,14 @@ export default function CartList() {
                 <label className='font-bold'>หักค่ามัดจำ</label>
                 <span className='text-lg text-orange-600'>
                   {cart_pay_deposit === "no"
-                    ? "0 บาท (ไม่มัดจำ)"
+                    ? "0.00 บาท (ไม่มัดจำ)"
                     : cart_pay_deposit && cart_pay_cost
                     ? cart_pay_deposit === "percent"
                       ? `${cart_pay_cost}% (${(() => {
                           const totalCostNum = Number(cart_total_cost.replace(/[^\d]/g, "")) || 0;
                           const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, "")) || 0;
-                          const depositAmount = Math.round((totalCostNum * payCostNum) / 100);
-                          return depositAmount.toLocaleString("th-TH");
+                          const depositAmount = (totalCostNum * payCostNum) / 100;
+                          return Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         })()} บาท)`
                       : `${cart_pay_cost} บาท`
                     : "-"}
@@ -1015,7 +1017,7 @@ export default function CartList() {
               </div>
               <div className='flex justify-between items-center py-2'>
                 <label className='font-bold text-green-700'>คงเหลือ</label>
-                <span className='text-xl font-bold text-green-700'>{cart_total_remain ? `${cart_total_remain} บาท` : "-"}</span>
+                <span className='text-xl font-bold text-green-700'>{cart_total_remain ? `${Number(cart_total_remain).toFixed(2)} บาท` : "-"}</span>
               </div>
             </div>
           </>
