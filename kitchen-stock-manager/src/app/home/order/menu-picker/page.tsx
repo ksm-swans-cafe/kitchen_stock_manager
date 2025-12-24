@@ -349,8 +349,9 @@ export default function Order() {
       total += (riceMenu.lunchbox_cost ?? 0) * riceCount;
     }
 
-    return total;
-  }, [selectedMenuItems, availableMenus, riceQuantity]);
+    // คูณด้วยจำนวนกล่องที่สั่ง
+    return total * lunchboxQuantity;
+  }, [selectedMenuItems, availableMenus, riceQuantity, lunchboxQuantity]);
 
   const setPriceBudget = useMemo(() => {
     if (!selectedSetMenu) return null;
@@ -612,8 +613,8 @@ export default function Order() {
 
         let totalCost: number;
         const setPrice = extractPriceFromSetName(selectedSetMenu);
-        if (setPrice !== null) totalCost = setPrice;
-        else totalCost = selectedMenuObjects.reduce((total, menu) => total + (menu.lunchbox_cost ?? 0), 0);
+        if (setPrice !== null) totalCost = setPrice * lunchboxQuantity;
+        else totalCost = selectedMenuObjects.reduce((total, menu) => total + (menu.lunchbox_cost ?? 0), 0) * lunchboxQuantity;
 
         const newLunchbox = {
           lunchbox_name: selectedFoodSet,
@@ -1105,7 +1106,7 @@ export default function Order() {
                               <div className="h-[2px] bg-gray-900/10 flex-1" />
                               <div className="text-2xl xl:text-4xl font-black text-gray-900 tracking-tighter tabular-nums">
                                 {setPriceBudget ? (
-                                  `${setPriceBudget - 20}-${setPriceBudget + 20}`
+                                  `${(setPriceBudget - 20) * lunchboxQuantity}-${(setPriceBudget + 20) * lunchboxQuantity}`
                                 ) : (
                                   selectionPrice.toLocaleString()
                                 )}
@@ -1320,41 +1321,41 @@ export default function Order() {
 
 
                     {/* Meat Type Filters and Count */}
-                    <div className='flex items-center justify-between gap-4 mb-4 sm:mb-6'>
-                      <div className='flex-1 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide'>
-                        <button
-                          onClick={() => setSelectedMeatType(null)}
-                          className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap border ${selectedMeatType === null
-                            ? "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-200"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-600"
-                            }`}
-                        >
-                          ทั้งหมด
-                        </button>
-                        {dynamicMeatTypes.map((meat) => (
-                          <button
-                            key={meat}
-                            onClick={() => setSelectedMeatType(meat)}
-                            className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap border ${selectedMeatType === meat
-                              ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white border-transparent shadow-md shadow-orange-200"
-                              : "bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-600"
-                              }`}
-                          >
-                            {meat}
-                          </button>
-                        ))}
-                        {selectedMeatType && (
-                          <button
-                            onClick={() => setSelectedMeatType(null)}
-                            className="text-xs sm:text-sm text-orange-500 hover:text-orange-600 font-medium ml-2 whitespace-nowrap"
-                          >
-                            ล้างตัวเลือก
-                          </button>
-                        )}
+                    <div className='space-y-3 sm:space-y-4 lg:space-y-6 mb-6'>
+                      <div className='flex items-center gap-2 sm:gap-4'>
+                        <h3 className='text-sm sm:text-base lg:text-lg font-bold text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>เลือกเนื้อสัตว์</h3>
+                        <div className='flex-1 h-px bg-gradient-to-r from-orange-200 to-pink-200'></div>
+                        <span className='text-xs sm:text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full whitespace-nowrap'>{availableMenus.length} รายการ</span>
                       </div>
-                      <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0'>
-                        {availableMenus.length} รายการ
-                      </span>
+
+                      <div className='flex flex-wrap gap-3 sm:gap-4'>
+                        {/* Option: All */}
+                        <MenuCard
+                          className='cursor-pointer w-full sm:w-[320px]'
+                          menuId="filter-all"
+                          name="ทั้งหมด"
+                          variant='list'
+                          selected={selectedMeatType === null}
+                          showPrice={false}
+                          size={isMobile ? "sm" : "md"}
+                          onClick={() => setSelectedMeatType(null)}
+                        />
+
+                        {/* Dynamic Meat Options */}
+                        {dynamicMeatTypes.map((meat) => (
+                          <MenuCard
+                            key={meat}
+                            className='cursor-pointer w-full sm:w-[320px]'
+                            menuId={`filter-${meat}`}
+                            name={`เนื้อ${meat}`}
+                            variant='list'
+                            selected={selectedMeatType === meat}
+                            showPrice={false}
+                            size={isMobile ? "sm" : "md"}
+                            onClick={() => setSelectedMeatType(selectedMeatType === meat ? null : meat)}
+                          />
+                        ))}
+                      </div>
                     </div>
 
                     {/* Note Section - Mobile Only with improved responsive design */}
