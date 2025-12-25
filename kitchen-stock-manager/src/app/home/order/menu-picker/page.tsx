@@ -38,7 +38,7 @@ const setImages: Record<string, string> = {
   F: SetF.src,
 };
 
-// ==================== ข้อมูลชนิด (Types) ====================
+// ==================== ชนิดข้อมูล (Types) ====================
 type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null; lunchbox_showPrice?: boolean };
 
 interface LunchBoxFromAPI {
@@ -497,7 +497,22 @@ export default function Order() {
 
           return prev.filter((item) => item !== menuKey);
         } else {
-          const currentSelectedMenus = availableMenus.filter((menu) => prev.includes(buildMenuKey(menu)));
+          // Logic for Auto-Replace "กับข้าวที่ 1" (Single Selection)
+          let effectivePrev = [...prev];
+
+          // ถ้าเลือก "กับข้าวที่ 1" ให้ลบอันเก่าออกก่อน (Swap)
+          if (isMainDishCategory) {
+            const existingMainDishKey = effectivePrev.find(key => {
+              const m = availableMenus.find(menu => buildMenuKey(menu) === key);
+              return m?.lunchbox_menu_category === "กับข้าวที่ 1";
+            });
+
+            if (existingMainDishKey) {
+              effectivePrev = effectivePrev.filter(k => k !== existingMainDishKey);
+            }
+          }
+
+          const currentSelectedMenus = availableMenus.filter((menu) => effectivePrev.includes(buildMenuKey(menu)));
 
           // ตรวจสอบจำนวนเมนูตามหมวดหมู่
           if (!isUnlimited || isDrinksSet) {
@@ -555,7 +570,7 @@ export default function Order() {
               const riceMenuKey = buildMenuKey(riceMenus[0]);
 
               // นับเมนูในหมวดเดียวกัน (ไม่รวมข้าว)
-              const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && prev.includes(buildMenuKey(menu)));
+              const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && effectivePrev.includes(buildMenuKey(menu)));
 
               // คำนวณจำนวนข้าว
               const requiredRiceCount = menusInCategory.length + 1; // +1 เพราะกำลังจะเพิ่มเมนูใหม่
@@ -563,19 +578,19 @@ export default function Order() {
               setRiceQuantity(requiredRiceCount);
 
               // เพิ่มข้าวถ้ายังไม่มี
-              if (!prev.includes(riceMenuKey)) {
-                return [...prev, riceMenuKey, menuKey];
+              if (!effectivePrev.includes(riceMenuKey)) {
+                return [...effectivePrev, riceMenuKey, menuKey];
               } else {
-                return [...prev, menuKey];
+                return [...effectivePrev, menuKey];
               }
             }
           }
 
           // ตรวจสอบขีดจำกัดจำนวนเมนู
-          if (isUnlimited || prev.length < limit) {
-            return [...prev, menuKey];
+          if (isUnlimited || effectivePrev.length < limit) {
+            return [...effectivePrev, menuKey];
           } else {
-            const newSelection = [...prev.slice(1), menuKey];
+            const newSelection = [...effectivePrev.slice(1), menuKey];
             return newSelection;
           }
         }
@@ -1470,7 +1485,7 @@ export default function Order() {
                             if (indexB !== -1) return 1;
                             // หรือเรียงตามตัวอักษร
                             return a.localeCompare(b, "th");
-                          });
+                          }).filter(category => category !== "ข้าว");
 
 
                           return sortedCategories.map((category, categoryIndex) => {
