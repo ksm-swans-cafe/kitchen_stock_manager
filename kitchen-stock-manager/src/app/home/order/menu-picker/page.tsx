@@ -1246,21 +1246,27 @@ export default function Order() {
                             </div>
 
                             <div className="flex items-end justify-between border-t border-gray-900/5 pt-2 mt-1">
-                              <div className="flex flex-col gap-1">
-                                <p className="text-[9px] xl:text-[10px] uppercase font-bold text-gray-400 tracking-wider text-red-500">จำนวนกล่องที่สั่ง</p>
-                                <div className="flex items-center bg-white border border-gray-200 rounded-xl p-0.5 sm:p-1 shadow-md">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-[9px] xl:text-[10px] uppercase font-bold text-gray-500 tracking-wider">จำนวนกล่องที่สั่ง</p>
+                                  <span className="text-[8px] xl:text-[9px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100 flex items-center gap-1">
+                                    <span className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
+                                    ขั้นต่ำ 10 กล่อง
+                                  </span>
+                                </div>
+                                <div className="flex items-center bg-white border border-gray-200 rounded-xl p-0.5 shadow-md w-fit">
                                   <button
                                     onClick={() => setLunchboxQuantity(Math.max(1, lunchboxQuantity - 1))}
-                                    className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-all text-gray-700 font-bold active:scale-90"
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 font-bold active:scale-90"
                                   >
-                                    -
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
                                   </button>
-                                  <span className="px-2 sm:px-3 text-sm sm:text-base font-black text-gray-900 min-w-[28px] text-center">{lunchboxQuantity}</span>
+                                  <span className="px-3 text-sm font-black text-gray-900 min-w-[32px] text-center">{lunchboxQuantity}</span>
                                   <button
                                     onClick={() => setLunchboxQuantity(lunchboxQuantity + 1)}
-                                    className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-orange-500 hover:bg-orange-600 transition-all text-white font-bold shadow-sm shadow-orange-200 active:scale-90"
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-orange-500 hover:bg-orange-600 transition-all text-white font-bold shadow-sm shadow-orange-200 active:scale-90"
                                   >
-                                    +
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                                   </button>
                                 </div>
                               </div>
@@ -1667,7 +1673,15 @@ export default function Order() {
                                           category={menu.lunchbox_menu_category || undefined}
                                           meatType={menuMeatType as any}
                                           selected={isSelected}
-                                          faded={isCategoryHasSelection && !isSelected}
+                                          faded={(() => {
+                                            if (!isCategoryHasSelection || isSelected) return false;
+                                            // กรณีพิเศษ: Lunch Box Set F - เครื่องเคียง
+                                            if (selectedFoodSet === "Lunch Box" && selectedSetMenu === "F" && category === "เครื่องเคียง") {
+                                              const sidedishCount = availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m)) && m.lunchbox_menu_category === "เครื่องเคียง").length;
+                                              return sidedishCount >= 2;
+                                            }
+                                            return true;
+                                          })()}
                                           duplicate={!!isLunchboxCategoryTaken}
                                           size={isMobile ? "sm" : "md"}
                                           showPrice={menu.lunchbox_showPrice ?? true}
