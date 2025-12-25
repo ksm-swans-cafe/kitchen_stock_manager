@@ -733,38 +733,49 @@ export default function Order() {
 
     if (!newMeatType) return;
 
-    // 1. สลับเมนูที่เลือกไว้เป็นเนื้อสัตว์ใหม่
-    const currentMainDishes = availableMenus.filter(m =>
-      (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
-      selectedMenuItems.includes(buildMenuKey(m))
-    );
-
     let newSelectedItems = [...selectedMenuItems];
     let hasChanges = false;
 
-    currentMainDishes.forEach(oldDish => {
-      const dishType = getDishType(oldDish.menu_name);
-      if (dishType) {
-        // หาเมนูใหม่ที่ประเภทเดียวกันแต้เนื้อสัตว์ใหม่
-        const newDish = availableMenus.find(m =>
-          (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
-          getDishType(m.menu_name) === dishType &&
-          m.menu_name.includes(newMeatType)
-        );
+    // 1. ตรวจสอบเมนูที่เลือกอยู่ทั้งหมด
+    const conflictingItems = availableMenus.filter((m) => selectedMenuItems.includes(buildMenuKey(m)));
 
+    conflictingItems.forEach((oldDish) => {
+      const oldMeatType = getMeatType(oldDish.menu_name);
+
+      // ถ้าเป็นเมนูที่มีเนื้อสัตว์ และเนื้อสัตว์ไม่ตรงกับที่เลือกใหม่
+      if (oldMeatType && oldMeatType !== newMeatType) {
+        // ลองหาเมนูใหม่ที่ประเภทเดียวกัน (Swap)
+        const dishType = getDishType(oldDish.menu_name);
+        const category = oldDish.lunchbox_menu_category;
+
+        let newDish = null;
+
+        if (dishType) {
+          newDish = availableMenus.find((m) =>
+            m.lunchbox_menu_category === category &&
+            getDishType(m.menu_name) === dishType &&
+            m.menu_name.includes(newMeatType)
+          );
+        }
+
+        // ลบเมนูเดิมออกเสมอ (เพราะมันไม่ตรงกับ Filter)
+        const oldKey = buildMenuKey(oldDish);
+        newSelectedItems = newSelectedItems.filter((k) => k !== oldKey);
+        hasChanges = true;
+
+        // ถ้าหาเมนูเปลี่ยนได้ ให้ใส่เมนูใหม่เข้าไปแทน
         if (newDish) {
-          // ลบอันเก่า เพิ่มอันใหม่
-          const oldKey = buildMenuKey(oldDish);
           const newKey = buildMenuKey(newDish);
-          newSelectedItems = newSelectedItems.filter(k => k !== oldKey).concat(newKey);
-          hasChanges = true;
+          if (!newSelectedItems.includes(newKey)) {
+            newSelectedItems.push(newKey);
+          }
         }
       }
     });
 
-    // 2. จัดการเมนูที่รอเลือกเนื้อสัตว์
+    // 2. จัดการเมนูที่รอเลือกเนื้อสัตว์ (Pending Focus)
     if (focusedDish) {
-      const matchPending = availableMenus.find(m =>
+      const matchPending = availableMenus.find((m) =>
         (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
         m.menu_name.includes(focusedDish) &&
         m.menu_name.includes(newMeatType)
@@ -777,6 +788,9 @@ export default function Order() {
           hasChanges = true;
         }
         setFocusedDish(null); // Clear focus after resolving
+      } else {
+        // ถ้าหาคู่ไม่ได้ แปลว่าเมนูนี้จะถูกซ่อนจาก Filter -> ต้องเอา Focus ออก
+        setFocusedDish(null);
       }
     }
 
@@ -1684,23 +1698,14 @@ export default function Order() {
                                     </div>
 
                                     <div className='flex flex-wrap gap-3 sm:gap-4'>
-                                      <MenuCard
-                                        className='cursor-pointer w-full sm:w-[320px]'
-                                        menuId="filter-all"
-                                        name="ทั้งหมด"
-                                        variant='list'
-                                        selected={selectedMeatType === null}
-                                        showPrice={false}
-                                        size={isMobile ? "sm" : "md"}
-                                        onClick={() => handleMeatFilterChange(null)}
-                                      />
+
 
                                       {dynamicMeatTypes.map((meat) => (
                                         <MenuCard
                                           key={meat}
                                           className='cursor-pointer w-full sm:w-[320px]'
                                           menuId={`filter-${meat}`}
-                                          name={`เนื้อ${meat}`}
+                                          name={meat}
                                           variant='list'
                                           selected={selectedMeatType === meat}
                                           showPrice={false}
