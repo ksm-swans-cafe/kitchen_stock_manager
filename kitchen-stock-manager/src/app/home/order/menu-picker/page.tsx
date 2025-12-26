@@ -323,7 +323,7 @@ export default function Order() {
 
       const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
 
-      // ตรวจสอบว่าเป็น Lunchbox Set E หรือ F หรือไม่
+      // ตรวจสอบว่าเป็น Lunchbox Set E หรือ F หรือไม่ 
       const isSidedishesSet = selectedFoodSet === "Lunch Box" && (selectedSetMenu === "E" || selectedSetMenu === "F");
       const isSidedishesSetJ = selectedFoodSet === "อาหารเจ" && selectedSetMenu === "D";
       const isSidedishesSetPre = selectedFoodSet === "Premium Lunch" && (selectedSetMenu === "270 baht" || selectedSetMenu === "300 baht" || selectedSetMenu === "379 baht");
