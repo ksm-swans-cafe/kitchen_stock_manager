@@ -20,6 +20,72 @@
   animation: slideDown 0.3s ease-out;
 }
 
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fadeSlideIn {
+  animation: fadeSlideIn 0.3s ease-out forwards;
+}
+
+.animate-fadeSlideOut {
+  animation: fadeSlideOut 0.15s ease-in forwards;
+}
+
+@keyframes auraGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px var(--aura-color), 0 0 30px var(--aura-color);
+  }
+  50% {
+    box-shadow: 0 0 25px var(--aura-color), 0 0 50px var(--aura-color);
+  }
+}
+
+@keyframes starPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 3px gold);
+  }
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px gold);
+  }
+}
+
+.animate-auraGlow {
+  animation: auraGlow 2s ease-in-out infinite;
+}
+
+.animate-starPulse {
+  animation: starPulse 1.5s ease-in-out infinite;
+}
+
+.cursor-hidden {
+  cursor: none !important;
+}
+
+.cursor-hidden * {
+  cursor: none !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
