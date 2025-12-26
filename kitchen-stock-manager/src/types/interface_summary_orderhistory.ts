@@ -81,6 +81,7 @@ export type RawCart = {
   cart_menu_items: string | MenuItem[];
   cart_create_date: string;
   cart_total_price: number;
+  cart_total_cost_lunchbox?: string;
   cart_status: string;
   cart_order_number: string;
   cart_username: string;

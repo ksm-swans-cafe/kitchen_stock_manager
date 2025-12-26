@@ -22,7 +22,11 @@ import FoodMenuSetIcon from "@/assets/food-menu.png";
 import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 
 // ==================== Types ====================
-type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null; lunchbox_showPrice?: boolean };
+type MenuItemWithAutoRice = MenuItem & { 
+  lunchbox_AutoRice?: boolean | null; 
+  lunchbox_showPrice?: boolean;
+  menu_cost?: number; // เพิ่ม menu_cost สำหรับเก็บราคาจาก lunchbox_cost
+};
 
 interface LunchBoxFromAPI {
   lunchbox_name: string;
@@ -525,7 +529,14 @@ export default function Order() {
               const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
               const objectsToCreate = isCustomUnlimited ? quantity : 1;
 
-              for (let i = 0; i < objectsToCreate; i++) selectedMenuObjects.push({ ...menu });
+              for (let i = 0; i < objectsToCreate; i++) {
+                // เพิ่ม menu_cost โดยใช้ lunchbox_cost ที่ได้จาก menu_lunchbox ที่ตรงกับ lunchbox_set_name
+                // lunchbox_cost มาจาก API ที่เช็ค lunchbox_name และ lunchbox_set_name แล้ว
+                selectedMenuObjects.push({ 
+                  ...menu,
+                  menu_cost: menu.lunchbox_cost || 0, // ใช้ lunchbox_cost เป็น menu_cost (ได้จาก menu_lunchbox ที่ตรงกับ lunchbox_set_name)
+                });
+              }
               processedMenuNames.add(menuKey);
             } else {
               console.warn(`Menu not found: ${menuKey}`);

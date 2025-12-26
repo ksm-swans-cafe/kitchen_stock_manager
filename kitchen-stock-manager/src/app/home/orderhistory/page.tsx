@@ -111,6 +111,23 @@ const OrderHistory = () => {
               }
             }
 
+            // คำนวณจำนวนกล่องทั้งหมดจาก cart_lunchbox (รวม lunchbox_total)
+            const totalBoxesFromLunchboxFallback = cartLunchboxFallback.reduce((sum: number, lunchbox: any) => {
+              return sum + (Number(lunchbox.lunchbox_total) || 0);
+            }, 0);
+
+            // ใช้ cart_total_cost_lunchbox สำหรับราคารวม (แปลงจาก string เป็น number)
+            // ถ้าไม่มี cart_total_cost_lunchbox ให้คำนวณจาก cart_lunchbox แทน
+            let totalPriceFallback = 0;
+            if (cart.cart_total_cost_lunchbox && cart.cart_total_cost_lunchbox.trim() !== "") {
+              totalPriceFallback = Number(cart.cart_total_cost_lunchbox.replace(/[^\d.-]/g, "")) || 0;
+            } else if (cartLunchboxFallback && cartLunchboxFallback.length > 0) {
+              // คำนวณราคารวมจาก cart_lunchbox
+              totalPriceFallback = cartLunchboxFallback.reduce((sum: number, lunchbox: any) => {
+                return sum + (Number(lunchbox.lunchbox_total_cost) || 0);
+              }, 0);
+            }
+
             return {
               id: cart.cart_id || "no-id",
               orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
@@ -118,8 +135,8 @@ const OrderHistory = () => {
               date: "ไม่ระบุ",
               dateISO: "",
               time: "ไม่ระบุ",
-              sets: 0,
-              price: cart.cart_total_price || 0,
+              sets: totalBoxesFromLunchboxFallback,
+              price: totalPriceFallback,
               status: cart.cart_status,
               createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
               menuItems: [],
@@ -186,6 +203,26 @@ const OrderHistory = () => {
             }
           }
 
+          // คำนวณจำนวนกล่องทั้งหมดจาก cart_lunchbox (รวม lunchbox_total)
+          const totalBoxesFromLunchbox = cartLunchbox.reduce((sum: number, lunchbox: any) => {
+            return sum + (Number(lunchbox.lunchbox_total) || 0);
+          }, 0);
+          
+          // ใช้ totalBoxesFromLunchbox ถ้ามีข้อมูลจาก cart_lunchbox มิฉะนั้นใช้ totalSets (fallback)
+          const finalSets = totalBoxesFromLunchbox > 0 ? totalBoxesFromLunchbox : totalSets;
+
+          // ใช้ cart_total_cost_lunchbox สำหรับราคารวม (แปลงจาก string เป็น number)
+          // ถ้าไม่มี cart_total_cost_lunchbox ให้คำนวณจาก cart_lunchbox แทน
+          let totalPrice = 0;
+          if (cart.cart_total_cost_lunchbox && cart.cart_total_cost_lunchbox.trim() !== "") {
+            totalPrice = Number(cart.cart_total_cost_lunchbox.replace(/[^\d.-]/g, "")) || 0;
+          } else if (cartLunchbox && cartLunchbox.length > 0) {
+            // คำนวณราคารวมจาก cart_lunchbox
+            totalPrice = cartLunchbox.reduce((sum: number, lunchbox: any) => {
+              return sum + (Number(lunchbox.lunchbox_total_cost) || 0);
+            }, 0);
+          }
+
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -193,8 +230,8 @@ const OrderHistory = () => {
             date: formattedDate,
             dateISO: formattedDateISO,
             time: formattedTime,
-            sets: totalSets,
-            price: cart.cart_total_price || 0,
+            sets: finalSets,
+            price: totalPrice,
             status: cart.cart_status,
             createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
             menuItems: menuItems.map((item) => ({
@@ -883,25 +920,10 @@ const OrderHistory = () => {
               return sum + (Number(menu.menu_total) || 0);
             }, 0);
             
-            let remainingPrice = lunchboxTotalCost;
             lunchbox.lunchbox_menu.forEach((menu: any, menuIdx: number) => {
               if (menu.menu_name) {
-                const menuSets = Number(menu.menu_total) || 0;
-                let menuPrice = 0;
-                
-                // ถ้ามี menu_cost จริงให้ใช้ค่านั้นก่อน
-                if (menu.menu_cost && Number(menu.menu_cost) > 0) {
-                  menuPrice = Number(menu.menu_cost) * menuSets;
-                } else if (lunchboxTotalCost > 0 && totalSetsInLunchbox > 0) {
-                  // แบ่งราคาตามสัดส่วนจำนวน Set
-                  if (menuIdx < lunchbox.lunchbox_menu.length - 1) {
-                    menuPrice = Math.round((lunchboxTotalCost * menuSets) / totalSetsInLunchbox);
-                    remainingPrice -= menuPrice;
-                  } else {
-                    // เมนูสุดท้ายใช้ราคาที่เหลือเพื่อให้รวมแล้วตรงกับยอดรวม
-                    menuPrice = remainingPrice;
-                  }
-                }
+                // ใช้ menu_cost จาก lunchbox_menu โดยตรง
+                const menuCost = Number(menu.menu_cost) || 0;
                 
                 menuRows.push({
                   "ลำดับ": "",
@@ -910,7 +932,7 @@ const OrderHistory = () => {
                   "เวลาจัดส่ง": exportTime,
                   "เวลารับอาหาร": receiveTime,
                   "จำนวน Set": menu.menu_total || 0,
-                  "ราคาอาหาร(บาท)": Number(menu.menu_cost || 0),
+                  "ราคาอาหาร(บาท)": menuCost,
                   "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
                   "สถานะ": getStatusText(cart.status),
                   "ผู้สร้าง": cart.createdBy,
@@ -1136,25 +1158,10 @@ const OrderHistory = () => {
               return sum + (Number(menu.menu_total) || 0);
             }, 0);
             
-            let remainingPrice = lunchboxTotalCost;
             lunchbox.lunchbox_menu.forEach((menu: any, menuIdx: number) => {
               if (menu.menu_name) {
-                const menuSets = Number(menu.menu_total) || 0;
-                let menuPrice = 0;
-                
-                // ถ้ามี menu_cost จริงให้ใช้ค่านั้นก่อน
-                if (menu.menu_cost && Number(menu.menu_cost) > 0) {
-                  menuPrice = Number(menu.menu_cost) * menuSets;
-                } else if (lunchboxTotalCost > 0 && totalSetsInLunchbox > 0) {
-                  // แบ่งราคาตามสัดส่วนจำนวน Set
-                  if (menuIdx < lunchbox.lunchbox_menu.length - 1) {
-                    menuPrice = Math.round((lunchboxTotalCost * menuSets) / totalSetsInLunchbox);
-                    remainingPrice -= menuPrice;
-                  } else {
-                    // เมนูสุดท้ายใช้ราคาที่เหลือเพื่อให้รวมแล้วตรงกับยอดรวม
-                    menuPrice = remainingPrice;
-                  }
-                }
+                // ใช้ menu_cost จาก lunchbox_menu โดยตรง
+                const menuCost = Number(menu.menu_cost) || 0;
                 
                 menuRows.push({
                   "ลำดับ": "",
@@ -1163,7 +1170,7 @@ const OrderHistory = () => {
                   "เวลาจัดส่ง": exportTime,
                   "เวลารับอาหาร": receiveTime,
                   "จำนวน Set": menu.menu_total || 0,
-                  "ราคาอาหาร(บาท)": Number(menu.menu_cost || 0),
+                  "ราคาอาหาร(บาท)": menuCost,
                   "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
                   "สถานะ": getStatusText(cart.status),
                   "ผู้สร้าง": cart.createdBy,
