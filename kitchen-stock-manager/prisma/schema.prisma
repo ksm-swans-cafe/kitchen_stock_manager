@@ -110,6 +110,7 @@ model cart {
   cart_total_cost    String
   cart_total_remain  String
   cart_description   CartCartDescription[]
+  cart_pinned        Boolean?
 }
 
 model employee {
