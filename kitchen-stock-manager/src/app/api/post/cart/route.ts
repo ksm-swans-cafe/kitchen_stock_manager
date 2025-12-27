@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       cart_export_time: cart_export_time || "",
       cart_receive_time: cart_receive_time || "",
       cart_shipping_cost: cart_shipping_cost || "",
-      cart_status: cart_pay_isdeposit ? "completed" : "pending",
+      cart_status: "completed",
       cart_receive_name: cart_receive_name || "",
       cart_total_cost_lunchbox: cart_total_cost_lunchbox || "",
       cart_invoice_tex: cart_invoice_tex || "",

@@ -72,6 +72,7 @@ export default function CartList() {
     cart_pay_deposit,
     cart_pay_isdeposit,
     cart_pay_cost,
+    cart_pay_charge,
     cart_total_remain,
     cart_total_cost,
     cart_lunch_box,
@@ -281,7 +282,11 @@ export default function CartList() {
         cart_pay_type: cart_pay_type,
         cart_pay_deposit: cart_pay_deposit,
         cart_pay_isdeposit: cart_pay_isdeposit,
-        cart_total_cost_lunchbox: (Number(cart_total_cost) - Number(cart_shipping_cost)).toString(),
+        cart_total_cost_lunchbox: selected_lunchboxes
+          .reduce((sum, lb) => {
+            return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
+          }, 0)
+          .toString(),
         cart_total_cost: cart_total_cost,
         cart_pay_cost: cart_pay_cost,
         cart_total_remain: cart_total_remain,
@@ -388,7 +393,6 @@ export default function CartList() {
     let depositAmount = 0;
     if (cart_pay_deposit === "full") depositAmount = payCostNum;
     else if (cart_pay_deposit === "percent") depositAmount = (totalCostNum * payCostNum) / 100;
-    else if (cart_pay_deposit === "no") depositAmount = 0;
 
     const remaining = totalCostNum - depositAmount;
     const formattedRemaining = remaining >= 0 ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
@@ -939,24 +943,12 @@ export default function CartList() {
                     <label htmlFor='deposit-full'>จำนวนเต็ม</label>
 
                     <input type='radio' id='deposit-percent' name='deposit' value='percent' checked={cart_pay_deposit === "percent" && cart_pay_isdeposit === true} onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })} />
-                    <label htmlFor='deposit-percent'>%</label>
-
-                    <input
-                      type='radio'
-                      id='deposit-none'
-                      name='deposit'
-                      value='no'
-                      checked={cart_pay_deposit === "no" && cart_pay_isdeposit === false}
-                      onChange={(e) => {
-                        setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: false, pay_cost: "" });
-                      }}
-                    />
-                    <label htmlFor='deposit-none'>ไม่มัดจำ</label>
+                    <label htmlFor='deposit-percent'>`${cart_pay_type === "card" ? "50" : ""}%`</label>
                   </div>
                 </div>
 
                 {/* Show input only when deposit type is selected and not "no" */}
-                {cart_pay_deposit && cart_pay_deposit !== "no" && (
+                {cart_pay_deposit && (
                   <div className='pb-4 flex items-center gap-2'>
                     <input
                       type='text'
@@ -975,8 +967,13 @@ export default function CartList() {
                         const totalCostNum = Number(cart_total_cost.replace(/[^\d]/g, "")) || 0;
 
                         if (cart_pay_deposit === "percent") {
-                          const percentValue = Math.min(Math.max(inputNumber, 1), 100);
-                          setCustomerInfo({ pay_cost: percentValue.toString() });
+                          if (cart_pay_type === "card") {
+                            const percentValue = 50;
+                            setCustomerInfo({ pay_cost: percentValue.toString() });
+                          } else {
+                            const percentValue = Math.min(Math.max(inputNumber, 1), 100);
+                            setCustomerInfo({ pay_cost: percentValue.toString() });
+                          }
                         } else {
                           const minAmount = Math.max(inputNumber, 1);
                           const maxAmount = Math.min(minAmount, totalCostNum);
@@ -995,15 +992,38 @@ export default function CartList() {
 
             <div className='border rounded p-4 mb-4 bg-gray-50'>
               <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>ยอดชำระทั้งหมด (รวมค่าจัดส่ง)</label>
+                <label className='font-bold'>ค่าอาหาร </label>
+                <span className='text-lg'>{Array.isArray(selected_lunchboxes) && selected_lunchboxes.length > 0 ? `${selected_lunchboxes.reduce((sum, lb) => sum + (Number(lb.lunchbox_total_cost?.replace(/[^\d]/g, "")) || 0), 0).toLocaleString("th-TH")} บาท` : "-"}</span>
+              </div>
+              <div className='flex justify-between items-center py-2 border-b'>
+                <label className='font-bold'>ค่าส่ง </label>
+                <span className='text-lg'>{cart_shipping_cost ? `${cart_shipping_cost} บาท` : "-"}</span>
+              </div>
+              <div className='flex justify-between items-center py-2 border-b'>
+                <label className='font-bold'>ค่าธรรมเนียม </label>
+                <span className='text-lg'>
+                  {cart_pay_type === "cash" || cart_pay_type === "transfer"
+                    ? `${(cart_pay_charge = 0)} บาท`
+                    : cart_pay_type === "card"
+                    ? Array.isArray(selected_lunchboxes) && selected_lunchboxes.length > 0
+                      ? (() => {
+                          const foodCost = selected_lunchboxes.reduce((sum, lb) => sum + (Number(lb.lunchbox_total_cost?.replace(/[^\d]/g, "")) || 0), 0);
+                          const totalForFee = foodCost + (Number(cart_shipping_cost) || 0);
+                          const fee = totalForFee * 0.03;
+                          return `${(cart_pay_charge = fee.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))} บาท`;
+                        })()
+                      : "-"
+                    : "-"}
+                </span>
+              </div>
+              <div className='flex justify-between items-center py-2 border-b'>
+                <label className='font-bold'>ยอดทั้งหมด </label>
                 <span className='text-lg'>{cart_total_cost ? `${cart_total_cost} บาท` : "-"}</span>
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>หักค่ามัดจำ</label>
+                <label className='font-bold'>ค่ามัดจำ</label>
                 <span className='text-lg text-orange-600'>
-                  {cart_pay_deposit === "no"
-                    ? "0.00 บาท (ไม่มัดจำ)"
-                    : cart_pay_deposit && cart_pay_cost
+                  {cart_pay_deposit && cart_pay_cost
                     ? cart_pay_deposit === "percent"
                       ? `${cart_pay_cost}% (${(() => {
                           const totalCostNum = Number(cart_total_cost.replace(/[^\d]/g, "")) || 0;
