@@ -381,6 +381,50 @@ export default function Order() {
     };
   }, [selectedMenuItems, availableMenus, riceQuantity]);
 
+  // ==================== Sequential Category Selection Logic ====================
+  // Get list of categories that have been selected (excluding rice)
+  const getSelectedCategories = useMemo(() => {
+    return availableMenus
+      .filter((menu) => selectedMenuItems.includes(buildMenuKey(menu)))
+      .map((menu) => menu.lunchbox_menu_category)
+      .filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว");
+  }, [availableMenus, selectedMenuItems]);
+
+  // Get ordered list of categories that exist in current menu
+  const getOrderedCategories = useMemo(() => {
+    const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
+
+    const existingCategories = [...new Set(availableMenus.map((m) => m.lunchbox_menu_category).filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว"))];
+
+    return categoryOrder.filter((cat) => existingCategories.includes(cat));
+  }, [availableMenus]);
+
+  // Check if a category is locked (requires previous category to be selected first)
+  const isCategoryLocked = useMemo(() => {
+    return (category: string) => {
+      const categoryIndex = getOrderedCategories.indexOf(category);
+
+      // If not in ordered list, not locked
+      if (categoryIndex === -1) return false;
+
+      // First category is always unlocked
+      if (categoryIndex === 0) return false;
+
+      // Check if previous category is selected
+      const prevCategory = getOrderedCategories[categoryIndex - 1];
+      return !getSelectedCategories.includes(prevCategory);
+    };
+  }, [getOrderedCategories, getSelectedCategories]);
+
+  // Get the previous category that needs to be selected
+  const getPreviousRequiredCategory = useMemo(() => {
+    return (category: string) => {
+      const categoryIndex = getOrderedCategories.indexOf(category);
+      if (categoryIndex <= 0) return null;
+      return getOrderedCategories[categoryIndex - 1];
+    };
+  }, [getOrderedCategories]);
+
   const handle = {
     MenuSelection: (menuKey: string) => {
       const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
@@ -716,6 +760,18 @@ export default function Order() {
 
       if (matchPending) {
         const key = buildMenuKey(matchPending);
+        const category = matchPending.lunchbox_menu_category;
+
+        // ลบเมนูเดิมในหมวดเดียวกันออกก่อน (ถ้ามี) เพื่อป้องกันการเลือกซ้ำ
+        if (category && category !== "ข้าว") {
+          newSelectedItems = newSelectedItems.filter((selectedKey) => {
+            const selectedMenu = availableMenus.find((m) => buildMenuKey(m) === selectedKey);
+            return selectedMenu?.lunchbox_menu_category !== category;
+          });
+          hasChanges = true;
+        }
+
+        // เพิ่มเมนูใหม่
         if (!newSelectedItems.includes(key)) {
           newSelectedItems.push(key);
           hasChanges = true;
@@ -884,23 +940,23 @@ export default function Order() {
                 วันที่{" "}
                 {currentTime
                   ? (() => {
-                      const date = currentTime;
-                      const day = date.toLocaleDateString("th-TH", { day: "2-digit" });
-                      const month = date.toLocaleDateString("th-TH", { month: "long" });
-                      const year = date.toLocaleDateString("th-TH", { year: "numeric" });
+                    const date = currentTime;
+                    const day = date.toLocaleDateString("th-TH", { day: "2-digit" });
+                    const month = date.toLocaleDateString("th-TH", { month: "long" });
+                    const year = date.toLocaleDateString("th-TH", { year: "numeric" });
 
-                      return `${day} ${month} ${year}`;
-                    })()
+                    return `${day} ${month} ${year}`;
+                  })()
                   : "วัน เดือน พ.ศ."}
               </div>
               <div className='text-sm md:text-base xl:text-lg font-bold text-black'>
                 เวลา{" "}
                 {currentTime
                   ? currentTime.toLocaleTimeString("th-TH", {
-                      hour12: false,
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                    hour12: false,
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                   : "--:--"}{" "}
                 น.
               </div>
@@ -917,19 +973,17 @@ export default function Order() {
                     setSelectedSetMenu("");
                     setSelectedMenuItems([]);
                   }}
-                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectedFoodSet
-                      ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                      : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0
+                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectedFoodSet
+                    ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+                    : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0
                       ? "bg-orange-100 border-2 border-orange-300"
                       : "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                  }`}>
+                    }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
                       <div
-                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                          selectedFoodSet ? "bg-green-500 text-white" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : "bg-gray-400 text-white"
-                        }`}>
+                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectedFoodSet ? "bg-green-500 text-white" : !selectedFoodSet && !selectedSetMenu && selectedMenuItems.length === 0 ? "bg-orange-500 text-white" : "bg-gray-400 text-white"
+                          }`}>
                         1
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -950,21 +1004,19 @@ export default function Order() {
                     }
                   }}
                   disabled={!selectedFoodSet}
-                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectedSetMenu
-                      ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                      : selectedFoodSet && !selectedSetMenu
+                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectedSetMenu
+                    ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+                    : selectedFoodSet && !selectedSetMenu
                       ? "bg-orange-100 border-2 border-orange-300"
                       : selectedFoodSet
-                      ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                      : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
-                  }`}>
+                        ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+                        : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
+                    }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
                       <div
-                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${
-                          selectedSetMenu ? "bg-green-500 text-white" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white" : selectedFoodSet ? "bg-gray-400 text-white" : "bg-gray-300 text-gray-500"
-                        }`}>
+                        className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectedSetMenu ? "bg-green-500 text-white" : selectedFoodSet && !selectedSetMenu ? "bg-orange-500 text-white" : selectedFoodSet ? "bg-gray-400 text-white" : "bg-gray-300 text-gray-500"
+                          }`}>
                         2
                       </div>
                       <div className='flex-1 min-w-0'>
@@ -998,15 +1050,14 @@ export default function Order() {
                     }
                   }}
                   disabled={!selectedSetMenu}
-                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${
-                    selectionCount.total > 0
-                      ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
-                      : selectedSetMenu
+                  className={`w-full p-3 md:p-4 xl:p-5 rounded-xl transition-all duration-200 text-left min-h-[60px] md:min-h-[70px] xl:min-h-[80px] ${selectionCount.total > 0
+                    ? "bg-green-100 border-2 border-green-300 hover:bg-green-200 cursor-pointer"
+                    : selectedSetMenu
                       ? "bg-orange-100 border-2 border-orange-300"
                       : selectedSetMenu
-                      ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
-                      : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
-                  }`}>
+                        ? "bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 cursor-pointer"
+                        : "bg-gray-50 border-2 border-gray-100 cursor-not-allowed opacity-50"
+                    }`}>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center space-x-3 xl:space-x-4'>
                       <div className={`w-7 h-7 md:w-8 md:h-8 xl:w-10 xl:h-10 rounded-full flex items-center justify-center text-sm md:text-base xl:text-lg font-bold ${selectionCount.total > 0 ? "bg-green-500 text-white" : selectedSetMenu ? "bg-orange-500 text-white" : "bg-gray-300 text-gray-500"}`}>
@@ -1048,16 +1099,15 @@ export default function Order() {
                       if (limit > 0) return selectionCount.total !== limit;
                       return false;
                     })()}
-                    className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${
-                      isSaving ||
+                    className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${isSaving ||
                       (() => {
                         if (selectionCount.total === 0) return true;
                         const limit = getSetLimit(selectedFoodSet, selectedSetMenu);
                         return limit > 0 && selectionCount.total !== limit;
                       })()
-                        ? "!bg-gray-200 !cursor-not-allowed"
-                        : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
-                    }`}>
+                      ? "!bg-gray-200 !cursor-not-allowed"
+                      : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
+                      }`}>
                     {isSaving ? (
                       <>
                         <div className='animate-spin w-4 h-4 md:w-5 md:h-5 xl:w-6 xl:h-6 border-2 border-white border-t-transparent rounded-full'></div>
@@ -1105,12 +1155,12 @@ export default function Order() {
               timeLabel={
                 currentTime
                   ? `${currentTime
-                      .toLocaleDateString("th-TH", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "2-digit",
-                      })
-                      .replace(/\//g, "/")} ${currentTime.toLocaleTimeString("th-TH", {
+                    .toLocaleDateString("th-TH", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                    })
+                    .replace(/\//g, "/")} ${currentTime.toLocaleTimeString("th-TH", {
                       hour12: false,
                       hour: "2-digit",
                       minute: "2-digit",
@@ -1558,6 +1608,10 @@ export default function Order() {
                                 const menusInCategory = groupedMenus[category];
                                 const isCategoryHasSelection = availableMenus.some((m) => (m.lunchbox_menu_category || "อื่นๆ") === category && selectedMenuItems.includes(buildMenuKey(m)));
 
+                                // ตรวจสอบว่าหมวดนี้ถูกล็อคหรือไม่
+                                const isLocked = isCategoryLocked(category);
+                                const previousCategory = getPreviousRequiredCategory(category);
+
                                 // เรียงลำดับเมนู
                                 const sortedMenus = [...menusInCategory].sort((a, b) => {
                                   const dishA = getDishType(a.menu_name);
@@ -1594,12 +1648,24 @@ export default function Order() {
                                 });
 
                                 return (
-                                  <div key={category} className='space-y-3 sm:space-y-4 lg:space-y-6'>
+                                  <div key={category} className={`space-y-3 sm:space-y-4 lg:space-y-6 ${isLocked ? "opacity-40 pointer-events-none" : ""}`}>
                                     <div className='flex items-center gap-2 sm:gap-4'>
-                                      <h3 className='text-sm sm:text-base lg:text-lg font-bold text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>หมวดหมู่: {category}</h3>
+                                      <h3 className={`text-sm sm:text-base lg:text-lg font-bold flex items-center gap-2 ${isLocked ? "text-gray-500" : "text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent"}`}>
+                                        {isLocked ? "🔒" : isCategoryHasSelection ? "✓" : "🔓"} หมวดหมู่: {category}
+                                      </h3>
                                       <div className='flex-1 h-px bg-gradient-to-r from-orange-200 to-pink-200'></div>
-                                      <span className='text-xs sm:text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full'>{menusInCategory.length} เมนู</span>
+                                      <span className={`text-xs sm:text-sm px-2 py-1 rounded-full ${isLocked ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-600"}`}>{menusInCategory.length} เมนู</span>
                                     </div>
+
+                                    {/* แสดงข้อความเมื่อหมวดถูกล็อค */}
+                                    {isLocked && previousCategory && (
+                                      <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3'>
+                                        <p className='text-xs sm:text-sm text-yellow-800 flex items-center gap-2'>
+                                          <span>⚠️</span>
+                                          <span>กรุณาเลือก "{previousCategory}" ก่อน</span>
+                                        </p>
+                                      </div>
+                                    )}
 
                                     <div className='flex flex-wrap gap-3 sm:gap-4'>
                                       {sortedMenus.map((menu, index) => {
@@ -1661,6 +1727,15 @@ export default function Order() {
                                             size={isMobile ? "sm" : "md"}
                                             showPrice={menu.lunchbox_showPrice ?? true}
                                             onClick={() => {
+                                              // ตรวจสอบว่าหมวดนี้ถูกล็อคหรือไม่
+                                              if (isLocked && menu.lunchbox_menu_category) {
+                                                const prevCat = getPreviousRequiredCategory(menu.lunchbox_menu_category);
+                                                if (prevCat) {
+                                                  alert(`กรุณาเลือกจากหมวด "${prevCat}" ก่อน`);
+                                                  return;
+                                                }
+                                              }
+
                                               if (!isLunchboxCategoryTaken) {
                                                 handle.MenuSelection(menuKey);
                                               }
