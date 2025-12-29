@@ -140,36 +140,47 @@ export default function Order() {
       // ถ้ามีข้อมูลแล้ว ให้โหลดข้อมูลแก้ไข
       if (editingIndexStr && editingDataStr) {
         setIsLoadingEditData(true);
-        try {
-          const index = parseInt(editingIndexStr);
-          const editingData = JSON.parse(editingDataStr);
+        // ถ้ายังไม่มีข้อมูล lunchbox ให้รอ
+        if (lunchboxData.length === 0) {
+          setIsLoadingEditData(true);
+          return;
+        }
 
-          setIsEditMode(true);
-          setEditingIndex(index);
-          setSelectedFoodSet(editingData.lunchbox_name);
-          setSelectedSetMenu(editingData.lunchbox_set);
-          setNote(editingData.note || "");
+        // ถ้ามีข้อมูลแล้ว ให้โหลดข้อมูลแก้ไข
+        if (editingIndexStr && editingDataStr) {
+          setIsLoadingEditData(true);
+          try {
+            const index = parseInt(editingIndexStr);
+            const editingData = JSON.parse(editingDataStr);
 
-          if (editingData.selected_menus && editingData.selected_menus.length > 0) {
-            const menuKeys = editingData.selected_menus.map((menu: MenuItemWithAutoRice) => buildMenuKey(menu));
-            setSelectedMenuItems(menuKeys);
-          }
+            setIsEditMode(true);
+            setEditingIndex(index);
+            setSelectedFoodSet(editingData.lunchbox_name);
+            setSelectedSetMenu(editingData.lunchbox_set);
+            setNote(editingData.note || "");
 
-          setTimeout(() => {
+            if (editingData.selected_menus && editingData.selected_menus.length > 0) {
+              const menuKeys = editingData.selected_menus.map((menu: MenuItemWithAutoRice) => buildMenuKey(menu));
+              setSelectedMenuItems(menuKeys);
+            }
+
+            setTimeout(() => {
+              setIsLoadingEditData(false);
+            }, 500);
+          } catch (error) {
+            console.error("Error loading edit data:", error);
             setIsLoadingEditData(false);
-          }, 500);
-        } catch (error) {
-          console.error("Error loading edit data:", error);
+          }
+        } else {
+          // ถ้าไม่มีข้อมูลแก้ไข ให้หยุดโหลด
           setIsLoadingEditData(false);
         }
-      } else if (lunchboxData.length === 0) {
       }
-    }
-  }, [lunchboxData]);
+    }, [lunchboxData]);
 
   // ==================== ตรรกะกลุ่มเมนู ====================
   // ตัวแปรสำหรับจัดการกลุ่มเมนู
-  const dishOrder = ["กะเพรา", "กระเทียม", "พริกแกง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
+  const dishOrder = ["กะเพรา", "กระเทียม", "พริกแกง", "พะแนง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
   const meatOrder = ["หมู", "ไก่", "หมึก", "กุ้ง", "ทะเล"];
   const genericDishTypes = ["กะเพรา", "กระเทียม", "พริกแกง", "พะแนง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
 
@@ -186,6 +197,7 @@ export default function Order() {
     if (menuName.includes("กะเพรา") || menuName.includes("กระเพรา")) return "กะเพรา";
     if (menuName.includes("กระเทียม")) return "กระเทียม";
     if (menuName.includes("พริกแกง") || menuName.includes("พริกเเกง")) return "พริกแกง";
+    if (menuName.includes("พะแนง")) return "พะแนง";
     if (menuName.includes("คั่วกลิ้ง")) return "คั่วกลิ้ง";
     if (menuName.includes("ผัดผงกะหรี่")) return "ผัดผงกะหรี่";
     return null;
@@ -435,11 +447,16 @@ export default function Order() {
       // First category is always unlocked
       if (categoryIndex === 0) return false;
 
+      // Special condition: "กับข้าวที่ 2" requires meat filter to be selected
+      if (category === "กับข้าวที่ 2" && !selectedMeatType) {
+        return true;
+      }
+
       // Check if previous category is selected
       const prevCategory = getOrderedCategories[categoryIndex - 1];
       return !getSelectedCategories.includes(prevCategory);
     };
-  }, [getOrderedCategories, getSelectedCategories]);
+  }, [getOrderedCategories, getSelectedCategories, selectedMeatType]);
 
   // Get the previous category that needs to be selected
   const getPreviousRequiredCategory = useMemo(() => {
@@ -1173,6 +1190,7 @@ export default function Order() {
                     setSelectedSetMenu("");
                     setSelectedMenuItems(riceMenus);
                     setRiceQuantity(riceMenus.length > 0 ? 1 : 0);
+                    setSelectedMeatType(null);
                     setNote("");
                   }}
                   className='w-full mt-3 xl:mt-4 px-4 py-3 md:px-5 md:py-4 xl:px-6 xl:py-5 bg-red-500 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl hover:bg-red-600 transition-colors min-h-[45px] md:min-h-[50px] xl:min-h-[60px]'>
@@ -1708,11 +1726,17 @@ export default function Order() {
                       </div>
 
                       {/* แสดงข้อความเมื่อหมวดถูกล็อค */}
-                      {isLocked && previousCategory && (
+                      {isLocked && (
                         <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3'>
                           <p className='text-xs sm:text-sm text-yellow-800 flex items-center gap-2'>
                             <span>⚠️</span>
-                            <span>กรุณาเลือก "{previousCategory}" ก่อน</span>
+                            <span>
+                              {category === "กับข้าวที่ 2" && !selectedMeatType
+                                ? 'กรุณาเลือกฟิลเตอร์เนื้อสัตว์ก่อน'
+                                : previousCategory
+                                  ? `กรุณาเลือก "${previousCategory}" ก่อน`
+                                  : 'กรุณาเลือกหมวดก่อนหน้าก่อน'}
+                            </span>
                           </p>
                         </div>
                       )}
@@ -1779,6 +1803,12 @@ export default function Order() {
                               onClick={() => {
                                 // ตรวจสอบว่าหมวดนี้ถูกล็อคหรือไม่
                                 if (isLocked && menu.lunchbox_menu_category) {
+                                  // กรณีพิเศษ: หมวด "กับข้าวที่ 2" ต้องเลือกฟิลเตอร์เนื้อสัตว์ก่อน
+                                  if (menu.lunchbox_menu_category === "กับข้าวที่ 2" && !selectedMeatType) {
+                                    alert('กรุณาเลือกฟิลเตอร์เนื้อสัตว์ก่อน');
+                                    return;
+                                  }
+
                                   const prevCat = getPreviousRequiredCategory(menu.lunchbox_menu_category);
                                   if (prevCat) {
                                     alert(`กรุณาเลือกจากหมวด "${prevCat}" ก่อน`);
@@ -1849,6 +1879,7 @@ onReset = {() => {
   setSelectedFoodSet("");
   setSelectedSetMenu("");
   setSelectedMenuItems(riceMenus);
+  setSelectedMeatType(null);
   setNote("");
 }}
             />
