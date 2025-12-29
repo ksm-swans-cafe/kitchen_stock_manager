@@ -92,9 +92,11 @@ export default function Page() {
       title: "Dashboard",
       icon: LayoutGrid,
       color: {
-        bg: "bg-sky-500/10 border border-sky-400/40 shadow-[0_0_20px_rgba(56,189,248,0.45)]",
+        bg: "bg-sky-500/10 border border-sky-400/40",
+        // bg: "bg-sky-500/10 border border-sky-400/40 shadow-[0_0_20px_rgba(56,189,248,0.45)]",
         hover:
-          "group-hover:bg-sky-500/20 group-hover:shadow-[0_0_28px_rgba(56,189,248,0.75)]",
+          "group-hover:bg-sky-500/20",
+          // "group-hover:bg-sky-500/20 group-hover:shadow-[0_0_28px_rgba(56,189,248,0.75)]",
         icon: "text-sky-500",
       },
       onClick: () => router.push("/home/dashboard"),
@@ -115,19 +117,19 @@ export default function Page() {
       hasBadge: false,
       badgeText: "",
     },
-    {
-      id: "finance",
-      title: "การเงิน",
-      icon: DollarSign,
-      color: {
-        bg: "bg-amber-500/10",
-        hover: "group-hover:bg-amber-500/20",
-        icon: "text-amber-600",
-      },
-      onClick: () => router.push("/home/finance"),
-      hasBadge: true,
-      badgeText: "Demo",
-    },
+    // {
+    //   id: "finance",
+    //   title: "การเงิน",
+    //   icon: DollarSign,
+    //   color: {
+    //     bg: "bg-amber-500/10",
+    //     hover: "group-hover:bg-amber-500/20",
+    //     icon: "text-amber-600",
+    //   },
+    //   onClick: () => router.push("/home/finance"),
+    //   hasBadge: true,
+    //   badgeText: "Demo",
+    // },
   ];
 
   const {
@@ -241,12 +243,14 @@ export default function Page() {
           {menuItems.map((item) => (
             <Card
               key={item.id}
-              className={`group hover:shadow-xl transition-all duration-300
-              ${
-                item.id === "dashboard"
-                  ? "border border-sky-400/70 bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent shadow-[0_0_24px_rgba(56,189,248,0.6)]"
-                  : ""
-              }`}
+              // กรอบเรืองแสง Dashboard
+              // className={`group hover:shadow-xl transition-all duration-300
+              //   ${
+              //     item.id === "dashboard"
+              //       ? "border border-sky-400/70 bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent shadow-[0_0_24px_rgba(56,189,248,0.6)]"
+              //       : ""
+              //   }`
+              // }
             >
               <CardContent className="relative p-0">
                 {item.hasBadge && (
