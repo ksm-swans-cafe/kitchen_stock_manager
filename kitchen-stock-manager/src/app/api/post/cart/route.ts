@@ -11,10 +11,31 @@ export async function POST(request: NextRequest) {
   if (!authResult.success) return authResult.response!;
   try {
     const body = await request.json();
-    const { cart_username, cart_lunchboxes, cart_customer_name, cart_customer_tel, cart_delivery_date, cart_location_send, cart_export_time, cart_receive_time, cart_receive_name, cart_total_cost_lunchbox, cart_invoice_tex, cart_shipping_cost, cart_pay_type, cart_pay_deposit, cart_pay_isdeposit, cart_pay_cost, cart_total_remain, cart_total_cost } = body;
+    const {
+      cart_channel_access,
+      cart_username,
+      cart_lunchboxes,
+      cart_customer_name,
+      cart_customer_tel,
+      cart_delivery_date,
+      cart_location_send,
+      cart_export_time,
+      cart_receive_time,
+      cart_receive_name,
+      cart_total_cost_lunchbox,
+      cart_invoice_tex,
+      cart_shipping_cost,
+      cart_pay_type,
+      cart_pay_deposit,
+      cart_pay_isdeposit,
+      cart_pay_cost,
+      cart_pay_charge,
+      cart_total_remain,
+      cart_total_cost,
+    } = body;
 
-    if (!cart_username || !cart_lunchboxes) {
-      return NextResponse.json({ error: "Username and lunchboxes are required" }, { status: 400 });
+    if (!cart_channel_access || !cart_username || !cart_lunchboxes) {
+      return NextResponse.json({ error: "Channel access, username and lunchboxes are required" }, { status: 400 });
     }
 
     const cartCreateDate = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
@@ -65,9 +86,11 @@ export async function POST(request: NextRequest) {
 
     const cartData = {
       cart_id: cartId,
+      cart_channel_access: cart_channel_access || "",
       cart_username: cart_username,
       cart_lunchbox: formattedLunchboxes,
       cart_create_date: cartCreateDateString,
+      cart_last_update: cartCreateDateString,
       cart_order_number: orderNumber,
       cart_customer_name: cart_customer_name || "",
       cart_customer_tel: cart_customer_tel || "",
@@ -84,6 +107,7 @@ export async function POST(request: NextRequest) {
       cart_pay_deposit: cart_pay_deposit || "",
       cart_pay_isdeposit: cart_pay_isdeposit || false,
       cart_pay_cost: cart_pay_cost || "",
+      cart_pay_charge: cart_pay_charge || "",
       cart_total_remain: cart_total_remain || "",
       cart_total_cost: cart_total_cost || "",
     };

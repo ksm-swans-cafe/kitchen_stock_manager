@@ -1781,6 +1781,7 @@ export namespace Prisma {
   export type CartMinAggregateOutputType = {
     id: string | null
     cart_create_date: string | null
+    cart_channel_access: string | null
     cart_customer_name: string | null
     cart_customer_tel: string | null
     cart_delivery_date: string | null
@@ -1798,6 +1799,7 @@ export namespace Prisma {
     cart_pay_type: string | null
     cart_pay_deposit: string | null
     cart_pay_isdeposit: boolean | null
+    cart_pay_charge: string | null
     cart_pay_cost: string | null
     cart_invoice_tex: string | null
     cart_total_cost: string | null
@@ -1807,6 +1809,7 @@ export namespace Prisma {
   export type CartMaxAggregateOutputType = {
     id: string | null
     cart_create_date: string | null
+    cart_channel_access: string | null
     cart_customer_name: string | null
     cart_customer_tel: string | null
     cart_delivery_date: string | null
@@ -1824,6 +1827,7 @@ export namespace Prisma {
     cart_pay_type: string | null
     cart_pay_deposit: string | null
     cart_pay_isdeposit: boolean | null
+    cart_pay_charge: string | null
     cart_pay_cost: string | null
     cart_invoice_tex: string | null
     cart_total_cost: string | null
@@ -1833,6 +1837,7 @@ export namespace Prisma {
   export type CartCountAggregateOutputType = {
     id: number
     cart_create_date: number
+    cart_channel_access: number
     cart_customer_name: number
     cart_customer_tel: number
     cart_delivery_date: number
@@ -1850,6 +1855,7 @@ export namespace Prisma {
     cart_pay_type: number
     cart_pay_deposit: number
     cart_pay_isdeposit: number
+    cart_pay_charge: number
     cart_pay_cost: number
     cart_invoice_tex: number
     cart_total_cost: number
@@ -1861,6 +1867,7 @@ export namespace Prisma {
   export type CartMinAggregateInputType = {
     id?: true
     cart_create_date?: true
+    cart_channel_access?: true
     cart_customer_name?: true
     cart_customer_tel?: true
     cart_delivery_date?: true
@@ -1878,6 +1885,7 @@ export namespace Prisma {
     cart_pay_type?: true
     cart_pay_deposit?: true
     cart_pay_isdeposit?: true
+    cart_pay_charge?: true
     cart_pay_cost?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
@@ -1887,6 +1895,7 @@ export namespace Prisma {
   export type CartMaxAggregateInputType = {
     id?: true
     cart_create_date?: true
+    cart_channel_access?: true
     cart_customer_name?: true
     cart_customer_tel?: true
     cart_delivery_date?: true
@@ -1904,6 +1913,7 @@ export namespace Prisma {
     cart_pay_type?: true
     cart_pay_deposit?: true
     cart_pay_isdeposit?: true
+    cart_pay_charge?: true
     cart_pay_cost?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
@@ -1913,6 +1923,7 @@ export namespace Prisma {
   export type CartCountAggregateInputType = {
     id?: true
     cart_create_date?: true
+    cart_channel_access?: true
     cart_customer_name?: true
     cart_customer_tel?: true
     cart_delivery_date?: true
@@ -1930,6 +1941,7 @@ export namespace Prisma {
     cart_pay_type?: true
     cart_pay_deposit?: true
     cart_pay_isdeposit?: true
+    cart_pay_charge?: true
     cart_pay_cost?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
@@ -2012,6 +2024,7 @@ export namespace Prisma {
   export type CartGroupByOutputType = {
     id: string
     cart_create_date: string
+    cart_channel_access: string
     cart_customer_name: string
     cart_customer_tel: string
     cart_delivery_date: string
@@ -2029,6 +2042,7 @@ export namespace Prisma {
     cart_pay_type: string
     cart_pay_deposit: string
     cart_pay_isdeposit: boolean
+    cart_pay_charge: string
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -2055,6 +2069,7 @@ export namespace Prisma {
   export type cartSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     cart_create_date?: boolean
+    cart_channel_access?: boolean
     cart_customer_name?: boolean
     cart_customer_tel?: boolean
     cart_delivery_date?: boolean
@@ -2073,6 +2088,7 @@ export namespace Prisma {
     cart_pay_type?: boolean
     cart_pay_deposit?: boolean
     cart_pay_isdeposit?: boolean
+    cart_pay_charge?: boolean
     cart_pay_cost?: boolean
     cart_invoice_tex?: boolean
     cart_total_cost?: boolean
@@ -2085,6 +2101,7 @@ export namespace Prisma {
   export type cartSelectScalar = {
     id?: boolean
     cart_create_date?: boolean
+    cart_channel_access?: boolean
     cart_customer_name?: boolean
     cart_customer_tel?: boolean
     cart_delivery_date?: boolean
@@ -2102,13 +2119,14 @@ export namespace Prisma {
     cart_pay_type?: boolean
     cart_pay_deposit?: boolean
     cart_pay_isdeposit?: boolean
+    cart_pay_charge?: boolean
     cart_pay_cost?: boolean
     cart_invoice_tex?: boolean
     cart_total_cost?: boolean
     cart_total_remain?: boolean
   }
 
-  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_isdeposit" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description", ExtArgs["result"]["cart"]>
+  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_channel_access" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_isdeposit" | "cart_pay_charge" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description", ExtArgs["result"]["cart"]>
   export type cartInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $cartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2117,6 +2135,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       cart_create_date: string
+      cart_channel_access: string
       cart_customer_name: string
       cart_customer_tel: string
       cart_delivery_date: string
@@ -2134,6 +2153,7 @@ export namespace Prisma {
       cart_pay_type: string
       cart_pay_deposit: string
       cart_pay_isdeposit: boolean
+      cart_pay_charge: string
       cart_pay_cost: string
       cart_invoice_tex: string
       cart_total_cost: string
@@ -2535,6 +2555,7 @@ export namespace Prisma {
   interface cartFieldRefs {
     readonly id: FieldRef<"cart", 'String'>
     readonly cart_create_date: FieldRef<"cart", 'String'>
+    readonly cart_channel_access: FieldRef<"cart", 'String'>
     readonly cart_customer_name: FieldRef<"cart", 'String'>
     readonly cart_customer_tel: FieldRef<"cart", 'String'>
     readonly cart_delivery_date: FieldRef<"cart", 'String'>
@@ -2552,6 +2573,7 @@ export namespace Prisma {
     readonly cart_pay_type: FieldRef<"cart", 'String'>
     readonly cart_pay_deposit: FieldRef<"cart", 'String'>
     readonly cart_pay_isdeposit: FieldRef<"cart", 'Boolean'>
+    readonly cart_pay_charge: FieldRef<"cart", 'String'>
     readonly cart_pay_cost: FieldRef<"cart", 'String'>
     readonly cart_invoice_tex: FieldRef<"cart", 'String'>
     readonly cart_total_cost: FieldRef<"cart", 'String'>
@@ -7968,6 +7990,7 @@ export namespace Prisma {
   export const CartScalarFieldEnum: {
     id: 'id',
     cart_create_date: 'cart_create_date',
+    cart_channel_access: 'cart_channel_access',
     cart_customer_name: 'cart_customer_name',
     cart_customer_tel: 'cart_customer_tel',
     cart_delivery_date: 'cart_delivery_date',
@@ -7985,6 +8008,7 @@ export namespace Prisma {
     cart_pay_type: 'cart_pay_type',
     cart_pay_deposit: 'cart_pay_deposit',
     cart_pay_isdeposit: 'cart_pay_isdeposit',
+    cart_pay_charge: 'cart_pay_charge',
     cart_pay_cost: 'cart_pay_cost',
     cart_invoice_tex: 'cart_invoice_tex',
     cart_total_cost: 'cart_total_cost',
@@ -8165,6 +8189,7 @@ export namespace Prisma {
     NOT?: cartWhereInput | cartWhereInput[]
     id?: StringFilter<"cart"> | string
     cart_create_date?: StringFilter<"cart"> | string
+    cart_channel_access?: StringFilter<"cart"> | string
     cart_customer_name?: StringFilter<"cart"> | string
     cart_customer_tel?: StringFilter<"cart"> | string
     cart_delivery_date?: StringFilter<"cart"> | string
@@ -8183,6 +8208,7 @@ export namespace Prisma {
     cart_pay_type?: StringFilter<"cart"> | string
     cart_pay_deposit?: StringFilter<"cart"> | string
     cart_pay_isdeposit?: BoolFilter<"cart"> | boolean
+    cart_pay_charge?: StringFilter<"cart"> | string
     cart_pay_cost?: StringFilter<"cart"> | string
     cart_invoice_tex?: StringFilter<"cart"> | string
     cart_total_cost?: StringFilter<"cart"> | string
@@ -8193,6 +8219,7 @@ export namespace Prisma {
   export type cartOrderByWithRelationInput = {
     id?: SortOrder
     cart_create_date?: SortOrder
+    cart_channel_access?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
     cart_delivery_date?: SortOrder
@@ -8211,6 +8238,7 @@ export namespace Prisma {
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
     cart_pay_isdeposit?: SortOrder
+    cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -8224,6 +8252,7 @@ export namespace Prisma {
     OR?: cartWhereInput[]
     NOT?: cartWhereInput | cartWhereInput[]
     cart_create_date?: StringFilter<"cart"> | string
+    cart_channel_access?: StringFilter<"cart"> | string
     cart_customer_name?: StringFilter<"cart"> | string
     cart_customer_tel?: StringFilter<"cart"> | string
     cart_delivery_date?: StringFilter<"cart"> | string
@@ -8242,6 +8271,7 @@ export namespace Prisma {
     cart_pay_type?: StringFilter<"cart"> | string
     cart_pay_deposit?: StringFilter<"cart"> | string
     cart_pay_isdeposit?: BoolFilter<"cart"> | boolean
+    cart_pay_charge?: StringFilter<"cart"> | string
     cart_pay_cost?: StringFilter<"cart"> | string
     cart_invoice_tex?: StringFilter<"cart"> | string
     cart_total_cost?: StringFilter<"cart"> | string
@@ -8252,6 +8282,7 @@ export namespace Prisma {
   export type cartOrderByWithAggregationInput = {
     id?: SortOrder
     cart_create_date?: SortOrder
+    cart_channel_access?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
     cart_delivery_date?: SortOrder
@@ -8269,6 +8300,7 @@ export namespace Prisma {
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
     cart_pay_isdeposit?: SortOrder
+    cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -8284,6 +8316,7 @@ export namespace Prisma {
     NOT?: cartScalarWhereWithAggregatesInput | cartScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"cart"> | string
     cart_create_date?: StringWithAggregatesFilter<"cart"> | string
+    cart_channel_access?: StringWithAggregatesFilter<"cart"> | string
     cart_customer_name?: StringWithAggregatesFilter<"cart"> | string
     cart_customer_tel?: StringWithAggregatesFilter<"cart"> | string
     cart_delivery_date?: StringWithAggregatesFilter<"cart"> | string
@@ -8301,6 +8334,7 @@ export namespace Prisma {
     cart_pay_type?: StringWithAggregatesFilter<"cart"> | string
     cart_pay_deposit?: StringWithAggregatesFilter<"cart"> | string
     cart_pay_isdeposit?: BoolWithAggregatesFilter<"cart"> | boolean
+    cart_pay_charge?: StringWithAggregatesFilter<"cart"> | string
     cart_pay_cost?: StringWithAggregatesFilter<"cart"> | string
     cart_invoice_tex?: StringWithAggregatesFilter<"cart"> | string
     cart_total_cost?: StringWithAggregatesFilter<"cart"> | string
@@ -8664,6 +8698,7 @@ export namespace Prisma {
   export type cartCreateInput = {
     id?: string
     cart_create_date: string
+    cart_channel_access: string
     cart_customer_name: string
     cart_customer_tel: string
     cart_delivery_date: string
@@ -8682,6 +8717,7 @@ export namespace Prisma {
     cart_pay_type: string
     cart_pay_deposit: string
     cart_pay_isdeposit: boolean
+    cart_pay_charge: string
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -8692,6 +8728,7 @@ export namespace Prisma {
   export type cartUncheckedCreateInput = {
     id?: string
     cart_create_date: string
+    cart_channel_access: string
     cart_customer_name: string
     cart_customer_tel: string
     cart_delivery_date: string
@@ -8710,6 +8747,7 @@ export namespace Prisma {
     cart_pay_type: string
     cart_pay_deposit: string
     cart_pay_isdeposit: boolean
+    cart_pay_charge: string
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -8719,6 +8757,7 @@ export namespace Prisma {
 
   export type cartUpdateInput = {
     cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_channel_access?: StringFieldUpdateOperationsInput | string
     cart_customer_name?: StringFieldUpdateOperationsInput | string
     cart_customer_tel?: StringFieldUpdateOperationsInput | string
     cart_delivery_date?: StringFieldUpdateOperationsInput | string
@@ -8737,6 +8776,7 @@ export namespace Prisma {
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
+    cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -8746,6 +8786,7 @@ export namespace Prisma {
 
   export type cartUncheckedUpdateInput = {
     cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_channel_access?: StringFieldUpdateOperationsInput | string
     cart_customer_name?: StringFieldUpdateOperationsInput | string
     cart_customer_tel?: StringFieldUpdateOperationsInput | string
     cart_delivery_date?: StringFieldUpdateOperationsInput | string
@@ -8764,6 +8805,7 @@ export namespace Prisma {
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
+    cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -8774,6 +8816,7 @@ export namespace Prisma {
   export type cartCreateManyInput = {
     id?: string
     cart_create_date: string
+    cart_channel_access: string
     cart_customer_name: string
     cart_customer_tel: string
     cart_delivery_date: string
@@ -8792,6 +8835,7 @@ export namespace Prisma {
     cart_pay_type: string
     cart_pay_deposit: string
     cart_pay_isdeposit: boolean
+    cart_pay_charge: string
     cart_pay_cost: string
     cart_invoice_tex: string
     cart_total_cost: string
@@ -8801,6 +8845,7 @@ export namespace Prisma {
 
   export type cartUpdateManyMutationInput = {
     cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_channel_access?: StringFieldUpdateOperationsInput | string
     cart_customer_name?: StringFieldUpdateOperationsInput | string
     cart_customer_tel?: StringFieldUpdateOperationsInput | string
     cart_delivery_date?: StringFieldUpdateOperationsInput | string
@@ -8819,6 +8864,7 @@ export namespace Prisma {
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
+    cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -8828,6 +8874,7 @@ export namespace Prisma {
 
   export type cartUncheckedUpdateManyInput = {
     cart_create_date?: StringFieldUpdateOperationsInput | string
+    cart_channel_access?: StringFieldUpdateOperationsInput | string
     cart_customer_name?: StringFieldUpdateOperationsInput | string
     cart_customer_tel?: StringFieldUpdateOperationsInput | string
     cart_delivery_date?: StringFieldUpdateOperationsInput | string
@@ -8846,6 +8893,7 @@ export namespace Prisma {
     cart_pay_type?: StringFieldUpdateOperationsInput | string
     cart_pay_deposit?: StringFieldUpdateOperationsInput | string
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
+    cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
@@ -9319,6 +9367,7 @@ export namespace Prisma {
   export type cartCountOrderByAggregateInput = {
     id?: SortOrder
     cart_create_date?: SortOrder
+    cart_channel_access?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
     cart_delivery_date?: SortOrder
@@ -9336,6 +9385,7 @@ export namespace Prisma {
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
     cart_pay_isdeposit?: SortOrder
+    cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -9345,6 +9395,7 @@ export namespace Prisma {
   export type cartMaxOrderByAggregateInput = {
     id?: SortOrder
     cart_create_date?: SortOrder
+    cart_channel_access?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
     cart_delivery_date?: SortOrder
@@ -9362,6 +9413,7 @@ export namespace Prisma {
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
     cart_pay_isdeposit?: SortOrder
+    cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
@@ -9371,6 +9423,7 @@ export namespace Prisma {
   export type cartMinOrderByAggregateInput = {
     id?: SortOrder
     cart_create_date?: SortOrder
+    cart_channel_access?: SortOrder
     cart_customer_name?: SortOrder
     cart_customer_tel?: SortOrder
     cart_delivery_date?: SortOrder
@@ -9388,6 +9441,7 @@ export namespace Prisma {
     cart_pay_type?: SortOrder
     cart_pay_deposit?: SortOrder
     cart_pay_isdeposit?: SortOrder
+    cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder

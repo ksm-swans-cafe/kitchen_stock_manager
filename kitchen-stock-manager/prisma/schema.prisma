@@ -32,6 +32,11 @@ type CartCartLunchboxLunchboxMenu {
   menu_total       Json
 }
 
+type CartCartLunchboxLunchboxDescription {
+  menu_description_id String?
+  menu_description_title String
+  menu_description_value String
+}
 
 type CartCartLunchboxLunchboxMenuMenuIngredients {
   ingredient_name   String
