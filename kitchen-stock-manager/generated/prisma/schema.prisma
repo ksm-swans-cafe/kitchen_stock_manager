@@ -22,7 +22,7 @@ type CartCartLunchbox {
 type CartCartLunchboxLunchboxMenu {
   menu_category    String
   menu_cost        BigInt?
-  menu_description String
+  menu_description CartCartLunchboxLunchboxDescription[]
   menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String
   /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
@@ -30,6 +30,12 @@ type CartCartLunchboxLunchboxMenu {
   menu_subname     String
   /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
   menu_total       Json
+}
+
+type CartCartLunchboxLunchboxDescription {
+  menu_description_id    String?
+  menu_description_title String
+  menu_description_value String
 }
 
 type CartCartLunchboxLunchboxMenuMenuIngredients {
@@ -86,6 +92,7 @@ type CartCartDescription {
 model cart {
   id                       String                @id @default(auto()) @map("_id") @db.ObjectId
   cart_create_date         String
+  cart_channel_access      String
   cart_customer_name       String
   cart_customer_tel        String
   cart_delivery_date       String
@@ -104,6 +111,7 @@ model cart {
   cart_pay_type            String
   cart_pay_deposit         String
   cart_pay_isdeposit       Boolean
+  cart_pay_charge          String
   cart_pay_cost            String
   cart_invoice_tex         String
   cart_total_cost          String
