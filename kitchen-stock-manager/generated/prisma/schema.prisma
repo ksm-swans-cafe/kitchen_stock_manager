@@ -22,7 +22,7 @@ type CartCartLunchbox {
 type CartCartLunchboxLunchboxMenu {
   menu_category    String
   menu_cost        BigInt?
-  menu_description String
+  menu_description CartCartLunchboxLunchboxDescription[]
   menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String
   /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries

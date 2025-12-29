@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
           ingredient_name: ingredient.ingredient_name || "",
           useItem: parseInt(ingredient.useItem || "0"),
         })),
-        menu_description: menu.menu_description || "",
+        menu_description: menu.menu_description || [],
         menu_cost: parseInt(menu.menu_cost || "0"),
         menu_order_id: parseInt(menu.menu_order_id || "0"),
       })),

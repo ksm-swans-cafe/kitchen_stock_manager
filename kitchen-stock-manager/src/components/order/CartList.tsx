@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { create } from "zustand";
+import { toast } from "sonner";
 
 import { useRouter } from "next/navigation";
 
@@ -242,63 +243,63 @@ export default function CartList() {
     setLoading(true);
     setErrors([]);
     try {
-       const response = await axios.post("/api/post/cart", {
-         cart_username: userName,
-         cart_channel_access,
-         cart_customer_name,
-         cart_customer_tel,
-         cart_location_send,
-         cart_delivery_date,
-         cart_export_time,
-         cart_receive_time,
-         cart_shipping_cost: cart_shipping_cost.replace(/[^\d]/g, ""),
-         cart_menu_items: items.map((item, index) => ({
-           menu_name: item.menu_name,
-           menu_subname: item.menu_subname,
-           menu_category: item.menu_category,
-           menu_total: item.menu_total,
-           menu_ingredients: item.menu_ingredients,
-           menu_description: item.menu_description,
-           menu_order_id: index + 1,
-         })),
-         cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
-           lunchbox_name: lunchbox.lunchbox_name,
-           lunchbox_set: lunchbox.lunchbox_set,
-           lunchbox_limit: lunchbox.lunchbox_limit,
-           lunchbox_quantity: lunchbox.quantity,
-           lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
-           lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
-             menu_name: menu.menu_name,
-             menu_subname: menu.menu_subname,
-             menu_category: menu.menu_category,
-             menu_total: lunchbox.quantity,
-             menu_cost: menu.lunchbox_cost || 0,
-             menu_ingredients:
-               menu.menu_ingredients?.map((ingredient) => ({
-                 ...ingredient,
-                 useItem: ingredient.useItem * lunchbox.quantity,
-               })) || [],
-             menu_description: menu.menu_description,
-             menu_order_id: menuIndex + 1,
-           })),
-         })),
-         cart_receive_name: cart_receive_name,
-         cart_invoice_tex: cart_invoice_tex,
-         cart_pay_type: cart_pay_type,
-         cart_pay_deposit: cart_pay_deposit,
-         cart_pay_isdeposit: cart_pay_isdeposit,
-         cart_total_cost_lunchbox: selected_lunchboxes
-           .reduce((sum, lb) => {
-             return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
-           }, 0)
-           .toString(),
-         cart_total_cost: cart_total_cost,
-         cart_pay_cost: cart_pay_cost,
-         cart_pay_charge: cart_pay_charge,
-         cart_total_remain: cart_total_remain,
-       });
+      const response = await axios.post("/api/post/cart", {
+        cart_username: userName,
+        cart_channel_access,
+        cart_customer_name,
+        cart_customer_tel,
+        cart_location_send,
+        cart_delivery_date,
+        cart_export_time,
+        cart_receive_time,
+        cart_shipping_cost: cart_shipping_cost.replace(/[^\d]/g, ""),
+        cart_menu_items: items.map((item, index) => ({
+          menu_name: item.menu_name,
+          menu_subname: item.menu_subname,
+          menu_category: item.menu_category,
+          menu_total: item.menu_total,
+          menu_ingredients: item.menu_ingredients,
+          menu_description: item.menu_description,
+          menu_order_id: index + 1,
+        })),
+        cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
+          lunchbox_name: lunchbox.lunchbox_name,
+          lunchbox_set: lunchbox.lunchbox_set,
+          lunchbox_limit: lunchbox.lunchbox_limit,
+          lunchbox_quantity: lunchbox.quantity,
+          lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
+          lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
+            menu_name: menu.menu_name,
+            menu_subname: menu.menu_subname,
+            menu_category: menu.menu_category,
+            menu_total: lunchbox.quantity,
+            menu_cost: menu.lunchbox_cost || 0,
+            menu_ingredients:
+              menu.menu_ingredients?.map((ingredient) => ({
+                ...ingredient,
+                useItem: ingredient.useItem * lunchbox.quantity,
+              })) || [],
+            menu_description: menu.menu_description,
+            menu_order_id: menuIndex + 1,
+          })),
+        })),
+        cart_receive_name: cart_receive_name,
+        cart_invoice_tex: cart_invoice_tex,
+        cart_pay_type: cart_pay_type,
+        cart_pay_deposit: cart_pay_deposit,
+        cart_pay_isdeposit: cart_pay_isdeposit,
+        cart_total_cost_lunchbox: selected_lunchboxes
+          .reduce((sum, lb) => {
+            return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
+          }, 0)
+          .toString(),
+        cart_total_cost: cart_total_cost,
+        cart_pay_cost: cart_pay_cost,
+        cart_pay_charge: cart_pay_charge,
+        cart_total_remain: cart_total_remain,
+      });
 
-       if (response.status !== 201) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
+      if (response.status !== 201) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
 
       // setSuccess(true);
 
@@ -371,15 +372,10 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
 
       setCopyText(copyTextContent);
       setSuccess(true);
-      navigator.clipboard
-        .writeText(copyTextContent)
-        .then(() => {
-          setIsCopied(true);
-          setTimeout(() => setIsCopied(false), 2000);
-        })
-        .catch(() => {
-          // ถ้าคัดลอกไม่สำเร็จ ไม่เป็นไร จะให้ผู้ใช้คัดลอกเองใน modal
-        });
+      navigator.clipboard.writeText(copyTextContent).then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "เกิดข้อผิดพลาดไม่ทราบสาเหตุ";
 
@@ -431,7 +427,16 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
     setSuccess(false);
     setIsCopied(false);
     clearCart();
-    router.push("/home/summarylist");
+
+    // แสดง notification ที่มุมขวาบน
+    toast.success("ดำเนินการเสร็จสิ้น", {
+      duration: 3000, // แสดง 3 วินาที
+    });
+
+    // พาไปหน้า summaryList หลังจาก notification หายไป
+    setTimeout(() => {
+      router.push("/home/summarylist");
+    }, 3000);
   };
 
   useEffect(() => {
@@ -618,13 +623,13 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
             </div>
 
             {/* Footer */}
-              <div className='p-4 border-t bg-gray-50 rounded-b-lg'>
-                <div className='w-full flex justify-center items-center'>
-                  <button onClick={handleFinish} className='w-auto px-4 py-3 !bg-green-600 !text-white rounded-lg font-semibold hover:!bg-green-700 transition-colors'>
-                    เสร็จสิ้น
-                  </button>
-                </div>
+            <div className='p-4 border-t bg-gray-50 rounded-b-lg'>
+              <div className='w-full flex justify-center items-center'>
+                <button onClick={handleFinish} className='w-auto px-4 py-3 !bg-green-600 !text-white rounded-lg font-semibold hover:!bg-green-700 transition-colors'>
+                  เสร็จสิ้น
+                </button>
               </div>
+            </div>
           </div>
         </div>
       )}
