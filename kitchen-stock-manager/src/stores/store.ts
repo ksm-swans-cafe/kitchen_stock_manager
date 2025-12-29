@@ -2,6 +2,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { MenuItem } from "@/models/menu_card/MenuCard";
 
+function generateCartItemId(menuId: string, description: string): string {
+  return `${menuId}-${description}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
 export interface CartItem extends MenuItem {
   menu_total: number;
   menu_description: string;
@@ -34,6 +38,7 @@ interface CartCartDescription {
 }
 interface CartState {
   items: CartItem[];
+  cart_channel_access: string;
   cart_customer_name: string;
   cart_customer_tel: string;
   cart_location_send: string;
@@ -50,6 +55,7 @@ interface CartState {
   setItemQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   setCustomerInfo: (info: {
+    channel_access?: string;
     name?: string;
     tel?: string;
     location?: string;
@@ -65,6 +71,7 @@ interface CartState {
     pay_deposit?: string;
     pay_isdeposit?: boolean;
     pay_cost?: string;
+    pay_charge?: string;
     total_remain?: string;
     total_cost_lunchbox?: string;
     total_cost?: string;
@@ -82,6 +89,7 @@ interface CartState {
   cart_pay_deposit: string;
   cart_pay_isdeposit: boolean;
   cart_pay_cost: string;
+  cart_pay_charge: string;
   cart_total_cost_lunchbox: string;
   cart_total_remain: string;
   cart_total_cost: string;
@@ -92,6 +100,7 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      cart_channel_access: "",
       cart_customer_name: "",
       cart_customer_tel: "",
       cart_location_send: "",
@@ -109,6 +118,7 @@ export const useCartStore = create<CartState>()(
       cart_pay_deposit: "",
       cart_pay_isdeposit: false,
       cart_pay_cost: "",
+      cart_pay_charge: "",
       cart_total_cost_lunchbox: "",
       cart_total_remain: "",
       cart_total_cost: "",
@@ -168,6 +178,7 @@ export const useCartStore = create<CartState>()(
       clearCart: () => {
         set({
           items: [],
+          cart_channel_access: "",
           cart_customer_name: "",
           cart_customer_tel: "",
           cart_location_send: "",
@@ -185,6 +196,7 @@ export const useCartStore = create<CartState>()(
           cart_pay_deposit: "",
           cart_pay_isdeposit: false,
           cart_pay_cost: "",
+          cart_pay_charge: "",
           cart_total_cost_lunchbox: "",
           cart_total_remain: "",
           cart_total_cost: "",
@@ -194,6 +206,7 @@ export const useCartStore = create<CartState>()(
 
       setCustomerInfo: (info) => {
         set((state) => ({
+          cart_channel_access: info.channel_access ?? state.cart_channel_access,
           cart_customer_name: info.name ?? state.cart_customer_name,
           cart_customer_tel: info.tel ?? state.cart_customer_tel,
           cart_location_send: info.location ?? state.cart_location_send,
@@ -210,6 +223,7 @@ export const useCartStore = create<CartState>()(
           cart_pay_deposit: info.pay_deposit ?? state.cart_pay_deposit,
           cart_pay_isdeposit: info.pay_isdeposit ?? state.cart_pay_isdeposit,
           cart_pay_cost: info.pay_cost ?? state.cart_pay_cost,
+          cart_pay_charge: info.pay_charge ?? state.cart_pay_charge,
           cart_total_cost_lunchbox: info.total_cost_lunchbox ?? state.cart_total_cost_lunchbox,
           cart_total_remain: info.total_remain ?? state.cart_total_remain,
           cart_total_cost: info.total_cost ?? state.cart_total_cost,

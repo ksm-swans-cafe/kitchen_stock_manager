@@ -90,6 +90,7 @@ Prisma.NullTypes = {
 exports.Prisma.CartScalarFieldEnum = {
   id: 'id',
   cart_create_date: 'cart_create_date',
+  cart_channel_access: 'cart_channel_access',
   cart_customer_name: 'cart_customer_name',
   cart_customer_tel: 'cart_customer_tel',
   cart_delivery_date: 'cart_delivery_date',
@@ -107,6 +108,7 @@ exports.Prisma.CartScalarFieldEnum = {
   cart_pay_type: 'cart_pay_type',
   cart_pay_deposit: 'cart_pay_deposit',
   cart_pay_isdeposit: 'cart_pay_isdeposit',
+  cart_pay_charge: 'cart_pay_charge',
   cart_pay_cost: 'cart_pay_cost',
   cart_invoice_tex: 'cart_invoice_tex',
   cart_total_cost: 'cart_total_cost',
