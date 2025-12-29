@@ -281,6 +281,7 @@ export default function CartList() {
               })) || [],
             menu_description: menu.menu_description,
             menu_order_id: menuIndex + 1,
+            menu_cost: (menu as any).menu_cost || menu.lunchbox_cost || 0, // ใช้ menu_cost หรือ lunchbox_cost เป็น fallback
           })),
         })),
         cart_receive_name: cart_receive_name,

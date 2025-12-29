@@ -111,6 +111,23 @@ const OrderHistory = () => {
               }
             }
 
+            // คำนวณจำนวนกล่องทั้งหมดจาก cart_lunchbox (รวม lunchbox_total)
+            const totalBoxesFromLunchboxFallback = cartLunchboxFallback.reduce((sum: number, lunchbox: any) => {
+              return sum + (Number(lunchbox.lunchbox_total) || 0);
+            }, 0);
+
+            // ใช้ cart_total_cost_lunchbox สำหรับราคารวม (แปลงจาก string เป็น number)
+            // ถ้าไม่มี cart_total_cost_lunchbox ให้คำนวณจาก cart_lunchbox แทน
+            let totalPriceFallback = 0;
+            if (cart.cart_total_cost_lunchbox && cart.cart_total_cost_lunchbox.trim() !== "") {
+              totalPriceFallback = Number(cart.cart_total_cost_lunchbox.replace(/[^\d.-]/g, "")) || 0;
+            } else if (cartLunchboxFallback && cartLunchboxFallback.length > 0) {
+              // คำนวณราคารวมจาก cart_lunchbox
+              totalPriceFallback = cartLunchboxFallback.reduce((sum: number, lunchbox: any) => {
+                return sum + (Number(lunchbox.lunchbox_total_cost) || 0);
+              }, 0);
+            }
+
             return {
               id: cart.cart_id || "no-id",
               orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
@@ -118,8 +135,8 @@ const OrderHistory = () => {
               date: "ไม่ระบุ",
               dateISO: "",
               time: "ไม่ระบุ",
-              sets: 0,
-              price: cart.cart_total_price || 0,
+              sets: totalBoxesFromLunchboxFallback,
+              price: totalPriceFallback,
               status: cart.cart_status,
               createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
               menuItems: [],
@@ -186,6 +203,26 @@ const OrderHistory = () => {
             }
           }
 
+          // คำนวณจำนวนกล่องทั้งหมดจาก cart_lunchbox (รวม lunchbox_total)
+          const totalBoxesFromLunchbox = cartLunchbox.reduce((sum: number, lunchbox: any) => {
+            return sum + (Number(lunchbox.lunchbox_total) || 0);
+          }, 0);
+          
+          // ใช้ totalBoxesFromLunchbox ถ้ามีข้อมูลจาก cart_lunchbox มิฉะนั้นใช้ totalSets (fallback)
+          const finalSets = totalBoxesFromLunchbox > 0 ? totalBoxesFromLunchbox : totalSets;
+
+          // ใช้ cart_total_cost_lunchbox สำหรับราคารวม (แปลงจาก string เป็น number)
+          // ถ้าไม่มี cart_total_cost_lunchbox ให้คำนวณจาก cart_lunchbox แทน
+          let totalPrice = 0;
+          if (cart.cart_total_cost_lunchbox && cart.cart_total_cost_lunchbox.trim() !== "") {
+            totalPrice = Number(cart.cart_total_cost_lunchbox.replace(/[^\d.-]/g, "")) || 0;
+          } else if (cartLunchbox && cartLunchbox.length > 0) {
+            // คำนวณราคารวมจาก cart_lunchbox
+            totalPrice = cartLunchbox.reduce((sum: number, lunchbox: any) => {
+              return sum + (Number(lunchbox.lunchbox_total_cost) || 0);
+            }, 0);
+          }
+
           return {
             id: cart.cart_id || "no-id",
             orderNumber,
@@ -193,8 +230,8 @@ const OrderHistory = () => {
             date: formattedDate,
             dateISO: formattedDateISO,
             time: formattedTime,
-            sets: totalSets,
-            price: cart.cart_total_price || 0,
+            sets: finalSets,
+            price: totalPrice,
             status: cart.cart_status,
             createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
             menuItems: menuItems.map((item) => ({
@@ -865,10 +902,8 @@ const OrderHistory = () => {
           ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
       
-      const formattedDeliveryDate = formatDeliveryDate(cart.cart_delivery_date);
+      const formattedDeliveryDate = formatDeliveryDateForExcel(cart.cart_delivery_date);
       const orderNumber = orderIndex + 1; // ลำดับ order (1, 2, 3, ...)
-      const exportTime = cart.cart_export_time ? `${cart.cart_export_time} น.` : "ไม่ระบุ";
-      const receiveTime = cart.cart_receive_time ? `${cart.cart_receive_time} น.` : "ไม่ระบุ";
 
       // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
       const menuRows: any[] = [];
@@ -883,37 +918,19 @@ const OrderHistory = () => {
               return sum + (Number(menu.menu_total) || 0);
             }, 0);
             
-            let remainingPrice = lunchboxTotalCost;
             lunchbox.lunchbox_menu.forEach((menu: any, menuIdx: number) => {
               if (menu.menu_name) {
-                const menuSets = Number(menu.menu_total) || 0;
-                let menuPrice = 0;
-                
-                // ถ้ามี menu_cost จริงให้ใช้ค่านั้นก่อน
-                if (menu.menu_cost && Number(menu.menu_cost) > 0) {
-                  menuPrice = Number(menu.menu_cost) * menuSets;
-                } else if (lunchboxTotalCost > 0 && totalSetsInLunchbox > 0) {
-                  // แบ่งราคาตามสัดส่วนจำนวน Set
-                  if (menuIdx < lunchbox.lunchbox_menu.length - 1) {
-                    menuPrice = Math.round((lunchboxTotalCost * menuSets) / totalSetsInLunchbox);
-                    remainingPrice -= menuPrice;
-                  } else {
-                    // เมนูสุดท้ายใช้ราคาที่เหลือเพื่อให้รวมแล้วตรงกับยอดรวม
-                    menuPrice = remainingPrice;
-                  }
-                }
+                // ใช้ menu_cost จาก lunchbox_menu โดยตรง
+                const menuCost = Number(menu.menu_cost) || 0;
                 
                 menuRows.push({
                   "ลำดับ": "",
+                  "ชื่อ": "",
                   "ชื่อเมนู": menu.menu_name,
                   "วันที่จัดส่ง": formattedDeliveryDate,
-                  "เวลาจัดส่ง": exportTime,
-                  "เวลารับอาหาร": receiveTime,
                   "จำนวน Set": menu.menu_total || 0,
-                  "ราคาอาหาร(บาท)": Number(menu.menu_cost || 0),
+                  "ราคาอาหาร(บาท)": menuCost,
                   "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-                  "สถานะ": getStatusText(cart.status),
-                  "ผู้สร้าง": cart.createdBy,
                 });
               }
             });
@@ -925,15 +942,12 @@ const OrderHistory = () => {
       if (menuRows.length === 0) {
         menuRows.push({
           "ลำดับ": orderNumber,
+          "ชื่อ": cart.cart_customer_name || "",
           "ชื่อเมนู": cart.name || "ไม่มีชื่อเมนู",
           "วันที่จัดส่ง": formattedDeliveryDate,
-          "เวลาจัดส่ง": exportTime,
-          "เวลารับอาหาร": receiveTime,
           "จำนวน Set": cart.sets,
           "ราคาอาหาร(บาท)": foodPrice,
           "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-          "สถานะ": getStatusText(cart.status),
-          "ผู้สร้าง": cart.createdBy,
         });
       }
 
@@ -957,29 +971,26 @@ const OrderHistory = () => {
       // แปลง Map กลับเป็น array
       const groupedMenuRows = Array.from(menuGroupMap.values());
       
-      // แสดงลำดับแค่ใน row แรกของแต่ละ order
+      // แสดงลำดับ และชื่อแค่ใน row แรกของแต่ละ order
       if (groupedMenuRows.length > 0) {
         groupedMenuRows[0]["ลำดับ"] = orderNumber;
-        groupedMenuRows[0]["ผู้รับ"] = cart.cart_customer_name || "";
-        // ลบลำดับและผู้รับออกจาก row อื่นๆ
+        groupedMenuRows[0]["ชื่อ"] = cart.cart_customer_name || "";
+        // ลบลำดับ และชื่อออกจาก row อื่นๆ
         for (let i = 1; i < groupedMenuRows.length; i++) {
           groupedMenuRows[i]["ลำดับ"] = "";
-          groupedMenuRows[i]["ผู้รับ"] = "";
+          groupedMenuRows[i]["ชื่อ"] = "";
         }
       }
 
       // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงราคาอาหาร)
       groupedMenuRows.push({
         "ลำดับ": "",
+        "ชื่อ": "",
         "ชื่อเมนู": "รวม",
         "วันที่จัดส่ง": "",
-        "เวลาจัดส่ง": "",
-        "เวลารับอาหาร": "",
         "จำนวน Set": "",
         "ราคาอาหาร(บาท)": foodPrice,
         "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-        "สถานะ": "",
-        "ผู้สร้าง": "",
       });
 
       return groupedMenuRows;
@@ -1004,15 +1015,12 @@ const OrderHistory = () => {
     // เพิ่ม row สรุปที่ท้ายสุด
     const summaryRow = {
       "ลำดับ": "",
+      "ชื่อ": "",
       "ชื่อเมนู": "รวม",
       "วันที่จัดส่ง": "",
-      "เวลาจัดส่ง": "",
-      "เวลารับอาหาร": "",
       "จำนวน Set": "",
       "ราคาอาหาร(บาท)": totalFoodPrice,
-      "ค่าจัดส่ง(บาท)": "",
-      "สถานะ": "",
-      "ผู้สร้าง": "",
+      "ค่าจัดส่ง(บาท)": totalShippingCost,
     };
 
     // เพิ่ม row สรุปเข้าไปใน worksheetData
@@ -1118,10 +1126,8 @@ const OrderHistory = () => {
           ? cart.cart_lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
       
-      const formattedDeliveryDate = formatDeliveryDate(cart.cart_delivery_date);
+      const formattedDeliveryDate = formatDeliveryDateForExcel(cart.cart_delivery_date);
       const orderNumber = orderIndex + 1; // ลำดับ order (1, 2, 3, ...)
-      const exportTime = cart.cart_export_time ? `${cart.cart_export_time} น.` : "ไม่ระบุ";
-      const receiveTime = cart.cart_receive_time ? `${cart.cart_receive_time} น.` : "ไม่ระบุ";
 
       // ดึงเมนูทั้งหมดจาก cart_lunchbox เพื่อแยกเป็น row ละ 1 เมนู
       const menuRows: any[] = [];
@@ -1136,37 +1142,19 @@ const OrderHistory = () => {
               return sum + (Number(menu.menu_total) || 0);
             }, 0);
             
-            let remainingPrice = lunchboxTotalCost;
             lunchbox.lunchbox_menu.forEach((menu: any, menuIdx: number) => {
               if (menu.menu_name) {
-                const menuSets = Number(menu.menu_total) || 0;
-                let menuPrice = 0;
-                
-                // ถ้ามี menu_cost จริงให้ใช้ค่านั้นก่อน
-                if (menu.menu_cost && Number(menu.menu_cost) > 0) {
-                  menuPrice = Number(menu.menu_cost) * menuSets;
-                } else if (lunchboxTotalCost > 0 && totalSetsInLunchbox > 0) {
-                  // แบ่งราคาตามสัดส่วนจำนวน Set
-                  if (menuIdx < lunchbox.lunchbox_menu.length - 1) {
-                    menuPrice = Math.round((lunchboxTotalCost * menuSets) / totalSetsInLunchbox);
-                    remainingPrice -= menuPrice;
-                  } else {
-                    // เมนูสุดท้ายใช้ราคาที่เหลือเพื่อให้รวมแล้วตรงกับยอดรวม
-                    menuPrice = remainingPrice;
-                  }
-                }
+                // ใช้ menu_cost จาก lunchbox_menu โดยตรง
+                const menuCost = Number(menu.menu_cost) || 0;
                 
                 menuRows.push({
                   "ลำดับ": "",
+                  "ชื่อ": "",
                   "ชื่อเมนู": menu.menu_name,
                   "วันที่จัดส่ง": formattedDeliveryDate,
-                  "เวลาจัดส่ง": exportTime,
-                  "เวลารับอาหาร": receiveTime,
                   "จำนวน Set": menu.menu_total || 0,
-                  "ราคาอาหาร(บาท)": Number(menu.menu_cost || 0),
+                  "ราคาอาหาร(บาท)": menuCost,
                   "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-                  "สถานะ": getStatusText(cart.status),
-                  "ผู้สร้าง": cart.createdBy,
                 });
               }
             });
@@ -1178,15 +1166,12 @@ const OrderHistory = () => {
       if (menuRows.length === 0) {
         menuRows.push({
           "ลำดับ": orderNumber,
+          "ชื่อ": cart.cart_customer_name || "",
           "ชื่อเมนู": cart.name || "ไม่มีชื่อเมนู",
           "วันที่จัดส่ง": formattedDeliveryDate,
-          "เวลาจัดส่ง": exportTime,
-          "เวลารับอาหาร": receiveTime,
           "จำนวน Set": cart.sets,
           "ราคาอาหาร(บาท)": foodPrice,
           "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-          "สถานะ": getStatusText(cart.status),
-          "ผู้สร้าง": cart.createdBy,
         });
       }
 
@@ -1209,28 +1194,25 @@ const OrderHistory = () => {
 
       // แปลง Map กลับเป็น array
       const groupedMenuRows = Array.from(menuGroupMap.values());
-      // แสดงลำดับและผู้รับแค่ใน row แรกของแต่ละ order
+      // แสดงลำดับ และชื่อแค่ใน row แรกของแต่ละ order
       if (groupedMenuRows.length > 0) {
         groupedMenuRows[0]["ลำดับ"] = orderNumber;
-        groupedMenuRows[0]["ผู้รับ"] = cart.cart_customer_name || "";
-        // ลบลำดับและผู้รับออกจาก row อื่นๆ
+        groupedMenuRows[0]["ชื่อ"] = cart.cart_customer_name || "";
+        // ลบลำดับ และชื่อออกจาก row อื่นๆ
         for (let i = 1; i < groupedMenuRows.length; i++) {
           groupedMenuRows[i]["ลำดับ"] = "";
-          groupedMenuRows[i]["ผู้รับ"] = "";
+          groupedMenuRows[i]["ชื่อ"] = "";
         }
       }
       // เพิ่ม row สรุปของแต่ละ order ที่ท้ายสุด (แสดงราคาอาหาร)
       groupedMenuRows.push({
         "ลำดับ": "",
+        "ชื่อ": "",
         "ชื่อเมนู": "รวม",
         "วันที่จัดส่ง": "",
-        "เวลาจัดส่ง": "",
-        "เวลารับอาหาร": "",
         "จำนวน Set": "",
         "ราคาอาหาร(บาท)": foodPrice,
         "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
-        "สถานะ": "",
-        "ผู้สร้าง": "",
       });
 
       return groupedMenuRows;
@@ -1255,15 +1237,12 @@ const OrderHistory = () => {
     // เพิ่ม row สรุปที่ท้ายสุด
     const summaryRow = {
       "ลำดับ": "",
+      "ชื่อ": "",
       "ชื่อเมนู": "รวม",
       "วันที่จัดส่ง": "",
-      "เวลาจัดส่ง": "",
-      "เวลารับอาหาร": "",
       "จำนวน Set": "",
       "ราคาอาหาร(บาท)": totalFoodPrice,
-      "ค่าจัดส่ง(บาท)": "",
-      "สถานะ": "",
-      "ผู้สร้าง": "",
+      "ค่าจัดส่ง(บาท)": totalShippingCost,
     };
 
     // เพิ่ม row สรุปเข้าไปใน worksheetData

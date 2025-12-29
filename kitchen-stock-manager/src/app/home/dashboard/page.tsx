@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { MapPin, Clock, Maximize2, Minimize2, Star, List, X, Edit } from "lucide-react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { MapPin, Clock, Maximize2, Minimize2, Star, Plus, Save, X, Trash2 } from "lucide-react";
 import { Button } from "@/share/ui/button";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { fetcher } from "@/lib/utils";
 
 import { Loading } from "@/components/loading/loading";
@@ -15,8 +15,15 @@ interface DayItem {
   qty: number | string;
 }
 
+interface CartDescription {
+  description_id: string | null;
+  description_title: string;
+  description_value: string;
+}
+
 interface DayCard {
   id: number;
+  cartId: string;
   dayOfWeek: string;
   dateTitle: string;
   sendPlace: string;
@@ -26,6 +33,7 @@ interface DayCard {
   totalText: string;
   isPinned?: boolean;
   minutesToSend?: number;
+  cart_description: CartDescription[];
 }
 
 interface ApiResponse {
@@ -47,6 +55,8 @@ interface ApiResponse {
         menu_quantity: number;
       }>;
     }>;
+    cart_description: CartDescription[];
+    cart_pinned: boolean;
   }>;
 }
 
@@ -59,6 +69,37 @@ const dayColor: Record<string, string> = {
   ศุกร์: "from-sky-400 to-sky-500",
   เสาร์: "from-indigo-400 to-indigo-500",
   อาทิตย์: "from-rose-400 to-rose-500",
+};
+
+const dayNoteColor: Record<string, { light: string; dark: string; hover: string }> = {
+  จันทร์: { light: "bg-yellow-50", dark: "bg-yellow-100", hover: "bg-yellow-200" },
+  อังคาร: { light: "bg-pink-50", dark: "bg-pink-100", hover: "bg-pink-200" },
+  พุธ: { light: "bg-emerald-50", dark: "bg-emerald-100", hover: "bg-emerald-200" },
+  พฤหัสบดี: { light: "bg-orange-50", dark: "bg-orange-100", hover: "bg-orange-200" },
+  ศุกร์: { light: "bg-sky-50", dark: "bg-sky-100", hover: "bg-sky-200" },
+  เสาร์: { light: "bg-indigo-50", dark: "bg-indigo-100", hover: "bg-indigo-200" },
+  อาทิตย์: { light: "bg-rose-50", dark: "bg-rose-100", hover: "bg-rose-200" },
+};
+
+const dayNoteTextColor: Record<string, string> = {
+  จันทร์: "text-yellow-700",
+  อังคาร: "text-pink-700",
+  พุธ: "text-emerald-700",
+  พฤหัสบดี: "text-orange-700",
+  ศุกร์: "text-sky-700",
+  เสาร์: "text-indigo-700",
+  อาทิตย์: "text-rose-700",
+};
+
+// Aura/Glow colors for pinned cards
+const dayAuraColor: Record<string, { class: string; style: React.CSSProperties }> = {
+  จันทร์: { class: "ring-2 ring-yellow-400 animate-auraGlow", style: { "--aura-color": "rgba(250,204,21,0.4)" } as React.CSSProperties },
+  อังคาร: { class: "ring-2 ring-pink-400 animate-auraGlow", style: { "--aura-color": "rgba(236,72,153,0.4)" } as React.CSSProperties },
+  พุธ: { class: "ring-2 ring-emerald-400 animate-auraGlow", style: { "--aura-color": "rgba(52,211,153,0.4)" } as React.CSSProperties },
+  พฤหัสบดี: { class: "ring-2 ring-orange-400 animate-auraGlow", style: { "--aura-color": "rgba(251,146,60,0.4)" } as React.CSSProperties },
+  ศุกร์: { class: "ring-2 ring-sky-400 animate-auraGlow", style: { "--aura-color": "rgba(56,189,248,0.4)" } as React.CSSProperties },
+  เสาร์: { class: "ring-2 ring-indigo-400 animate-auraGlow", style: { "--aura-color": "rgba(129,140,248,0.4)" } as React.CSSProperties },
+  อาทิตย์: { class: "ring-2 ring-rose-400 animate-auraGlow", style: { "--aura-color": "rgba(251,113,133,0.4)" } as React.CSSProperties },
 };
 
 const dayColorLegend = [
@@ -114,19 +155,170 @@ const getTimeAlertInfo = (minutes?: number) => {
 // --- Main Component ---
 export default function Dashboard() {
   const [fullscreen, setFullscreen] = useState(false);
-  // State สำหรับเก็บ ID ของการ์ดที่ User เลือกปักหมุดเอง
-  const [pinnedIds, setPinnedIds] = useState<number[]>([]);
-  // ฟังก์ชันสำหรับ toggle ปักหมุด
-  const togglePin = (id: number) => {
-    setPinnedIds((prev) => {
-      if (prev.includes(id)) {
-        // ถ้าปักอยู่แล้ว ให้ถอนออก
-        return prev.filter((pinnedId) => pinnedId !== id);
-      } else {
-        return [...prev, id];
+  // State สำหรับ note input
+  const [noteInputs, setNoteInputs] = useState<Record<string, { title: string; value: string }>>({});
+  const [showNoteInput, setShowNoteInput] = useState<Record<string, boolean>>({});
+  const [closingNoteInput, setClosingNoteInput] = useState<Record<string, boolean>>({});
+  const [savingNotes, setSavingNotes] = useState<Record<string, boolean>>({});
+  const [editingNote, setEditingNote] = useState<Record<string, { cartId: string; title: string; value: string } | null>>({});
+  const [savingPin, setSavingPin] = useState<Record<string, boolean>>({});
+  const [cursorHidden, setCursorHidden] = useState(false);
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+  const cursorTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cursor auto-hide after 5 seconds of inactivity
+  useEffect(() => {
+    const resetCursorTimer = () => {
+      setCursorHidden(false);
+      if (cursorTimerRef.current) {
+        clearTimeout(cursorTimerRef.current);
       }
-    });
+      cursorTimerRef.current = setTimeout(() => {
+        setCursorHidden(true);
+      }, 5000);
+    };
+
+    const handleActivity = () => {
+      resetCursorTimer();
+    };
+
+    // Listen for mouse movement, clicks, keyboard, and scroll
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("mousedown", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("scroll", handleActivity, true);
+
+    // Start the timer initially
+    resetCursorTimer();
+
+    return () => {
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("mousedown", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("scroll", handleActivity, true);
+      if (cursorTimerRef.current) {
+        clearTimeout(cursorTimerRef.current);
+      }
+    };
+  }, []);
+
+  // ฟังก์ชันสำหรับ toggle ปักหมุดและบันทึกลง DB
+  const togglePin = async (cartId: string, currentPinned: boolean) => {
+    setSavingPin((prev) => ({ ...prev, [cartId]: true }));
+    try {
+      const response = await fetch(`/api/edit/cart-pinned/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart_pinned: !currentPinned }),
+      });
+      if (response.ok) {
+        // Refresh data
+        mutate("/api/get/dashboard");
+      }
+    } catch (error) {
+      console.error("Error updating pin status:", error);
+    } finally {
+      setSavingPin((prev) => ({ ...prev, [cartId]: false }));
+    }
   };
+
+  // ฟังก์ชันบันทึก note ไปยัง database
+  const saveNoteToDatabase = useCallback(async (cartId: string, descriptions: CartDescription[]) => {
+    setSavingNotes((prev) => ({ ...prev, [cartId]: true }));
+    try {
+      const response = await fetch(`/api/edit/cart-description/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart_description: descriptions }),
+      });
+      if (!response.ok) {
+        console.error("Failed to save note");
+      } else {
+        // Refresh data after successful save
+        mutate("/api/get/dashboard");
+      }
+    } catch (error) {
+      console.error("Error saving note:", error);
+    } finally {
+      setSavingNotes((prev) => ({ ...prev, [cartId]: false }));
+    }
+  }, []);
+
+  // ฟังก์ชันเพิ่ม note ใหม่
+  const handleAddNote = useCallback((cartId: string, currentDescriptions: CartDescription[]) => {
+    const noteInput = noteInputs[cartId];
+    if (!noteInput || (!noteInput.title.trim() && !noteInput.value.trim())) {
+      setClosingNoteInput((prev) => ({ ...prev, [cartId]: true }));
+      setTimeout(() => {
+        setClosingNoteInput((prev) => ({ ...prev, [cartId]: false }));
+        setShowNoteInput((prev) => ({ ...prev, [cartId]: false }));
+      }, 150);
+      return;
+    }
+
+    const newNote: CartDescription = {
+      description_id: Date.now().toString(),
+      description_title: noteInput.title.trim() || "หมายเหตุ",
+      description_value: noteInput.value.trim(),
+    };
+
+    const updatedDescriptions = [...currentDescriptions, newNote];
+    saveNoteToDatabase(cartId, updatedDescriptions);
+    
+    // Reset input with closing animation
+    setNoteInputs((prev) => ({ ...prev, [cartId]: { title: "", value: "" } }));
+    setClosingNoteInput((prev) => ({ ...prev, [cartId]: true }));
+    setTimeout(() => {
+      setClosingNoteInput((prev) => ({ ...prev, [cartId]: false }));
+      setShowNoteInput((prev) => ({ ...prev, [cartId]: false }));
+    }, 150);
+  }, [noteInputs, saveNoteToDatabase]);
+
+  // ฟังก์ชันลบ note
+  const handleDeleteNote = useCallback((cartId: string, descriptionId: string, currentDescriptions: CartDescription[]) => {
+    const updatedDescriptions = currentDescriptions.filter((d) => d.description_id !== descriptionId);
+    saveNoteToDatabase(cartId, updatedDescriptions);
+  }, [saveNoteToDatabase]);
+
+  // ฟังก์ชันเริ่มแก้ไข note
+  const handleStartEditNote = useCallback((descriptionId: string, cartId: string, title: string, value: string) => {
+    setEditingNote((prev) => ({ ...prev, [descriptionId]: { cartId, title, value } }));
+  }, []);
+
+  // ฟังก์ชันยกเลิกแก้ไข note
+  const handleCancelEditNote = useCallback((descriptionId: string) => {
+    setEditingNote((prev) => ({ ...prev, [descriptionId]: null }));
+  }, []);
+
+  // ฟังก์ชันบันทึกการแก้ไข note
+  const handleSaveEditNote = useCallback((descriptionId: string, currentDescriptions: CartDescription[]) => {
+    const editing = editingNote[descriptionId];
+    if (!editing) return;
+
+    const updatedDescriptions = currentDescriptions.map((d) =>
+      d.description_id === descriptionId
+        ? { ...d, description_title: editing.title.trim() || "หมายเหตุ", description_value: editing.value.trim() }
+        : d
+    );
+    saveNoteToDatabase(editing.cartId, updatedDescriptions);
+    setEditingNote((prev) => ({ ...prev, [descriptionId]: null }));
+  }, [editingNote, saveNoteToDatabase]);
+
+  // ฟังก์ชันอัปเดตค่าขณะแก้ไข
+  const handleEditNoteChange = useCallback((descriptionId: string, field: "title" | "value", value: string) => {
+    setEditingNote((prev) => ({
+      ...prev,
+      [descriptionId]: prev[descriptionId] ? { ...prev[descriptionId]!, [field]: value } : null,
+    }));
+  }, []);
+
+  // Auto-save with debounce when typing
+  const handleNoteInputChange = useCallback((cartId: string, field: "title" | "value", value: string) => {
+    setNoteInputs((prev) => ({
+      ...prev,
+      [cartId]: { ...prev[cartId], [field]: value },
+    }));
+  }, []);
 
   // Calculate minutes until send time
   const calculateMinutesToSend = (date: string, sendTime: string): number => {
@@ -224,6 +416,7 @@ export default function Dashboard() {
 
         return {
           id: index + 1, // แนะนำให้ใช้ ID จริงจาก API ถ้ามี เพื่อความแม่นยำในการระบุตัวตน
+          cartId: item.id, // เก็บ cart_id จริงจาก API เพื่อใช้ในการบันทึก note
           dayOfWeek: item.dayOfWeek,
           dateTitle: `วัน${item.dayOfWeek}ที่ ${dayNum} ${getMonthName(month)} พ.ศ.${year}`,
           sendPlace: item.location,
@@ -231,8 +424,9 @@ export default function Dashboard() {
           receiveTime: item.receiveTime + " น.",
           items: sortedItems,
           totalText: `รวม ${totalQty} ชุด`,
-          isPinned: false, // สามารถรับค่านี้จาก API ได้ถ้ามี
+          isPinned: item.cart_pinned || false,
           minutesToSend,
+          cart_description: item.cart_description || [],
         };
       })
       .filter((card) => card.minutesToSend >= 0);
@@ -272,14 +466,8 @@ export default function Dashboard() {
     }
   };
 
-  // --- [LOGIC ใหม่] การจัดการ Layout และข้อมูล ---
-
-  // 1. หาการ์ดที่ถูกปักหมุด (Pinned Cards) - สูงสุด 2 ใบ
-  const pinnedCards = allCards.filter((c) => pinnedIds.includes(c.id));
-
-  // 2. รายการที่จะอยู่ในส่วน Scroll (Scrollable List)
-  // คือการ์ดทั้งหมด "ยกเว้น" ใบที่ถูกปักหมุดอยู่
-  const scrollableCards = allCards.filter((c) => !pinnedIds.includes(c.id));
+  // --- [การจัดการ Pinned Cards] ---
+  // ไม่ใช้ pinnedCards/scrollableCards แยกแล้ว เพราะแสดงทั้งหมดรวมกันพร้อม highlight
 
   // --- Card Renderer ---
   const renderDayCard = (day: DayCard, asPinnedSlot = false) => {
@@ -287,32 +475,43 @@ export default function Dashboard() {
 
     const headerGradient = dayColor[day.dayOfWeek] || "from-teal-400 to-teal-500";
     const timeAlert = getTimeAlertInfo(day.minutesToSend);
-    const isPinned = pinnedIds.includes(day.id);
+    const isPinned = day.isPinned || false;
+    const auraConfig = dayAuraColor[day.dayOfWeek] || { class: "ring-2 ring-gray-400 animate-auraGlow", style: { "--aura-color": "rgba(156,163,175,0.4)" } as React.CSSProperties };
 
     return (
       <div
         key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")}
+        style={isPinned ? auraConfig.style : undefined}
         // Logic ความสูง: h-full เพื่อให้ยืดตาม Container, min-w เพื่อกำหนดความกว้างขั้นต่ำ
-        className={`bg-white rounded-2xl shadow overflow-hidden flex flex-col h-full 
-          min-w-[300px] 
-          ${asPinnedSlot && timeAlert ? "ring-4 ring-amber-300" : ""}
-          ${asPinnedSlot ? "shadow-2xl border-2 border-yellow-400/50" : "shadow"}
+        className={`group/card bg-white rounded-2xl overflow-hidden flex flex-col h-full 
+          min-w-[300px] transition-all duration-300
+          ${isPinned ? auraConfig.class : "shadow"}
+          ${timeAlert && isPinned ? "ring-4 ring-amber-300" : ""}
         `}>
         {/* HEADER (Fixed) */}
         <div className={`relative flex-none bg-gradient-to-r ${headerGradient} text-white p-4 pb-5`}>
-          {/* ปุ่มดาวปักหมุด - มุมขวาบนของทุก Card */}
+          {/* ปุ่มดาวปักหมุด - แสดงตลอดถ้าปักหมุดแล้ว, ซ่อนถ้าไม่ได้ปัก (แสดงเมื่อ hover) */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              togglePin(day.id);
+              if (!savingPin[day.cartId]) {
+                togglePin(day.cartId, isPinned);
+              }
             }}
-            className={`absolute top-2 right-2 p-2 rounded-full transition-all
-              ${isPinned ? "bg-yellow-400 hover:bg-yellow-500 shadow-lg" : "bg-white/20 hover:bg-white/40 backdrop-blur-sm"}
+            disabled={savingPin[day.cartId]}
+            className={`absolute top-2 right-2 p-2 transition-all duration-300
+              ${isPinned 
+                ? "opacity-100" 
+                : "opacity-0 group-hover/card:opacity-100 hover:scale-110"}
+              ${savingPin[day.cartId] ? "cursor-wait" : "cursor-pointer"}
             `}
             title={isPinned ? "ถอนหมุด" : "ปักหมุด"}>
             <Star
-              className={`w-5 h-5 transition-all
-                ${isPinned ? "text-white fill-white" : "text-white/80"}
+              className={`w-6 h-6 transition-all drop-shadow-md
+                ${isPinned 
+                  ? "text-yellow-400 fill-yellow-400 animate-starPulse" 
+                  : "text-white/80 hover:text-yellow-300"}
+                ${savingPin[day.cartId] ? "animate-spin" : ""}
               `}
             />
           </button>
@@ -368,8 +567,219 @@ export default function Dashboard() {
                   <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center text-gray-900 font-semibold align-middle'>{item.qty}</td>
                 </tr>
               ))}
+              {/* Notes displayed as table rows */}
+              {day.cart_description && day.cart_description.map((desc, idx) => {
+                const rowIndex = day.items.length + idx;
+                const hasValue = desc.description_value && desc.description_value.trim() !== "";
+                const descId = desc.description_id || idx.toString();
+                const isEditing = editingNote[descId] !== null && editingNote[descId] !== undefined;
+                
+                // Editing mode
+                if (isEditing) {
+                  return (
+                    <tr 
+                      key={`note-${descId}`} 
+                      className={`${rowIndex % 2 === 0 ? "bg-amber-100/50" : "bg-amber-100/30"}`}
+                    >
+                      <td colSpan={2} className='px-4 py-2'>
+                        <div className='flex flex-wrap gap-2 items-stretch'>
+                          <textarea
+                            placeholder='รายการ'
+                            value={editingNote[descId]?.title || ""}
+                            onChange={(e) => {
+                              handleEditNoteChange(descId, "title", e.target.value);
+                              e.target.style.height = 'auto';
+                              e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            ref={(el) => {
+                              if (el) {
+                                el.style.height = 'auto';
+                                el.style.height = el.scrollHeight + 'px';
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            rows={1}
+                            className='flex-1 min-w-[150px] px-3 py-1.5 text-base border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none resize-none overflow-hidden leading-normal bg-white'
+                          />
+                          <input
+                            type='text'
+                            placeholder='จำนวน'
+                            value={editingNote[descId]?.value || ""}
+                            onChange={(e) => handleEditNoteChange(descId, "value", e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className='w-20 shrink-0 px-2 py-1.5 text-base border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-center bg-white'
+                          />
+                        </div>
+                        <div className='flex gap-2 justify-end mt-2'>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelEditNote(descId);
+                            }}
+                            className='group/cancel px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                            style={{ color: '#ef4444' }}>
+                            <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                            ยกเลิก
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSaveEditNote(descId, day.cart_description);
+                            }}
+                            disabled={savingNotes[day.cartId]}
+                            className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                            style={{ color: '#10b981' }}>
+                            <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                            {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }
+                
+                // Display mode
+                const noteColors = dayNoteColor[day.dayOfWeek] || { light: "bg-amber-50", dark: "bg-amber-100", hover: "bg-amber-200" };
+                
+                return (
+                  <tr 
+                    key={`note-${descId}`} 
+                    className={`group cursor-pointer hover:${noteColors.hover} transition-colors ${rowIndex % 2 === 0 ? noteColors.light : noteColors.dark}`}
+                    onClick={() => handleStartEditNote(descId, day.cartId, desc.description_title, desc.description_value)}
+                  >
+                    {hasValue ? (
+                      <>
+                        <td className='px-4 py-2 !text-black align-middle break-words whitespace-pre-wrap'>{desc.description_title}</td>
+                        <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center !text-black font-semibold align-middle relative overflow-hidden'>
+                          <span>{desc.description_value}</span>
+                          <div
+                            className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
+                              opacity-0 translate-x-full group-hover:opacity-100 group-hover:translate-x-0 
+                              transition-all duration-300 ease-out pointer-events-none group-hover:pointer-events-auto'>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteNote(day.cartId, desc.description_id || "", day.cart_description);
+                              }}
+                              className='p-2 hover:bg-red-600 rounded-l-lg transition-colors h-full'
+                              title='ลบหมายเหตุ'>
+                              <Trash2 className='w-4 h-4 text-white' />
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <td colSpan={2} className='px-4 py-2 !text-black align-middle break-words whitespace-pre-wrap relative overflow-hidden'>
+                        <span>{desc.description_title}</span>
+                        <div
+                          className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
+                            opacity-0 translate-x-full group-hover:opacity-100 group-hover:translate-x-0 
+                            transition-all duration-300 ease-out pointer-events-none group-hover:pointer-events-auto'>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNote(day.cartId, desc.description_id || "", day.cart_description);
+                            }}
+                            className='p-2 hover:bg-red-600 rounded-l-lg transition-colors h-full'
+                            title='ลบหมายเหตุ'>
+                            <Trash2 className='w-4 h-4 text-white' />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+
+          {/* Notes Section */}
+          <div className='border-t border-gray-200'>
+            {/* Add Note Input */}
+            {(showNoteInput[day.cartId] || closingNoteInput[day.cartId]) ? (
+              <div 
+                className={`px-4 py-3 ${closingNoteInput[day.cartId] ? 'animate-fadeSlideOut' : 'animate-fadeSlideIn'}`}
+                style={{ backgroundColor: '#d1fae5' }}
+                onAnimationEnd={() => {
+                  if (closingNoteInput[day.cartId]) {
+                    setClosingNoteInput((prev) => ({ ...prev, [day.cartId]: false }));
+                    setShowNoteInput((prev) => ({ ...prev, [day.cartId]: false }));
+                  }
+                }}>
+                <div className='flex flex-wrap gap-2 items-stretch'>
+                  <textarea
+                    placeholder='รายการ'
+                    value={noteInputs[day.cartId]?.title || ""}
+                    onChange={(e) => {
+                      handleNoteInputChange(day.cartId, "title", e.target.value);
+                      // Auto-resize textarea
+                      e.target.style.height = 'auto';
+                      e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    rows={1}
+                    className='flex-1 min-w-[120px] px-3 py-1.5 text-base border border-emerald-400 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none resize-none overflow-hidden leading-normal bg-white'
+                  />
+                  <input
+                    type='text'
+                    placeholder='จำนวน'
+                    value={noteInputs[day.cartId]?.value || ""}
+                    onChange={(e) => handleNoteInputChange(day.cartId, "value", e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className='w-16 shrink-0 px-2 py-1.5 text-base border border-emerald-400 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none text-center bg-white'
+                  />
+                </div>
+                <div className='flex gap-2 justify-end mt-2'>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setClosingNoteInput((prev) => ({ ...prev, [day.cartId]: true }));
+                      setNoteInputs((prev) => ({ ...prev, [day.cartId]: { title: "", value: "" } }));
+                      // ใช้ timeout เพื่อรอ animation เสร็จ
+                      setTimeout(() => {
+                        setClosingNoteInput((prev) => ({ ...prev, [day.cartId]: false }));
+                        setShowNoteInput((prev) => ({ ...prev, [day.cartId]: false }));
+                      }, 150);
+                    }}
+                    className='group/cancel px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                    style={{ color: '#ef4444' }}>
+                    <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                    ยกเลิก
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddNote(day.cartId, day.cart_description);
+                    }}
+                    disabled={savingNotes[day.cartId]}
+                    className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                    style={{ color: '#10b981' }}>
+                    <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                    {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Hide when any note is being edited
+              !day.cart_description?.some((desc, idx) => {
+                const descId = desc.description_id || idx.toString();
+                return editingNote[descId] !== null && editingNote[descId] !== undefined;
+              }) && (
+                <div className='overflow-hidden max-h-0 opacity-0 group-hover/card:max-h-12 group-hover/card:opacity-100 transition-all duration-500 ease-in-out'>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowNoteInput((prev) => ({ ...prev, [day.cartId]: true }));
+                      setNoteInputs((prev) => ({ ...prev, [day.cartId]: { title: "", value: "" } }));
+                    }}
+                    className='group/btn w-full px-4 py-2 flex items-center justify-center gap-1 text-xs text-gray-500 border-t border-gray-100 transition-all duration-300 ease-in-out hover:bg-gray-50 hover:text-emerald-600 active:scale-95'>
+                    <Plus className='w-3 h-3 transition-transform duration-300 group-hover/btn:rotate-180 group-hover/btn:scale-110' />
+                    <span>เพิ่มหมายเหตุ</span>
+                  </button>
+                </div>
+              )
+            )}
+          </div>
         </div>
 
         {/* FOOTER (Fixed) */}
@@ -382,7 +792,7 @@ export default function Dashboard() {
 
   return (
     // Main Container: ความสูงเท่าหน้าจอ (h-screen) และห้าม Scroll ที่ตัวแม่ (overflow-hidden)
-    <div className={`p-4 sm:p-6 h-screen flex flex-col overflow-hidden bg-gray-50`}>
+    <div className={`p-4 sm:p-6 h-screen flex flex-col overflow-hidden bg-gray-50 ${cursorHidden ? "cursor-hidden" : ""}`}>
       {/* Loading State */}
       {isLoading && <Loading context='หน้าแดชบอร์ด' icon={DashboardIcon.src} />}
 
@@ -446,65 +856,26 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* [LAYOUT หลัก] แบ่งส่วน Scroll และ Fixed */}
+          {/* [LAYOUT หลัก] แสดงการ์ดทั้งหมด พร้อม highlight สำหรับการ์ดที่ปักหมุด */}
           <div className='flex-1 flex gap-4 overflow-hidden'>
-            {/* ZONE 1: Scrollable List Area (ส่วนซ้ายเลื่อนแนวนอน) */}
+            {/* Scrollable Cards Area */}
             <div className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden pb-2 snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2`}>
-              {scrollableCards.length > 0
-                ? scrollableCards.map((day) => (
-                    // Logic การกำหนดความกว้าง (Width)
-                    // - ถ้ามีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 3 ใบ (ใบละ ~32%)
-                    // - ถ้าไม่มีปักหมุด: แบ่งพื้นที่ให้โชว์ประมาณ 4 ใบ (ใบละ ~24%)
+              {allCards.length > 0
+                ? allCards.map((day) => (
                     <div
                       key={day.id}
                       className={`h-full flex-none transition-all duration-300
-                      ${
-                        pinnedCards.length > 0
-                          ? "w-[85vw] sm:w-[45vw] md:w-[40vw] lg:w-[32%]" // Case มีปักหมุด
-                          : "w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]" // Case ไม่มีปักหมุด
-                      }
+                      w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]
                     `}>
                       {renderDayCard(day, false)}
                     </div>
                   ))
-                : // กรณีไม่มีข้อมูลใน list (เช่น การ์ดทั้งหมดถูกปักหมุดหมดแล้ว)
-                  pinnedCards.length === 0 && (
+                : (
                     <div className='flex flex-col items-center justify-center w-full text-gray-400 h-full border-2 border-dashed rounded-xl'>
                       <p>ไม่มีรายการออเดอร์</p>
                     </div>
                   )}
             </div>
-
-            {/* ZONE 2: Pinned Cards Area (ส่วนขวาตรึงอยู่กับที่ - ขนาดพอดีกับ 1 การ์ด) */}
-            {/* แสดงเฉพาะเมื่อมีการปักหมุด */}
-            {pinnedCards.length > 0 && (
-              <div className='hidden lg:flex flex-none' style={{ width: "360px" }}>
-                {/* Pinned Content Area */}
-                <div className='flex-1 flex flex-col border-l-2 border-gray-200 pl-4 ml-3 bg-gray-50/50 min-w-0'>
-                  {/* Header */}
-                  <div className='flex-none flex items-center justify-between pb-2 border-b border-gray-200 mb-3'>
-                    <div className='flex items-center gap-2'>
-                      <Star className='w-4 h-4 text-yellow-500 fill-yellow-500' />
-                      <span className='text-sm font-semibold text-gray-700'>ปักหมุด ({pinnedCards.length})</span>
-                    </div>
-                    <button onClick={() => setPinnedIds([])} className='text-xs text-gray-500 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50'>
-                      ล้างทั้งหมด
-                    </button>
-                  </div>
-
-                  {/* Scrollable Pinned Cards */}
-                  <div className='flex-1 min-w-0 overflow-x-auto overflow-y-hidden pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent snap-x snap-mandatory'>
-                    <div className='flex gap-4 h-full'>
-                      {pinnedCards.map((card) => (
-                        <div key={card.id} className='flex-none h-full snap-start' style={{ width: "300px" }}>
-                          {renderDayCard(card, true)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </>
       )}

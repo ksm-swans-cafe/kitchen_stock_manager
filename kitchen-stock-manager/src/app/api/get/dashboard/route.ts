@@ -90,6 +90,8 @@ export async function GET() {
             cart_export_time: 1,
             cart_receive_time: 1,
             cart_lunchbox: 1,
+            cart_description: 1,
+            cart_pinned: 1,
           },
         },
       ],
@@ -121,6 +123,8 @@ export async function GET() {
           menu_quantity: menu.menu_total,
         })),
       })),
+      cart_description: item.cart_description || [],
+      cart_pinned: item.cart_pinned || false,
     }));
     
     return NextResponse.json({
