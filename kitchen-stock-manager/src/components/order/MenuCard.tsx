@@ -77,7 +77,7 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
   ref
 ) {
   const sizeConf = sizeMap[size] || sizeMap.md;
-  const isDisabled = disabled || (!!duplicate && !selected);
+  const isDisabled = disabled; // นำ duplicate ออกเพื่อให้กดสลับเมนูได้ (Auto-Swap)
 
   const handleClick = () => {
     if (isDisabled) return;
@@ -97,8 +97,8 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       ? "bg-yellow-50 border-2 border-yellow-400 ring-1 ring-yellow-200"
       : "bg-green-50 border-2 border-green-300 ring-1 ring-green-200"
     : duplicate
-    ? "bg-red-50 border-2 border-red-200 opacity-60 cursor-not-allowed"
-    : "bg-white border border-gray-100 hover:border-green-200 hover:shadow-md";
+      ? "bg-red-50 border-2 border-red-200 opacity-60" // เอารูปแบบ cursor-not-allowed ออกเพื่อให้กดสลับเมนูได้สะดวก
+      : "bg-white border border-gray-100 hover:border-green-200 hover:shadow-md";
 
   const indicatorClass = forced ? "bg-yellow-500" : "bg-green-500";
 
