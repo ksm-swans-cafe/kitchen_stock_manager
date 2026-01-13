@@ -20,6 +20,7 @@ import { LunchBox } from "@/stores/store";
 
 import SetFoodSelect from "@/assets/set_food_select.png";
 import Edit from "@/assets/edit.png";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
 
 registerLocale("th", th);
 
@@ -601,7 +602,9 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
 
               {/* ปุ่มคัดลอก */}
               <div className='mt-4 flex justify-end gap-2'>
-                <button onClick={handleCopyText} className={`w-auto px-4 py-2 rounded-lg font-semibold transition-all ${isCopied ? "!bg-green-600 !text-white" : "!bg-gray-500 !text-white hover:!bg-gray-600"}`}>
+                <button
+                  onClick={handleCopyText}
+                  className={`w-auto px-4 py-2 rounded-lg font-semibold transition-all ${isCopied ? "!bg-green-600 !text-white" : "!bg-gray-500 !text-white hover:!bg-gray-600"}`}>
                   {isCopied ? (
                     <span className='flex items-center justify-end gap-2'>
                       <svg className='!w-5 !h-5' fill='none' stroke='currentColor' strokeWidth='2' viewBox='0 0 24 24'>
@@ -637,7 +640,10 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
 
       {/* Error Notification Toast - Top Right */}
       {errors.length > 0 && (
-        <div className={`fixed top-4 right-4 z-50 flex w-3/4 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${isErrorVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"}`}>
+        <div
+          className={`fixed top-4 right-4 z-50 flex w-3/4 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${
+            isErrorVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
+          }`}>
           <svg xmlns='http://www.w3.org/2000/svg' height='96' width='16'>
             <path
               strokeLinecap='round'
@@ -692,27 +698,138 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
         </h1>
 
         <div className='grid grid-cols-2 gap-4 mb-4'>
-          <div className='col-span-2 flex flex-col gap-1'>
+          <div className='col-span-2 flex flex-col gap-2'>
             <div className='flex items-center gap-2'>
               <label className='font-bold'>ช่องทาง</label>
             </div>
-            <div className='grid grid-cols-2 items-center gap-2'>
-              <div>
-                <input type='radio' id='facebook' name='channel' value='facebook' checked={cart_channel_access === "facebook"} onChange={(e) => setCustomerInfo({ channel_access: e.target.value })} />
-                <label htmlFor='facebook'>Facebook</label>
-              </div>
-              <div>
-                <input type='radio' id='line' name='channel' value='line' checked={cart_channel_access === "line"} onChange={(e) => setCustomerInfo({ channel_access: e.target.value })} />
-                <label htmlFor='line'>Line</label>
-              </div>
-              <div>
-                <input type='radio' id='instagram' name='channel' value='instagram' checked={cart_channel_access === "instagram"} onChange={(e) => setCustomerInfo({ channel_access: e.target.value })} />
-                <label htmlFor='instagram'>Instagram</label>
-              </div>
-              <div>
-                <input type='radio' id='other' name='channel' value='other' checked={cart_channel_access === "other"} onChange={(e) => setCustomerInfo({ channel_access: e.target.value })} />
-                <label htmlFor='other'>Other</label>
-              </div>
+            <div className='grid grid-cols-2 gap-3'>
+              {/* Facebook */}
+              <label
+                htmlFor='facebook'
+                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  cart_channel_access === "facebook" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-300 bg-white hover:border-blue-300 hover:bg-blue-50/50"
+                }`}>
+                <input
+                  type='radio'
+                  id='facebook'
+                  name='channel'
+                  value='facebook'
+                  checked={cart_channel_access === "facebook"}
+                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  className='sr-only'
+                />
+                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "facebook" ? "#1877F2" : "#6B7280" }}>
+                  <path d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' />
+                </svg>
+                <span className={`font-medium ${cart_channel_access === "facebook" ? "text-blue-700" : "text-gray-700"}`}>Facebook</span>
+                {cart_channel_access === "facebook" && (
+                  <div className='absolute top-2 right-2'>
+                    <svg className='w-5 h-5 text-blue-500' fill='currentColor' viewBox='0 0 20 20'>
+                      <path
+                        fillRule='evenodd'
+                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                )}
+              </label>
+
+              {/* Line */}
+              <label
+                htmlFor='line'
+                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  cart_channel_access === "line" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
+                }`}>
+                <input
+                  type='radio'
+                  id='line'
+                  name='channel'
+                  value='line'
+                  checked={cart_channel_access === "line"}
+                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  className='sr-only'
+                />
+                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "line" ? "#00C300" : "#6B7280" }}>
+                  <path d='M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.27l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.63.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.028 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314' />
+                </svg>
+                <span className={`font-medium ${cart_channel_access === "line" ? "text-green-700" : "text-gray-700"}`}>Line</span>
+                {cart_channel_access === "line" && (
+                  <div className='absolute top-2 right-2'>
+                    <svg className='w-5 h-5 text-green-500' fill='currentColor' viewBox='0 0 20 20'>
+                      <path
+                        fillRule='evenodd'
+                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                )}
+              </label>
+
+              {/* Instagram */}
+              <label
+                htmlFor='instagram'
+                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  cart_channel_access === "instagram" ? "border-pink-500 bg-pink-50 shadow-md" : "border-gray-300 bg-white hover:border-pink-300 hover:bg-pink-50/50"
+                }`}>
+                <input
+                  type='radio'
+                  id='instagram'
+                  name='channel'
+                  value='instagram'
+                  checked={cart_channel_access === "instagram"}
+                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  className='sr-only'
+                />
+                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "instagram" ? "#E4405F" : "#6B7280" }}>
+                  <path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z' />
+                </svg>
+                <span className={`font-medium ${cart_channel_access === "instagram" ? "text-pink-700" : "text-gray-700"}`}>Instagram</span>
+                {cart_channel_access === "instagram" && (
+                  <div className='absolute top-2 right-2'>
+                    <svg className='!w-5 !h-5 text-pink-500' fill='currentColor' viewBox='0 0 20 20'>
+                      <path
+                        fillRule='evenodd'
+                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                )}
+              </label>
+
+              {/* Other */}
+              <label
+                htmlFor='other'
+                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  cart_channel_access === "other" ? "border-purple-500 bg-purple-50 shadow-md" : "border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50/50"
+                }`}>
+                <input
+                  type='radio'
+                  id='other'
+                  name='channel'
+                  value='other'
+                  checked={cart_channel_access === "other"}
+                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  className='sr-only'
+                />
+                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "other" ? "#9333EA" : "#6B7280" }}>
+                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' />
+                </svg>
+                <span className={`font-medium ${cart_channel_access === "other" ? "text-purple-700" : "text-gray-700"}`}>Other</span>
+                {cart_channel_access === "other" && (
+                  <div className='absolute top-2 right-2'>
+                    <svg className='w-5 h-5 text-purple-500' fill='currentColor' viewBox='0 0 20 20'>
+                      <path
+                        fillRule='evenodd'
+                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                )}
+              </label>
             </div>
           </div>
 
@@ -789,7 +906,7 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
                 );
               }}
             />
-            {cart_delivery_date && <p className='text-sm text-gray-500 mt-1'>วันที่จัดส่ง: {cart_delivery_date}</p>}
+            {/* {cart_delivery_date && <p className='text-sm text-gray-500 mt-1'>วันที่จัดส่ง: {cart_delivery_date}</p>} */}
           </div>
 
           <div className='flex flex-col gap-1'>
@@ -936,7 +1053,16 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
             <label className='font-bold' htmlFor=''>
               เลขใบกำกับภาษี
             </label>
-            <input className='border rounded px-3 py-2' type='text' inputMode='numeric' pattern='[0-9]*' value={cart_invoice_tex} onChange={handle.TaxInvoiceNumberChange} placeholder='เลขใบกำกับภาษี ( 13 หลัก)' maxLength={13} />
+            <input
+              className='border rounded px-3 py-2'
+              type='text'
+              inputMode='numeric'
+              pattern='[0-9]*'
+              value={cart_invoice_tex}
+              onChange={handle.TaxInvoiceNumberChange}
+              placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
+              maxLength={13}
+            />
           </div>
         </div>
 
@@ -1010,19 +1136,32 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
                             }
                           });
                         }}
-                        className='px-2 py-1 w-auto !bg-red-500 !text-white rounded text-sm hover:!font-semibold hover:!bg-red-700'>
+                        className='px-2 py-1 w-auto !bg-red-500 !text-white rounded text-sm duration-300 !transition-all ease-in-out hover:!font-semibold hover:!bg-red-700 hover:!scale-105'>
                         ลบ
                       </button>
                     </div>
 
                     <div className='flex items-center gap-2 mb-2'>
                       <label className='text-sm'>จำนวน:</label>
-                      <input type='number' value={lunchbox.quantity} onChange={(e) => updateLunchboxQuantity(actualIndex, Number(e.target.value))} min='1' className='w-20 border rounded px-2 py-1 text-center' />
+                      <input
+                        type='number'
+                        value={lunchbox.quantity}
+                        onChange={(e) => updateLunchboxQuantity(actualIndex, Number(e.target.value))}
+                        min='1'
+                        className='w-20 border rounded px-2 py-1 text-center'
+                      />
                     </div>
 
                     <div className='flex items-center gap-2 mb-2'>
                       <label className='text-sm'>ราคารวม:</label>
-                      <input disabled={true} type='text' value={lunchbox.lunchbox_total_cost} onChange={(e) => handle.LunchboxTotalCostChange(actualIndex, e)} placeholder='ใส่ราคารวม' className='w-32 border rounded px-2 py-1 text-center' />
+                      <input
+                        disabled={true}
+                        type='text'
+                        value={lunchbox.lunchbox_total_cost}
+                        onChange={(e) => handle.LunchboxTotalCostChange(actualIndex, e)}
+                        placeholder='ใส่ราคารวม'
+                        className='w-32 border rounded px-2 py-1 text-center'
+                      />
                       <span className='text-sm text-gray-500'>บาท</span>
                     </div>
 
@@ -1054,7 +1193,9 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
                       </div>
                     )}
 
-                    <button onClick={() => handle.EditLunchbox(actualIndex)} className='w-auto mx-auto flex !items-center !justify-center gap-2 px-3 py-2 rounded hover:!bg-gray-300 hover:!font-semibold text-sm'>
+                    <button
+                      onClick={() => handle.EditLunchbox(actualIndex)}
+                      className='w-auto mx-auto flex !items-center !justify-center gap-2 px-3 py-2 rounded duration-300 !transition-all ease-in-out hover:!bg-gray-300 hover:!font-semibold hover:!scale-105 text-sm'>
                       <img className='w-7 h-7' src={Edit.src} alt='' /> แก้ไขทั้งหมด
                     </button>
                   </div>
@@ -1092,7 +1233,9 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
               }
             }}
             disabled={!validate.BasicInfo()}
-            className={`w-full text-center px-4 py-2 text-white rounded transition-all duration-300 ${validate.BasicInfo() ? "bg-green-500 hover:bg-green-600 hover:scale-110 hover:font-semibold cursor-pointer" : "bg-gray-400 cursor-not-allowed opacity-60"}`}>
+            className={`w-full text-center px-4 py-2 text-white rounded !transition-all duration-300 ${
+              validate.BasicInfo() ? "bg-green-500 hover:bg-green-600 hover:scale-110 hover:font-semibold cursor-pointer" : "bg-gray-400 cursor-not-allowed opacity-60"
+            }`}>
             <svg viewBox='0 0 1024 1024' className='icon relative -top-0.5 !w-10 !h-10' version='1.1' xmlns='http://www.w3.org/2000/svg'>
               <path d='M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z' fill={validate.BasicInfo() ? "#4CAF50" : "#9CA3AF"} />
               <path d='M448 298.666667h128v426.666666h-128z' fill='#FFFFFF' />
@@ -1127,28 +1270,113 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
           <>
             <div className='flex items-center gap-2 mb-4'>
               <label className='font-bold'>รูปแบบการชำระเงิน</label>
-              <select value={cart_pay_type} onChange={(e) => setCustomerInfo({ pay_type: e.target.value })} className='w-auto border rounded px-3 py-2'>
-                <option value=''>เลือกรูปแบบการชำระเงิน</option>
-                <option value='cash'>ชำระด้วยเงินสด</option>
-                <option value='transfer'>ชำระด้วยโอนเงิน</option>
-                <option value='card'>ชำระด้วยบัตรเครดิต</option>
-              </select>
+              <Select value={cart_pay_type || ""} onValueChange={(value) => setCustomerInfo({ pay_type: value })}>
+                <SelectTrigger className='w-[200px]'>
+                  <SelectValue placeholder='เลือกรูปแบบการชำระเงิน' />
+                </SelectTrigger>
+                <SelectContent side='bottom' align='start' position='popper' avoidCollisions={true} collisionPadding={8} sideOffset={4} className='w-[200px] max-w-[200px]'>
+                  <SelectItem value='cash'>ชำระด้วยเงินสด</SelectItem>
+                  <SelectItem value='transfer'>ชำระด้วยโอนเงิน</SelectItem>
+                  <SelectItem value='card'>ชำระด้วยบัตรเครดิต</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Show deposit section only when payment method is selected */}
             {cart_pay_type && (
               <>
-                <div className='flex items-center gap-2 mb-4'>
-                  <div className='flex'>
+                <div className='flex flex-col gap-2 mb-4'>
+                  <div className='flex items-center gap-2'>
                     <label className='font-bold'>รูปแบบการมัดจำ</label>
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <input type='radio' id='deposit-full' name='deposit' value='full' checked={cart_pay_deposit === "full" && cart_pay_isdeposit === true} onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })} />
-                    <label htmlFor='deposit-full'>จำนวนเต็ม</label>
+                  <div className='grid grid-cols-2 gap-3'>
+                    {/* จำนวนเต็ม */}
+                    <label
+                      htmlFor='deposit-full'
+                      className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        cart_pay_deposit === "full" && cart_pay_isdeposit === true
+                          ? "border-orange-500 bg-orange-50 shadow-md"
+                          : "border-gray-300 bg-white hover:border-orange-300 hover:bg-orange-50/50"
+                      }`}>
+                      <input
+                        type='radio'
+                        id='deposit-full'
+                        name='deposit'
+                        value='full'
+                        checked={cart_pay_deposit === "full" && cart_pay_isdeposit === true}
+                        onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })}
+                        className='sr-only'
+                      />
+                      <svg
+                        className='!w-5 !h-5'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                        style={{ color: cart_pay_deposit === "full" && cart_pay_isdeposit === true ? "#EA580C" : "#6B7280" }}>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+                      </svg>
+                      <span className={`font-medium ${cart_pay_deposit === "full" && cart_pay_isdeposit === true ? "text-orange-700" : "text-gray-700"}`}>จำนวนเต็ม</span>
+                      {cart_pay_deposit === "full" && cart_pay_isdeposit === true && (
+                        <div className='absolute top-2 right-2'>
+                          <svg className='!w-5 !h-5 text-orange-500' fill='currentColor' viewBox='0 0 20 20'>
+                            <path
+                              fillRule='evenodd'
+                              d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                              clipRule='evenodd'
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </label>
 
-                    <input type='radio' id='deposit-percent' name='deposit' value='percent' checked={cart_pay_deposit === "percent" && cart_pay_isdeposit === true} onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })} />
-                    {/* <label htmlFor='deposit-percent'>`${cart_pay_type === "card" ? "50" : ""}%`</label> */}
-                    <label htmlFor='deposit-percent'>50%</label>
+                    {/* 50% */}
+                    <label
+                      htmlFor='deposit-percent'
+                      className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        cart_pay_deposit === "percent" && cart_pay_isdeposit === true
+                          ? "border-amber-500 bg-amber-50 shadow-md"
+                          : "border-gray-300 bg-white hover:border-amber-300 hover:bg-amber-50/50"
+                      }`}>
+                      <input
+                        type='radio'
+                        id='deposit-percent'
+                        name='deposit'
+                        value='percent'
+                        checked={cart_pay_deposit === "percent" && cart_pay_isdeposit === true}
+                        onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })}
+                        className='sr-only'
+                      />
+                      <svg className='!w-5 !h-5' version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
+                        <path
+                          style={{ fill: "#F2B851" }}
+                          d='M512,256.8l-67.2-54.224l43.2-74.96l-91.2-7.968l-8-87.728L312,68.608L259.2,0l-49.6,70.176
+	l-80-41.472l-4.8,90.928l-89.6,4.784l33.6,86.128L0,252.016l70.4,52.64l-35.2,74.96l88,9.568l4.8,89.328l81.6-38.288L264,512
+	l48-71.776l75.2,36.688l6.4-89.328l88-1.6l-32-73.376L512,256.8z'
+                        />
+                        <path
+                          style={{ fill: "#FFFFFF" }}
+                          d='M252.544,210.352c0,36.352-22.992,55.328-48.128,55.328c-26.464,0-47.312-19.776-47.312-52.384
+	c0-31.008,18.992-54.528,48.656-54.528C235.696,158.768,252.544,180.688,252.544,210.352z M187.296,212.224
+	c0,18.176,6.16,31.264,17.92,31.264c11.488,0,17.104-11.744,17.104-31.264c0-17.664-4.816-31.28-17.376-31.28
+	C192.928,180.944,187.296,194.832,187.296,212.224z M206.56,338.4l99.712-179.648h21.92L228.208,338.4H206.56z M377.648,282.528
+	c0,36.352-22.992,55.344-48.128,55.344c-26.192,0-47.04-19.776-47.312-52.384c0-31.008,18.992-54.544,48.656-54.544
+	C360.8,230.928,377.648,252.848,377.648,282.528z M312.688,284.4c-0.272,18.192,5.872,31.28,17.648,31.28
+	c11.504,0,17.104-11.76,17.104-31.28c0-17.648-4.544-31.28-17.104-31.28C318.032,253.12,312.688,267.024,312.688,284.4z'
+                        />
+                      </svg>
+                      <span className={`font-medium ${cart_pay_deposit === "percent" && cart_pay_isdeposit === true ? "text-amber-700" : "text-gray-700"}`}>50%</span>
+                      {cart_pay_deposit === "percent" && cart_pay_isdeposit === true && (
+                        <div className='absolute top-2 right-2'>
+                          <svg className='!w-5 !h-5 text-amber-500' fill='currentColor' viewBox='0 0 20 20'>
+                            <path
+                              fillRule='evenodd'
+                              d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+                              clipRule='evenodd'
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </label>
                   </div>
                 </div>
               </>
@@ -1157,7 +1385,11 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
             <div className='border rounded p-4 mb-4 bg-gray-50'>
               <div className='flex justify-between items-center py-2 border-b'>
                 <label className='font-bold'>ค่าอาหาร </label>
-                <span className='text-lg'>{Array.isArray(selected_lunchboxes) && selected_lunchboxes.length > 0 ? `${selected_lunchboxes.reduce((sum, lb) => sum + (Number(lb.lunchbox_total_cost?.replace(/[^\d]/g, "")) || 0), 0).toLocaleString("th-TH")} บาท` : "-"}</span>
+                <span className='text-lg'>
+                  {Array.isArray(selected_lunchboxes) && selected_lunchboxes.length > 0
+                    ? `${selected_lunchboxes.reduce((sum, lb) => sum + (Number(lb.lunchbox_total_cost?.replace(/[^\d]/g, "")) || 0), 0).toLocaleString("th-TH")} บาท`
+                    : "-"}
+                </span>
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
                 <label className='font-bold'>ค่าส่ง </label>
@@ -1202,7 +1434,7 @@ ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บ�
             cursor: loading ? "not-allowed" : "pointer",
             color: "white",
           }}
-          className={`w-full py-2 rounded font-bold transition ${loading ? "" : errors.length === 0 ? "hover:!bg-green-400" : "hover:bg-red-400"}`}>
+          className={`w-full py-2 rounded font-bold !transition-all duration-300 ${loading ? "" : errors.length === 0 ? "hover:!bg-green-500" : "hover:bg-red-400"}`}>
           {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
         </button>
       </div>
