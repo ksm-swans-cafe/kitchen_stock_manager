@@ -573,8 +573,8 @@ export default function Order() {
           let effectivePrev = [...prev];
 
           // ถ้าเลือกเมนูในหมวดหมู่ที่เลือกไปแล้ว ให้ลบอันเก่าออกก่อน (Swap)
-          // ยกเว้นหมวด "ข้าว" ที่มี logic พิเศษ
-          if (selectedMenu.lunchbox_menu_category && selectedMenu.lunchbox_menu_category !== "ข้าว") {
+          // รวมทุกหมวดหมู่ (รวมถึงข้าว)
+          if (selectedMenu.lunchbox_menu_category) {
             const existingMenuKey = effectivePrev.find((key) => {
               const m = availableMenus.find((menu) => buildMenuKey(menu) === key);
               return m?.lunchbox_menu_category === selectedMenu.lunchbox_menu_category;
@@ -582,25 +582,6 @@ export default function Order() {
 
             if (existingMenuKey) {
               effectivePrev = effectivePrev.filter((k) => k !== existingMenuKey);
-            }
-          }
-
-          const currentSelectedMenus = availableMenus.filter((menu) => effectivePrev.includes(buildMenuKey(menu)));
-
-          // ตรวจสอบจำนวนเมนูตามหมวดหมู่ - ทุกหมวดหมู่เลือกได้แค่ 1 อย่างเดียว
-          if (!isUnlimited || isDrinksSet) {
-            const existingLunchboxCategories = currentSelectedMenus.map((menu) => menu.lunchbox_menu_category).filter((category) => category);
-
-            // ตรวจสอบว่ามีเมนูในหมวดหมู่นี้เลือกไว้แล้วหรือไม่ (ยกเว้นข้าว)
-            if (selectedMenu.lunchbox_menu_category && selectedMenu.lunchbox_menu_category !== "ข้าว" && existingLunchboxCategories.includes(selectedMenu.lunchbox_menu_category)) {
-              // ถ้ามีแล้ว จะถูกจัดการด้วย Auto-Replace ด้านบนแล้ว ไม่ต้องแจ้งเตือน
-              // แต่ถ้ายังมีอยู่ แสดงว่าอาจมีปัญหา ให้แจ้งเตือน
-              const existingCount = currentSelectedMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category).length;
-              if (existingCount > 0) {
-                // ควรจะถูกจัดการด้วย Auto-Replace แล้ว แต่ถ้ายังมี ให้แจ้งเตือน
-                alert(`ไม่สามารถเลือกเมนูจากหมวดหมู่ "${selectedMenu.lunchbox_menu_category}" ได้ เนื่องจากได้เลือกเมนูจากหมวดหมู่นี้ไว้แล้ว`);
-                return prev;
-              }
             }
           }
 
@@ -779,7 +760,17 @@ export default function Order() {
   const handleMeatFilterChange = (newMeatType: string | null) => {
     setSelectedMeatType(newMeatType);
 
-    if (!newMeatType) return;
+    // ถ้าปลดตัวเลือกเนื้อสัตว์ออก ให้เคลียร์เมนูในหมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว"
+    if (!newMeatType) {
+      setSelectedMenuItems((prev) => {
+        return prev.filter((key) => {
+          const menu = availableMenus.find((m) => buildMenuKey(m) === key);
+          return menu?.lunchbox_menu_category !== "กับข้าวที่ 1" && menu?.lunchbox_menu_category !== "ข้าว+กับข้าว";
+        });
+      });
+      setFocusedDish(null);
+      return;
+    }
 
     let newSelectedItems = [...selectedMenuItems];
     let hasChanges = false;
@@ -1658,15 +1649,7 @@ export default function Order() {
                             size={isMobile ? "sm" : "md"}
                             showPrice={true}
                             onClick={() => {
-                              const hasCategorySelection = availableMenus.some((m) =>
-                                (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
-                                selectedMenuItems.includes(buildMenuKey(m))
-                              );
-
-                              // อนุญาตให้คลิกได้ถ้ายังไม่มีการเลือก หรือคลิกเพื่อยกเลิกอันเดิม
-                              if (!hasCategorySelection || isDishTypeSelected) {
-                                handleGenericDishClick(dishType, matchingMenu);
-                              }
+                              handleGenericDishClick(dishType, matchingMenu);
                             }}
                           />
                         );
@@ -1837,13 +1820,7 @@ export default function Order() {
                               faded={(() => {
                                 if (isSelected) return false;
 
-                                // 1. ตรวจสอบเรื่องประเภทเนื้อสัตว์ (ถ้าเลือกฟิลเตอร์แล้ว)
-                                if (selectedMeatType) {
-                                  const menuMeat = getMeatType(menu.menu_name);
-                                  if (menuMeat && menuMeat !== selectedMeatType) return true;
-                                }
-
-                                // 2. ตรวจสอบเรื่องการเลือกในหมวดหมู่เดียวกันไปแล้ว (ยกเว้นข้าว)
+                                // 1. ตรวจสอบเรื่องการเลือกในหมวดหมู่เดียวกันไปแล้ว (ยกเว้นข้าว)
                                 if (isCategoryHasSelection && menu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว") {
                                   const hasCategorySelected = availableMenus.some((m) => m.lunchbox_menu_category === menu.lunchbox_menu_category && selectedMenuItems.includes(buildMenuKey(m)));
                                   return hasCategorySelected;
@@ -1854,15 +1831,6 @@ export default function Order() {
                               size={isMobile ? "sm" : "md"}
                               showPrice={menu.lunchbox_showPrice ?? true}
                               onClick={() => {
-                                // ตรวจสอบเรื่องเนื้อสัตว์ไม่ตรงกับฟิลเตอร์
-                                if (selectedMeatType) {
-                                  const menuMeat = getMeatType(menu.menu_name);
-                                  if (menuMeat && menuMeat !== selectedMeatType) {
-                                    alert(`กรุณาเลือกเฉพาะเมนูที่เป็น ${selectedMeatType}`);
-                                    return;
-                                  }
-                                }
-
                                 // ตรวจสอบว่าหมวดนี้ถูกล็อคหรือไม่
                                 if (isLocked && menu.lunchbox_menu_category) {
                                   // กรณีพิเศษ: หมวด "กับข้าวที่ 2" ต้องเลือกฟิลเตอร์เนื้อสัตว์ก่อน
@@ -1878,9 +1846,7 @@ export default function Order() {
                                   }
                                 }
 
-                                if (!isLunchboxCategoryTaken) {
-                                  handle.MenuSelection(menuKey);
-                                }
+                                handle.MenuSelection(menuKey);
                               }}
                             />
                           );
