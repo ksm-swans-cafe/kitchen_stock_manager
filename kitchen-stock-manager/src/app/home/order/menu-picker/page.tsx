@@ -343,6 +343,8 @@ export default function Order() {
       result = result.filter((menu) => {
         // ถ้าไม่ใช่หมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว" ให้ปล่อยผ่าน (ไม่กรอง)
         if (menu.lunchbox_menu_category !== "กับข้าวที่ 1" && menu.lunchbox_menu_category !== "ข้าว+กับข้าว") return true;
+        // ถ้าไม่ใช่หมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว" ให้ปล่อยผ่าน (ไม่กรอง)
+        if (menu.lunchbox_menu_category !== "กับข้าวที่ 1" && menu.lunchbox_menu_category !== "ข้าว+กับข้าว") return true;
 
         const menuName = menu.menu_name || "";
         return menuName.includes(selectedMeatType);
@@ -370,6 +372,7 @@ export default function Order() {
   // หาประเภทเนื้อสัตว์ที่มีในเมนูปัจจุบัน
   const dynamicMeatTypes = useMemo(() => {
     const keywords = ["หมู", "ไก่", "กุ้ง", "หมึก", "ทะเล"];
+    const mainDish1Menus = availableMenus.filter((m) => m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว");
     const mainDish1Menus = availableMenus.filter((m) => m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว");
     return keywords.filter((k) => mainDish1Menus.some((m) => (m.menu_name || "").includes(k)));
   }, [availableMenus]);
@@ -563,48 +566,50 @@ export default function Order() {
           // ถ้าเลือกเมนูในหมวดหมู่ที่เลือกไปแล้ว ให้ลบอันเก่าออกก่อน (Swap)
           // รวมทุกหมวดหมู่ (รวมถึงข้าว)
           if (selectedMenu.lunchbox_menu_category) {
-            const existingMenuKey = effectivePrev.find((key) => {
-              const m = availableMenus.find((menu) => buildMenuKey(menu) === key);
-              return m?.lunchbox_menu_category === selectedMenu.lunchbox_menu_category;
-            });
+            // รวมทุกหมวดหมู่ (รวมถึงข้าว)
+            if (selectedMenu.lunchbox_menu_category) {
+              const existingMenuKey = effectivePrev.find((key) => {
+                const m = availableMenus.find((menu) => buildMenuKey(menu) === key);
+                return m?.lunchbox_menu_category === selectedMenu.lunchbox_menu_category;
+              });
 
-            if (existingMenuKey) {
-              effectivePrev = effectivePrev.filter((k) => k !== existingMenuKey);
-            }
-          }
-
-          // เพิ่มข้าวอัตโนมัติ
-          if (isUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && shouldAutoAddRice) {
-            const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว");
-            if (riceMenus.length > 0) {
-              const riceMenuKey = buildMenuKey(riceMenus[0]);
-
-              // นับเมนูในหมวดเดียวกัน (ไม่รวมข้าว)
-              const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && effectivePrev.includes(buildMenuKey(menu)));
-
-              // คำนวณจำนวนข้าว
-              const requiredRiceCount = menusInCategory.length + 1; // +1 เพราะกำลังจะเพิ่มเมนูใหม่
-
-              setRiceQuantity(requiredRiceCount);
-
-              // เพิ่มข้าวถ้ายังไม่มี
-              if (!effectivePrev.includes(riceMenuKey)) {
-                return [...effectivePrev, riceMenuKey, menuKey];
-              } else {
-                return [...effectivePrev, menuKey];
+              if (existingMenuKey) {
+                effectivePrev = effectivePrev.filter((k) => k !== existingMenuKey);
               }
             }
-          }
 
-          // ตรวจสอบขีดจำกัดจำนวนเมนู
-          if (isUnlimited || effectivePrev.length < limit) {
-            return [...effectivePrev, menuKey];
-          } else {
-            const newSelection = [...effectivePrev.slice(1), menuKey];
-            return newSelection;
+            // เพิ่มข้าวอัตโนมัติ
+            if (isUnlimited && !isRiceMenu && selectedMenu.lunchbox_menu_category && shouldAutoAddRice) {
+              const riceMenus = availableMenus.filter((menu) => menu.lunchbox_menu_category === "ข้าว");
+              if (riceMenus.length > 0) {
+                const riceMenuKey = buildMenuKey(riceMenus[0]);
+
+                // นับเมนูในหมวดเดียวกัน (ไม่รวมข้าว)
+                const menusInCategory = availableMenus.filter((menu) => menu.lunchbox_menu_category === selectedMenu.lunchbox_menu_category && menu.lunchbox_menu_category !== "ข้าว" && effectivePrev.includes(buildMenuKey(menu)));
+
+                // คำนวณจำนวนข้าว
+                const requiredRiceCount = menusInCategory.length + 1; // +1 เพราะกำลังจะเพิ่มเมนูใหม่
+
+                setRiceQuantity(requiredRiceCount);
+
+                // เพิ่มข้าวถ้ายังไม่มี
+                if (!effectivePrev.includes(riceMenuKey)) {
+                  return [...effectivePrev, riceMenuKey, menuKey];
+                } else {
+                  return [...effectivePrev, menuKey];
+                }
+              }
+            }
+
+            // ตรวจสอบขีดจำกัดจำนวนเมนู
+            if (isUnlimited || effectivePrev.length < limit) {
+              return [...effectivePrev, menuKey];
+            } else {
+              const newSelection = [...effectivePrev.slice(1), menuKey];
+              return newSelection;
+            }
           }
-        }
-      });
+        });
     },
     Submit: async () => {
       if (!selectedFoodSet || !selectedSetMenu || selectedMenuItems.length === 0) {
@@ -673,6 +678,20 @@ export default function Order() {
           return catA.localeCompare(catB, "th");
         });
 
+        // เรียงลำดับเมนูตามหมวดหมู่ก่อนบันทึก
+        const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
+        selectedMenuObjects.sort((a, b) => {
+          const catA = a.lunchbox_menu_category || "อื่นๆ";
+          const catB = b.lunchbox_menu_category || "อื่นๆ";
+          const indexA = categoryOrder.indexOf(catA);
+          const indexB = categoryOrder.indexOf(catB);
+
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return catA.localeCompare(catB, "th");
+        });
+
         // ตรวจสอบว่ามีเมนูหรือไม่
         if (selectedMenuObjects.length === 0) throw new Error("ไม่พบเมนูที่เลือก");
 
@@ -701,6 +720,7 @@ export default function Order() {
 
           store.updateLunchboxMenus(editingIndex, selectedMenuObjects);
           store.updateLunchboxNote(editingIndex, note);
+          store.updateLunchboxQuantity(editingIndex, lunchboxQuantity);
           store.updateLunchboxQuantity(editingIndex, lunchboxQuantity);
           store.updateLunchboxTotalCost(editingIndex, newLunchbox.lunchbox_total_cost);
 
@@ -742,12 +762,24 @@ export default function Order() {
   // แสดงหน้าจอรอโหลดข้อมูล
   if (isLoadingEditData) {
     return <Loading context='ข้อมูลแก้ไข' />;
+    return <Loading context='ข้อมูลแก้ไข' />;
   }
 
   // จัดการเปลี่ยนประเภทเนื้อสัตว์และสลับเมนู
   const handleMeatFilterChange = (newMeatType: string | null) => {
     setSelectedMeatType(newMeatType);
 
+    // ถ้าปลดตัวเลือกเนื้อสัตว์ออก ให้เคลียร์เมนูในหมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว"
+    if (!newMeatType) {
+      setSelectedMenuItems((prev) => {
+        return prev.filter((key) => {
+          const menu = availableMenus.find((m) => buildMenuKey(m) === key);
+          return menu?.lunchbox_menu_category !== "กับข้าวที่ 1" && menu?.lunchbox_menu_category !== "ข้าว+กับข้าว";
+        });
+      });
+      setFocusedDish(null);
+      return;
+    }
     // ถ้าปลดตัวเลือกเนื้อสัตว์ออก ให้เคลียร์เมนูในหมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว"
     if (!newMeatType) {
       setSelectedMenuItems((prev) => {
