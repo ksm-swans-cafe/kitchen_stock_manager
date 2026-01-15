@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       cart_pay_charge,
       cart_total_remain,
       cart_total_cost,
+      cart_message,
     } = body;
 
     if (!cart_channel_access || !cart_username || !cart_lunchboxes) {
@@ -112,15 +113,24 @@ export async function POST(request: NextRequest) {
       cart_total_cost: cart_total_cost || "",
     };
 
+    const cartLogData = {
+      message: cart_message || `สร้างออเดอร์ ${cartId} โดย ${cart_username}`,
+      create_date: cartCreateDateString,
+      create_by: cart_username,
+      status: "created",
+    };
     const finalCartData = convertBigIntToNumber(cartData);
 
     const result = await prisma.cart.create({
       data: finalCartData,
     });
+    const cartLogResult = await prisma.cart_log.create({
+      data: cartLogData,
+    });
 
     const finalResult = convertBigIntToNumber(result);
 
-    return NextResponse.json({ message: "Cart created successfully", cart: finalResult }, { status: 201 });
+    return NextResponse.json({ message: "Cart created successfully", cart: finalResult, cart_log: cartLogResult }, { status: 201 });
   } catch (error: string | unknown) {
     console.error("Error creating cart:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(

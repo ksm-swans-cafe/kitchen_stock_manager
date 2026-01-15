@@ -120,6 +120,14 @@ model cart {
   cart_pinned        Boolean?
 }
 
+model cart_log {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  message String
+  status String
+  create_date String
+  create_by String
+}
+
 model employee {
   id                 String @id @default(auto()) @map("_id") @db.ObjectId
   employee_firstname String

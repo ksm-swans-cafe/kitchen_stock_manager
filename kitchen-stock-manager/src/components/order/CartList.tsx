@@ -244,6 +244,69 @@ export default function CartList() {
     setLoading(true);
     setErrors([]);
     try {
+      // สร้างข้อความสำหรับ cart_log ก่อนส่ง request
+      const lunchboxListForMessage = selected_lunchboxes
+        .map((lb, index) => {
+          const lunchboxCost = Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0;
+          const costPerBox = lunchboxCost / lb.quantity;
+          const menuList = lb.selected_menus.map((menu, menuIndex) => `+ ${menu.menu_name}`).join("\n      ");
+
+          return `${index + 1}.${lb.lunchbox_name} - ${lb.lunchbox_set}
+      ${menuList}
+      เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท 
+      จำนวน ${lb.quantity} กล่อง 
+      รวม ${costPerBox.toLocaleString("th-TH")}x${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`;
+        })
+        .join("\n\n      ");
+
+      const totalLunchboxCostForMessage = selected_lunchboxes.reduce((sum, lb) => {
+        return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
+      }, 0);
+
+      const shippingCostNumForMessage = Number(cart_shipping_cost.replace(/[^\d]/g, "")) || 0;
+      const chargeNumForMessage = Number(cart_pay_charge.replace(/[^\d.]/g, "") || 0);
+      const totalCostNumForMessage = totalLunchboxCostForMessage + shippingCostNumForMessage + chargeNumForMessage;
+
+      let depositTextForMessage = "";
+      let depositValueForMessage = "";
+      if (cart_pay_deposit === "percent") {
+        const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, "") || 0);
+        const depositAmount = (totalCostNumForMessage * payCostNum) / 100;
+        depositTextForMessage = `${cart_pay_cost}%`;
+        depositValueForMessage = `(${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท)`;
+      } else if (cart_pay_deposit === "full") {
+        const depositAmount = Number(cart_pay_cost.replace(/[^\d]/g, "") || 0) / 100;
+        depositTextForMessage = `${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
+        depositValueForMessage = `(${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท)`;
+      } else {
+        depositTextForMessage = "-";
+      }
+
+      const copyTextContent = `
+📌รับออเดอร์ คุณ ${cart_receive_name} 
+ช่องทางที่สั่ง : ${cart_channel_access}
+ผู้รับออเดอร์ : ${userName}
+✅ รายละเอียดสำหรับจัดส่ง
+1.วันที่รับสินค้า : ${cart_delivery_date}
+2.เวลาส่งสินค้า : ${cart_export_time}
+3.เวลารับสินค้า : ${cart_receive_time}
+4.สถานที่จัดส่ง : ${cart_location_send}
+5.ชื่อผู้รับสินค้า : ${cart_receive_name}
+6.เบอร์โทร : ${cart_customer_tel}
+7.ออกบิลในนาม : ${cart_customer_name}
+8.ที่อยู่ : ${cart_location_send}
+9.เลขประจำตัวผู้เสียภาษี : ${cart_invoice_tex}
+
+✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
+      ${lunchboxListForMessage}
+
+✅รวมค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท
+ค่าจัดส่ง ${cart_shipping_cost} บาท
+${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บาท\n` : ""}
+✅รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
+มัดจำ ${depositTextForMessage}
+ชำระ ${depositValueForMessage} (ชำระเรียบร้อยเเล้ว)`;
+
       const response = await axios.post("/api/post/cart", {
         cart_username: userName,
         cart_channel_access,
@@ -299,25 +362,24 @@ export default function CartList() {
         cart_pay_cost: cart_pay_cost,
         cart_pay_charge: cart_pay_charge,
         cart_total_remain: cart_total_remain,
+        cart_message: copyTextContent,
       });
 
       if (response.status !== 201) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
 
-      // setSuccess(true);
+      // // ใช้ copyTextContent ที่สร้างไว้ก่อนหน้านี้
+      //   .map((lb, index) => {
+      //     const lunchboxCost = Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0;
+      //     const costPerBox = lunchboxCost / lb.quantity;
+      //     const menuList = lb.selected_menus.map((menu, menuIndex) => `+ ${menu.menu_name}`).join("\n      ");
 
-      const lunchboxList = selected_lunchboxes
-        .map((lb, index) => {
-          const lunchboxCost = Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0;
-          const costPerBox = lunchboxCost / lb.quantity;
-          const menuList = lb.selected_menus.map((menu, menuIndex) => `+ ${menu.menu_name}`).join("\n      ");
-
-          return `${index + 1}.${lb.lunchbox_name} - ${lb.lunchbox_set}
-      ${menuList}
-      เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท 
-      จำนวน ${lb.quantity} กล่อง 
-      รวม ${costPerBox.toLocaleString("th-TH")}x${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`;
-        })
-        .join("\n\n      ");
+      //     return `${index + 1}.${lb.lunchbox_name} - ${lb.lunchbox_set}
+      // ${menuList}
+      // เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท
+      // จำนวน ${lb.quantity} กล่อง
+      // รวม ${costPerBox.toLocaleString("th-TH")}x${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`;
+      //   })
+      //   .join("\n\n      ");
 
       // คำนวณยอดรวม
       const totalLunchboxCost = selected_lunchboxes.reduce((sum, lb) => {
@@ -347,29 +409,30 @@ export default function CartList() {
       // คำนวณยอดคงเหลือ
       const remainNum = Number(cart_total_remain.replace(/[^\d.]/g, "")) || 0;
 
-      const copyTextContent = `
-📌รับออเดอร์ คุณ ${cart_receive_name} 
-ช่องทางที่สั่ง : ${cart_channel_access}
-✅ รายละเอียดสำหรับจัดส่ง
-1.วันที่รับสินค้า : ${cart_delivery_date}
-2.เวลาส่งสินค้า : ${cart_export_time}
-3.เวลารับสินค้า : ${cart_receive_time}
-4.สถานที่จัดส่ง : ${cart_location_send}
-5.ชื่อผู้รับสินค้า : ${cart_receive_name}
-6.เบอร์โทร : ${cart_customer_tel}
-7.ออกบิลในนาม : ${cart_customer_name}
-8.ที่อยู่ : ${cart_location_send}
-9.เลขประจำตัวผู้เสียภาษี : ${cart_invoice_tex}
+      //       const copyTextContent = `
+      // 📌รับออเดอร์ คุณ ${cart_receive_name}
+      // ช่องทางที่สั่ง : ${cart_channel_access}
+      // ผู้รับออเดอร์ : ${userName}
+      // ✅ รายละเอียดสำหรับจัดส่ง
+      // 1.วันที่รับสินค้า : ${cart_delivery_date}
+      // 2.เวลาส่งสินค้า : ${cart_export_time}
+      // 3.เวลารับสินค้า : ${cart_receive_time}
+      // 4.สถานที่จัดส่ง : ${cart_location_send}
+      // 5.ชื่อผู้รับสินค้า : ${cart_receive_name}
+      // 6.เบอร์โทร : ${cart_customer_tel}
+      // 7.ออกบิลในนาม : ${cart_customer_name}
+      // 8.ที่อยู่ : ${cart_location_send}
+      // 9.เลขประจำตัวผู้เสียภาษี : ${cart_invoice_tex}
 
-✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
-      ${lunchboxList}
+      // ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง
+      //       ${lunchboxList}
 
-✅รวมค่าอาหาร ${totalLunchboxCost.toLocaleString("th-TH")} บาท
-ค่าจัดส่ง ${cart_shipping_cost} บาท
-${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บาท\n` : ""}
-✅รวมทั้งหมด ${totalCostNum.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
-มัดจำ ${depositText}
-ชำระ ${depositValue} (ชำระเรียบร้อยเเล้ว)`;
+      // ✅รวมค่าอาหาร ${totalLunchboxCost.toLocaleString("th-TH")} บาท
+      // ค่าจัดส่ง ${cart_shipping_cost} บาท
+      // ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บาท\n` : ""}
+      // ✅รวมทั้งหมด ${totalCostNum.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
+      // มัดจำ ${depositText}
+      // ชำระ ${depositValue} (ชำระเรียบร้อยเเล้ว)`;
       // คงเหลือ ${remainNum > 0 ? `${Number(remainNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท` : "-"}
 
       setCopyText(copyTextContent);
