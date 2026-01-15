@@ -143,6 +143,14 @@ exports.Prisma.CartScalarFieldEnum = {
   cart_pinned: 'cart_pinned'
 };
 
+exports.Prisma.Cart_logScalarFieldEnum = {
+  id: 'id',
+  message: 'message',
+  status: 'status',
+  create_date: 'create_date',
+  create_by: 'create_by'
+};
+
 exports.Prisma.EmployeeScalarFieldEnum = {
   id: 'id',
   employee_firstname: 'employee_firstname',
@@ -212,6 +220,7 @@ exports.Prisma.QueryMode = {
 
 exports.Prisma.ModelName = {
   cart: 'cart',
+  cart_log: 'cart_log',
   employee: 'employee',
   ingredient_transaction: 'ingredient_transaction',
   ingredients: 'ingredients',

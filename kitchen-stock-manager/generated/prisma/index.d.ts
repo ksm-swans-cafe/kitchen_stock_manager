@@ -54,6 +54,11 @@ export type CartCartDescription = $Result.DefaultSelection<Prisma.$CartCartDescr
  */
 export type cart = $Result.DefaultSelection<Prisma.$cartPayload>
 /**
+ * Model cart_log
+ * 
+ */
+export type cart_log = $Result.DefaultSelection<Prisma.$cart_logPayload>
+/**
  * Model employee
  * 
  */
@@ -173,6 +178,16 @@ export class PrismaClient<
     * ```
     */
   get cart(): Prisma.cartDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.cart_log`: Exposes CRUD operations for the **cart_log** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Cart_logs
+    * const cart_logs = await prisma.cart_log.findMany()
+    * ```
+    */
+  get cart_log(): Prisma.cart_logDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.employee`: Exposes CRUD operations for the **employee** model.
@@ -665,6 +680,7 @@ export namespace Prisma {
 
   export const ModelName: {
     cart: 'cart',
+    cart_log: 'cart_log',
     employee: 'employee',
     ingredient_transaction: 'ingredient_transaction',
     ingredients: 'ingredients',
@@ -688,7 +704,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "cart" | "employee" | "ingredient_transaction" | "ingredients" | "lunchbox" | "menu"
+      modelProps: "cart" | "cart_log" | "employee" | "ingredient_transaction" | "ingredients" | "lunchbox" | "menu"
       txIsolationLevel: never
     }
     model: {
@@ -763,6 +779,80 @@ export namespace Prisma {
           count: {
             args: Prisma.cartCountArgs<ExtArgs>
             result: $Utils.Optional<CartCountAggregateOutputType> | number
+          }
+        }
+      }
+      cart_log: {
+        payload: Prisma.$cart_logPayload<ExtArgs>
+        fields: Prisma.cart_logFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.cart_logFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.cart_logFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload>
+          }
+          findFirst: {
+            args: Prisma.cart_logFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.cart_logFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload>
+          }
+          findMany: {
+            args: Prisma.cart_logFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload>[]
+          }
+          create: {
+            args: Prisma.cart_logCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload>
+          }
+          createMany: {
+            args: Prisma.cart_logCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.cart_logDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload>
+          }
+          update: {
+            args: Prisma.cart_logUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload>
+          }
+          deleteMany: {
+            args: Prisma.cart_logDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.cart_logUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.cart_logUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$cart_logPayload>
+          }
+          aggregate: {
+            args: Prisma.Cart_logAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCart_log>
+          }
+          groupBy: {
+            args: Prisma.cart_logGroupByArgs<ExtArgs>
+            result: $Utils.Optional<Cart_logGroupByOutputType>[]
+          }
+          findRaw: {
+            args: Prisma.cart_logFindRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          aggregateRaw: {
+            args: Prisma.cart_logAggregateRawArgs<ExtArgs>
+            result: JsonObject
+          }
+          count: {
+            args: Prisma.cart_logCountArgs<ExtArgs>
+            result: $Utils.Optional<Cart_logCountAggregateOutputType> | number
           }
         }
       }
@@ -1216,6 +1306,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     cart?: cartOmit
+    cart_log?: cart_logOmit
     employee?: employeeOmit
     ingredient_transaction?: ingredient_transactionOmit
     ingredients?: ingredientsOmit
@@ -2205,7 +2296,7 @@ export namespace Prisma {
     cart_pinned?: boolean
   }
 
-  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_isdeposit" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description" | "cart_pinned", ExtArgs["result"]["cart"]>
+  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_channel_access" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_isdeposit" | "cart_pay_charge" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description" | "cart_pinned", ExtArgs["result"]["cart"]>
   export type cartInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $cartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3044,6 +3135,938 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: cartInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model cart_log
+   */
+
+  export type AggregateCart_log = {
+    _count: Cart_logCountAggregateOutputType | null
+    _min: Cart_logMinAggregateOutputType | null
+    _max: Cart_logMaxAggregateOutputType | null
+  }
+
+  export type Cart_logMinAggregateOutputType = {
+    id: string | null
+    message: string | null
+    status: string | null
+    create_date: string | null
+    create_by: string | null
+  }
+
+  export type Cart_logMaxAggregateOutputType = {
+    id: string | null
+    message: string | null
+    status: string | null
+    create_date: string | null
+    create_by: string | null
+  }
+
+  export type Cart_logCountAggregateOutputType = {
+    id: number
+    message: number
+    status: number
+    create_date: number
+    create_by: number
+    _all: number
+  }
+
+
+  export type Cart_logMinAggregateInputType = {
+    id?: true
+    message?: true
+    status?: true
+    create_date?: true
+    create_by?: true
+  }
+
+  export type Cart_logMaxAggregateInputType = {
+    id?: true
+    message?: true
+    status?: true
+    create_date?: true
+    create_by?: true
+  }
+
+  export type Cart_logCountAggregateInputType = {
+    id?: true
+    message?: true
+    status?: true
+    create_date?: true
+    create_by?: true
+    _all?: true
+  }
+
+  export type Cart_logAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which cart_log to aggregate.
+     */
+    where?: cart_logWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of cart_logs to fetch.
+     */
+    orderBy?: cart_logOrderByWithRelationInput | cart_logOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: cart_logWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` cart_logs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` cart_logs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned cart_logs
+    **/
+    _count?: true | Cart_logCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: Cart_logMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: Cart_logMaxAggregateInputType
+  }
+
+  export type GetCart_logAggregateType<T extends Cart_logAggregateArgs> = {
+        [P in keyof T & keyof AggregateCart_log]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCart_log[P]>
+      : GetScalarType<T[P], AggregateCart_log[P]>
+  }
+
+
+
+
+  export type cart_logGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: cart_logWhereInput
+    orderBy?: cart_logOrderByWithAggregationInput | cart_logOrderByWithAggregationInput[]
+    by: Cart_logScalarFieldEnum[] | Cart_logScalarFieldEnum
+    having?: cart_logScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: Cart_logCountAggregateInputType | true
+    _min?: Cart_logMinAggregateInputType
+    _max?: Cart_logMaxAggregateInputType
+  }
+
+  export type Cart_logGroupByOutputType = {
+    id: string
+    message: string
+    status: string
+    create_date: string
+    create_by: string
+    _count: Cart_logCountAggregateOutputType | null
+    _min: Cart_logMinAggregateOutputType | null
+    _max: Cart_logMaxAggregateOutputType | null
+  }
+
+  type GetCart_logGroupByPayload<T extends cart_logGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<Cart_logGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof Cart_logGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], Cart_logGroupByOutputType[P]>
+            : GetScalarType<T[P], Cart_logGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type cart_logSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    message?: boolean
+    status?: boolean
+    create_date?: boolean
+    create_by?: boolean
+  }, ExtArgs["result"]["cart_log"]>
+
+
+
+  export type cart_logSelectScalar = {
+    id?: boolean
+    message?: boolean
+    status?: boolean
+    create_date?: boolean
+    create_by?: boolean
+  }
+
+  export type cart_logOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "message" | "status" | "create_date" | "create_by", ExtArgs["result"]["cart_log"]>
+
+  export type $cart_logPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "cart_log"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      message: string
+      status: string
+      create_date: string
+      create_by: string
+    }, ExtArgs["result"]["cart_log"]>
+    composites: {}
+  }
+
+  type cart_logGetPayload<S extends boolean | null | undefined | cart_logDefaultArgs> = $Result.GetResult<Prisma.$cart_logPayload, S>
+
+  type cart_logCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<cart_logFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: Cart_logCountAggregateInputType | true
+    }
+
+  export interface cart_logDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['cart_log'], meta: { name: 'cart_log' } }
+    /**
+     * Find zero or one Cart_log that matches the filter.
+     * @param {cart_logFindUniqueArgs} args - Arguments to find a Cart_log
+     * @example
+     * // Get one Cart_log
+     * const cart_log = await prisma.cart_log.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends cart_logFindUniqueArgs>(args: SelectSubset<T, cart_logFindUniqueArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Cart_log that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {cart_logFindUniqueOrThrowArgs} args - Arguments to find a Cart_log
+     * @example
+     * // Get one Cart_log
+     * const cart_log = await prisma.cart_log.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends cart_logFindUniqueOrThrowArgs>(args: SelectSubset<T, cart_logFindUniqueOrThrowArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Cart_log that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {cart_logFindFirstArgs} args - Arguments to find a Cart_log
+     * @example
+     * // Get one Cart_log
+     * const cart_log = await prisma.cart_log.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends cart_logFindFirstArgs>(args?: SelectSubset<T, cart_logFindFirstArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Cart_log that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {cart_logFindFirstOrThrowArgs} args - Arguments to find a Cart_log
+     * @example
+     * // Get one Cart_log
+     * const cart_log = await prisma.cart_log.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends cart_logFindFirstOrThrowArgs>(args?: SelectSubset<T, cart_logFindFirstOrThrowArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Cart_logs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {cart_logFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Cart_logs
+     * const cart_logs = await prisma.cart_log.findMany()
+     * 
+     * // Get first 10 Cart_logs
+     * const cart_logs = await prisma.cart_log.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const cart_logWithIdOnly = await prisma.cart_log.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends cart_logFindManyArgs>(args?: SelectSubset<T, cart_logFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Cart_log.
+     * @param {cart_logCreateArgs} args - Arguments to create a Cart_log.
+     * @example
+     * // Create one Cart_log
+     * const Cart_log = await prisma.cart_log.create({
+     *   data: {
+     *     // ... data to create a Cart_log
+     *   }
+     * })
+     * 
+     */
+    create<T extends cart_logCreateArgs>(args: SelectSubset<T, cart_logCreateArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Cart_logs.
+     * @param {cart_logCreateManyArgs} args - Arguments to create many Cart_logs.
+     * @example
+     * // Create many Cart_logs
+     * const cart_log = await prisma.cart_log.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends cart_logCreateManyArgs>(args?: SelectSubset<T, cart_logCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a Cart_log.
+     * @param {cart_logDeleteArgs} args - Arguments to delete one Cart_log.
+     * @example
+     * // Delete one Cart_log
+     * const Cart_log = await prisma.cart_log.delete({
+     *   where: {
+     *     // ... filter to delete one Cart_log
+     *   }
+     * })
+     * 
+     */
+    delete<T extends cart_logDeleteArgs>(args: SelectSubset<T, cart_logDeleteArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Cart_log.
+     * @param {cart_logUpdateArgs} args - Arguments to update one Cart_log.
+     * @example
+     * // Update one Cart_log
+     * const cart_log = await prisma.cart_log.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends cart_logUpdateArgs>(args: SelectSubset<T, cart_logUpdateArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Cart_logs.
+     * @param {cart_logDeleteManyArgs} args - Arguments to filter Cart_logs to delete.
+     * @example
+     * // Delete a few Cart_logs
+     * const { count } = await prisma.cart_log.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends cart_logDeleteManyArgs>(args?: SelectSubset<T, cart_logDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Cart_logs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {cart_logUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Cart_logs
+     * const cart_log = await prisma.cart_log.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends cart_logUpdateManyArgs>(args: SelectSubset<T, cart_logUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Cart_log.
+     * @param {cart_logUpsertArgs} args - Arguments to update or create a Cart_log.
+     * @example
+     * // Update or create a Cart_log
+     * const cart_log = await prisma.cart_log.upsert({
+     *   create: {
+     *     // ... data to create a Cart_log
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Cart_log we want to update
+     *   }
+     * })
+     */
+    upsert<T extends cart_logUpsertArgs>(args: SelectSubset<T, cart_logUpsertArgs<ExtArgs>>): Prisma__cart_logClient<$Result.GetResult<Prisma.$cart_logPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Cart_logs that matches the filter.
+     * @param {cart_logFindRawArgs} args - Select which filters you would like to apply.
+     * @example
+     * const cart_log = await prisma.cart_log.findRaw({
+     *   filter: { age: { $gt: 25 } }
+     * })
+     */
+    findRaw(args?: cart_logFindRawArgs): Prisma.PrismaPromise<JsonObject>
+
+    /**
+     * Perform aggregation operations on a Cart_log.
+     * @param {cart_logAggregateRawArgs} args - Select which aggregations you would like to apply.
+     * @example
+     * const cart_log = await prisma.cart_log.aggregateRaw({
+     *   pipeline: [
+     *     { $match: { status: "registered" } },
+     *     { $group: { _id: "$country", total: { $sum: 1 } } }
+     *   ]
+     * })
+     */
+    aggregateRaw(args?: cart_logAggregateRawArgs): Prisma.PrismaPromise<JsonObject>
+
+
+    /**
+     * Count the number of Cart_logs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {cart_logCountArgs} args - Arguments to filter Cart_logs to count.
+     * @example
+     * // Count the number of Cart_logs
+     * const count = await prisma.cart_log.count({
+     *   where: {
+     *     // ... the filter for the Cart_logs we want to count
+     *   }
+     * })
+    **/
+    count<T extends cart_logCountArgs>(
+      args?: Subset<T, cart_logCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], Cart_logCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Cart_log.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {Cart_logAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends Cart_logAggregateArgs>(args: Subset<T, Cart_logAggregateArgs>): Prisma.PrismaPromise<GetCart_logAggregateType<T>>
+
+    /**
+     * Group by Cart_log.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {cart_logGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends cart_logGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: cart_logGroupByArgs['orderBy'] }
+        : { orderBy?: cart_logGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, cart_logGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCart_logGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the cart_log model
+   */
+  readonly fields: cart_logFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for cart_log.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__cart_logClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the cart_log model
+   */
+  interface cart_logFieldRefs {
+    readonly id: FieldRef<"cart_log", 'String'>
+    readonly message: FieldRef<"cart_log", 'String'>
+    readonly status: FieldRef<"cart_log", 'String'>
+    readonly create_date: FieldRef<"cart_log", 'String'>
+    readonly create_by: FieldRef<"cart_log", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * cart_log findUnique
+   */
+  export type cart_logFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * Filter, which cart_log to fetch.
+     */
+    where: cart_logWhereUniqueInput
+  }
+
+  /**
+   * cart_log findUniqueOrThrow
+   */
+  export type cart_logFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * Filter, which cart_log to fetch.
+     */
+    where: cart_logWhereUniqueInput
+  }
+
+  /**
+   * cart_log findFirst
+   */
+  export type cart_logFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * Filter, which cart_log to fetch.
+     */
+    where?: cart_logWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of cart_logs to fetch.
+     */
+    orderBy?: cart_logOrderByWithRelationInput | cart_logOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for cart_logs.
+     */
+    cursor?: cart_logWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` cart_logs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` cart_logs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of cart_logs.
+     */
+    distinct?: Cart_logScalarFieldEnum | Cart_logScalarFieldEnum[]
+  }
+
+  /**
+   * cart_log findFirstOrThrow
+   */
+  export type cart_logFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * Filter, which cart_log to fetch.
+     */
+    where?: cart_logWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of cart_logs to fetch.
+     */
+    orderBy?: cart_logOrderByWithRelationInput | cart_logOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for cart_logs.
+     */
+    cursor?: cart_logWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` cart_logs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` cart_logs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of cart_logs.
+     */
+    distinct?: Cart_logScalarFieldEnum | Cart_logScalarFieldEnum[]
+  }
+
+  /**
+   * cart_log findMany
+   */
+  export type cart_logFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * Filter, which cart_logs to fetch.
+     */
+    where?: cart_logWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of cart_logs to fetch.
+     */
+    orderBy?: cart_logOrderByWithRelationInput | cart_logOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing cart_logs.
+     */
+    cursor?: cart_logWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` cart_logs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` cart_logs.
+     */
+    skip?: number
+    distinct?: Cart_logScalarFieldEnum | Cart_logScalarFieldEnum[]
+  }
+
+  /**
+   * cart_log create
+   */
+  export type cart_logCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * The data needed to create a cart_log.
+     */
+    data: XOR<cart_logCreateInput, cart_logUncheckedCreateInput>
+  }
+
+  /**
+   * cart_log createMany
+   */
+  export type cart_logCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many cart_logs.
+     */
+    data: cart_logCreateManyInput | cart_logCreateManyInput[]
+  }
+
+  /**
+   * cart_log update
+   */
+  export type cart_logUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * The data needed to update a cart_log.
+     */
+    data: XOR<cart_logUpdateInput, cart_logUncheckedUpdateInput>
+    /**
+     * Choose, which cart_log to update.
+     */
+    where: cart_logWhereUniqueInput
+  }
+
+  /**
+   * cart_log updateMany
+   */
+  export type cart_logUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update cart_logs.
+     */
+    data: XOR<cart_logUpdateManyMutationInput, cart_logUncheckedUpdateManyInput>
+    /**
+     * Filter which cart_logs to update
+     */
+    where?: cart_logWhereInput
+    /**
+     * Limit how many cart_logs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * cart_log upsert
+   */
+  export type cart_logUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * The filter to search for the cart_log to update in case it exists.
+     */
+    where: cart_logWhereUniqueInput
+    /**
+     * In case the cart_log found by the `where` argument doesn't exist, create a new cart_log with this data.
+     */
+    create: XOR<cart_logCreateInput, cart_logUncheckedCreateInput>
+    /**
+     * In case the cart_log was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<cart_logUpdateInput, cart_logUncheckedUpdateInput>
+  }
+
+  /**
+   * cart_log delete
+   */
+  export type cart_logDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
+    /**
+     * Filter which cart_log to delete.
+     */
+    where: cart_logWhereUniqueInput
+  }
+
+  /**
+   * cart_log deleteMany
+   */
+  export type cart_logDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which cart_logs to delete
+     */
+    where?: cart_logWhereInput
+    /**
+     * Limit how many cart_logs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * cart_log findRaw
+   */
+  export type cart_logFindRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The query predicate filter. If unspecified, then all documents in the collection will match the predicate. ${@link https://docs.mongodb.com/manual/reference/operator/query MongoDB Docs}.
+     */
+    filter?: InputJsonValue
+    /**
+     * Additional options to pass to the `find` command ${@link https://docs.mongodb.com/manual/reference/command/find/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * cart_log aggregateRaw
+   */
+  export type cart_logAggregateRawArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * An array of aggregation stages to process and transform the document stream via the aggregation pipeline. ${@link https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline MongoDB Docs}.
+     */
+    pipeline?: InputJsonValue[]
+    /**
+     * Additional options to pass to the `aggregate` command ${@link https://docs.mongodb.com/manual/reference/command/aggregate/#command-fields MongoDB Docs}.
+     */
+    options?: InputJsonValue
+  }
+
+  /**
+   * cart_log without action
+   */
+  export type cart_logDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the cart_log
+     */
+    select?: cart_logSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the cart_log
+     */
+    omit?: cart_logOmit<ExtArgs> | null
   }
 
 
@@ -8100,6 +9123,17 @@ export namespace Prisma {
   export type CartScalarFieldEnum = (typeof CartScalarFieldEnum)[keyof typeof CartScalarFieldEnum]
 
 
+  export const Cart_logScalarFieldEnum: {
+    id: 'id',
+    message: 'message',
+    status: 'status',
+    create_date: 'create_date',
+    create_by: 'create_by'
+  };
+
+  export type Cart_logScalarFieldEnum = (typeof Cart_logScalarFieldEnum)[keyof typeof Cart_logScalarFieldEnum]
+
+
   export const EmployeeScalarFieldEnum: {
     id: 'id',
     employee_firstname: 'employee_firstname',
@@ -8426,6 +9460,58 @@ export namespace Prisma {
     cart_total_cost?: StringWithAggregatesFilter<"cart"> | string
     cart_total_remain?: StringWithAggregatesFilter<"cart"> | string
     cart_pinned?: BoolNullableWithAggregatesFilter<"cart"> | boolean | null
+  }
+
+  export type cart_logWhereInput = {
+    AND?: cart_logWhereInput | cart_logWhereInput[]
+    OR?: cart_logWhereInput[]
+    NOT?: cart_logWhereInput | cart_logWhereInput[]
+    id?: StringFilter<"cart_log"> | string
+    message?: StringFilter<"cart_log"> | string
+    status?: StringFilter<"cart_log"> | string
+    create_date?: StringFilter<"cart_log"> | string
+    create_by?: StringFilter<"cart_log"> | string
+  }
+
+  export type cart_logOrderByWithRelationInput = {
+    id?: SortOrder
+    message?: SortOrder
+    status?: SortOrder
+    create_date?: SortOrder
+    create_by?: SortOrder
+  }
+
+  export type cart_logWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: cart_logWhereInput | cart_logWhereInput[]
+    OR?: cart_logWhereInput[]
+    NOT?: cart_logWhereInput | cart_logWhereInput[]
+    message?: StringFilter<"cart_log"> | string
+    status?: StringFilter<"cart_log"> | string
+    create_date?: StringFilter<"cart_log"> | string
+    create_by?: StringFilter<"cart_log"> | string
+  }, "id">
+
+  export type cart_logOrderByWithAggregationInput = {
+    id?: SortOrder
+    message?: SortOrder
+    status?: SortOrder
+    create_date?: SortOrder
+    create_by?: SortOrder
+    _count?: cart_logCountOrderByAggregateInput
+    _max?: cart_logMaxOrderByAggregateInput
+    _min?: cart_logMinOrderByAggregateInput
+  }
+
+  export type cart_logScalarWhereWithAggregatesInput = {
+    AND?: cart_logScalarWhereWithAggregatesInput | cart_logScalarWhereWithAggregatesInput[]
+    OR?: cart_logScalarWhereWithAggregatesInput[]
+    NOT?: cart_logScalarWhereWithAggregatesInput | cart_logScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"cart_log"> | string
+    message?: StringWithAggregatesFilter<"cart_log"> | string
+    status?: StringWithAggregatesFilter<"cart_log"> | string
+    create_date?: StringWithAggregatesFilter<"cart_log"> | string
+    create_by?: StringWithAggregatesFilter<"cart_log"> | string
   }
 
   export type employeeWhereInput = {
@@ -8993,6 +10079,58 @@ export namespace Prisma {
     cart_total_remain?: StringFieldUpdateOperationsInput | string
     cart_description?: XOR<CartCartDescriptionListUpdateEnvelopeInput, CartCartDescriptionCreateInput> | CartCartDescriptionCreateInput[]
     cart_pinned?: NullableBoolFieldUpdateOperationsInput | boolean | null
+  }
+
+  export type cart_logCreateInput = {
+    id?: string
+    message: string
+    status: string
+    create_date: string
+    create_by: string
+  }
+
+  export type cart_logUncheckedCreateInput = {
+    id?: string
+    message: string
+    status: string
+    create_date: string
+    create_by: string
+  }
+
+  export type cart_logUpdateInput = {
+    message?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    create_date?: StringFieldUpdateOperationsInput | string
+    create_by?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type cart_logUncheckedUpdateInput = {
+    message?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    create_date?: StringFieldUpdateOperationsInput | string
+    create_by?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type cart_logCreateManyInput = {
+    id?: string
+    message: string
+    status: string
+    create_date: string
+    create_by: string
+  }
+
+  export type cart_logUpdateManyMutationInput = {
+    message?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    create_date?: StringFieldUpdateOperationsInput | string
+    create_by?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type cart_logUncheckedUpdateManyInput = {
+    message?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    create_date?: StringFieldUpdateOperationsInput | string
+    create_by?: StringFieldUpdateOperationsInput | string
   }
 
   export type employeeCreateInput = {
@@ -9603,6 +10741,30 @@ export namespace Prisma {
     _min?: NestedBoolNullableFilter<$PrismaModel>
     _max?: NestedBoolNullableFilter<$PrismaModel>
     isSet?: boolean
+  }
+
+  export type cart_logCountOrderByAggregateInput = {
+    id?: SortOrder
+    message?: SortOrder
+    status?: SortOrder
+    create_date?: SortOrder
+    create_by?: SortOrder
+  }
+
+  export type cart_logMaxOrderByAggregateInput = {
+    id?: SortOrder
+    message?: SortOrder
+    status?: SortOrder
+    create_date?: SortOrder
+    create_by?: SortOrder
+  }
+
+  export type cart_logMinOrderByAggregateInput = {
+    id?: SortOrder
+    message?: SortOrder
+    status?: SortOrder
+    create_date?: SortOrder
+    create_by?: SortOrder
   }
 
   export type employeeCountOrderByAggregateInput = {
@@ -10282,12 +11444,6 @@ export namespace Prisma {
     useItem: InputJsonValue
   }
 
-  export type BoolNullableFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
-    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
-    isSet?: boolean
-  }
-
   export type CartCartLunchboxLunchboxDescriptionCreateInput = {
     menu_description_id?: string | null
     menu_description_title: string
@@ -10370,6 +11526,15 @@ export namespace Prisma {
     multiply?: bigint | number
     divide?: bigint | number
     unset?: boolean
+  }
+
+  export type CartCartLunchboxLunchboxDescriptionCompositeListFilter = {
+    equals?: CartCartLunchboxLunchboxDescriptionObjectEqualityInput[]
+    every?: CartCartLunchboxLunchboxDescriptionWhereInput
+    some?: CartCartLunchboxLunchboxDescriptionWhereInput
+    none?: CartCartLunchboxLunchboxDescriptionWhereInput
+    isEmpty?: boolean
+    isSet?: boolean
   }
 
   export type CartCartLunchboxLunchboxMenuMenuIngredientsCompositeListFilter = {
