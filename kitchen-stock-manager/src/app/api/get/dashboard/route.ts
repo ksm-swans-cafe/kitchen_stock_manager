@@ -121,6 +121,8 @@ export async function GET() {
         lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => ({
           menu_name: menu.menu_name,
           menu_quantity: menu.menu_total,
+          menu_ingredients: menu.menu_ingredients || [],
+          menu_description: menu.menu_description || [],
         })),
       })),
       cart_description: item.cart_description || [],

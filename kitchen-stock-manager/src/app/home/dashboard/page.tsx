@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { MapPin, Clock, Maximize2, Minimize2, Star, Plus, Save, X, Trash2 } from "lucide-react";
 import { Button } from "@/share/ui/button";
 import useSWR, { mutate } from "swr";
@@ -11,8 +11,23 @@ import DashboardIcon from "@/assets/dashboard.png";
 
 // --- Interfaces ---
 interface DayItem {
- name: string;
+  name: string;
   qty: number | string;
+  lunchbox_name?: string;
+  menu_ingredients?: MenuIngredient[];
+  menu_description?: MenuItemDescription[];
+}
+
+interface MenuIngredient {
+  ingredient_name: string;
+  ingredient_status?: boolean;
+  useItem: number | string;
+}
+
+interface MenuItemDescription {
+  menu_description_id: string | null;
+  menu_description_title: string;
+  menu_description_value: string;
 }
 
 interface CartDescription {
@@ -53,6 +68,8 @@ interface ApiResponse {
       lunchbox_menu: Array<{
         menu_name: string;
         menu_quantity: number;
+        menu_ingredients: MenuIngredient[];
+        menu_description: MenuItemDescription[];
       }>;
     }>;
     cart_description: CartDescription[];
@@ -165,6 +182,14 @@ export default function Dashboard() {
   const [cursorHidden, setCursorHidden] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
   const cursorTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // State สำหรับ menu description
+  const [menuDescInputs, setMenuDescInputs] = useState<Record<string, { title: string; value: string }>>({});
+  const [showMenuDescInput, setShowMenuDescInput] = useState<Record<string, boolean>>({});
+  const [closingMenuDescInput, setClosingMenuDescInput] = useState<Record<string, boolean>>({});
+  const [savingMenuDesc, setSavingMenuDesc] = useState<Record<string, boolean>>({});
+  const [editingMenuDesc, setEditingMenuDesc] = useState<Record<string, { cartId: string; lunchboxName: string; menuName: string; title: string; value: string } | null>>({});
+  const [expandedMenuItems, setExpandedMenuItems] = useState<Record<string, boolean>>({});
 
   // Cursor auto-hide after 5 seconds of inactivity
   useEffect(() => {
@@ -320,6 +345,138 @@ export default function Dashboard() {
     }));
   }, []);
 
+  // ======= Menu Description Functions =======
+  
+  // ฟังก์ชันบันทึก menu description ไปยัง database
+  const saveMenuDescToDatabase = useCallback(async (
+    cartId: string, 
+    lunchboxName: string, 
+    menuName: string, 
+    descriptions: MenuItemDescription[]
+  ) => {
+    const key = `${cartId}-${lunchboxName}-${menuName}`;
+    setSavingMenuDesc((prev) => ({ ...prev, [key]: true }));
+    try {
+      const response = await fetch(`/api/edit/menu-description/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          lunchbox_name: lunchboxName,
+          menu_name: menuName,
+          menu_description: descriptions 
+        }),
+      });
+      if (!response.ok) {
+        console.error("Failed to save menu description");
+      } else {
+        mutate("/api/get/dashboard");
+      }
+    } catch (error) {
+      console.error("Error saving menu description:", error);
+    } finally {
+      setSavingMenuDesc((prev) => ({ ...prev, [key]: false }));
+    }
+  }, []);
+
+  // ฟังก์ชันเพิ่ม menu description ใหม่
+  const handleAddMenuDesc = useCallback((
+    cartId: string, 
+    lunchboxName: string, 
+    menuName: string, 
+    currentDescriptions: MenuItemDescription[]
+  ) => {
+    const key = `${cartId}-${lunchboxName}-${menuName}`;
+    const input = menuDescInputs[key];
+    if (!input || (!input.title.trim() && !input.value.trim())) {
+      setClosingMenuDescInput((prev) => ({ ...prev, [key]: true }));
+      setTimeout(() => {
+        setClosingMenuDescInput((prev) => ({ ...prev, [key]: false }));
+        setShowMenuDescInput((prev) => ({ ...prev, [key]: false }));
+      }, 150);
+      return;
+    }
+
+    const newDesc: MenuItemDescription = {
+      menu_description_id: Date.now().toString(),
+      menu_description_title: input.title.trim() || "หมายเหตุ",
+      menu_description_value: input.value.trim(),
+    };
+
+    const updatedDescriptions = [...currentDescriptions, newDesc];
+    saveMenuDescToDatabase(cartId, lunchboxName, menuName, updatedDescriptions);
+    
+    setMenuDescInputs((prev) => ({ ...prev, [key]: { title: "", value: "" } }));
+    setClosingMenuDescInput((prev) => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setClosingMenuDescInput((prev) => ({ ...prev, [key]: false }));
+      setShowMenuDescInput((prev) => ({ ...prev, [key]: false }));
+    }, 150);
+  }, [menuDescInputs, saveMenuDescToDatabase]);
+
+  // ฟังก์ชันลบ menu description
+  const handleDeleteMenuDesc = useCallback((
+    cartId: string, 
+    lunchboxName: string, 
+    menuName: string, 
+    descriptionId: string, 
+    currentDescriptions: MenuItemDescription[]
+  ) => {
+    const updatedDescriptions = currentDescriptions.filter((d) => d.menu_description_id !== descriptionId);
+    saveMenuDescToDatabase(cartId, lunchboxName, menuName, updatedDescriptions);
+  }, [saveMenuDescToDatabase]);
+
+  // ฟังก์ชันเริ่มแก้ไข menu description
+  const handleStartEditMenuDesc = useCallback((
+    descriptionId: string, 
+    cartId: string, 
+    lunchboxName: string, 
+    menuName: string, 
+    title: string, 
+    value: string
+  ) => {
+    setEditingMenuDesc((prev) => ({ ...prev, [descriptionId]: { cartId, lunchboxName, menuName, title, value } }));
+  }, []);
+
+  // ฟังก์ชันยกเลิกแก้ไข menu description
+  const handleCancelEditMenuDesc = useCallback((descriptionId: string) => {
+    setEditingMenuDesc((prev) => ({ ...prev, [descriptionId]: null }));
+  }, []);
+
+  // ฟังก์ชันบันทึกการแก้ไข menu description
+  const handleSaveEditMenuDesc = useCallback((descriptionId: string, currentDescriptions: MenuItemDescription[]) => {
+    const editing = editingMenuDesc[descriptionId];
+    if (!editing) return;
+
+    const updatedDescriptions = currentDescriptions.map((d) =>
+      d.menu_description_id === descriptionId
+        ? { ...d, menu_description_title: editing.title.trim() || "หมายเหตุ", menu_description_value: editing.value.trim() }
+        : d
+    );
+    saveMenuDescToDatabase(editing.cartId, editing.lunchboxName, editing.menuName, updatedDescriptions);
+    setEditingMenuDesc((prev) => ({ ...prev, [descriptionId]: null }));
+  }, [editingMenuDesc, saveMenuDescToDatabase]);
+
+  // ฟังก์ชันอัปเดตค่าขณะแก้ไข menu description
+  const handleEditMenuDescChange = useCallback((descriptionId: string, field: "title" | "value", value: string) => {
+    setEditingMenuDesc((prev) => ({
+      ...prev,
+      [descriptionId]: prev[descriptionId] ? { ...prev[descriptionId]!, [field]: value } : null,
+    }));
+  }, []);
+
+  // ฟังก์ชันอัปเดต input menu description
+  const handleMenuDescInputChange = useCallback((key: string, field: "title" | "value", value: string) => {
+    setMenuDescInputs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], [field]: value },
+    }));
+  }, []);
+
+  // Toggle expanded menu item
+  const toggleExpandMenuItem = useCallback((key: string) => {
+    setExpandedMenuItems((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
   // Calculate minutes until send time
   const calculateMinutesToSend = (date: string, sendTime: string): number => {
     const [day, month, year] = date.split("/").map(Number);
@@ -366,6 +523,9 @@ export default function Dashboard() {
             menuItems.push({
               name: menu.menu_name,
               qty: menu.menu_quantity,
+              lunchbox_name: lunchbox.lunchbox_name,
+              menu_ingredients: menu.menu_ingredients || [],
+              menu_description: menu.menu_description || [],
             });
           });
         });
@@ -374,8 +534,37 @@ export default function Dashboard() {
           const existingItem = acc.find((i) => i.name === item.name);
           if (existingItem) {
             existingItem.qty = (Number(existingItem.qty) + Number(item.qty)).toString();
+            // Merge ingredients (keep unique ones)
+            if (item.menu_ingredients) {
+              existingItem.menu_ingredients = existingItem.menu_ingredients || [];
+              item.menu_ingredients.forEach((ing) => {
+                const existingIng = existingItem.menu_ingredients!.find((e) => e.ingredient_name === ing.ingredient_name);
+                if (existingIng) {
+                  existingIng.useItem = Number(existingIng.useItem) + Number(ing.useItem);
+                } else {
+                  existingItem.menu_ingredients!.push({ ...ing });
+                }
+              });
+            }
+            // Merge descriptions (keep all unique ones)
+            if (item.menu_description) {
+              existingItem.menu_description = existingItem.menu_description || [];
+              item.menu_description.forEach((desc) => {
+                const existingDesc = existingItem.menu_description!.find(
+                  (d) => d.menu_description_title === desc.menu_description_title && d.menu_description_value === desc.menu_description_value
+                );
+                if (!existingDesc) {
+                  existingItem.menu_description!.push({ ...desc });
+                }
+              });
+            }
           } else {
-            acc.push({ ...item, qty: String(item.qty) });
+            acc.push({ 
+              ...item, 
+              qty: String(item.qty),
+              menu_ingredients: item.menu_ingredients ? [...item.menu_ingredients] : [],
+              menu_description: item.menu_description ? [...item.menu_description] : [],
+            });
           }
           return acc;
         }, [] as DayItem[]);
@@ -561,12 +750,240 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {day.items.map((item, index) => (
-                <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                  <td className='px-4 py-2 !text-black align-middle'>{item.name}</td>
-                  <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center text-gray-900 font-semibold align-middle'>{item.qty}</td>
-                </tr>
-              ))}
+              {day.items.map((item, index) => {
+                const hasMenuDescription = item.menu_description && item.menu_description.length > 0;
+                const menuKey = `${day.cartId}-${item.lunchbox_name || ''}-${item.name}`;
+                const isExpanded = expandedMenuItems[menuKey];
+                const isShowingAddInput = showMenuDescInput[menuKey] || closingMenuDescInput[menuKey];
+                
+                return (
+                  <React.Fragment key={index}>
+                    {/* Main menu item row */}
+                    <tr 
+                      className={`group/menuitem cursor-pointer transition-colors ${index % 2 === 0 ? "bg-white hover:bg-gray-100" : "bg-gray-50 hover:bg-gray-100"}`}
+                      onClick={() => toggleExpandMenuItem(menuKey)}
+                    >
+                      <td className='px-4 py-2 !text-black align-middle'>
+                        <div className='flex items-center gap-2'>
+                          {(hasMenuDescription || isExpanded) && (
+                            <span className={`text-xs text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                              ▶
+                            </span>
+                          )}
+                          <span>{item.name}</span>
+                          {hasMenuDescription && (
+                            <span className='text-xs text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded-full'>
+                              {item.menu_description!.length}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center text-gray-900 font-semibold align-middle relative'>
+                        <span>{item.qty}</span>
+                        {/* Add menu description button - show on hover */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedMenuItems((prev) => ({ ...prev, [menuKey]: true }));
+                            setShowMenuDescInput((prev) => ({ ...prev, [menuKey]: true }));
+                            setMenuDescInputs((prev) => ({ ...prev, [menuKey]: { title: "", value: "" } }));
+                          }}
+                          className='absolute right-1 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover/menuitem:opacity-100 transition-opacity text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded'
+                          title='เพิ่มหมายเหตุเมนู'
+                        >
+                          <Plus className='w-3 h-3' />
+                        </button>
+                      </td>
+                    </tr>
+                    
+                    {/* Menu Description rows - shown when expanded */}
+                    {isExpanded && hasMenuDescription && item.menu_description!.map((desc, descIdx) => {
+                      const descId = desc.menu_description_id || `${menuKey}-${descIdx}`;
+                      const hasValue = desc.menu_description_value && desc.menu_description_value.trim() !== "";
+                      const isEditingThis = editingMenuDesc[descId] !== null && editingMenuDesc[descId] !== undefined;
+                      
+                      // Editing mode
+                      if (isEditingThis) {
+                        return (
+                          <tr 
+                            key={`menu-desc-${index}-${descIdx}`} 
+                            className='bg-blue-100/50 border-l-4 border-blue-400'
+                          >
+                            <td colSpan={2} className='px-4 py-2 pl-8'>
+                              <div className='flex flex-wrap gap-2 items-stretch'>
+                                <textarea
+                                  placeholder='รายการ'
+                                  value={editingMenuDesc[descId]?.title || ""}
+                                  onChange={(e) => {
+                                    handleEditMenuDescChange(descId, "title", e.target.value);
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                  }}
+                                  ref={(el) => {
+                                    if (el) {
+                                      el.style.height = 'auto';
+                                      el.style.height = el.scrollHeight + 'px';
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  rows={1}
+                                  className='flex-1 min-w-[120px] px-3 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none resize-none overflow-hidden leading-normal bg-white'
+                                />
+                                <input
+                                  type='text'
+                                  placeholder='จำนวน'
+                                  value={editingMenuDesc[descId]?.value || ""}
+                                  onChange={(e) => handleEditMenuDescChange(descId, "value", e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className='w-16 shrink-0 px-2 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none text-center bg-white'
+                                />
+                              </div>
+                              <div className='flex gap-2 justify-end mt-2'>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelEditMenuDesc(descId);
+                                  }}
+                                  className='group/cancel px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                                  style={{ color: '#ef4444' }}>
+                                  <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                                  ยกเลิก
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSaveEditMenuDesc(descId, item.menu_description || []);
+                                  }}
+                                  disabled={savingMenuDesc[menuKey]}
+                                  className='group/save px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                                  style={{ color: '#3b82f6' }}>
+                                  <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                                  {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+                      
+                      // Display mode
+                      return (
+                        <tr 
+                          key={`menu-desc-${index}-${descIdx}`} 
+                          className='group/desc bg-blue-50/50 border-l-4 border-blue-400 cursor-pointer hover:bg-blue-100/50 transition-colors'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEditMenuDesc(descId, day.cartId, item.lunchbox_name || '', item.name, desc.menu_description_title, desc.menu_description_value);
+                          }}
+                        >
+                          {hasValue ? (
+                            <>
+                              <td className='px-4 py-1.5 pl-8 !text-blue-700 text-base align-middle'>
+                                <span>↳ {desc.menu_description_title}</span>
+                              </td>
+                              <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-1.5 !text-center !text-blue-700 text-base font-medium align-middle relative overflow-hidden'>
+                                <span>{desc.menu_description_value}</span>
+                                {/* Delete button */}
+                                <div
+                                  className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
+                                    opacity-0 translate-x-full group-hover/desc:opacity-100 group-hover/desc:translate-x-0 
+                                    transition-all duration-300 ease-out pointer-events-none group-hover/desc:pointer-events-auto'>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteMenuDesc(day.cartId, item.lunchbox_name || '', item.name, desc.menu_description_id || '', item.menu_description || []);
+                                    }}
+                                    className='px-1.5 py-1 hover:bg-red-600 rounded-l-lg transition-colors h-full flex items-center'
+                                    title='ลบหมายเหตุเมนู'>
+                                    <Trash2 className='w-3 h-3 text-white' />
+                                  </button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <td colSpan={2} className='px-4 py-1.5 pl-8 !text-blue-700 text-base align-middle relative overflow-hidden'>
+                              <span>↳ {desc.menu_description_title}</span>
+                              {/* Delete button */}
+                              <div
+                                className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
+                                  opacity-0 translate-x-full group-hover/desc:opacity-100 group-hover/desc:translate-x-0 
+                                  transition-all duration-300 ease-out pointer-events-none group-hover/desc:pointer-events-auto'>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteMenuDesc(day.cartId, item.lunchbox_name || '', item.name, desc.menu_description_id || '', item.menu_description || []);
+                                  }}
+                                  className='px-1.5 py-1 hover:bg-red-600 rounded-l-lg transition-colors h-full flex items-center'
+                                  title='ลบหมายเหตุเมนู'>
+                                  <Trash2 className='w-3 h-3 text-white' />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                    
+                    {/* Add Menu Description Input Row */}
+                    {isExpanded && isShowingAddInput && (
+                      <tr className={`border-l-4 border-blue-400 ${closingMenuDescInput[menuKey] ? 'animate-fadeSlideOut' : 'animate-fadeSlideIn'}`}>
+                        <td colSpan={2} className='px-4 py-2 pl-8 bg-blue-50'>
+                          <div className='flex flex-wrap gap-2 items-stretch'>
+                            <textarea
+                              placeholder='รายการ'
+                              value={menuDescInputs[menuKey]?.title || ""}
+                              onChange={(e) => {
+                                handleMenuDescInputChange(menuKey, "title", e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              rows={1}
+                              className='flex-1 min-w-[100px] px-3 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none resize-none overflow-hidden leading-normal bg-white'
+                            />
+                            <input
+                              type='text'
+                              placeholder='จำนวน'
+                              value={menuDescInputs[menuKey]?.value || ""}
+                              onChange={(e) => handleMenuDescInputChange(menuKey, "value", e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              className='w-14 shrink-0 px-2 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none text-center bg-white'
+                            />
+                          </div>
+                          <div className='flex gap-2 justify-end mt-2'>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setClosingMenuDescInput((prev) => ({ ...prev, [menuKey]: true }));
+                                setMenuDescInputs((prev) => ({ ...prev, [menuKey]: { title: "", value: "" } }));
+                                setTimeout(() => {
+                                  setClosingMenuDescInput((prev) => ({ ...prev, [menuKey]: false }));
+                                  setShowMenuDescInput((prev) => ({ ...prev, [menuKey]: false }));
+                                }, 150);
+                              }}
+                              className='group/cancel px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                              style={{ color: '#ef4444' }}>
+                              <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                              ยกเลิก
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddMenuDesc(day.cartId, item.lunchbox_name || '', item.name, item.menu_description || []);
+                              }}
+                              disabled={savingMenuDesc[menuKey]}
+                              className='group/save px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                              style={{ color: '#3b82f6' }}>
+                              <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                              {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
               {/* Notes displayed as table rows */}
               {day.cart_description && day.cart_description.map((desc, idx) => {
                 const rowIndex = day.items.length + idx;
