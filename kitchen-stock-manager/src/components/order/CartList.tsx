@@ -21,7 +21,7 @@ import { LunchBox } from "@/stores/store";
 import SetFoodSelect from "@/assets/set_food_select.png";
 import Edit from "@/assets/edit.png";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
-
+import "./style.css";
 registerLocale("th", th);
 
 interface cartList {
@@ -96,6 +96,7 @@ export default function CartList() {
     cart_total_cost,
     cart_lunch_box,
     selected_lunchboxes,
+    cart_ispay,
     setCustomerInfo,
     removeLunchbox,
     updateLunchboxQuantity,
@@ -299,7 +300,6 @@ export default function CartList() {
       icon: "info",
       title: "กรุณาตรวจสอบข้อมูลก่อนยืนยัน",
       showCancelButton: true,
-      reverseButtons: true,
       cancelButtonText: "ย้อนกลับ",
       confirmButtonText: "ยืนยัน",
       confirmButtonColor: "#28a745",
@@ -322,7 +322,7 @@ export default function CartList() {
       ${menuList}
       เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท 
       จำนวน ${lb.quantity} กล่อง 
-      รวม ${costPerBox.toLocaleString("th-TH")}x${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`;
+      รวม ${lunchboxCost.toLocaleString("th-TH")} บาท`;
         })
         .join("\n\n      ");
 
@@ -336,23 +336,36 @@ export default function CartList() {
 
       let depositTextForMessage = "";
       let depositValueForMessage = "";
+      let depositAmountForMessage = 0;
+      let paymentStatusText = "";
+
       if (cart_pay_deposit === "percent") {
         const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, "") || 0);
-        const depositAmount = (totalCostNumForMessage * payCostNum) / 100;
+        depositAmountForMessage = (totalCostNumForMessage * payCostNum) / 100;
         depositTextForMessage = `${cart_pay_cost}%`;
-        depositValueForMessage = `(${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท)`;
+        if (cart_ispay === "paid") {
+          paymentStatusText = "ชำระแล้ว";
+        } else if (cart_ispay === "unpaid") {
+          paymentStatusText = "ยังไม่ชำระ";
+        } else {
+          paymentStatusText = "ชำระแล้ว"; // default ถ้ายังไม่เลือก
+        }
+        depositValueForMessage = `${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท (${paymentStatusText})`;
       } else if (cart_pay_deposit === "full") {
-        const depositAmount = Number(cart_pay_cost.replace(/[^\d]/g, "") || 0) / 100;
-        depositTextForMessage = `${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
-        depositValueForMessage = `(${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท)`;
+        depositAmountForMessage = Number(cart_pay_cost.replace(/[^\d]/g, "") || 0) / 100;
+        depositTextForMessage = "เต็มจำนวน";
+        // เมื่อเลือกเต็มจำนวน cart_ispay จะเป็น "-" แต่ให้แสดงว่าชำระแล้วเพราะเต็มจำนวน = ชำระเต็มจำนวนแล้ว
+        paymentStatusText = "ชำระแล้ว";
+        depositValueForMessage = `${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท (${paymentStatusText})`;
       } else {
         depositTextForMessage = "-";
+        depositValueForMessage = "";
       }
 
-      const copyTextContent = `
-📌รับออเดอร์ คุณ ${cart_receive_name} 
+      const copyTextContent = `📌รับออเดอร์ คุณ ${cart_receive_name} 
 ช่องทางที่สั่ง : ${cart_channel_access}
 ผู้รับออเดอร์ : ${userName}
+
 ✅ รายละเอียดสำหรับจัดส่ง
 1.วันที่รับสินค้า : ${cart_delivery_date}
 2.เวลาส่งสินค้า : ${cart_export_time}
@@ -367,12 +380,19 @@ export default function CartList() {
 ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
       ${lunchboxListForMessage}
 
-✅รวมค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท
+รวมค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท
 ค่าจัดส่ง ${cart_shipping_cost} บาท
 ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บาท\n` : ""}
 ✅รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
-มัดจำ ${depositTextForMessage}
-ชำระ ${depositValueForMessage} (ชำระเรียบร้อยเเล้ว)`;
+${
+  cart_pay_deposit && cart_pay_deposit !== "no"
+    ? cart_pay_deposit === "full"
+      ? "ชำระเต็มจำนวนเเล้ว"
+      : `มัดจำ ${depositTextForMessage}
+ชำระ ${depositValueForMessage}
+${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือชำระ ${cart_total_remain} บาท` : ""}`
+    : ""
+}`;
 
       const response = await axios.post("/api/post/cart", {
         cart_username: userName,
@@ -429,6 +449,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
         cart_pay_charge: cart_pay_charge,
         cart_total_remain: cart_total_remain,
         cart_message: copyTextContent,
+        cart_ispay: cart_ispay,
       });
 
       if (response.status !== 201) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
@@ -580,14 +601,30 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
       return;
     }
 
+    if (cart_pay_deposit === "full") {
+      if (cart_ispay !== "-") {
+        setCustomerInfo({ ispay: "-" });
+      }
+      const depositAmount = payCostNum / 100;
+      const remaining = totalCostNum - depositAmount;
+      const formattedRemaining = remaining >= 0 ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
+      setCustomerInfo({ total_remain: formattedRemaining });
+      return;
+    }
+
+    if (cart_pay_deposit === "percent" && cart_ispay === "unpaid") {
+      const formattedRemaining = Number(totalCostNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      setCustomerInfo({ total_remain: formattedRemaining });
+      return;
+    }
+
     let depositAmount = 0;
-    if (cart_pay_deposit === "full") depositAmount = payCostNum / 100; // แปลงจากสตางค์กลับเป็นบาท
-    else if (cart_pay_deposit === "percent") depositAmount = (totalCostNum * payCostNum) / 100;
+    if (cart_pay_deposit === "percent") depositAmount = (totalCostNum * payCostNum) / 100;
 
     const remaining = totalCostNum - depositAmount;
     const formattedRemaining = remaining >= 0 ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
     setCustomerInfo({ total_remain: formattedRemaining });
-  }, [cart_total_cost, cart_pay_deposit, cart_pay_cost]);
+  }, [cart_total_cost, cart_pay_deposit, cart_pay_cost, cart_ispay]);
 
   useEffect(() => {
     if (errors.length > 0) {
@@ -643,20 +680,11 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
             </div>
 
             {/* Content */}
-            <div className='p-4 overflow-y-auto flex-1'>
+            <div className='p-4 flex-1'>
               <p className='text-gray-700 mb-4'>กรุณาคัดลอกข้อความด้านล่างเพื่อส่งให้ลูกค้า:</p>
-
-              {/* Textarea สำหรับแสดงข้อความ (fallback สำหรับการคัดลอก) */}
-              <textarea
-                id='copy-textarea'
-                value={copyText}
-                readOnly
-                className='w-full p-3 border border-gray-300 rounded-lg resize-none font-mono text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500'
-                rows={15}
-                onClick={(e) => {
-                  (e.target as HTMLTextAreaElement).select();
-                }}
-              />
+              <div className='overflow-y-auto border-2 py-2 pl-4  border-gray-300 rounded-xl bg-gray-50 overflow-x-hidden'>
+                <textarea id='copy-textarea' value={copyText} readOnly className='w-full resize-none text-sm overflow-y-visible select-none outline-none focus:outline-none' rows={15} />
+              </div>
 
               {/* ปุ่มคัดลอก */}
               <div className='mt-4 flex justify-end gap-2'>
@@ -945,7 +973,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
           </div>
 
           <div className='flex flex-col gap-1'>
-            <label className='font-bold'>เบอร์โทรลูกค้า</label>
+            <label className='font-bold'>เบอร์ติดต่อ</label>
             <input type='text' value={cart_customer_tel} onChange={handle.PhoneChange} placeholder='081-234-5678' className='border rounded px-3 py-2' />
           </div>
 
@@ -1224,7 +1252,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
                             title: "ยืนยันการลบ",
                             text: `คุณต้องการลบชุดอาหาร "${lunchbox.lunchbox_name} - ${lunchbox.lunchbox_set}" หรือไม่?`,
                             showCancelButton: true,
-                            reverseButtons: true,
                             confirmButtonText: "ลบ",
                             cancelButtonText: "ยกเลิก",
                             confirmButtonColor: "#e74c3c",
@@ -1400,56 +1427,41 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
                     <label
                       htmlFor='deposit-full'
                       className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        cart_pay_deposit === "full" && cart_pay_isdeposit === true
-                          ? "border-orange-500 bg-orange-50 shadow-md"
-                          : "border-gray-300 bg-white hover:border-orange-300 hover:bg-orange-50/50"
+                        cart_pay_deposit === "full" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-300 bg-white hover:border-orange-300 hover:bg-orange-50/50"
                       }`}>
                       <input
                         type='radio'
                         id='deposit-full'
                         name='deposit'
                         value='full'
-                        checked={cart_pay_deposit === "full" && cart_pay_isdeposit === true}
-                        onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })}
+                        checked={cart_pay_deposit === "full"}
+                        onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, ispay: "-" })}
                         className='sr-only'
                       />
-                      <svg
-                        className='!w-5 !h-5'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                        style={{ color: cart_pay_deposit === "full" && cart_pay_isdeposit === true ? "#EA580C" : "#6B7280" }}>
+                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' style={{ color: cart_pay_deposit === "full" ? "#EA580C" : "#6B7280" }}>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
                       </svg>
-                      <span className={`font-medium ${cart_pay_deposit === "full" && cart_pay_isdeposit === true ? "text-orange-700" : "text-gray-700"}`}>จำนวนเต็ม</span>
-                      {cart_pay_deposit === "full" && cart_pay_isdeposit === true && (
-                        <div className='absolute top-2 right-2'>
-                          <svg className='!w-5 !h-5 text-orange-500' fill='currentColor' viewBox='0 0 20 20'>
-                            <path
-                              fillRule='evenodd'
-                              d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                              clipRule='evenodd'
-                            />
-                          </svg>
-                        </div>
-                      )}
+                      <span className={`font-medium ${cart_pay_deposit === "full" ? "text-orange-700" : "text-gray-700"}`}>เต็มจำนวน</span>
                     </label>
 
                     {/* 50% */}
                     <label
                       htmlFor='deposit-percent'
                       className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        cart_pay_deposit === "percent" && cart_pay_isdeposit === true
-                          ? "border-amber-500 bg-amber-50 shadow-md"
-                          : "border-gray-300 bg-white hover:border-amber-300 hover:bg-amber-50/50"
+                        cart_pay_deposit === "percent" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-300 bg-white hover:border-amber-300 hover:bg-amber-50/50"
                       }`}>
                       <input
                         type='radio'
                         id='deposit-percent'
                         name='deposit'
                         value='percent'
-                        checked={cart_pay_deposit === "percent" && cart_pay_isdeposit === true}
-                        onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, pay_isdeposit: true })}
+                        checked={cart_pay_deposit === "percent"}
+                        onChange={(e) => {
+                          setCustomerInfo({ pay_deposit: e.target.value });
+                          if (!cart_ispay || cart_ispay === "-") {
+                            setCustomerInfo({ ispay: "" });
+                          }
+                        }}
                         className='sr-only'
                       />
                       <svg className='!w-5 !h-5' version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
@@ -1470,21 +1482,107 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
 	c11.504,0,17.104-11.76,17.104-31.28c0-17.648-4.544-31.28-17.104-31.28C318.032,253.12,312.688,267.024,312.688,284.4z'
                         />
                       </svg>
-                      <span className={`font-medium ${cart_pay_deposit === "percent" && cart_pay_isdeposit === true ? "text-amber-700" : "text-gray-700"}`}>50%</span>
-                      {cart_pay_deposit === "percent" && cart_pay_isdeposit === true && (
-                        <div className='absolute top-2 right-2'>
-                          <svg className='!w-5 !h-5 text-amber-500' fill='currentColor' viewBox='0 0 20 20'>
-                            <path
-                              fillRule='evenodd'
-                              d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                              clipRule='evenodd'
-                            />
-                          </svg>
-                        </div>
-                      )}
+                      <span className={`font-medium ${cart_pay_deposit === "percent" ? "text-amber-700" : "text-gray-700"}`}>50%</span>
                     </label>
                   </div>
                 </div>
+
+                {/* สถานะการชำระเงิน - แสดงเมื่อเลือกรูปแบบการมัดจำ 50% เท่านั้น */}
+                {cart_pay_deposit && cart_pay_deposit === "percent" && (
+                  <div className='flex flex-col gap-2 mb-4'>
+                    <div className='flex items-center gap-2'>
+                      <label className='font-bold'>สถานะการชำระเงิน</label>
+                    </div>
+                    <div className='grid grid-cols-2 gap-3'>
+                      {/* ชำระแล้ว */}
+                      <label
+                        htmlFor='payment-paid'
+                        className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                          cart_ispay === "paid" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
+                        }`}>
+                        <input
+                          type='radio'
+                          id='payment-paid'
+                          name='payment-status'
+                          value='paid'
+                          checked={cart_ispay === "paid"}
+                          onChange={(e) => setCustomerInfo({ ispay: "paid" })}
+                          className='sr-only'
+                        />
+
+                        <svg
+                          xmlns='http://www.w3.org/2000/svg'
+                          className='!w-5 !h-5'
+                          style={{ color: cart_ispay === "paid" ? "#10B981" : "#6B7280" }}
+                          width='24'
+                          height='24'
+                          viewBox='0 0 24 24'
+                          fill='none'
+                          stroke='currentColor'
+                          strokeWidth='2'
+                          strokeLinecap='round'
+                          stroke-linejoin='round'>
+                          <path d='M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
+                          <path d='m16 19 3 3 3-3' />
+                          <path d='M18 12h.01' />
+                          <path d='M19 16v6' />
+                          <path d='M6 12h.01' />
+                          <circle cx='12' cy='12' r='2' />
+                        </svg>
+                        <span className={`font-medium ${cart_ispay === "paid" ? "text-green-700" : "text-gray-700"}`}>ชำระแล้ว</span>
+                      </label>
+
+                      {/* ไม่ได้ชำระ */}
+                      <label
+                        htmlFor='payment-unpaid'
+                        className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                          cart_ispay === "unpaid" ? "border-red-500 bg-red-50 shadow-md" : "border-gray-300 bg-white hover:border-red-300 hover:bg-red-50/50"
+                        }`}>
+                        <input
+                          type='radio'
+                          id='payment-unpaid'
+                          name='payment-status'
+                          value='unpaid'
+                          checked={cart_ispay === "unpaid"}
+                          onChange={(e) => setCustomerInfo({ ispay: "unpaid" })}
+                          className='sr-only'
+                        />
+                        <svg
+                          xmlns='http://www.w3.org/2000/svg'
+                          className='!w-5 !h-5'
+                          style={{ color: cart_ispay === "unpaid" ? "#EF4444" : "#6B7280" }}
+                          width='24'
+                          height='24'
+                          viewBox='0 0 24 24'
+                          fill='none'
+                          stroke='currentColor'
+                          stroke-width='2'
+                          stroke-linecap='round'
+                          stroke-linejoin='round'>
+                          <path d='M13 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
+                          <path d='m17 17 5 5' />
+                          <path d='M18 12h.01' />
+                          <path d='m22 17-5 5' />
+                          <path d='M6 12h.01' />
+                          <circle cx='12' cy='12' r='2' />
+                        </svg>
+                        <span className={`font-medium ${cart_ispay === "unpaid" ? "text-red-700" : "text-gray-700"}`}>ไม่ได้ชำระ</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* แสดง "-" เมื่อเลือกเต็มจำนวน */}
+                {cart_pay_deposit && cart_pay_deposit === "full" && (
+                  <div className='flex flex-col gap-2 mb-4'>
+                    <div className='flex items-center gap-2'>
+                      <label className='font-bold'>สถานะการชำระเงิน</label>
+                    </div>
+                    <div className='p-4 border-2 border-gray-300 rounded-lg bg-gray-50'>
+                      <span className='text-gray-700 font-medium'>-</span>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -1507,10 +1605,18 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
                 <label className='font-bold'>ยอดทั้งหมด </label>
-                <span className='text-lg'>{cart_total_cost ? `${cart_total_cost} บาท` : "-"}</span>
+                <span className='text-lg'>
+                  {cart_total_cost
+                    ? `${(() => {
+                        const totalCostStr = cart_total_cost.replace(/,/g, "");
+                        const totalCostNum = parseFloat(totalCostStr) || 0;
+                        return Number(totalCostNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                      })()} บาท`
+                    : "-"}
+                </span>
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>ค่ามัดจำ</label>
+                <label className='font-bold'>{cart_pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ"}</label>
                 <span className='text-lg text-orange-600'>
                   {cart_pay_deposit && cart_pay_cost
                     ? cart_pay_deposit === "percent"

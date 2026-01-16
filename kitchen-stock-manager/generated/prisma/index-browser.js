@@ -137,6 +137,7 @@ exports.Prisma.CartScalarFieldEnum = {
   cart_pay_isdeposit: 'cart_pay_isdeposit',
   cart_pay_charge: 'cart_pay_charge',
   cart_pay_cost: 'cart_pay_cost',
+  cart_ispay: 'cart_ispay',
   cart_invoice_tex: 'cart_invoice_tex',
   cart_total_cost: 'cart_total_cost',
   cart_total_remain: 'cart_total_remain',

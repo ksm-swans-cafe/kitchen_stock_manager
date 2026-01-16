@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       cart_total_remain,
       cart_total_cost,
       cart_message,
+      cart_ispay,
     } = body;
 
     if (!cart_channel_access || !cart_username || !cart_lunchboxes) {
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
 
     const formattedLunchboxes = convertBigIntToNumber(rawLunchboxes);
 
+    const cart_status = cart_ispay === "-" ? "completed" : cart_ispay === "paid" ? "completed" : cart_ispay === "unpaid" ? "pending" : "pending";
     const cartData = {
       cart_id: cartId,
       cart_channel_access: cart_channel_access || "",
@@ -100,7 +102,7 @@ export async function POST(request: NextRequest) {
       cart_export_time: cart_export_time || "",
       cart_receive_time: cart_receive_time || "",
       cart_shipping_cost: cart_shipping_cost || "",
-      cart_status: "completed",
+      cart_status: cart_status,
       cart_receive_name: cart_receive_name || "",
       cart_total_cost_lunchbox: cart_total_cost_lunchbox || "",
       cart_invoice_tex: cart_invoice_tex || "",
@@ -111,6 +113,7 @@ export async function POST(request: NextRequest) {
       cart_pay_charge: cart_pay_charge || "",
       cart_total_remain: cart_total_remain || "",
       cart_total_cost: cart_total_cost || "",
+      cart_ispay: cart_ispay || "",
     };
 
     const cartLogData = {

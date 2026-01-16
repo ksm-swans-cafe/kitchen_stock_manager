@@ -1962,6 +1962,7 @@ export namespace Prisma {
     cart_pay_isdeposit: boolean | null
     cart_pay_charge: string | null
     cart_pay_cost: string | null
+    cart_ispay: string | null
     cart_invoice_tex: string | null
     cart_total_cost: string | null
     cart_total_remain: string | null
@@ -1991,6 +1992,7 @@ export namespace Prisma {
     cart_pay_isdeposit: boolean | null
     cart_pay_charge: string | null
     cart_pay_cost: string | null
+    cart_ispay: string | null
     cart_invoice_tex: string | null
     cart_total_cost: string | null
     cart_total_remain: string | null
@@ -2020,6 +2022,7 @@ export namespace Prisma {
     cart_pay_isdeposit: number
     cart_pay_charge: number
     cart_pay_cost: number
+    cart_ispay: number
     cart_invoice_tex: number
     cart_total_cost: number
     cart_total_remain: number
@@ -2051,6 +2054,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: true
     cart_pay_charge?: true
     cart_pay_cost?: true
+    cart_ispay?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
     cart_total_remain?: true
@@ -2080,6 +2084,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: true
     cart_pay_charge?: true
     cart_pay_cost?: true
+    cart_ispay?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
     cart_total_remain?: true
@@ -2109,6 +2114,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: true
     cart_pay_charge?: true
     cart_pay_cost?: true
+    cart_ispay?: true
     cart_invoice_tex?: true
     cart_total_cost?: true
     cart_total_remain?: true
@@ -2211,6 +2217,7 @@ export namespace Prisma {
     cart_pay_isdeposit: boolean
     cart_pay_charge: string
     cart_pay_cost: string
+    cart_ispay: string
     cart_invoice_tex: string
     cart_total_cost: string
     cart_total_remain: string
@@ -2258,6 +2265,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: boolean
     cart_pay_charge?: boolean
     cart_pay_cost?: boolean
+    cart_ispay?: boolean
     cart_invoice_tex?: boolean
     cart_total_cost?: boolean
     cart_total_remain?: boolean
@@ -2290,13 +2298,14 @@ export namespace Prisma {
     cart_pay_isdeposit?: boolean
     cart_pay_charge?: boolean
     cart_pay_cost?: boolean
+    cart_ispay?: boolean
     cart_invoice_tex?: boolean
     cart_total_cost?: boolean
     cart_total_remain?: boolean
     cart_pinned?: boolean
   }
 
-  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_channel_access" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_isdeposit" | "cart_pay_charge" | "cart_pay_cost" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description" | "cart_pinned", ExtArgs["result"]["cart"]>
+  export type cartOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cart_create_date" | "cart_channel_access" | "cart_customer_name" | "cart_customer_tel" | "cart_delivery_date" | "cart_export_time" | "cart_id" | "cart_last_update" | "cart_location_send" | "cart_lunchbox" | "cart_total_cost_lunchbox" | "cart_order_number" | "cart_receive_time" | "cart_receive_name" | "cart_shipping_cost" | "cart_status" | "cart_username" | "cart_pay_type" | "cart_pay_deposit" | "cart_pay_isdeposit" | "cart_pay_charge" | "cart_pay_cost" | "cart_ispay" | "cart_invoice_tex" | "cart_total_cost" | "cart_total_remain" | "cart_description" | "cart_pinned", ExtArgs["result"]["cart"]>
   export type cartInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $cartPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2325,6 +2334,7 @@ export namespace Prisma {
       cart_pay_isdeposit: boolean
       cart_pay_charge: string
       cart_pay_cost: string
+      cart_ispay: string
       cart_invoice_tex: string
       cart_total_cost: string
       cart_total_remain: string
@@ -2746,6 +2756,7 @@ export namespace Prisma {
     readonly cart_pay_isdeposit: FieldRef<"cart", 'Boolean'>
     readonly cart_pay_charge: FieldRef<"cart", 'String'>
     readonly cart_pay_cost: FieldRef<"cart", 'String'>
+    readonly cart_ispay: FieldRef<"cart", 'String'>
     readonly cart_invoice_tex: FieldRef<"cart", 'String'>
     readonly cart_total_cost: FieldRef<"cart", 'String'>
     readonly cart_total_remain: FieldRef<"cart", 'String'>
@@ -9114,6 +9125,7 @@ export namespace Prisma {
     cart_pay_isdeposit: 'cart_pay_isdeposit',
     cart_pay_charge: 'cart_pay_charge',
     cart_pay_cost: 'cart_pay_cost',
+    cart_ispay: 'cart_ispay',
     cart_invoice_tex: 'cart_invoice_tex',
     cart_total_cost: 'cart_total_cost',
     cart_total_remain: 'cart_total_remain',
@@ -9326,6 +9338,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: BoolFilter<"cart"> | boolean
     cart_pay_charge?: StringFilter<"cart"> | string
     cart_pay_cost?: StringFilter<"cart"> | string
+    cart_ispay?: StringFilter<"cart"> | string
     cart_invoice_tex?: StringFilter<"cart"> | string
     cart_total_cost?: StringFilter<"cart"> | string
     cart_total_remain?: StringFilter<"cart"> | string
@@ -9357,6 +9370,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: SortOrder
     cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
+    cart_ispay?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
     cart_total_remain?: SortOrder
@@ -9391,6 +9405,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: BoolFilter<"cart"> | boolean
     cart_pay_charge?: StringFilter<"cart"> | string
     cart_pay_cost?: StringFilter<"cart"> | string
+    cart_ispay?: StringFilter<"cart"> | string
     cart_invoice_tex?: StringFilter<"cart"> | string
     cart_total_cost?: StringFilter<"cart"> | string
     cart_total_remain?: StringFilter<"cart"> | string
@@ -9421,6 +9436,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: SortOrder
     cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
+    cart_ispay?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
     cart_total_remain?: SortOrder
@@ -9456,6 +9472,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: BoolWithAggregatesFilter<"cart"> | boolean
     cart_pay_charge?: StringWithAggregatesFilter<"cart"> | string
     cart_pay_cost?: StringWithAggregatesFilter<"cart"> | string
+    cart_ispay?: StringWithAggregatesFilter<"cart"> | string
     cart_invoice_tex?: StringWithAggregatesFilter<"cart"> | string
     cart_total_cost?: StringWithAggregatesFilter<"cart"> | string
     cart_total_remain?: StringWithAggregatesFilter<"cart"> | string
@@ -9892,6 +9909,7 @@ export namespace Prisma {
     cart_pay_isdeposit: boolean
     cart_pay_charge: string
     cart_pay_cost: string
+    cart_ispay: string
     cart_invoice_tex: string
     cart_total_cost: string
     cart_total_remain: string
@@ -9923,6 +9941,7 @@ export namespace Prisma {
     cart_pay_isdeposit: boolean
     cart_pay_charge: string
     cart_pay_cost: string
+    cart_ispay: string
     cart_invoice_tex: string
     cart_total_cost: string
     cart_total_remain: string
@@ -9953,6 +9972,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_ispay?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
     cart_total_remain?: StringFieldUpdateOperationsInput | string
@@ -9983,6 +10003,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_ispay?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
     cart_total_remain?: StringFieldUpdateOperationsInput | string
@@ -10014,6 +10035,7 @@ export namespace Prisma {
     cart_pay_isdeposit: boolean
     cart_pay_charge: string
     cart_pay_cost: string
+    cart_ispay: string
     cart_invoice_tex: string
     cart_total_cost: string
     cart_total_remain: string
@@ -10044,6 +10066,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_ispay?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
     cart_total_remain?: StringFieldUpdateOperationsInput | string
@@ -10074,6 +10097,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: BoolFieldUpdateOperationsInput | boolean
     cart_pay_charge?: StringFieldUpdateOperationsInput | string
     cart_pay_cost?: StringFieldUpdateOperationsInput | string
+    cart_ispay?: StringFieldUpdateOperationsInput | string
     cart_invoice_tex?: StringFieldUpdateOperationsInput | string
     cart_total_cost?: StringFieldUpdateOperationsInput | string
     cart_total_remain?: StringFieldUpdateOperationsInput | string
@@ -10625,6 +10649,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: SortOrder
     cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
+    cart_ispay?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
     cart_total_remain?: SortOrder
@@ -10654,6 +10679,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: SortOrder
     cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
+    cart_ispay?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
     cart_total_remain?: SortOrder
@@ -10683,6 +10709,7 @@ export namespace Prisma {
     cart_pay_isdeposit?: SortOrder
     cart_pay_charge?: SortOrder
     cart_pay_cost?: SortOrder
+    cart_ispay?: SortOrder
     cart_invoice_tex?: SortOrder
     cart_total_cost?: SortOrder
     cart_total_remain?: SortOrder
