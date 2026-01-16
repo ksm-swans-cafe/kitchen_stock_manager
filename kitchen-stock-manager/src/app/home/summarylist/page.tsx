@@ -303,6 +303,7 @@ const SummaryList: React.FC = () => {
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
             cart_shipping_cost: cart.cart_shipping_cost,
+            cart_invoice_tex: cart.cart_invoice_tex,
             cart_lunchbox: cartLunchbox,
           };
         });
@@ -2362,12 +2363,12 @@ const SummaryList: React.FC = () => {
                           <AccordionTrigger className='w-full hover:no-underline px-0'>
                             <div className='flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base font-bold'>
                               <div>รายการคำสั่งซื้อหมายเลข {String(cart.order_number).padStart(3, "0")}</div>
-                              <div className='flex items-center gap-2 font-medium text-slate-800'>
+                              {/* <div className='flex items-center gap-2 font-medium text-slate-800'>
                                 <FileText className='w-4 h-4 text-blue-500' />
                                 <span className='truncate text-sm sm:text-base'>
                                   ผู้สร้างรายการคำสั่งซื้อ: <span className=''>{cart.createdBy}</span>
                                 </span>
-                              </div>
+                              </div> */}
                               <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
                                 <div className='flex flex-col sm:flex-row sm:items-center gap-2 text-sm sm:text-base'>
                                   <div className='flex items-center gap-1'>
@@ -2411,19 +2412,41 @@ const SummaryList: React.FC = () => {
                                   <CalendarDays className='w-4 h-4' />
                                   <span>วันที่สั่งอาหาร {cart.date}</span>
                                 </div>
-                                <div className='flex items-center gap-1'>
+                                {/* <div className='flex items-center gap-1'>
                                   <Clock className='w-4 h-4' />
                                   <span>เวลา {cart.time} น.</span>
-                                </div>
-                                <div className='flex items-center gap-1'>
+                                </div> */}
+                                {/* <div className='flex items-center gap-1'>
                                   <BsCashStack className='w-4 h-4' />
                                   <span>ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.</span>
                                 </div>
                                 <div className='flex items-center gap-1'>
                                   <FaWallet className='w-4 h-4' />
                                   <span>รับ: {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
-                                </div>
+                                </div> */}
                               </div>
+                              {(cart.cart_invoice_tex || cart.cart_customer_name || cart.cart_location_send) && (
+                                <div className='flex flex-col gap-2 text-xs sm:text-sm font-normal text-black border-t pt-2 mt-2'>
+                                  {cart.cart_invoice_tex && (
+                                    <div className='flex items-center gap-1'>
+                                      <FileText className='w-4 h-4 text-purple-500' />
+                                      <span>เลขกำกับภาษี: {cart.cart_invoice_tex}</span>
+                                    </div>
+                                  )}
+                                  {cart.cart_customer_name && (
+                                    <div className='flex items-center gap-1'>
+                                      <User className='w-4 h-4 text-blue-500' />
+                                      <span>ออกบิลในนาม: {cart.cart_customer_name}</span>
+                                    </div>
+                                  )}
+                                  {cart.cart_location_send && (
+                                    <div className='flex items-center gap-1'>
+                                      <Map className='w-4 h-4 text-red-600' />
+                                      <span>ที่อยู่: {cart.cart_location_send}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                               <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
                                 <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                               </div>

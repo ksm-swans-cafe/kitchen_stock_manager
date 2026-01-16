@@ -32,11 +32,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const [cart] = await prisma.cart.findMany({
+    // Fetch cart without cart_total_cost_lunchbox to avoid null error
+    const cart = await prisma.cart.findFirst({
       where: { cart_id: id },
       select: {
+        id: true,
         cart_id: true,
-        cart_menu_items: true,
+        cart_lunchbox: true,
+        // Exclude cart_total_cost_lunchbox to avoid null error
       },
     });
 
@@ -44,25 +47,61 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    let existingMenuItems: MenuItem[] = [];
-    if (cart.cart_menu_items) {
-      try {
-        if (typeof cart.cart_menu_items === "string") {
-          existingMenuItems = JSON.parse(cart.cart_menu_items);
-        } else if (Array.isArray(cart.cart_menu_items)) {
-          existingMenuItems = cart.cart_menu_items as unknown as MenuItem[];
-        } else {
-          existingMenuItems = [];
-        }
-        if (!Array.isArray(existingMenuItems)) {
-          console.warn("cart_menu_items is not an array, resetting to empty array");
-          existingMenuItems = [];
-        }
-      } catch (parseError) {
-        console.error("Failed to parse cart_menu_items:", parseError);
-        existingMenuItems = [];
+    // Fetch cart_total_cost_lunchbox separately using aggregateRaw
+    let cartTotalCostLunchbox = "0";
+    try {
+      const costResult = await (prisma.cart as any).aggregateRaw({
+        pipeline: [
+          { $match: { cart_id: id } },
+          {
+            $project: {
+              cart_total_cost_lunchbox: { $ifNull: ["$cart_total_cost_lunchbox", "0"] },
+            },
+          },
+        ],
+      }) as unknown as Array<{ cart_total_cost_lunchbox: string }>;
+
+      if (Array.isArray(costResult) && costResult.length > 0) {
+        cartTotalCostLunchbox = costResult[0].cart_total_cost_lunchbox || "0";
       }
+    } catch (costError) {
+      console.warn("Error fetching cart_total_cost_lunchbox, using default '0':", costError);
+      cartTotalCostLunchbox = "0";
     }
+
+    // Parse cart_lunchbox and extract menu items
+    let lunchboxes: any[] = [];
+    if (typeof cart.cart_lunchbox === "string") {
+      try {
+        lunchboxes = JSON.parse(cart.cart_lunchbox);
+      } catch (e) {
+        console.error("JSON parse error:", (e as Error).message);
+        return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
+      }
+    } else if (Array.isArray(cart.cart_lunchbox)) {
+      lunchboxes = cart.cart_lunchbox;
+    } else {
+      lunchboxes = [];
+    }
+
+    // Extract existing menu items from cart_lunchbox structure
+    let existingMenuItems: MenuItem[] = [];
+    lunchboxes.forEach((lunchbox: any) => {
+      if (lunchbox.lunchbox_menu && Array.isArray(lunchbox.lunchbox_menu)) {
+        lunchbox.lunchbox_menu.forEach((menu: any) => {
+          existingMenuItems.push({
+            menu_name: menu.menu_name || "",
+            menu_total: menu.menu_total || 0,
+            menu_ingredients: (menu.menu_ingredients || []).map((ing: any) => ({
+              useItem: ing.useItem || 0,
+              ingredient_name: ing.ingredient_name || "",
+              ingredient_status: ing.ingredient_status ?? false,
+            })),
+            menu_description: menu.menu_description || "",
+          });
+        });
+      }
+    });
 
     const invalidMenus = await Promise.all(
       menuItems.map(async (item: MenuItem) => {
@@ -78,27 +117,43 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: `เมนูต่อไปนี้ไม่มีอยู่ในระบบ: ${invalidMenus.join(", ")}` }, { status: 400 });
     }
 
-    const updatedMenuItems = menuItems.map((item: MenuItem) => {
-      const existingMenu = existingMenuItems.find((m) => m.menu_name === item.menu_name);
-      const menuIngredients = item.menu_ingredients.map((ing) => ({
-        useItem: ing.useItem,
-        ingredient_name: ing.ingredient_name,
-        ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
-      }));
+    // Update menu items in cart_lunchbox structure
+    const updatedLunchboxes = lunchboxes.map((lunchbox: any) => {
+      const updatedLunchboxMenu = (lunchbox.lunchbox_menu || []).map((menu: any) => {
+        // Find the updated menu item from the request
+        const updatedMenu = menuItems.find((m: MenuItem) => m.menu_name === menu.menu_name);
+        if (updatedMenu) {
+          // Find existing menu to preserve ingredient_status
+          const existingMenu = existingMenuItems.find((m) => m.menu_name === menu.menu_name);
+          const menuIngredients = updatedMenu.menu_ingredients.map((ing) => ({
+            ingredient_name: ing.ingredient_name,
+            useItem: ing.useItem,
+            ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
+          }));
+
+          return {
+            ...menu,
+            menu_total: updatedMenu.menu_total,
+            menu_ingredients: menuIngredients,
+            menu_description: updatedMenu.menu_description || menu.menu_description || "",
+          };
+        }
+        return menu;
+      });
+
       return {
-        menu_name: item.menu_name,
-        menu_total: item.menu_total,
-        menu_ingredients: menuIngredients,
-        menu_description: item.menu_description,
+        ...lunchbox,
+        lunchbox_menu: updatedLunchboxMenu,
       };
     });
 
-    console.log("Updated menuItems to save:", JSON.stringify(updatedMenuItems, null, 2));
+    console.log("Updated lunchboxes to save:", JSON.stringify(updatedLunchboxes, null, 2));
 
     const result = await prisma.cart.updateMany({
       where: { cart_id: id },
       data: {
-        cart_menu_items: updatedMenuItems,
+        cart_lunchbox: updatedLunchboxes as any,
+        cart_total_cost_lunchbox: cartTotalCostLunchbox, // Use value from aggregateRaw
         cart_last_update: new Date().toISOString(),
       },
     });
@@ -109,7 +164,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     return NextResponse.json({
       success: true,
-      cart: result,
+      updated: result.count,
     });
   } catch (error: unknown) {
     console.error("Server error:", {

@@ -90,14 +90,27 @@ export async function PATCH(request: NextRequest) {
     if (cart_receive_time !== undefined) updateData.cart_receive_time = cart_receive_time;
     if (cart_shipping_cost !== undefined) updateData.cart_shipping_cost = cart_shipping_cost;
 
-    // Update the cart
-    const result = await prisma.cart.update({
-      where: { id: (existingCart as { id: string }).id },
+    // Update the cart using updateMany to avoid null field validation errors
+    const result = await prisma.cart.updateMany({
+      where: { cart_id: id },
       data: updateData,
     });
 
+    if (result.count === 0) {
+      return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุหรือไม่สามารถอัปเดตได้" }, { status: 404 });
+    }
+
+    // Fetch the updated cart to return
+    const updatedCart = await prisma.cart.findFirst({
+      where: { cart_id: id },
+    });
+
+    if (!updatedCart) {
+      return NextResponse.json({ error: "ไม่พบตะกร้าหลังอัปเดต" }, { status: 404 });
+    }
+
     // Convert BigInt to string for JSON serialization
-    const serializedResult = JSON.parse(JSON.stringify(result, (key, value) =>
+    const serializedResult = JSON.parse(JSON.stringify(updatedCart, (key, value) =>
       typeof value === 'bigint' ? value.toString() : value
     ));
 

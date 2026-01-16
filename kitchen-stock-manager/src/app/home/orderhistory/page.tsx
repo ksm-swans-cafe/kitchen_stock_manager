@@ -149,6 +149,7 @@ const OrderHistory = () => {
               cart_customer_name: cart.cart_customer_name,
               cart_location_send: cart.cart_location_send,
               cart_shipping_cost: cart.cart_shipping_cost,
+              cart_invoice_tex: cart.cart_invoice_tex,
               cart_lunchbox: cartLunchboxFallback,
             };
           }
@@ -247,6 +248,7 @@ const OrderHistory = () => {
             cart_customer_name: cart.cart_customer_name,
             cart_location_send: cart.cart_location_send,
             cart_shipping_cost: cart.cart_shipping_cost,
+            cart_invoice_tex: cart.cart_invoice_tex,
             cart_lunchbox: cartLunchbox,
           };
         });
@@ -883,7 +885,29 @@ const OrderHistory = () => {
 
   const handleExportExcelForDate = async (dateISO: string, orders: Cart[]) => {
     // กรองเฉพาะ orders ที่มี status success หรือ cancelled
-    const ordersToExport = orders.filter((cart) => cart.status === "success" || cart.status === "cancelled");
+    let ordersToExport = orders.filter((cart) => cart.status === "success" || cart.status === "cancelled");
+
+    // เรียงข้อมูลตามวันที่จัดส่งจากน้อยไปมาก (วันที่เก่าก่อน วันที่ใหม่มาหลัง)
+    ordersToExport.sort((a, b) => {
+      const dateA = convertThaiDateToISO(a.cart_delivery_date);
+      const dateB = convertThaiDateToISO(b.cart_delivery_date);
+
+      if (!dateA) return 1; // วันที่ไม่มีข้อมูลไปท้ายสุด
+      if (!dateB) return -1; // วันที่ไม่มีข้อมูลไปท้ายสุด
+
+      const timeA = new Date(dateA).getTime();
+      const timeB = new Date(dateB).getTime();
+
+      // เรียงตามวันที่จากน้อยไปมาก (วันที่เก่าก่อน)
+      if (timeA !== timeB) {
+        return timeA - timeB;
+      }
+
+      // ถ้าวันที่เท่ากัน เรียงตาม order_number จากน้อยไปมาก
+      const orderNumA = parseInt(a.order_number || "0");
+      const orderNumB = parseInt(b.order_number || "0");
+      return orderNumA - orderNumB;
+    });
 
     if (ordersToExport.length === 0) {
       Swal.fire({
@@ -1119,6 +1143,28 @@ const OrderHistory = () => {
         return monthKey === selectedMonth;
       });
     }
+
+    // เรียงข้อมูลตามวันที่จัดส่งจากน้อยไปมาก (วันที่เก่าก่อน วันที่ใหม่มาหลัง)
+    ordersToExport.sort((a, b) => {
+      const dateA = convertThaiDateToISO(a.cart_delivery_date);
+      const dateB = convertThaiDateToISO(b.cart_delivery_date);
+
+      if (!dateA) return 1; // วันที่ไม่มีข้อมูลไปท้ายสุด
+      if (!dateB) return -1; // วันที่ไม่มีข้อมูลไปท้ายสุด
+
+      const timeA = new Date(dateA).getTime();
+      const timeB = new Date(dateB).getTime();
+
+      // เรียงตามวันที่จากน้อยไปมาก (วันที่เก่าก่อน)
+      if (timeA !== timeB) {
+        return timeA - timeB;
+      }
+
+      // ถ้าวันที่เท่ากัน เรียงตาม order_number จากน้อยไปมาก
+      const orderNumA = parseInt(a.order_number || "0");
+      const orderNumB = parseInt(b.order_number || "0");
+      return orderNumA - orderNumB;
+    });
 
     const worksheetData = ordersToExport.flatMap((cart, orderIndex) => {
       const foodPrice =
@@ -1600,11 +1646,30 @@ const OrderHistory = () => {
                                   <CalendarDays className='w-4 h-4' />
                                   <span>วันที่สั่งอาหาร {cart.date}</span>
                                 </div>
-                                <div className='flex items-center gap-1'>
-                                  <Clock className='w-4 h-4' />
-                                  <span>เวลา {cart.time} น.</span>
-                                </div>
+                                
                               </div>
+                              {(cart.cart_invoice_tex || cart.cart_customer_name || cart.cart_location_send) && (
+                                <div className='flex flex-col gap-2 text-xs sm:text-sm font-normal text-black border-t pt-2 mt-2'>
+                                  {cart.cart_invoice_tex && (
+                                    <div className='flex items-center gap-1'>
+                                      <FileText className='w-4 h-4 text-purple-500' />
+                                      <span>เลขกำกับภาษี: {cart.cart_invoice_tex}</span>
+                                    </div>
+                                  )}
+                                  {cart.cart_customer_name && (
+                                    <div className='flex items-center gap-1'>
+                                      <User className='w-4 h-4 text-blue-500' />
+                                      <span>ออกบิลในนาม: {cart.cart_customer_name}</span>
+                                    </div>
+                                  )}
+                                  {cart.cart_location_send && (
+                                    <div className='flex items-center gap-1'>
+                                      <MapIcon className='w-4 h-4 text-red-600' />
+                                      <span>ที่อยู่: {cart.cart_location_send}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                               <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
                                 <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                               </div>
