@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest) {
           menu_category: menu.menu_category,
           menu_total: menu.menu_total,
           menu_order_id: menu.menu_order_id || 0,
-          menu_description: menu.menu_description || "",
+          menu_description: Array.isArray(menu.menu_description) ? menu.menu_description : [],
           menu_cost: menu.menu_cost || 0,
           menu_ingredients: (menu.menu_ingredients || []).map((ing: any) => ({
             ingredient_name: ing.ingredient_name,
