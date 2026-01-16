@@ -68,6 +68,7 @@ export interface Cart {
   cart_export_time?: string;
   cart_customer_tel?: string;
   cart_location_send?: string;
+  cart_invoice_tex?: string;
   cart_lunchbox: Lunchbox[];
 }
 
@@ -94,6 +95,7 @@ export type RawCart = {
   cart_export_time: string;
   cart_receive_time: string;
   cart_shipping_cost: string;
+  cart_invoice_tex?: string;
   cart_lunchbox: string | Lunchbox[];
 };
 
