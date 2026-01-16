@@ -102,7 +102,7 @@ export async function GET() {
         status: "success",
         total: 0,
         result: [] 
-      }, { status: 404 });
+      }, { status: 200 });
     }
     
     const convertedResult = convertBigIntToString(result);
