@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "menu_description must be an array" }, { status: 400 });
     }
 
-    // Format the menu_description
+    // Format the menu_descriptio
     const formattedDescription = menu_description.map((desc) => ({
       menu_description_id: desc.menu_description_id || null,
       menu_description_title: desc.menu_description_title || "",
