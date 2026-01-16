@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest) {
       menu_description_value: desc.menu_description_value || "",
     }));
 
-    // Get existing cart_lunchbox and update the specific menu's description
+    // Get existing cart_lunchbox and update the specific menu description
     const cartLunchbox = (existingCart as any).cart_lunchbox || [];
     
     const updatedLunchbox = cartLunchbox.map((lunchbox: any) => {
