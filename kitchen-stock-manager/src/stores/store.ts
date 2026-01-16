@@ -76,6 +76,7 @@ interface CartState {
     total_cost_lunchbox?: string;
     total_cost?: string;
     description?: CartCartDescription[];
+    ispay?: string;
   }) => void;
   addLunchbox: (lunchbox: SelectedLunchbox) => void;
   removeLunchbox: (index: number) => void;
@@ -94,6 +95,7 @@ interface CartState {
   cart_total_remain: string;
   cart_total_cost: string;
   cart_description: CartCartDescription[];
+  cart_ispay: string;
 }
 
 export const useCartStore = create<CartState>()(
@@ -123,6 +125,7 @@ export const useCartStore = create<CartState>()(
       cart_total_remain: "",
       cart_total_cost: "",
       cart_description: [],
+      cart_ispay: "",
 
       addItem: (item, description = "") => {
         const { items } = get();
@@ -201,6 +204,7 @@ export const useCartStore = create<CartState>()(
           cart_total_remain: "",
           cart_total_cost: "",
           cart_description: [],
+          cart_ispay: "",
         });
       },
 
@@ -228,6 +232,7 @@ export const useCartStore = create<CartState>()(
           cart_total_remain: info.total_remain ?? state.cart_total_remain,
           cart_total_cost: info.total_cost ?? state.cart_total_cost,
           cart_description: info.description ?? state.cart_description,
+          cart_ispay: info.ispay ?? state.cart_ispay,
         }));
       },
 
