@@ -92,6 +92,7 @@ export default function CartList() {
   const [isErrorVisible, setIsErrorVisible] = useState(false);
   const [copyText, setCopyText] = useState("");
   const [isCopied, setIsCopied] = useState(false);
+  const [customChannelName, setCustomChannelName] = useState("");
   const handle = {
     LunchboxTotalCostChange: (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
@@ -148,6 +149,40 @@ export default function CartList() {
     ChangeQuantity: (cartItemId: string, quantity: number) => {
       if (quantity >= 1) setItemQuantity(cartItemId, quantity);
     },
+    CopyText: async () => {
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      const textarea = document.getElementById("copy-textarea") as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // สำหรับ mobile
+        try {
+          document.execCommand("copy");
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+        } catch (e) {
+          console.error("Failed to copy:", e);
+        }
+      }
+    }
+  },
+
+  Finish: () => {
+    setSuccess(false);
+    setIsCopied(false);
+    clearCart();
+
+    toast.success("ดำเนินการเสร็จสิ้น", {
+      duration: 3000, // แสดง 3 วินาที
+    });
+
+    setTimeout(() => {
+      router.push("/home/summarylist");
+    }, 1000);
+  },
   };
 
   const validate = {
@@ -244,7 +279,6 @@ export default function CartList() {
     setLoading(true);
     setErrors([]);
     try {
-      // สร้างข้อความสำหรับ cart_log ก่อนส่ง request
       const lunchboxListForMessage = selected_lunchboxes
         .map((lb, index) => {
           const lunchboxCost = Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0;
@@ -345,7 +379,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
               })) || [],
             menu_description: menu.menu_description,
             menu_order_id: menuIndex + 1,
-            menu_cost: (menu as any).menu_cost || menu.lunchbox_cost || 0, // ใช้ menu_cost หรือ lunchbox_cost เป็น fallback
           })),
         })),
         cart_receive_name: cart_receive_name,
@@ -366,20 +399,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
       });
 
       if (response.status !== 201) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
-
-      // // ใช้ copyTextContent ที่สร้างไว้ก่อนหน้านี้
-      //   .map((lb, index) => {
-      //     const lunchboxCost = Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0;
-      //     const costPerBox = lunchboxCost / lb.quantity;
-      //     const menuList = lb.selected_menus.map((menu, menuIndex) => `+ ${menu.menu_name}`).join("\n      ");
-
-      //     return `${index + 1}.${lb.lunchbox_name} - ${lb.lunchbox_set}
-      // ${menuList}
-      // เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท
-      // จำนวน ${lb.quantity} กล่อง
-      // รวม ${costPerBox.toLocaleString("th-TH")}x${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`;
-      //   })
-      //   .join("\n\n      ");
 
       // คำนวณยอดรวม
       const totalLunchboxCost = selected_lunchboxes.reduce((sum, lb) => {
@@ -408,32 +427,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
 
       // คำนวณยอดคงเหลือ
       const remainNum = Number(cart_total_remain.replace(/[^\d.]/g, "")) || 0;
-
-      //       const copyTextContent = `
-      // 📌รับออเดอร์ คุณ ${cart_receive_name}
-      // ช่องทางที่สั่ง : ${cart_channel_access}
-      // ผู้รับออเดอร์ : ${userName}
-      // ✅ รายละเอียดสำหรับจัดส่ง
-      // 1.วันที่รับสินค้า : ${cart_delivery_date}
-      // 2.เวลาส่งสินค้า : ${cart_export_time}
-      // 3.เวลารับสินค้า : ${cart_receive_time}
-      // 4.สถานที่จัดส่ง : ${cart_location_send}
-      // 5.ชื่อผู้รับสินค้า : ${cart_receive_name}
-      // 6.เบอร์โทร : ${cart_customer_tel}
-      // 7.ออกบิลในนาม : ${cart_customer_name}
-      // 8.ที่อยู่ : ${cart_location_send}
-      // 9.เลขประจำตัวผู้เสียภาษี : ${cart_invoice_tex}
-
-      // ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง
-      //       ${lunchboxList}
-
-      // ✅รวมค่าอาหาร ${totalLunchboxCost.toLocaleString("th-TH")} บาท
-      // ค่าจัดส่ง ${cart_shipping_cost} บาท
-      // ${chargeNum > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บาท\n` : ""}
-      // ✅รวมทั้งหมด ${totalCostNum.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
-      // มัดจำ ${depositText}
-      // ชำระ ${depositValue} (ชำระเรียบร้อยเเล้ว)`;
-      // คงเหลือ ${remainNum > 0 ? `${Number(remainNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท` : "-"}
 
       setCopyText(copyTextContent);
       setSuccess(true);
@@ -464,44 +457,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
     const groups = [];
     for (let i = 0; i < menus.length; i += limit) groups.push(menus.slice(i, i + limit));
     return groups;
-  };
-
-  const handleCopyText = async () => {
-    try {
-      await navigator.clipboard.writeText(copyText);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
-      // Fallback: เลือกข้อความใน textarea
-      const textarea = document.getElementById("copy-textarea") as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.select();
-        textarea.setSelectionRange(0, 99999); // สำหรับ mobile
-        try {
-          document.execCommand("copy");
-          setIsCopied(true);
-          setTimeout(() => setIsCopied(false), 2000);
-        } catch (e) {
-          console.error("Failed to copy:", e);
-        }
-      }
-    }
-  };
-
-  const handleFinish = () => {
-    setSuccess(false);
-    setIsCopied(false);
-    clearCart();
-
-    // แสดง notification ที่มุมขวาบน
-    toast.success("ดำเนินการเสร็จสิ้น", {
-      duration: 3000, // แสดง 3 วินาที
-    });
-
-    // พาไปหน้า summaryList หลังจาก notification หายไป
-    setTimeout(() => {
-      router.push("/home/summarylist");
-    }, 3000);
   };
 
   useEffect(() => {
@@ -617,6 +572,13 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
     }
   }, [errors]);
 
+  useEffect(() => {
+    if (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram" && cart_channel_access !== "other")
+      setCustomChannelName(cart_channel_access);
+    else if (cart_channel_access === "other") setCustomChannelName("");
+    else setCustomChannelName("");
+  }, [cart_channel_access]);
+
   return (
     <main className='min-h-screen text-black'>
       {/* Success Modal */}
@@ -666,7 +628,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
               {/* ปุ่มคัดลอก */}
               <div className='mt-4 flex justify-end gap-2'>
                 <button
-                  onClick={handleCopyText}
+                  onClick={handle.CopyText}
                   className={`w-auto px-4 py-2 rounded-lg font-semibold transition-all ${isCopied ? "!bg-green-600 !text-white" : "!bg-gray-500 !text-white hover:!bg-gray-600"}`}>
                   {isCopied ? (
                     <span className='flex items-center justify-end gap-2'>
@@ -692,7 +654,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
             {/* Footer */}
             <div className='p-4 border-t bg-gray-50 rounded-b-lg'>
               <div className='w-full flex justify-center items-center'>
-                <button onClick={handleFinish} className='w-auto px-4 py-3 !bg-green-600 !text-white rounded-lg font-semibold hover:!bg-green-700 transition-colors'>
+                <button onClick={handle.Finish} className='w-auto px-4 py-3 !bg-green-600 !text-white rounded-lg font-semibold hover:!bg-green-700 transition-colors'>
                   เสร็จสิ้น
                 </button>
               </div>
@@ -778,7 +740,10 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
                   name='channel'
                   value='facebook'
                   checked={cart_channel_access === "facebook"}
-                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  onChange={(e) => {
+                    setCustomerInfo({ channel_access: e.target.value });
+                    setCustomChannelName("");
+                  }}
                   className='sr-only'
                 />
                 <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "facebook" ? "#1877F2" : "#6B7280" }}>
@@ -810,7 +775,10 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
                   name='channel'
                   value='line'
                   checked={cart_channel_access === "line"}
-                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  onChange={(e) => {
+                    setCustomerInfo({ channel_access: e.target.value });
+                    setCustomChannelName("");
+                  }}
                   className='sr-only'
                 />
                 <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "line" ? "#00C300" : "#6B7280" }}>
@@ -842,7 +810,10 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
                   name='channel'
                   value='instagram'
                   checked={cart_channel_access === "instagram"}
-                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  onChange={(e) => {
+                    setCustomerInfo({ channel_access: e.target.value });
+                    setCustomChannelName("");
+                  }}
                   className='sr-only'
                 />
                 <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "instagram" ? "#E4405F" : "#6B7280" }}>
@@ -866,22 +837,43 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
               <label
                 htmlFor='other'
                 className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  cart_channel_access === "other" ? "border-purple-500 bg-purple-50 shadow-md" : "border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50/50"
+                  cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")
+                    ? "border-purple-500 bg-purple-50 shadow-md"
+                    : "border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50/50"
                 }`}>
                 <input
                   type='radio'
                   id='other'
                   name='channel'
                   value='other'
-                  checked={cart_channel_access === "other"}
-                  onChange={(e) => setCustomerInfo({ channel_access: e.target.value })}
+                  checked={!!(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram"))}
+                  onChange={(e) => {
+                    setCustomerInfo({ channel_access: "other" });
+                    setCustomChannelName("");
+                  }}
                   className='sr-only'
                 />
-                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "other" ? "#9333EA" : "#6B7280" }}>
+                <svg
+                  className='!w-5 !h-5'
+                  fill='currentColor'
+                  viewBox='0 0 24 24'
+                  style={{
+                    color:
+                      cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")
+                        ? "#9333EA"
+                        : "#6B7280",
+                  }}>
                   <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' />
                 </svg>
-                <span className={`font-medium ${cart_channel_access === "other" ? "text-purple-700" : "text-gray-700"}`}>Other</span>
-                {cart_channel_access === "other" && (
+                <span
+                  className={`font-medium ${
+                    cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")
+                      ? "text-purple-700"
+                      : "text-gray-700"
+                  }`}>
+                  Other
+                </span>
+                {(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")) && (
                   <div className='absolute top-2 right-2'>
                     <svg className='w-5 h-5 text-purple-500' fill='currentColor' viewBox='0 0 20 20'>
                       <path
@@ -894,6 +886,24 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
                 )}
               </label>
             </div>
+
+            {(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")) && (
+              <div className='col-span-2 flex flex-col gap-1 '>
+                <label className='font-bold'>ระบุชื่อช่องทาง</label>
+                <input
+                  type='text'
+                  value={cart_channel_access === "other" ? customChannelName : cart_channel_access || customChannelName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCustomChannelName(value);
+                    if (value.trim()) setCustomerInfo({ channel_access: value });
+                    else setCustomerInfo({ channel_access: "other" });
+                  }}
+                  placeholder='กรอกชื่อช่องทาง'
+                  className='border rounded px-3 py-2 w-full'
+                />
+              </div>
+            )}
           </div>
 
           <div className='flex flex-col gap-1'>
