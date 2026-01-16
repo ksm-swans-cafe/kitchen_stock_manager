@@ -37,6 +37,14 @@ interface cartList {
   setLunchbox: (lunchbox: LunchBox[]) => void;
   availableSets: string[];
   setAvailableSets: (availableSets: string[]) => void;
+  isErrorVisible: boolean;
+  setIsErrorVisible: (isErrorVisible: boolean) => void;
+  copyText: string;
+  setCopyText: (copyText: string) => void;
+  isCopied: boolean;
+  setIsCopied: (isCopied: boolean) => void;
+  customChannelName: string;
+  setCustomChannelName: (customChannelName: string) => void;
 }
 
 const useCartList = create<cartList>((set) => ({
@@ -52,6 +60,14 @@ const useCartList = create<cartList>((set) => ({
   setLunchbox: (lunchbox) => set({ lunchbox }),
   availableSets: [],
   setAvailableSets: (availableSets) => set({ availableSets }),
+  isErrorVisible: false,
+  setIsErrorVisible: (isErrorVisible) => set({ isErrorVisible }),
+  copyText: "",
+  setCopyText: (copyText) => set({ copyText }),
+  isCopied: false,
+  setIsCopied: (isCopied) => set({ isCopied }),
+  customChannelName: "",
+  setCustomChannelName: (customChannelName) => set({ customChannelName }),
 }));
 
 export default function CartList() {
@@ -86,13 +102,30 @@ export default function CartList() {
     updateLunchboxTotalCost,
   } = useCartStore();
 
-  const { loading, setLoading, errors, setErrors, success, setSuccess, rawDate, setRawDate, lunchbox, setLunchbox, availableSets, setAvailableSets } = useCartList();
+  const {
+    loading,
+    setLoading,
+    errors,
+    setErrors,
+    success,
+    setSuccess,
+    rawDate,
+    setRawDate,
+    lunchbox,
+    setLunchbox,
+    availableSets,
+    setAvailableSets,
+    isErrorVisible,
+    setIsErrorVisible,
+    copyText,
+    setCopyText,
+    isCopied,
+    setIsCopied,
+    customChannelName,
+    setCustomChannelName,
+  } = useCartList();
   const { userName, userRole } = useAuth();
   const router = useRouter();
-  const [isErrorVisible, setIsErrorVisible] = useState(false);
-  const [copyText, setCopyText] = useState("");
-  const [isCopied, setIsCopied] = useState(false);
-  const [customChannelName, setCustomChannelName] = useState("");
   const handle = {
     LunchboxTotalCostChange: (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
@@ -150,39 +183,39 @@ export default function CartList() {
       if (quantity >= 1) setItemQuantity(cartItemId, quantity);
     },
     CopyText: async () => {
-    try {
-      await navigator.clipboard.writeText(copyText);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
-      const textarea = document.getElementById("copy-textarea") as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.select();
-        textarea.setSelectionRange(0, 99999); // สำหรับ mobile
-        try {
-          document.execCommand("copy");
-          setIsCopied(true);
-          setTimeout(() => setIsCopied(false), 2000);
-        } catch (e) {
-          console.error("Failed to copy:", e);
+      try {
+        await navigator.clipboard.writeText(copyText);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) {
+        const textarea = document.getElementById("copy-textarea") as HTMLTextAreaElement;
+        if (textarea) {
+          textarea.select();
+          textarea.setSelectionRange(0, 99999); // สำหรับ mobile
+          try {
+            document.execCommand("copy");
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+          } catch (e) {
+            console.error("Failed to copy:", e);
+          }
         }
       }
-    }
-  },
+    },
 
-  Finish: () => {
-    setSuccess(false);
-    setIsCopied(false);
-    clearCart();
+    Finish: () => {
+      setSuccess(false);
+      setIsCopied(false);
+      clearCart();
 
-    toast.success("ดำเนินการเสร็จสิ้น", {
-      duration: 3000, // แสดง 3 วินาที
-    });
+      toast.success("ดำเนินการเสร็จสิ้น", {
+        duration: 3000, // แสดง 3 วินาที
+      });
 
-    setTimeout(() => {
-      router.push("/home/summarylist");
-    }, 1000);
-  },
+      setTimeout(() => {
+        router.push("/home/summarylist");
+      }, 1000);
+    },
   };
 
   const validate = {
@@ -822,7 +855,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
                 <span className={`font-medium ${cart_channel_access === "instagram" ? "text-pink-700" : "text-gray-700"}`}>Instagram</span>
                 {cart_channel_access === "instagram" && (
                   <div className='absolute top-2 right-2'>
-                    <svg className='!w-5 !h-5 text-pink-500' fill='currentColor' viewBox='0 0 20 20'>
+                    <svg className='w-5 h-5 text-pink-500' fill='currentColor' viewBox='0 0 20 20'>
                       <path
                         fillRule='evenodd'
                         d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
