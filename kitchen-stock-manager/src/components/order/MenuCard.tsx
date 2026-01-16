@@ -1,11 +1,11 @@
 "use client";
 
 import React, { KeyboardEvent, forwardRef, memo } from "react";
-import { GlassWater, CakeSlice, Candy, Apple } from "lucide-react";
+import { GlassWater, CakeSlice, Candy, Apple, Check } from "lucide-react";
 
 export type MenuCardSize = "sm" | "md" | "lg";
 
-export type MeatType = "หมู" | "ไก่" | "หมึก" | "กุ้ง" | "ทะเล" | null;
+export type MeatType = "หมู" | "ไก่" | "หมึก" | "กุ้ง" | null;
 
 export type MenuCardProps = {
   menuId: string;
@@ -28,6 +28,9 @@ export type MenuCardProps = {
   showPrice?: boolean;
   showCategory?: boolean;
   title?: string;
+  variant?: "card" | "list";
+  faded?: boolean;
+  isAdditionalPrice?: boolean;
 };
 
 const sizeMap: Record<MenuCardSize, { media: string; emoji: string }> = {
@@ -65,14 +68,16 @@ const meatTypeGradients: Record<string, string> = {
   ไก่: "bg-[linear-gradient(to_bottom_right,theme(colors.yellow.100),theme(colors.yellow.200),theme(colors.yellow.300))]",
   หมึก: "bg-[linear-gradient(to_bottom_right,theme(colors.purple.100),theme(colors.purple.200),theme(colors.purple.300))]",
   กุ้ง: "bg-[linear-gradient(to_bottom_right,theme(colors.orange.100),theme(colors.orange.200),theme(colors.orange.300))]",
-  ทะเล: "bg-[linear-gradient(to_bottom_right,theme(colors.cyan.100),theme(colors.cyan.200),theme(colors.cyan.300))]",
 };
 
 const defaultGradient = "bg-[linear-gradient(to_bottom_right,theme(colors.green.100),theme(colors.green.200),theme(colors.green.300))]";
 
-const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard({ menuId, name, price, category, emoji, image, meatType, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title }, ref) {
+const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuCard(
+  { menuId, name, price, category, emoji, image, meatType, selected = false, forced = false, duplicate = false, disabled = false, onClick, className, size = "md", showPrice = true, showCategory = true, title, variant = "card", faded = false, isAdditionalPrice = false },
+  ref
+) {
   const sizeConf = sizeMap[size] || sizeMap.md;
-  const isDisabled = disabled || (!!duplicate && !selected);
+  const isDisabled = disabled; // นำ duplicate ออกเพื่อให้กดสลับเมนูได้ (Auto-Swap)
 
   const handleClick = () => {
     if (isDisabled) return;
@@ -97,6 +102,37 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
 
   const indicatorClass = forced ? "bg-yellow-500" : "bg-green-500";
 
+  /* List Variant Rendering */
+  if (variant === "list") {
+    // Note: User can pass variant="list" or maybe we repurpose size="list" if cleaner.
+    // The plan said add variant prop. Let's use that.
+
+    // Using opacity for faded state
+    const opacityClass = faded ? "opacity-40 grayscale" : "opacity-100";
+
+    return (
+      <button
+        type='button'
+        ref={ref}
+        role='button'
+        disabled={isDisabled}
+        onClick={handleClick}
+        className={cn("w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border text-left bg-white", selected ? "border-orange-500 bg-orange-50 shadow-sm" : "border-gray-100 hover:border-gray-300 hover:bg-gray-50", opacityClass, className)}>
+        {/* Checkbox Circle */}
+        <div className={cn("w-6 h-6 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-all", selected ? "bg-orange-500 border-orange-500" : "border-gray-300 bg-white group-hover:border-gray-400")}>
+          {selected && <Check className='text-white w-3.5 h-3.5' strokeWidth={3} />}
+        </div>
+
+        {/* Name */}
+        <div className={cn("flex-1 font-bold text-sm sm:text-base text-gray-800", selected ? "text-orange-900" : "")}>{name}</div>
+
+        {/* Price */}
+        {showPrice && typeof price === "number" && <div className='font-medium text-gray-600 text-sm whitespace-nowrap'>{price > 0 ? (isAdditionalPrice ? `(+${price})` : `${price}.-`) : ""}</div>}
+      </button>
+    );
+  }
+
+  /* Card Variant Rendering (Default) */
   return (
     <button
       type='button'
@@ -130,7 +166,7 @@ const BaseMenuCard = forwardRef<HTMLButtonElement, MenuCardProps>(function MenuC
       <div className='p-2 h-24 text-center'>
         <div className={cn("font-bold p-1 text-black text-sm lg:text-base leading-tight group-hover:text-green-700 transition-colors duration-200", "line-clamp-2 overflow-hidden")}>เมนู{name}</div>
 
-        {showPrice && typeof price === "number" && <div className='mt-1 text-sm text-black'>ราคา {price} บาท</div>}
+        {showPrice && typeof price === "number" && <div className='mt-1 text-sm text-black'>ราคา {isAdditionalPrice ? `(+${price})` : `${price} บาท`}</div>}
       </div>
 
       {/* Focus ring accent sweep (subtle visual polish) */}
