@@ -921,7 +921,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_cha
             </div>
 
             {(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")) && (
-              <div className='col-span-2 flex flex-col gap-1 '>
+              <div className='col-span-2 flex flex-col gap-1 -mt-5'>
                 <label className='font-bold'>ระบุชื่อช่องทาง</label>
                 <input
                   type='text'
