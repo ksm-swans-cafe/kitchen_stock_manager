@@ -1908,17 +1908,6 @@ const OrderHistory = () => {
               </div>
               <div className='flex justify-end gap-2 pt-4 '>
                 <Button
-                  variant='outline'
-                  style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
-                  className=' !bg-red-400'
-                  onClick={() => {
-                    setIsExcelMonthDialogOpen(false);
-                    setSelectedMonthForExcel("");
-                  }}>
-                  ยกเลิก
-                </Button>
-
-                <Button
                   variant='default'
                   style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
                   className=' !bg-green-400'
@@ -1931,6 +1920,17 @@ const OrderHistory = () => {
                   }}>
                   Export Excel
                 </Button>
+                <Button
+                  variant='outline'
+                  style={{ color: "#000000", borderColor: "#808080", borderWidth: "1px" }}
+                  className=' !bg-red-400'
+                  onClick={() => {
+                    setIsExcelMonthDialogOpen(false);
+                    setSelectedMonthForExcel("");
+                  }}>
+                  ยกเลิก
+                </Button>
+
               </div>
             </div>
           </DialogContent>
