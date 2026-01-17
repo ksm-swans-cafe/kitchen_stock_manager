@@ -2094,6 +2094,7 @@ const SummaryList: React.FC = () => {
 
           <div>
             <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
+              <CalendarDays className='w-4 h-4 mr-2 text-slate-500' />
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
                   year: "numeric",
@@ -2164,7 +2165,7 @@ const SummaryList: React.FC = () => {
           <div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
-                <Filter className='w-4 h-4 mr-2 text-slate-500' />
+                <Wallet className='w-4 h-4 mr-2 text-slate-500' />
                 <SelectValue placeholder='All statuses' />
               </SelectTrigger>
               <SelectContent side='bottom' align='start' avoidCollisions={false}>
@@ -2194,7 +2195,7 @@ const SummaryList: React.FC = () => {
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
-          <div className='flex flex-center justify-self-end text-red-400'>
+          <div className='flex flex-center justify-self-end text-red-400 pr-1'>{/* เดิมไม่มี pr */}
             <Button
               onClick={() => {
                 setSearchTerm("");
@@ -2208,14 +2209,16 @@ const SummaryList: React.FC = () => {
               [ X ] ล้างฟิลเตอร์
             </Button>
           </div>
-          <div className='flex flex-col sm:flex-row flex-center gap-2'>
+
+          {/* ปุ่ม Export CSV PDF */}
+          {/* <div className='flex flex-col sm:flex-row flex-center gap-2'>
             <Button onClick={() => handleExport("csv")} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> CSV
             </Button>
             <Button onClick={() => handleExport("pdf")} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
               <Download className='w-4 h-4 mr-2' /> PDF
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <div className='space-y-6'>
