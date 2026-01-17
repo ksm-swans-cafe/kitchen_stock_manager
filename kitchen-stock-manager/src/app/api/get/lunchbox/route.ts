@@ -7,13 +7,8 @@ export async function GET() {
   if (!authResult.success) return authResult.response!;
 
   try {
-    const lunchboxes = await prisma.lunchbox.findMany({
-      select: {
-        lunchbox_name: true,
-        lunchbox_set_name: true,
-        lunchbox_limit: true,
-      },
-    });
+    // ใช้ findRaw เพื่อดึงข้อมูลโดยตรงจาก MongoDB รวม field ใหม่ที่ยังไม่ได้ generate Prisma
+    const lunchboxes = await prisma.lunchbox.findRaw({});
 
     const menus = await prisma.menu.findMany({
       select: {
@@ -31,10 +26,14 @@ export async function GET() {
       });
     });
 
-    const result = lunchboxes.map((lb) => {
+    const result = (lunchboxes as unknown as any[]).map((lb: any) => {
       const key = `${lb.lunchbox_name}_${lb.lunchbox_set_name}`;
       return {
-        ...lb,
+        lunchbox_name: lb.lunchbox_name,
+        lunchbox_set_name: lb.lunchbox_set_name,
+        lunchbox_limit: lb.lunchbox_limit,
+        lunchbox_name_image: lb.lunchbox_name_image || null,
+        lunchbox_set_name_image: lb.lunchbox_set_name_image || null,
         lunchbox_cost: lunchboxCostMap.get(key) || 0,
       };
     });

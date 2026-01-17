@@ -2,6 +2,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { MenuItem } from "@/models/menu_card/MenuCard";
 
+function generateCartItemId(menuId: string, description: string): string {
+  return `${menuId}-${description}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
 export interface CartItem extends MenuItem {
   menu_total: number;
   menu_description: string;
@@ -27,8 +31,14 @@ interface SelectedLunchbox {
   note?: string; // เพิ่ม note field
 }
 
+interface CartCartDescription {
+  description_id: string;
+  description_title: string;
+  description_value: string;
+}
 interface CartState {
   items: CartItem[];
+  cart_channel_access: string;
   cart_customer_name: string;
   cart_customer_tel: string;
   cart_location_send: string;
@@ -44,24 +54,55 @@ interface CartState {
   removeItem: (cartItemId: string) => void;
   setItemQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
-  setCustomerInfo: (info: { name?: string; tel?: string; location?: string; deliveryDate?: string; exportTime?: string; receiveTime?: string; cart_shipping_cost?: string; lunchbox?: string; lunchbox_set?: string }) => void;
-  // เพิ่มฟังก์ชันใหม่
+  setCustomerInfo: (info: {
+    channel_access?: string;
+    name?: string;
+    tel?: string;
+    location?: string;
+    deliveryDate?: string;
+    exportTime?: string;
+    receiveTime?: string;
+    cart_shipping_cost?: string;
+    lunchbox?: string;
+    lunchbox_set?: string;
+    receive_name?: string;
+    invoice_tex?: string;
+    pay_type?: string;
+    pay_deposit?: string;
+    pay_isdeposit?: boolean;
+    pay_cost?: string;
+    pay_charge?: string;
+    total_remain?: string;
+    total_cost_lunchbox?: string;
+    total_cost?: string;
+    description?: CartCartDescription[];
+    ispay?: string;
+  }) => void;
   addLunchbox: (lunchbox: SelectedLunchbox) => void;
   removeLunchbox: (index: number) => void;
   updateLunchboxQuantity: (index: number, quantity: number) => void;
   updateLunchboxMenus: (index: number, menus: MenuItem[]) => void;
   updateLunchboxTotalCost: (index: number, totalCost: string) => void;
   updateLunchboxNote: (index: number, note: string) => void;
+  cart_receive_name: string;
+  cart_invoice_tex: string;
+  cart_pay_type: string;
+  cart_pay_deposit: string;
+  cart_pay_isdeposit: boolean;
+  cart_pay_cost: string;
+  cart_pay_charge: string;
+  cart_total_cost_lunchbox: string;
+  cart_total_remain: string;
+  cart_total_cost: string;
+  cart_description: CartCartDescription[];
+  cart_ispay: string;
 }
-
-const generateCartItemId = (menuId: string | undefined, description: string) => {
-  return `${menuId || "no-id"}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${description.replace(/\s+/g, "_")}`;
-};
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      cart_channel_access: "",
       cart_customer_name: "",
       cart_customer_tel: "",
       cart_location_send: "",
@@ -73,6 +114,18 @@ export const useCartStore = create<CartState>()(
       cart_lunch_box: "",
       cart_lunch_box_set: "",
       selected_lunchboxes: [],
+      cart_receive_name: "",
+      cart_invoice_tex: "",
+      cart_pay_type: "",
+      cart_pay_deposit: "",
+      cart_pay_isdeposit: false,
+      cart_pay_cost: "",
+      cart_pay_charge: "",
+      cart_total_cost_lunchbox: "",
+      cart_total_remain: "",
+      cart_total_cost: "",
+      cart_description: [],
+      cart_ispay: "",
 
       addItem: (item, description = "") => {
         const { items } = get();
@@ -128,6 +181,7 @@ export const useCartStore = create<CartState>()(
       clearCart: () => {
         set({
           items: [],
+          cart_channel_access: "",
           cart_customer_name: "",
           cart_customer_tel: "",
           cart_location_send: "",
@@ -139,11 +193,24 @@ export const useCartStore = create<CartState>()(
           cart_lunch_box: "",
           cart_lunch_box_set: "",
           selected_lunchboxes: [],
+          cart_receive_name: "",
+          cart_invoice_tex: "",
+          cart_pay_type: "",
+          cart_pay_deposit: "",
+          cart_pay_isdeposit: false,
+          cart_pay_cost: "",
+          cart_pay_charge: "",
+          cart_total_cost_lunchbox: "",
+          cart_total_remain: "",
+          cart_total_cost: "",
+          cart_description: [],
+          cart_ispay: "",
         });
       },
 
       setCustomerInfo: (info) => {
         set((state) => ({
+          cart_channel_access: info.channel_access ?? state.cart_channel_access,
           cart_customer_name: info.name ?? state.cart_customer_name,
           cart_customer_tel: info.tel ?? state.cart_customer_tel,
           cart_location_send: info.location ?? state.cart_location_send,
@@ -151,9 +218,21 @@ export const useCartStore = create<CartState>()(
           cart_export_time: info.exportTime ?? state.cart_export_time,
           cart_receive_time: info.receiveTime ?? state.cart_receive_time,
           cart_shipping_cost: info.cart_shipping_cost ?? state.cart_shipping_cost,
-          cart_lunchbox: info.lunchbox ?? state.cart_lunchbox,
-          cart_lunch_box: info.lunchbox ?? state.cart_lunch_box,
+          cart_lunchbox: typeof info.lunchbox === "string" ? state.cart_lunchbox : info.lunchbox ?? state.cart_lunchbox,
+          cart_lunch_box: typeof info.lunchbox === "string" ? info.lunchbox : state.cart_lunch_box,
           cart_lunch_box_set: info.lunchbox_set ?? state.cart_lunch_box_set,
+          cart_receive_name: info.receive_name ?? state.cart_receive_name,
+          cart_invoice_tex: info.invoice_tex ?? state.cart_invoice_tex,
+          cart_pay_type: info.pay_type ?? state.cart_pay_type,
+          cart_pay_deposit: info.pay_deposit ?? state.cart_pay_deposit,
+          cart_pay_isdeposit: info.pay_isdeposit ?? state.cart_pay_isdeposit,
+          cart_pay_cost: info.pay_cost ?? state.cart_pay_cost,
+          cart_pay_charge: info.pay_charge ?? state.cart_pay_charge,
+          cart_total_cost_lunchbox: info.total_cost_lunchbox ?? state.cart_total_cost_lunchbox,
+          cart_total_remain: info.total_remain ?? state.cart_total_remain,
+          cart_total_cost: info.total_cost ?? state.cart_total_cost,
+          cart_description: info.description ?? state.cart_description,
+          cart_ispay: info.ispay ?? state.cart_ispay,
         }));
       },
 

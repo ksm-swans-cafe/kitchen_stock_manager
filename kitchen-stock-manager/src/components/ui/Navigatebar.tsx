@@ -30,6 +30,7 @@ export default function Navigatebar() {
   const { userName } = useAuth();
 
   const items = useCartStore((state: { items: { menu_total: number }[] }) => state.items);
+  const selected_lunchboxes = useCartStore((state: { selected_lunchboxes: { quantity: number }[] }) => state.selected_lunchboxes);
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -75,10 +76,15 @@ export default function Navigatebar() {
     router.back();
   };
 
-  const totalQuantity = items.reduce((sum: number, item: { menu_total: number }) => sum + item.menu_total, 0);
+  // นับจำนวนจากเมนูปกติ
+  const itemsQuantity = items.reduce((sum: number, item: { menu_total: number }) => sum + item.menu_total, 0);
+  // นับจำนวนชุดอาหารที่เลือก (นับเป็นชุด ไม่นับ quantity)
+  const lunchboxesQuantity = selected_lunchboxes.length;
+  // รวมจำนวนทั้งหมด
+  const totalQuantity = itemsQuantity + lunchboxesQuantity;
 
   return (
-    <nav className={`w-full bg-gray-200 py-3 px-4 ${isScrolled ? "fixed top-0 left-0 right-0 z-50 shadow-md animate-slideDown" : ""}`}>
+    <nav className='w-full bg-gray-200 py-3 px-4 sticky top-0 z-40 shadow-sm'>
       <div className='mx-auto max-w-[1200px] relative'>
         <ul className='flex gap-2 items-center text-gray-700 flex-wrap'>
           {!isHomePage && (

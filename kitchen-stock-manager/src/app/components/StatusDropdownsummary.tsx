@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState} from "react";
+import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import useSWR from "swr";
 import Swal from "sweetalert2";
@@ -26,8 +27,11 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocked, setIsLocked] = useState(defaultStatus === "success" || defaultStatus === "cancelled");
   const { userName } = useAuth();
-
-  const { mutate: mutateCarts } = useSWR("/api/get/carts", fetcher);
+  const pathname = usePathname();
+  let pathnameValue: string = "";
+  if (pathname === "/home/summarylist") pathnameValue = "summarylist";
+  else if (pathname === "/home/orderhistory") pathnameValue = "orderhistory";
+  const { mutate: mutateCarts } = useSWR(`/api/get/carts/${pathnameValue}`, fetcher);
   const { mutate: mutateIngredients } = useSWR("/api/get/ingredients", fetcher);
 
   const isValidTimeFormat = (time: string | undefined): boolean => {

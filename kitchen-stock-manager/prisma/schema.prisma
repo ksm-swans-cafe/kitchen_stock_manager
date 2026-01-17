@@ -22,7 +22,7 @@ type CartCartLunchbox {
 type CartCartLunchboxLunchboxMenu {
   menu_category    String
   menu_cost        BigInt?
-  menu_description String
+  menu_description CartCartLunchboxLunchboxDescription[]
   menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String
   /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
@@ -30,6 +30,12 @@ type CartCartLunchboxLunchboxMenu {
   menu_subname     String
   /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
   menu_total       Json
+}
+
+type CartCartLunchboxLunchboxDescription {
+  menu_description_id String?
+  menu_description_title String
+  menu_description_value String
 }
 
 type CartCartLunchboxLunchboxMenuMenuIngredients {
@@ -68,16 +74,25 @@ type MenuMenuIngredients {
 }
 
 type MenuMenuLunchbox {
+  lunchbox_menuid String?
   lunchbox_cost     BigInt?
   lunchbox_name     String
   lunchbox_set_name String
   lunchbox_menu_category String?
   lunchbox_showPrice Boolean?
+  lunchbox_AutoRice Boolean?
+}
+
+type CartCartDescription {
+  description_id     String?
+  description_title  String
+  description_value  String
 }
 
 model cart {
   id                 String              @id @default(auto()) @map("_id") @db.ObjectId
   cart_create_date   String
+  cart_channel_access String
   cart_customer_name String
   cart_customer_tel  String
   cart_delivery_date String
@@ -86,12 +101,32 @@ model cart {
   cart_last_update   String?
   cart_location_send String
   cart_lunchbox      CartCartLunchbox[]
-  cart_menu_items    CartCartMenuItems[]
+  cart_total_cost_lunchbox String
   cart_order_number  String
   cart_receive_time  String
+  cart_receive_name  String
   cart_shipping_cost String
   cart_status        String
   cart_username      String
+  cart_pay_type      String
+  cart_pay_deposit   String
+  cart_pay_isdeposit Boolean
+  cart_pay_charge    String
+  cart_pay_cost      String
+  cart_ispay         String?
+  cart_invoice_tex  String
+  cart_total_cost    String
+  cart_total_remain  String
+  cart_description   CartCartDescription[]
+  cart_pinned        Boolean?
+}
+
+model cart_log {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  message String
+  status String
+  create_date String
+  create_by String
 }
 
 model employee {
@@ -132,10 +167,12 @@ model ingredients {
 }
 
 model lunchbox {
-  id                String @id @default(auto()) @map("_id") @db.ObjectId
-  lunchbox_limit    Int
-  lunchbox_name     String
-  lunchbox_set_name String
+  id                      String  @id @default(auto()) @map("_id") @db.ObjectId
+  lunchbox_limit          Int
+  lunchbox_name           String
+  lunchbox_set_name       String
+  lunchbox_name_image     String?
+  lunchbox_set_name_image String?
 }
 
 model menu {

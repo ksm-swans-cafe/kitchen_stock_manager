@@ -99,7 +99,16 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
 
     console.log("Attempting to update cart with id:", cart.id);
-    console.log("Updated lunchboxes:", JSON.stringify(updatedLunchboxes, null, 2));
+    console.log(
+      "Updated lunchboxes:",
+      JSON.stringify(
+        updatedLunchboxes,
+        (key, value) => {
+          return typeof value === "bigint" ? value.toString() : value;
+        },
+        2
+      )
+    );
 
     const result = await prisma.cart.updateMany({
       where: { cart_id: id },

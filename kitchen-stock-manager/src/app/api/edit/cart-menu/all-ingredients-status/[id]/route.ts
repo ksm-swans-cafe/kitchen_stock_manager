@@ -32,6 +32,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         id: true,
         cart_id: true,
         cart_lunchbox: true,
+        cart_total_cost_lunchbox: true,
       },
     });
 
@@ -69,23 +70,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       })),
     }));
 
-    // แก้ไข: ใช้ replacer function เพื่อจัดการ BigInt
-    // console.log(
-    //   "Updated lunchboxes:",
-    //   JSON.stringify(
-    //     updatedLunchboxes,
-    //     (key, value) => {
-    //       return typeof value === "bigint" ? value.toString() : value;
-    //     },
-    //     2
-    //   )
-    // );
-    // console.log("Attempting to update cart with id:", cart.id);
-
     const result = await prisma.cart.update({
       where: { id: cart.id }, // เปลี่ยนจาก cart_id เป็น id
       data: {
         cart_lunchbox: updatedLunchboxes as any,
+        cart_total_cost_lunchbox: cart.cart_total_cost_lunchbox || "0", // Ensure non-null value
       },
     });
 

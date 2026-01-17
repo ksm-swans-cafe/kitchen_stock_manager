@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest) {
           menu_category: menu.menu_category,
           menu_total: menu.menu_total,
           menu_order_id: menu.menu_order_id || 0,
-          menu_description: menu.menu_description || "",
+          menu_description: Array.isArray(menu.menu_description) ? menu.menu_description : [],
           menu_cost: menu.menu_cost || 0,
           menu_ingredients: (menu.menu_ingredients || []).map((ing: any) => ({
             ingredient_name: ing.ingredient_name,
@@ -90,14 +90,27 @@ export async function PATCH(request: NextRequest) {
     if (cart_receive_time !== undefined) updateData.cart_receive_time = cart_receive_time;
     if (cart_shipping_cost !== undefined) updateData.cart_shipping_cost = cart_shipping_cost;
 
-    // Update the cart
-    const result = await prisma.cart.update({
-      where: { id: (existingCart as { id: string }).id },
+    // Update the cart using updateMany to avoid null field validation errors
+    const result = await prisma.cart.updateMany({
+      where: { cart_id: id },
       data: updateData,
     });
 
+    if (result.count === 0) {
+      return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุหรือไม่สามารถอัปเดตได้" }, { status: 404 });
+    }
+
+    // Fetch the updated cart to return
+    const updatedCart = await prisma.cart.findFirst({
+      where: { cart_id: id },
+    });
+
+    if (!updatedCart) {
+      return NextResponse.json({ error: "ไม่พบตะกร้าหลังอัปเดต" }, { status: 404 });
+    }
+
     // Convert BigInt to string for JSON serialization
-    const serializedResult = JSON.parse(JSON.stringify(result, (key, value) =>
+    const serializedResult = JSON.parse(JSON.stringify(updatedCart, (key, value) =>
       typeof value === 'bigint' ? value.toString() : value
     ));
 
