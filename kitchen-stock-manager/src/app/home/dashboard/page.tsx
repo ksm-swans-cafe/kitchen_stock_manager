@@ -842,16 +842,6 @@ export default function Dashboard() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleCancelEditMenuDesc(descId);
-                                  }}
-                                  className='group/cancel px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
-                                  style={{ color: '#ef4444' }}>
-                                  <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
-                                  ยกเลิก
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
                                     handleSaveEditMenuDesc(descId, item.menu_description || []);
                                   }}
                                   disabled={savingMenuDesc[menuKey]}
@@ -859,6 +849,16 @@ export default function Dashboard() {
                                   style={{ color: '#3b82f6' }}>
                                   <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
                                   {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelEditMenuDesc(descId);
+                                  }}
+                                  className='group/cancel px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                                  style={{ color: '#ef4444' }}>
+                                  <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                                  ยกเลิก
                                 </button>
                               </div>
                             </td>
@@ -954,6 +954,17 @@ export default function Dashboard() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                handleAddMenuDesc(day.cartId, item.lunchbox_name || '', item.name, item.menu_description || []);
+                              }}
+                              disabled={savingMenuDesc[menuKey]}
+                              className='group/save px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                              style={{ color: '#3b82f6' }}>
+                              <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                              {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setClosingMenuDescInput((prev) => ({ ...prev, [menuKey]: true }));
                                 setMenuDescInputs((prev) => ({ ...prev, [menuKey]: { title: "", value: "" } }));
                                 setTimeout(() => {
@@ -965,17 +976,6 @@ export default function Dashboard() {
                               style={{ color: '#ef4444' }}>
                               <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
                               ยกเลิก
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddMenuDesc(day.cartId, item.lunchbox_name || '', item.name, item.menu_description || []);
-                              }}
-                              disabled={savingMenuDesc[menuKey]}
-                              className='group/save px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
-                              style={{ color: '#3b82f6' }}>
-                              <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
-                              {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
                             </button>
                           </div>
                         </td>
@@ -1031,16 +1031,6 @@ export default function Dashboard() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCancelEditNote(descId);
-                            }}
-                            className='group/cancel px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
-                            style={{ color: '#ef4444' }}>
-                            <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
-                            ยกเลิก
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
                               handleSaveEditNote(descId, day.cart_description);
                             }}
                             disabled={savingNotes[day.cartId]}
@@ -1048,6 +1038,16 @@ export default function Dashboard() {
                             style={{ color: '#10b981' }}>
                             <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
                             {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelEditNote(descId);
+                            }}
+                            className='group/cancel px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                            style={{ color: '#ef4444' }}>
+                            <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                            ยกเลิก
                           </button>
                         </div>
                       </td>
@@ -1150,6 +1150,17 @@ export default function Dashboard() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      handleAddNote(day.cartId, day.cart_description);
+                    }}
+                    disabled={savingNotes[day.cartId]}
+                    className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                    style={{ color: '#10b981' }}>
+                    <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                    {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setClosingNoteInput((prev) => ({ ...prev, [day.cartId]: true }));
                       setNoteInputs((prev) => ({ ...prev, [day.cartId]: { title: "", value: "" } }));
                       // ใช้ timeout เพื่อรอ animation เสร็จ
@@ -1162,17 +1173,6 @@ export default function Dashboard() {
                     style={{ color: '#ef4444' }}>
                     <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
                     ยกเลิก
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddNote(day.cartId, day.cart_description);
-                    }}
-                    disabled={savingNotes[day.cartId]}
-                    className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
-                    style={{ color: '#10b981' }}>
-                    <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
-                    {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
                   </button>
                 </div>
               </div>
