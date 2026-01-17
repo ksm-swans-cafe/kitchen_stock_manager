@@ -503,6 +503,32 @@ export default function Dashboard() {
     dedupingInterval: 5000,
   });
 
+  // Auto-expand all menu items with descriptions by default
+  useEffect(() => {
+    if (apiData && apiData.status === "success") {
+      const expandedState: Record<string, boolean> = {};
+      apiData.result.forEach((item) => {
+        item.items.forEach((lunchbox) => {
+          lunchbox.lunchbox_menu.forEach((menu) => {
+            const menuKey = `${item.id}-${lunchbox.lunchbox_name}-${menu.menu_name}`;
+            // Set all menu items to expanded by default
+            if (expandedState[menuKey] === undefined) {
+              expandedState[menuKey] = true;
+            }
+          });
+        });
+      });
+      setExpandedMenuItems((prev) => {
+        // Only set keys that don't exist yet (preserve user's toggle choices)
+        const newState = { ...expandedState };
+        Object.keys(prev).forEach((key) => {
+          newState[key] = prev[key];
+        });
+        return newState;
+      });
+    }
+  }, [apiData]);
+
   // Process Data
   const allCards = useMemo<DayCard[]>(() => {
     if (!apiData || apiData.status !== "success") {
@@ -765,7 +791,7 @@ export default function Dashboard() {
                     >
                       <td className='px-4 py-2 !text-black align-middle'>
                         <div className='flex items-center gap-2'>
-                          {(hasMenuDescription || isExpanded) && (
+                          {hasMenuDescription && (
                             <span className={`text-xs text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
                               ▶
                             </span>
