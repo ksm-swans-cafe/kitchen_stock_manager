@@ -503,6 +503,32 @@ export default function Dashboard() {
     dedupingInterval: 5000,
   });
 
+  // Auto-expand all menu items with descriptions by default
+  useEffect(() => {
+    if (apiData && apiData.status === "success") {
+      const expandedState: Record<string, boolean> = {};
+      apiData.result.forEach((item) => {
+        item.items.forEach((lunchbox) => {
+          lunchbox.lunchbox_menu.forEach((menu) => {
+            const menuKey = `${item.id}-${lunchbox.lunchbox_name}-${menu.menu_name}`;
+            // Set all menu items to expanded by default
+            if (expandedState[menuKey] === undefined) {
+              expandedState[menuKey] = true;
+            }
+          });
+        });
+      });
+      setExpandedMenuItems((prev) => {
+        // Only set keys that don't exist yet (preserve user's toggle choices)
+        const newState = { ...expandedState };
+        Object.keys(prev).forEach((key) => {
+          newState[key] = prev[key];
+        });
+        return newState;
+      });
+    }
+  }, [apiData]);
+
   // Process Data
   const allCards = useMemo<DayCard[]>(() => {
     if (!apiData || apiData.status !== "success") {
@@ -765,7 +791,7 @@ export default function Dashboard() {
                     >
                       <td className='px-4 py-2 !text-black align-middle'>
                         <div className='flex items-center gap-2'>
-                          {(hasMenuDescription || isExpanded) && (
+                          {hasMenuDescription && (
                             <span className={`text-xs text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
                               ▶
                             </span>
@@ -842,16 +868,6 @@ export default function Dashboard() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleCancelEditMenuDesc(descId);
-                                  }}
-                                  className='group/cancel px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
-                                  style={{ color: '#ef4444' }}>
-                                  <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
-                                  ยกเลิก
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
                                     handleSaveEditMenuDesc(descId, item.menu_description || []);
                                   }}
                                   disabled={savingMenuDesc[menuKey]}
@@ -859,6 +875,16 @@ export default function Dashboard() {
                                   style={{ color: '#3b82f6' }}>
                                   <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
                                   {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelEditMenuDesc(descId);
+                                  }}
+                                  className='group/cancel px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                                  style={{ color: '#ef4444' }}>
+                                  <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                                  ยกเลิก
                                 </button>
                               </div>
                             </td>
@@ -954,6 +980,17 @@ export default function Dashboard() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                handleAddMenuDesc(day.cartId, item.lunchbox_name || '', item.name, item.menu_description || []);
+                              }}
+                              disabled={savingMenuDesc[menuKey]}
+                              className='group/save px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                              style={{ color: '#3b82f6' }}>
+                              <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                              {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setClosingMenuDescInput((prev) => ({ ...prev, [menuKey]: true }));
                                 setMenuDescInputs((prev) => ({ ...prev, [menuKey]: { title: "", value: "" } }));
                                 setTimeout(() => {
@@ -965,17 +1002,6 @@ export default function Dashboard() {
                               style={{ color: '#ef4444' }}>
                               <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
                               ยกเลิก
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddMenuDesc(day.cartId, item.lunchbox_name || '', item.name, item.menu_description || []);
-                              }}
-                              disabled={savingMenuDesc[menuKey]}
-                              className='group/save px-3 py-1 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
-                              style={{ color: '#3b82f6' }}>
-                              <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
-                              {savingMenuDesc[menuKey] ? "กำลังบันทึก..." : "บันทึก"}
                             </button>
                           </div>
                         </td>
@@ -1031,16 +1057,6 @@ export default function Dashboard() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCancelEditNote(descId);
-                            }}
-                            className='group/cancel px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
-                            style={{ color: '#ef4444' }}>
-                            <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
-                            ยกเลิก
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
                               handleSaveEditNote(descId, day.cart_description);
                             }}
                             disabled={savingNotes[day.cartId]}
@@ -1048,6 +1064,16 @@ export default function Dashboard() {
                             style={{ color: '#10b981' }}>
                             <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
                             {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelEditNote(descId);
+                            }}
+                            className='group/cancel px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 active:scale-95'
+                            style={{ color: '#ef4444' }}>
+                            <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
+                            ยกเลิก
                           </button>
                         </div>
                       </td>
@@ -1150,6 +1176,17 @@ export default function Dashboard() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      handleAddNote(day.cartId, day.cart_description);
+                    }}
+                    disabled={savingNotes[day.cartId]}
+                    className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
+                    style={{ color: '#10b981' }}>
+                    <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
+                    {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setClosingNoteInput((prev) => ({ ...prev, [day.cartId]: true }));
                       setNoteInputs((prev) => ({ ...prev, [day.cartId]: { title: "", value: "" } }));
                       // ใช้ timeout เพื่อรอ animation เสร็จ
@@ -1162,17 +1199,6 @@ export default function Dashboard() {
                     style={{ color: '#ef4444' }}>
                     <X className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/cancel:rotate-90' />
                     ยกเลิก
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddNote(day.cartId, day.cart_description);
-                    }}
-                    disabled={savingNotes[day.cartId]}
-                    className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
-                    style={{ color: '#10b981' }}>
-                    <Save className='w-3 h-3 inline mr-1 transition-transform duration-300 group-hover/save:scale-110' />
-                    {savingNotes[day.cartId] ? "กำลังบันทึก..." : "บันทึก"}
                   </button>
                 </div>
               </div>

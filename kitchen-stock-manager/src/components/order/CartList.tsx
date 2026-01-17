@@ -958,7 +958,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
 
             {(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")) && (
               <div className='col-span-2 flex flex-col gap-1 -mt-5'>
-                <label className='font-bold'>ระบุชื่อช่องทาง</label>
+                <label className='font-bold'>ชื่อช่องทาง</label>
                 <input
                   type='text'
                   value={cart_channel_access === "other" ? customChannelName : cart_channel_access || customChannelName}
@@ -968,7 +968,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                     if (value.trim()) setCustomerInfo({ channel_access: value });
                     else setCustomerInfo({ channel_access: "other" });
                   }}
-                  placeholder='กรอกชื่อช่องทาง'
+                  placeholder='ระบุชื่อช่องทาง'
                   className='border rounded px-3 py-2 w-full'
                 />
               </div>
@@ -977,17 +977,17 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
 
           <div className='flex flex-col gap-1'>
             <label className='font-bold'>ชื่อลูกค้า</label>
-            <input type='text' value={cart_receive_name} onChange={(e) => setCustomerInfo({ receive_name: e.target.value })} placeholder='ชื่อลูกค้า' className='border rounded px-3 py-2' />
+            <input type='text' value={cart_receive_name} onChange={(e) => setCustomerInfo({ receive_name: e.target.value })} placeholder='ระบุชื่อลูกค้า' className='border rounded px-3 py-2' />
           </div>
 
           <div className='flex flex-col gap-1'>
             <label className='font-bold'>เบอร์ติดต่อ</label>
-            <input type='text' value={cart_customer_tel} onChange={handle.PhoneChange} placeholder='081-234-5678' className='border rounded px-3 py-2' />
+            <input type='text' value={cart_customer_tel} onChange={handle.PhoneChange} placeholder='ระบุเบอร์ติดต่อ' className='border rounded px-3 py-2' />
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-bold'>สถานที่จัดส่ง</label>
-            <input type='text' value={cart_location_send} onChange={(e) => setCustomerInfo({ location: e.target.value })} placeholder='สถานที่จัดส่ง' className='w-full border rounded px-3 py-2' />
+            <input type='text' value={cart_location_send} onChange={(e) => setCustomerInfo({ location: e.target.value })} placeholder='ระบุสถานที่จัดส่ง' className='w-full border rounded px-3 py-2' />
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
@@ -1011,7 +1011,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               dateFormat='dd/MM/yyyy'
               minDate={userRole === "admin" ? undefined : new Date()}
               locale='th'
-              placeholderText='วัน/เดือน/ปี (พ.ศ.)'
+              placeholderText='เลือกวัน/เดือน/ปี ที่จัดส่ง'
               className='w-full border rounded px-3 py-2'
               renderCustomHeader={({ date, changeYear, changeMonth, decreaseMonth, increaseMonth, prevMonthButtonDisabled, nextMonthButtonDisabled }) => {
                 const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
@@ -1428,7 +1428,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               <>
                 <div className='flex flex-col gap-2 mb-4'>
                   <div className='flex items-center gap-2'>
-                    <label className='font-bold'>รูปแบบการมัดจำ</label>
+                    <label className='font-bold'>รูปแบบการชำระ</label>
                   </div>
                   <div className='grid grid-cols-2 gap-3'>
                     {/* จำนวนเต็ม */}
@@ -1495,7 +1495,38 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                   </div>
                 </div>
 
-                {/* สถานะการชำระเงิน - แสดงเมื่อเลือกรูปแบบการมัดจำ 50% เท่านั้น */}
+                {/* แสดงสถานะชำระแล้วเมื่อเลือกเต็มจำนวน */}
+                {cart_pay_deposit === "full" && (
+                  <div className='flex flex-col gap-2 mb-4'>
+                    <div className='flex items-center gap-2'>
+                      <label className='font-bold'>สถานะการชำระเงิน</label>
+                    </div>
+                    <div className='flex items-center justify-center gap-2 p-4 border-2 rounded-lg border-green-500 bg-green-50 shadow-md'>
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        className='!w-5 !h-5'
+                        style={{ color: "#10B981" }}
+                        width='24'
+                        height='24'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'>
+                        <path d='M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
+                        <path d='m16 19 3 3 3-3' />
+                        <path d='M18 12h.01' />
+                        <path d='M19 16v6' />
+                        <path d='M6 12h.01' />
+                        <circle cx='12' cy='12' r='2' />
+                      </svg>
+                      <span className='font-medium text-green-700'>ชำระแล้ว</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* สถานะการชำระเงิน - แสดงเมื่อเลือกรูปแบบการชำระ 50% เท่านั้น */}
                 {cart_pay_deposit && cart_pay_deposit === "percent" && (
                   <div className='flex flex-col gap-2 mb-4'>
                     <div className='flex items-center gap-2'>
@@ -1581,7 +1612,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                 )}
 
                 {/* แสดง "-" เมื่อเลือกเต็มจำนวน */}
-                {cart_pay_deposit && cart_pay_deposit === "full" && (
+                {/* {cart_pay_deposit && cart_pay_deposit === "full" && (
                   <div className='flex flex-col gap-2 mb-4'>
                     <div className='flex items-center gap-2'>
                       <label className='font-bold'>สถานะการชำระเงิน</label>
@@ -1590,7 +1621,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                       <span className='text-gray-700 font-medium'>-</span>
                     </div>
                   </div>
-                )}
+                )} */}
               </>
             )}
 
