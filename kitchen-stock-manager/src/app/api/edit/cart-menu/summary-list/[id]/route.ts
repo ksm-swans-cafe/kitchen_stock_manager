@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+function convertBigIntToNumber(obj: any): any {
+  return JSON.parse(JSON.stringify(obj, (key, value) => (typeof value === "bigint" ? Number(value) : value)));
+}
+
 interface MenuItem {
   menu_name: string;
   menu_total: number;
@@ -131,11 +135,24 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
             ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
           }));
 
+          // Handle menu_description - must be array of objects, not string
+          let menuDescription: any[] = [];
+          if (menu.menu_description && Array.isArray(menu.menu_description)) {
+            // If existing menu has description as array, use it
+            menuDescription = menu.menu_description;
+          } else if (updatedMenu.menu_description && Array.isArray(updatedMenu.menu_description)) {
+            // If updated menu has description as array, use it
+            menuDescription = updatedMenu.menu_description;
+          } else {
+            // Default to empty array if no description or not in correct format
+            menuDescription = [];
+          }
+
           return {
             ...menu,
             menu_total: updatedMenu.menu_total,
             menu_ingredients: menuIngredients,
-            menu_description: updatedMenu.menu_description || menu.menu_description || "",
+            menu_description: menuDescription,
           };
         }
         return menu;
@@ -147,12 +164,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       };
     });
 
-    console.log("Updated lunchboxes to save:", JSON.stringify(updatedLunchboxes, null, 2));
+    // Convert BigInt to Number before stringify
+    const serializedLunchboxes = convertBigIntToNumber(updatedLunchboxes);
+    console.log("Updated lunchboxes to save:", JSON.stringify(serializedLunchboxes, null, 2));
 
     const result = await prisma.cart.updateMany({
       where: { cart_id: id },
       data: {
-        cart_lunchbox: updatedLunchboxes as any,
+        cart_lunchbox: serializedLunchboxes as any,
         cart_total_cost_lunchbox: cartTotalCostLunchbox, // Use value from aggregateRaw
         cart_last_update: new Date().toISOString(),
       },
@@ -162,10 +181,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุหรือไม่สามารถอัปเดตได้" }, { status: 404 });
     }
 
-    return NextResponse.json({
+    // Convert result to ensure no BigInt values
+    const serializedResult = convertBigIntToNumber({
       success: true,
       updated: result.count,
     });
+
+    return NextResponse.json(serializedResult);
   } catch (error: unknown) {
     console.error("Server error:", {
       message: (error as Error)?.message,

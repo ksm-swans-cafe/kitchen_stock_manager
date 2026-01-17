@@ -2361,16 +2361,16 @@ const SummaryList: React.FC = () => {
                             </div>
                           </div>
                           <AccordionTrigger className='w-full hover:no-underline px-0'>
-                            <div className='flex flex-col gap-3 w-full text-slate-700 text-sm sm:text-base font-bold'>
+                            <div className='flex flex-col gap-3 w-full text-slate-700 text-base font-bold'>
                               <div>รายการคำสั่งซื้อหมายเลข {String(cart.order_number).padStart(3, "0")}</div>
                               {/* <div className='flex items-center gap-2 font-medium text-slate-800'>
                                 <FileText className='w-4 h-4 text-blue-500' />
-                                <span className='truncate text-sm sm:text-base'>
+                                <span className='truncate text-base'>
                                   ผู้สร้างรายการคำสั่งซื้อ: <span className=''>{cart.createdBy}</span>
                                 </span>
                               </div> */}
                               <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
-                                <div className='flex flex-col sm:flex-row sm:items-center gap-2 text-sm sm:text-base'>
+                                <div className='flex flex-col sm:flex-row sm:items-center gap-2 text-base'>
                                   <div className='flex items-center gap-1'>
                                     <Package className='w-4 h-4' />
                                     <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
@@ -2394,20 +2394,20 @@ const SummaryList: React.FC = () => {
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
-                                <div className='flex items-center gap-1 text-sm sm:text-base'>
+                                <div className='flex items-center gap-1 text-base'>
                                   <Map className='w-4 h-4 text-red-600' />
                                   <span>สถานที่จัดส่ง {cart.cart_location_send} </span>
                                 </div>
                               </div>
                               <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
-                                <div className='flex items-center gap-1 text-sm sm:text-base'>
+                                <div className='flex items-center gap-1 text-base'>
                                   <User className='w-4 h-4' />
                                   <span>ส่งถึงคุณ {cart.cart_customer_name}</span>
                                   <Smartphone className='w-4 h-4' />
                                   <span>เบอร์ {cart.cart_customer_tel} </span>
                                 </div>
                               </div>
-                              <div className='flex flex-wrap items-center gap-4 text-xs sm:text-sm font-normal text-black'>
+                              <div className='flex flex-wrap items-center gap-4 text-base font-normal text-black'>
                                 <div className='flex items-center gap-1'>
                                   <CalendarDays className='w-4 h-4' />
                                   <span>วันที่สั่งอาหาร {cart.date}</span>
@@ -2426,7 +2426,7 @@ const SummaryList: React.FC = () => {
                                 </div> */}
                               </div>
                               {(cart.cart_invoice_tex || cart.cart_customer_name || cart.cart_location_send) && (
-                                <div className='flex flex-col gap-2 text-xs sm:text-sm font-normal text-black border-t pt-2 mt-2'>
+                                <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
                                   {cart.cart_invoice_tex && (
                                     <div className='flex items-center gap-1'>
                                       <FileText className='w-4 h-4 text-purple-500' />
