@@ -590,16 +590,20 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
   }, [cart_pay_deposit, cart_pay_type, cart_pay_cost, cart_total_cost]);
 
   useEffect(() => {
-    const totalCostStr = cart_total_cost.replace(/,/g, "");
-    const totalCostNum = parseFloat(totalCostStr) || 0;
-    const totalCostInSatang = Math.round(totalCostNum * 100); // แปลงเป็นสตางค์
-
-    const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, "")) || 0;
-
-    if (!cart_pay_deposit || totalCostNum === 0) {
+    if (!cart_total_cost || !cart_pay_deposit) {
       setCustomerInfo({ total_remain: "" });
       return;
     }
+
+    const totalCostStr = cart_total_cost.replace(/,/g, "");
+    const totalCostNum = parseFloat(totalCostStr) || 0;
+
+    if (totalCostNum === 0 || isNaN(totalCostNum)) {
+      setCustomerInfo({ total_remain: "" });
+      return;
+    }
+
+    const payCostNum = Number(cart_pay_cost?.replace(/[^\d]/g, "") || 0) || 0;
 
     if (cart_pay_deposit === "full") {
       if (cart_ispay !== "-") {
@@ -607,14 +611,18 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
       }
       const depositAmount = payCostNum / 100;
       const remaining = totalCostNum - depositAmount;
-      const formattedRemaining = remaining >= 0 ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
+      const formattedRemaining = remaining >= 0 && !isNaN(remaining) ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
       setCustomerInfo({ total_remain: formattedRemaining });
       return;
     }
 
     if (cart_pay_deposit === "percent" && cart_ispay === "unpaid") {
-      const formattedRemaining = Number(totalCostNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      setCustomerInfo({ total_remain: formattedRemaining });
+      if (totalCostNum > 0 && !isNaN(totalCostNum)) {
+        const formattedRemaining = Number(totalCostNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        setCustomerInfo({ total_remain: formattedRemaining });
+      } else {
+        setCustomerInfo({ total_remain: "" });
+      }
       return;
     }
 
@@ -622,7 +630,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
     if (cart_pay_deposit === "percent") depositAmount = (totalCostNum * payCostNum) / 100;
 
     const remaining = totalCostNum - depositAmount;
-    const formattedRemaining = remaining >= 0 ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
+    const formattedRemaining = remaining >= 0 && !isNaN(remaining) ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
     setCustomerInfo({ total_remain: formattedRemaining });
   }, [cart_total_cost, cart_pay_deposit, cart_pay_cost, cart_ispay]);
 
@@ -1404,7 +1412,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
             <div className='flex items-center gap-2 mb-4'>
               <label className='font-bold'>รูปแบบการชำระเงิน</label>
               <Select value={cart_pay_type || ""} onValueChange={(value) => setCustomerInfo({ pay_type: value })}>
-                <SelectTrigger className='w-[200px]'>
+                <SelectTrigger className='w-auto'>
                   <SelectValue placeholder='เลือกรูปแบบการชำระเงิน' />
                 </SelectTrigger>
                 <SelectContent side='bottom' align='start' position='popper' avoidCollisions={true} collisionPadding={8} sideOffset={4} className='w-[200px] max-w-[200px]'>
@@ -1521,7 +1529,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                           stroke='currentColor'
                           strokeWidth='2'
                           strokeLinecap='round'
-                          stroke-linejoin='round'>
+                          strokeLinejoin='round'>
                           <path d='M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
                           <path d='m16 19 3 3 3-3' />
                           <path d='M18 12h.01' />
@@ -1556,9 +1564,9 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                           viewBox='0 0 24 24'
                           fill='none'
                           stroke='currentColor'
-                          stroke-width='2'
-                          stroke-linecap='round'
-                          stroke-linejoin='round'>
+                          strokeWidth='2'
+                          strokeLinecap='round'
+                          strokeLinejoin='round'>
                           <path d='M13 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
                           <path d='m17 17 5 5' />
                           <path d='M18 12h.01' />
@@ -1633,7 +1641,15 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               </div>
               <div className='flex justify-between items-center py-2'>
                 <label className='font-bold text-green-700'>คงเหลือ</label>
-                <span className='text-xl font-bold text-green-700'>{cart_total_remain ? `${Number(cart_total_remain).toFixed(2)} บาท` : "-"}</span>
+                <span className='text-xl font-bold text-green-700'>
+                  {cart_total_remain
+                    ? (() => {
+                        const remainStr = typeof cart_total_remain === "string" ? cart_total_remain.replace(/,/g, "") : String(cart_total_remain);
+                        const remainNum = parseFloat(remainStr) || 0;
+                        return remainNum > 0 ? `${remainNum.toFixed(2)} บาท` : "0.00 บาท";
+                      })()
+                    : "-"}
+                </span>
               </div>
             </div>
           </>
