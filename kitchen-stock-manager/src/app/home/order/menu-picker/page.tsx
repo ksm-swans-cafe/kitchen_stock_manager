@@ -445,22 +445,41 @@ export default function Order() {
   }, [selectedMenuItems, availableMenus, riceQuantity]);
 
   // ==================== Sequential Category Selection Logic ====================
-  // Get list of categories that have been selected (excluding rice)
-  const getSelectedCategories = useMemo(() => {
-    return availableMenus
-      .filter((menu) => selectedMenuItems.includes(buildMenuKey(menu)))
-      .map((menu) => menu.lunchbox_menu_category)
-      .filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว");
-  }, [availableMenus, selectedMenuItems]);
-
   // Get ordered list of categories that exist in current menu
   const getOrderedCategories = useMemo(() => {
-    const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
+    const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "ข้าว+กับข้าว", "meat-filter", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
 
     const existingCategories = [...new Set(availableMenus.map((m) => m.lunchbox_menu_category).filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว"))];
 
+    // Add virtual meat filter if we have a dish category that requires meat
+    if (existingCategories.some(cat => cat === "กับข้าวที่ 1" || cat === "ข้าว+กับข้าว")) {
+      existingCategories.push("meat-filter");
+    }
+
     return categoryOrder.filter((cat) => existingCategories.includes(cat));
   }, [availableMenus]);
+
+  // Get list of categories that have been selected (excluding rice)
+  const getSelectedCategories = useMemo(() => {
+    const selected = availableMenus
+      .filter((menu) => selectedMenuItems.includes(buildMenuKey(menu)))
+      .map((menu) => menu.lunchbox_menu_category)
+      .filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว");
+
+    // Add virtual flags for sequence logic
+    // Unlocks meat filter if a dish is picked or being focused
+    if (focusedDish !== null || selected.some(cat => cat === "กับข้าวที่ 1" || cat === "ข้าว+กับข้าว")) {
+      if (!selected.includes("กับข้าวที่ 1")) selected.push("กับข้าวที่ 1");
+      if (!selected.includes("ข้าว+กับข้าว")) selected.push("ข้าว+กับข้าว");
+    }
+
+    // Unlocks subsequent steps if meat is selected
+    if (selectedMeatType !== null) {
+      selected.push("meat-filter");
+    }
+
+    return selected;
+  }, [availableMenus, selectedMenuItems, focusedDish, selectedMeatType]);
 
   // Check if a category is locked (requires previous category to be selected first)
   const isCategoryLocked = useMemo(() => {
