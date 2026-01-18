@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { MapPin, Clock, Maximize2, Minimize2, Star, Plus, Save, X, Trash2 } from "lucide-react";
+import { MapPin, Clock, Maximize2, Minimize2, Star, Plus, Save, X, Trash2, Edit2, CalendarDays } from "lucide-react";
 import { Button } from "@/share/ui/button";
 import useSWR, { mutate } from "swr";
 import { fetcher } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 import { Loading } from "@/components/loading/loading";
 import DashboardIcon from "@/assets/dashboard.png";
@@ -41,6 +44,7 @@ interface DayCard {
   cartId: string;
   dayOfWeek: string;
   dateTitle: string;
+  rawDate: string; // DD/MM/YYYY format
   sendPlace: string;
   sendTime: string;
   receiveTime: string;
@@ -49,6 +53,15 @@ interface DayCard {
   isPinned?: boolean;
   minutesToSend?: number;
   cart_description: CartDescription[];
+}
+
+// Edit Card Modal State Interface
+interface EditCardState {
+  cartId: string;
+  date: string;
+  sendTime: string;
+  receiveTime: string;
+  location: string;
 }
 
 interface ApiResponse {
@@ -131,11 +144,11 @@ const dayColorLegend = [
 
 const cleanTime = (text: string) => text.replace(/\(.*?\)/g, "").trim();
 
-const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+const monthNamesShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 
-const getMonthName = (monthNum: string | number): string => {
+const getMonthNameShort = (monthNum: string | number): string => {
   const num = typeof monthNum === "string" ? parseInt(monthNum, 10) : monthNum;
-  return monthNames[num - 1] || monthNum.toString();
+  return monthNamesShort[num - 1] || monthNum.toString();
 };
 
 const getTimeAlertInfo = (minutes?: number) => {
@@ -171,6 +184,10 @@ const getTimeAlertInfo = (minutes?: number) => {
 
 // --- Main Component ---
 export default function Dashboard() {
+  const router = useRouter();
+  const { userRole } = useAuth(); // ดึง userRole จาก AuthProvider
+  const isAdmin = userRole === "admin"; // ตรวจสอบว่าเป็น admin หรือไม่
+  
   const [fullscreen, setFullscreen] = useState(false);
   // State สำหรับ note input
   const [noteInputs, setNoteInputs] = useState<Record<string, { title: string; value: string }>>({});
@@ -182,6 +199,10 @@ export default function Dashboard() {
   const [cursorHidden, setCursorHidden] = useState(false);
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
   const cursorTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // State สำหรับแก้ไข Card Info (เวลาจัดส่ง, เวลารับ, สถานที่, วันที่)
+  const [editCardInfo, setEditCardInfo] = useState<EditCardState | null>(null);
+  const [savingCardInfo, setSavingCardInfo] = useState(false);
 
   // State สำหรับ menu description
   const [menuDescInputs, setMenuDescInputs] = useState<Record<string, { title: string; value: string }>>({});
@@ -226,6 +247,79 @@ export default function Dashboard() {
       }
     };
   }, []);
+
+  // ฟังก์ชันนำทางไปหน้า summarylist พร้อม filter
+  const handleNavigateToSummary = useCallback((cartId: string, dateTitle: string) => {
+    Swal.fire({
+      title: 'ต้องการนำทางไปหน้าสรุปรายการหรือไม่?',
+      text: `ไปยังรายการ ${dateTitle}`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'ใช่, นำทาง',
+      cancelButtonText: 'ยกเลิก',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // นำทางไปหน้า summarylist พร้อม query parameter สำหรับ filter
+        router.push(`/home/summarylist?cartId=${cartId}`);
+      }
+    });
+  }, [router]);
+
+  // ฟังก์ชันเริ่มแก้ไข Card Info
+  const handleStartEditCardInfo = useCallback((day: DayCard) => {
+    setEditCardInfo({
+      cartId: day.cartId,
+      date: day.rawDate,
+      sendTime: day.sendTime.replace(' น.', ''),
+      receiveTime: day.receiveTime.replace(' น.', ''),
+      location: day.sendPlace,
+    });
+  }, []);
+
+  // ฟังก์ชันบันทึก Card Info
+  const handleSaveCardInfo = useCallback(async () => {
+    if (!editCardInfo) return;
+    
+    setSavingCardInfo(true);
+    try {
+      const response = await fetch(`/api/edit/cart/${editCardInfo.cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cart_delivery_date: editCardInfo.date,
+          cart_export_time: editCardInfo.sendTime,
+          cart_receive_time: editCardInfo.receiveTime,
+          cart_location_send: editCardInfo.location,
+        }),
+      });
+      
+      if (response.ok) {
+        mutate("/api/get/dashboard");
+        setEditCardInfo(null);
+        Swal.fire({
+          icon: 'success',
+          title: 'บันทึกสำเร็จ',
+          text: 'อัปเดตข้อมูลเรียบร้อยแล้ว',
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update');
+      }
+    } catch (error) {
+      console.error("Error updating card info:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        text: 'ไม่สามารถบันทึกข้อมูลได้',
+      });
+    } finally {
+      setSavingCardInfo(false);
+    }
+  }, [editCardInfo]);
 
   // ฟังก์ชันสำหรับ toggle ปักหมุดและบันทึกลง DB
   const togglePin = async (cartId: string, currentPinned: boolean) => {
@@ -629,11 +723,15 @@ export default function Dashboard() {
 
         const minutesToSend = calculateMinutesToSend(item.date, item.sendTime);
 
+        // แปลงปี พ.ศ. เป็น 2 หลักท้าย (เช่น 2569 -> 69)
+        const shortYear = String(year).slice(-2);
+
         return {
           id: index + 1, // แนะนำให้ใช้ ID จริงจาก API ถ้ามี เพื่อความแม่นยำในการระบุตัวตน
           cartId: item.id, // เก็บ cart_id จริงจาก API เพื่อใช้ในการบันทึก note
           dayOfWeek: item.dayOfWeek,
-          dateTitle: `วัน${item.dayOfWeek}ที่ ${dayNum} ${getMonthName(month)} พ.ศ.${year}`,
+          dateTitle: `วัน${item.dayOfWeek}ที่ ${dayNum} ${getMonthNameShort(month)} ${shortYear}`,
+          rawDate: item.date, // เก็บวันที่แบบ raw (DD/MM/YYYY) สำหรับใช้ในการแก้ไข
           sendPlace: item.location,
           sendTime: item.sendTime + " น.",
           receiveTime: item.receiveTime + " น.",
@@ -644,7 +742,13 @@ export default function Dashboard() {
           cart_description: item.cart_description || [],
         };
       })
-      .filter((card) => card.minutesToSend >= 0);
+      .filter((card) => card.minutesToSend >= 0)
+      // Sort: pinned cards มาก่อน
+      .sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0; // คงลำดับเดิมถ้า pin status เหมือนกัน
+      });
   }, [apiData]);
 
   // Fullscreen Handlers
@@ -703,8 +807,10 @@ export default function Dashboard() {
           ${isPinned ? auraConfig.class : "shadow"}
           ${timeAlert && isPinned ? "ring-4 ring-amber-300" : ""}
         `}>
-        {/* HEADER (Fixed) */}
-        <div className={`relative flex-none bg-gradient-to-r ${headerGradient} text-white p-4 pb-5`}>
+        {/* HEADER (Fixed) - คลิกที่ส่วนวันที่/เวลา/สถานที่เพื่อแก้ไข (เฉพาะ admin) */}
+        <div 
+          className={`relative flex-none bg-gradient-to-r ${headerGradient} text-white p-4 pb-5 transition-all`}
+        >
           {/* ปุ่มดาวปักหมุด - แสดงตลอดถ้าปักหมุดแล้ว, ซ่อนถ้าไม่ได้ปัก (แสดงเมื่อ hover) */}
           <button
             onClick={(e) => {
@@ -731,24 +837,50 @@ export default function Dashboard() {
             />
           </button>
 
-          <div className='text-center mb-3 mt-5 lg:mt-6'>
+          {/* วันที่ - คลิกเพื่อแก้ไข (เฉพาะ admin) หรือนำทางไปหน้าสรุปรายการ */}
+          <div 
+            className={`text-center mb-3 mt-5 lg:mt-6 ${isAdmin ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isAdmin) {
+                handleNavigateToSummary(day.cartId, day.dateTitle);
+              }
+            }}
+            title={isAdmin ? 'คลิกเพื่อไปหน้าสรุปรายการ' : undefined}
+          >
             <h2 className='!text-base lg:!text-xl !font-semibold drop-shadow !text-black'>{day.dateTitle}</h2>
           </div>
 
-          <div className='flex justify-start mb-2'>
-            <div className='inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 whitespace-normal break-words'>
+          {/* สถานที่ - คลิกเพื่อแก้ไข (เฉพาะ admin) */}
+          <div 
+            className={`flex justify-start mb-2 ${isAdmin ? 'cursor-pointer' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isAdmin) handleStartEditCardInfo(day);
+            }}
+            title={isAdmin ? 'คลิกเพื่อแก้ไขข้อมูล' : undefined}
+          >
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200 whitespace-normal break-words ${isAdmin ? 'hover:bg-gray-300 transition-colors' : ''}`}>
               <MapPin className='w-4 h-4 shrink-0 !text-black' />
               <span className='text-xs lg:text-sm leading-snug !text-black'>{day.sendPlace}</span>
             </div>
           </div>
 
-          <div className='flex flex-wrap gap-3 mt-2'>
-            <div className='flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[100px] lg:min-w-[150px]'>
+          {/* เวลาส่ง และ เวลารับ - คลิกเพื่อแก้ไข (เฉพาะ admin) */}
+          <div 
+            className={`flex flex-wrap gap-3 mt-2 ${isAdmin ? 'cursor-pointer' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isAdmin) handleStartEditCardInfo(day);
+            }}
+            title={isAdmin ? 'คลิกเพื่อแก้ไขข้อมูล' : undefined}
+          >
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[100px] lg:min-w-[150px] ${isAdmin ? 'hover:bg-gray-300 transition-colors' : ''}`}>
               <Clock className='w-4 h-4 !text-black' />
               <span className='text-xs lg:text-sm font-semibold whitespace-nowrap !text-black'>เวลาส่ง</span>
               <span className='whitespace-nowrap text-xs lg:text-sm !text-black'>{cleanTime(day.sendTime)}</span>
             </div>
-            <div className='flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[100px] lg:min-w-[150px]'>
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full bg-gray-200 flex-1 min-w-[100px] lg:min-w-[150px] ${isAdmin ? 'hover:bg-gray-300 transition-colors' : ''}`}>
               <Clock className='w-4 h-4 !text-black' />
               <span className='text-xs lg:text-sm font-semibold whitespace-nowrap !text-black'>เวลารับ</span>
               <span className='whitespace-nowrap text-xs lg:text-sm !text-black'>{cleanTime(day.receiveTime)}</span>
@@ -1236,6 +1368,172 @@ export default function Dashboard() {
   return (
     // Main Container: ความสูงเท่าหน้าจอ (h-screen) และห้าม Scroll ที่ตัวแม่ (overflow-hidden)
     <div className={`p-4 sm:p-6 h-screen flex flex-col overflow-hidden bg-gray-50 ${cursorHidden ? "cursor-hidden" : ""}`}>
+      {/* Edit Card Info Modal - เฉพาะ admin */}
+      {isAdmin && editCardInfo && (
+        <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4' onClick={() => setEditCardInfo(null)}>
+          <div 
+            className='bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeSlideIn'
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className='bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4'>
+              <h3 className='text-lg font-semibold flex items-center gap-2'>
+                <Edit2 className='w-5 h-5' />
+                แก้ไขข้อมูลออเดอร์
+              </h3>
+            </div>
+
+            {/* Modal Body */}
+            <div className='p-5 space-y-5'>
+              {/* วันที่จัดส่ง */}
+              <div>
+                <label className='block text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2'>
+                  <CalendarDays className='w-4 h-4 text-blue-600' />
+                  วันที่จัดส่ง
+                </label>
+                <input
+                  type='date'
+                  value={(() => {
+                    // แปลงจาก DD/MM/YYYY (พ.ศ.) เป็น YYYY-MM-DD (ค.ศ.) สำหรับ input date
+                    const [d, m, y] = editCardInfo.date.split('/');
+                    if (d && m && y) {
+                      const gregorianYear = parseInt(y) - 543;
+                      return `${gregorianYear}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                    }
+                    return '';
+                  })()}
+                  onChange={(e) => {
+                    // แปลงจาก YYYY-MM-DD (ค.ศ.) เป็น DD/MM/YYYY (พ.ศ.)
+                    const [y, m, d] = e.target.value.split('-');
+                    if (y && m && d) {
+                      const buddhistYear = parseInt(y) + 543;
+                      setEditCardInfo({ ...editCardInfo, date: `${d}/${m}/${buddhistYear}` });
+                    }
+                  }}
+                  className='w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 font-medium bg-white'
+                />
+              </div>
+
+              {/* เวลาส่ง */}
+              <div>
+                <label className='block text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2'>
+                  <Clock className='w-4 h-4 text-green-600' />
+                  เวลาส่ง
+                </label>
+                <div className='flex items-center gap-2'>
+                  <select
+                    value={editCardInfo.sendTime.split(':')[0] || '00'}
+                    onChange={(e) => {
+                      const minute = editCardInfo.sendTime.split(':')[1] || '00';
+                      setEditCardInfo({ ...editCardInfo, sendTime: `${e.target.value}:${minute}` });
+                    }}
+                    className='flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 font-medium bg-white cursor-pointer'
+                  >
+                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map((hour) => (
+                      <option key={hour} value={hour}>{hour}</option>
+                    ))}
+                  </select>
+                  <span className='text-xl font-bold text-gray-600'>:</span>
+                  <select
+                    value={editCardInfo.sendTime.split(':')[1] || '00'}
+                    onChange={(e) => {
+                      const hour = editCardInfo.sendTime.split(':')[0] || '00';
+                      setEditCardInfo({ ...editCardInfo, sendTime: `${hour}:${e.target.value}` });
+                    }}
+                    className='flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 font-medium bg-white cursor-pointer'
+                  >
+                    {['00', '15', '30', '45'].map((minute) => (
+                      <option key={minute} value={minute}>{minute}</option>
+                    ))}
+                  </select>
+                  <span className='text-sm font-medium text-gray-500'>น.</span>
+                </div>
+              </div>
+
+              {/* เวลารับ */}
+              <div>
+                <label className='block text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2'>
+                  <Clock className='w-4 h-4 text-orange-600' />
+                  เวลารับ
+                </label>
+                <div className='flex items-center gap-2'>
+                  <select
+                    value={editCardInfo.receiveTime.split(':')[0] || '00'}
+                    onChange={(e) => {
+                      const minute = editCardInfo.receiveTime.split(':')[1] || '00';
+                      setEditCardInfo({ ...editCardInfo, receiveTime: `${e.target.value}:${minute}` });
+                    }}
+                    className='flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 font-medium bg-white cursor-pointer'
+                  >
+                    {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map((hour) => (
+                      <option key={hour} value={hour}>{hour}</option>
+                    ))}
+                  </select>
+                  <span className='text-xl font-bold text-gray-600'>:</span>
+                  <select
+                    value={editCardInfo.receiveTime.split(':')[1] || '00'}
+                    onChange={(e) => {
+                      const hour = editCardInfo.receiveTime.split(':')[0] || '00';
+                      setEditCardInfo({ ...editCardInfo, receiveTime: `${hour}:${e.target.value}` });
+                    }}
+                    className='flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 font-medium bg-white cursor-pointer'
+                  >
+                    {['00', '15', '30', '45'].map((minute) => (
+                      <option key={minute} value={minute}>{minute}</option>
+                    ))}
+                  </select>
+                  <span className='text-sm font-medium text-gray-500'>น.</span>
+                </div>
+              </div>
+
+              {/* สถานที่ */}
+              <div>
+                <label className='block text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2'>
+                  <MapPin className='w-4 h-4 text-red-600' />
+                  สถานที่จัดส่ง
+                </label>
+                <input
+                  type='text'
+                  value={editCardInfo.location}
+                  onChange={(e) => setEditCardInfo({ ...editCardInfo, location: e.target.value })}
+                  placeholder='ระบุสถานที่'
+                  className='w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 font-medium bg-white placeholder:text-gray-400'
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer - ปุ่มใหญ่และกดง่าย */}
+            <div className='px-5 py-4 bg-gray-50 flex gap-3'>
+              <button
+                onClick={handleSaveCardInfo}
+                disabled={savingCardInfo}
+                className='flex-1 px-5 py-3.5 text-base font-semibold rounded-xl hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
+              >
+                {savingCardInfo ? (
+                  <>
+                    <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
+                    กำลังบันทึก...
+                  </>
+                ) : (
+                  <>
+                    <Save className='w-5 h-5' />
+                    บันทึก
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setEditCardInfo(null)}
+                className='flex-1 px-5 py-3.5 text-base font-semibold rounded-xl hover:opacity-80 active:scale-[0.98] transition-all flex items-center justify-center'
+                style={{ backgroundColor: '#f3f4f6', color: '#374151', border: '2px solid #d1d5db' }}
+              >
+                ยกเลิก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Loading State */}
       {isLoading && <Loading context='หน้าแดชบอร์ด' icon={DashboardIcon.src} />}
 
