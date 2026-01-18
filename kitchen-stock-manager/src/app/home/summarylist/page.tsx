@@ -203,12 +203,12 @@ const SummaryList: React.FC = () => {
           const formattedDate = Number.isNaN(dateObjectForLocale.getTime())
             ? "ไม่ระบุ"
             : dateObjectForLocale
-                .toLocaleDateString("th-TH", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })
-                .replace(/ /g, " ");
+              .toLocaleDateString("th-TH", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+              .replace(/ /g, " ");
 
           const date = new Date(cart.cart_create_date);
           const formattedDateISO = Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
@@ -481,25 +481,25 @@ const SummaryList: React.FC = () => {
       prevCarts.map((cart) =>
         cart.id === cartId
           ? {
-              ...cart,
-              allIngredients: cart.allIngredients.map((group) =>
-                group.menuName === menuName
-                  ? {
-                      ...group,
-                      ingredients: group.ingredients.map((ing) =>
-                        ing.ingredient_name === ingredientName
-                          ? {
-                              ...ing,
-                              isChecked: newCheckedStatus,
-                              ingredient_status: newCheckedStatus,
-                            }
-                          : ing
-                      ),
-                      ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),
-                    }
-                  : group
-              ),
-            }
+            ...cart,
+            allIngredients: cart.allIngredients.map((group) =>
+              group.menuName === menuName
+                ? {
+                  ...group,
+                  ingredients: group.ingredients.map((ing) =>
+                    ing.ingredient_name === ingredientName
+                      ? {
+                        ...ing,
+                        isChecked: newCheckedStatus,
+                        ingredient_status: newCheckedStatus,
+                      }
+                      : ing
+                  ),
+                  ingredient_status: group.ingredients.every((ing) => (ing.ingredient_name === ingredientName ? newCheckedStatus : ing.isChecked)),
+                }
+                : group
+            ),
+          }
           : cart
       )
     );
@@ -548,17 +548,17 @@ const SummaryList: React.FC = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-                ...cart,
-                allIngredients: cart.allIngredients.map((group) => ({
-                  ...group,
-                  ingredients: group.ingredients.map((ing) => ({
-                    ...ing,
-                    isChecked: true,
-                    ingredient_status: true,
-                  })),
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
                   ingredient_status: true,
                 })),
-              }
+                ingredient_status: true,
+              })),
+            }
             : cart
         )
       );
@@ -567,17 +567,17 @@ const SummaryList: React.FC = () => {
         setSelectedCartForSummary((prev) =>
           prev
             ? {
-                ...prev,
-                allIngredients: prev.allIngredients.map((group) => ({
-                  ...group,
-                  ingredients: group.ingredients.map((ing) => ({
-                    ...ing,
-                    isChecked: true,
-                    ingredient_status: true,
-                  })),
+              ...prev,
+              allIngredients: prev.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
                   ingredient_status: true,
                 })),
-              }
+                ingredient_status: true,
+              })),
+            }
             : prev
         );
       }
@@ -637,17 +637,17 @@ const SummaryList: React.FC = () => {
         prevCarts.map((cart) =>
           targetCarts.some((target) => target.id === cart.id)
             ? {
-                ...cart,
-                allIngredients: cart.allIngredients.map((group) => ({
-                  ...group,
-                  ingredients: group.ingredients.map((ing) => ({
-                    ...ing,
-                    isChecked: true,
-                    ingredient_status: true,
-                  })),
+              ...cart,
+              allIngredients: cart.allIngredients.map((group) => ({
+                ...group,
+                ingredients: group.ingredients.map((ing) => ({
+                  ...ing,
+                  isChecked: true,
                   ingredient_status: true,
                 })),
-              }
+                ingredient_status: true,
+              })),
+            }
             : cart
         )
       );
@@ -847,12 +847,12 @@ const SummaryList: React.FC = () => {
       const deliveryDateISO = Time.convertThaiDateToISO(cart.cart_delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
-            .toLocaleDateString("th-TH", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-            .replace(/ /g, " ")
+          .toLocaleDateString("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+          .replace(/ /g, " ")
         : "ไม่มีวันที่จัดส่ง";
       (acc[dateDisplay] = acc[dateDisplay] || []).push(cart);
       return acc;
@@ -1061,8 +1061,8 @@ const SummaryList: React.FC = () => {
           วันที่: cart.date,
           เวลา: cart.time,
           "จำนวน Set": cart.sets,
-          "ราคาอาหาร(บาท)": foodPrice,
-          "ค่าจัดส่ง(บาท)": Number(cart.cart_shipping_cost || 0),
+          "ราคาอาหาร": foodPrice,
+          "ค่าส่ง": Number(cart.cart_shipping_cost || 0),
           สถานะ: getStatus("text", cart.status),
           ผู้สร้าง: cart.createdBy,
         };
@@ -1885,12 +1885,12 @@ const SummaryList: React.FC = () => {
           validIngredients.length > 0
             ? validIngredients
             : [
-                {
-                  ingredient_name: "ข้าว",
-                  useItem: 1,
-                  ingredient_status: false,
-                },
-              ];
+              {
+                ingredient_name: "ข้าว",
+                useItem: 1,
+                ingredient_status: false,
+              },
+            ];
 
         return {
           ...m,
@@ -2029,22 +2029,22 @@ const SummaryList: React.FC = () => {
           prevCarts.map((cart) =>
             cart.id === cartId
               ? {
-                  ...cart,
-                  menuItems: updatedMenuItems,
-                  cart_lunchbox: lunchboxesToUse as any,
-                  allIngredients: updatedMenuItems.map((item) => ({
-                    menuName: item.menu_name,
-                    ingredients: item.menu_ingredients.map((ing: { useItem: number; ingredient_name: string; ingredient_status: boolean }) => ({
-                      ...ing,
-                      calculatedTotal: ing.useItem * item.menu_total,
-                      isChecked: ing.ingredient_status,
-                      ingredient_status: ing.ingredient_status,
-                      ingredient_unit: ingredientUnitMap.get(ing.ingredient_name) ?? "ไม่ระบุหน่วย",
-                    })),
-                    ingredient_status: item.menu_ingredients.every((ing: { ingredient_status: boolean }) => ing.ingredient_status),
+                ...cart,
+                menuItems: updatedMenuItems,
+                cart_lunchbox: lunchboxesToUse as any,
+                allIngredients: updatedMenuItems.map((item) => ({
+                  menuName: item.menu_name,
+                  ingredients: item.menu_ingredients.map((ing: { useItem: number; ingredient_name: string; ingredient_status: boolean }) => ({
+                    ...ing,
+                    calculatedTotal: ing.useItem * item.menu_total,
+                    isChecked: ing.ingredient_status,
+                    ingredient_status: ing.ingredient_status,
+                    ingredient_unit: ingredientUnitMap.get(ing.ingredient_name) ?? "ไม่ระบุหน่วย",
                   })),
-                  sets: updatedMenuItems.reduce((sum, item) => sum + item.menu_total, 0),
-                }
+                  ingredient_status: item.menu_ingredients.every((ing: { ingredient_status: boolean }) => ing.ingredient_status),
+                })),
+                sets: updatedMenuItems.reduce((sum, item) => sum + item.menu_total, 0),
+              }
               : cart
           )
         );
@@ -2096,12 +2096,12 @@ const SummaryList: React.FC = () => {
             <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    locale: "th",
-                    timeZone: "Asia/Bangkok",
-                  })}`
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  locale: "th",
+                  timeZone: "Asia/Bangkok",
+                })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -2259,9 +2259,9 @@ const SummaryList: React.FC = () => {
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                                ...prev,
-                                                exportHour: e.target.value,
-                                              }
+                                              ...prev,
+                                              exportHour: e.target.value,
+                                            }
                                             : prev
                                         )
                                       }
@@ -2279,9 +2279,9 @@ const SummaryList: React.FC = () => {
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                                ...prev,
-                                                exportMinute: e.target.value,
-                                              }
+                                              ...prev,
+                                              exportMinute: e.target.value,
+                                            }
                                             : prev
                                         )
                                       }
@@ -2302,9 +2302,9 @@ const SummaryList: React.FC = () => {
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                                ...prev,
-                                                receiveHour: e.target.value,
-                                              }
+                                              ...prev,
+                                              receiveHour: e.target.value,
+                                            }
                                             : prev
                                         )
                                       }
@@ -2322,9 +2322,9 @@ const SummaryList: React.FC = () => {
                                         setEditingTimes((prev) =>
                                           prev
                                             ? {
-                                                ...prev,
-                                                receiveMinute: e.target.value,
-                                              }
+                                              ...prev,
+                                              receiveMinute: e.target.value,
+                                            }
                                             : prev
                                         )
                                       }
@@ -2349,9 +2349,9 @@ const SummaryList: React.FC = () => {
                                 </div>
                               ) : (
                                 <div className='flex items-center gap-2'>
-                                  <BsCashStack className='w-6 h-6' />
+                                  🕒
                                   <span>เวลาส่งอาหาร {cart.cart_export_time || "ไม่ระบุ"} น.</span>
-                                  <FaWallet className='w-4 h-4 ml-4' />
+                                  🕒
                                   <span>เวลารับอาหาร {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
                                   <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")}>
                                     {/* <Edit2 className='w-4 h-4' /> */}
@@ -2363,85 +2363,70 @@ const SummaryList: React.FC = () => {
                           <AccordionTrigger className='w-full hover:no-underline px-0'>
                             <div className='flex flex-col gap-3 w-full text-slate-700 text-base font-bold'>
                               <div>รายการคำสั่งซื้อหมายเลข {String(cart.order_number).padStart(3, "0")}</div>
-                              {/* <div className='flex items-center gap-2 font-medium text-slate-800'>
-                                <FileText className='w-4 h-4 text-blue-500' />
-                                <span className='truncate text-base'>
-                                  ผู้สร้างรายการคำสั่งซื้อ: <span className=''>{cart.createdBy}</span>
-                                </span>
-                              </div> */}
                               <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
                                 <div className='flex flex-col sm:flex-row sm:items-center gap-2 text-base'>
-                                  <div className='flex items-center gap-1'>
-                                    <Package className='w-4 h-4' />
+                                  <div className='flex items-center gap-2'>
+                                    📦 
                                     <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
                                   </div>
-                                  <div className='flex items-center gap-1'>
-                                    <Wallet className='w-4 h-4 text-green-400' />
+                                  <div className='flex items-center gap-2'>
+                                    💵
                                     <span>
                                       ราคาอาหาร{" "}
                                       {(() => {
-                                        // คำนวณราคาอาหารจากผลรวม lunchbox_total_cost
-                                        const foodPrice = cart.cart_lunchbox && cart.cart_lunchbox.length > 0 ? cart.cart_lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0) : cart.price || 0;
+                                        const foodPrice = cart.cart_lunchbox && cart.cart_lunchbox.length > 0
+                                          ? cart.cart_lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+                                          : cart.price || 0;
                                         return foodPrice.toLocaleString("th-TH");
                                       })()}{" "}
                                       บาท
                                     </span>
                                   </div>
-                                  <div className='flex items-center gap-1'>
-                                    <Container className='w-4 h-4 text-blue-500' />
+                                  <div className='flex items-center gap-2'>
+                                    🚚
                                     <span>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
                                   </div>
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
-                                <div className='flex items-center gap-1 text-base'>
-                                  <Map className='w-4 h-4 text-red-600' />
+                                <div className='flex items-center gap-2 text-base'>
+                                  📍
                                   <span>สถานที่จัดส่ง {cart.cart_location_send} </span>
                                 </div>
                               </div>
                               <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
-                                <div className='flex items-center gap-1 text-base'>
-                                  <User className='w-4 h-4' />
+                                <div className='flex items-center gap-2 text-base'>
+                                  👤
                                   <span>ส่งถึงคุณ {cart.cart_customer_name}</span>
-                                  <Smartphone className='w-4 h-4' />
-                                  <span>เบอร์ {cart.cart_customer_tel} </span>
+                                  <div className="flex items-center gap-2 ml-2 sm:ml-4">
+                                    📞
+                                    <span>เบอร์ {cart.cart_customer_tel} </span>
+                                  </div>
                                 </div>
                               </div>
                               <div className='flex flex-wrap items-center gap-4 text-base font-normal text-black'>
-                                <div className='flex items-center gap-1'>
-                                  <CalendarDays className='w-4 h-4' />
+                                <div className='flex items-center gap-2'>
+                                  📅
                                   <span>วันที่สั่งอาหาร {cart.date}</span>
                                 </div>
-                                {/* <div className='flex items-center gap-1'>
-                                  <Clock className='w-4 h-4' />
-                                  <span>เวลา {cart.time} น.</span>
-                                </div> */}
-                                {/* <div className='flex items-center gap-1'>
-                                  <BsCashStack className='w-4 h-4' />
-                                  <span>ส่ง: {cart.cart_export_time || "ไม่ระบุ"} น.</span>
-                                </div>
-                                <div className='flex items-center gap-1'>
-                                  <FaWallet className='w-4 h-4' />
-                                  <span>รับ: {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
-                                </div> */}
                               </div>
                               {(cart.cart_invoice_tex || cart.cart_customer_name || cart.cart_location_send) && (
                                 <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
                                   {cart.cart_invoice_tex && (
-                                    <div className='flex items-center gap-1'>
-                                      <FileText className='w-4 h-4 text-purple-500' />
+                                    <div className='flex items-center gap-2'>
+                                      📄
                                       <span>เลขกำกับภาษี: {cart.cart_invoice_tex}</span>
                                     </div>
                                   )}
                                   {cart.cart_customer_name && (
-                                    <div className='flex items-center gap-1'>
-                                      <User className='w-4 h-4 text-blue-500' />
+                                    <div className='flex items-center gap-2'>
+                                      👤
                                       <span>ออกบิลในนาม: {cart.cart_customer_name}</span>
                                     </div>
                                   )}
                                   {cart.cart_location_send && (
-                                    <div className='flex items-center gap-1'>
-                                      <Map className='w-4 h-4 text-red-600' />
+                                    <div className='flex items-center gap-2'>
+                                      📍
                                       <span>ที่อยู่: {cart.cart_location_send}</span>
                                     </div>
                                   )}
@@ -2450,8 +2435,10 @@ const SummaryList: React.FC = () => {
                               <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
                                 <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
                               </div>
+
                             </div>
                           </AccordionTrigger>
+
                           <div className='flex justify-center mt-2 gap-2 flex-wrap'>
                             <StatusDropdown
                               cartId={cart.id}
@@ -2502,10 +2489,10 @@ const SummaryList: React.FC = () => {
                                               menu_description: menu.menu_description || "",
                                               menu_ingredients: Array.isArray(menu.menu_ingredients)
                                                 ? menu.menu_ingredients.map((ing: any) => ({
-                                                    useItem: ing.useItem ?? 0,
-                                                    ingredient_name: ing.ingredient_name ?? "ไม่ระบุวัตถุดิบ",
-                                                    ingredient_status: ing.ingredient_status ?? false,
-                                                  }))
+                                                  useItem: ing.useItem ?? 0,
+                                                  ingredient_name: ing.ingredient_name ?? "ไม่ระบุวัตถุดิบ",
+                                                  ingredient_status: ing.ingredient_status ?? false,
+                                                }))
                                                 : [],
                                             });
                                           });
@@ -2979,9 +2966,9 @@ const SummaryList: React.FC = () => {
                                                                                 menuItems: prev.menuItems.map((mi) =>
                                                                                   mi.menu_name === menu.menu_name
                                                                                     ? {
-                                                                                        ...mi,
-                                                                                        menu_ingredients: mi.menu_ingredients.map((ing) => (ing.ingredient_name === ingredient.ingredient_name ? { ...ing, useItem: newUse } : ing)),
-                                                                                      }
+                                                                                      ...mi,
+                                                                                      menu_ingredients: mi.menu_ingredients.map((ing) => (ing.ingredient_name === ingredient.ingredient_name ? { ...ing, useItem: newUse } : ing)),
+                                                                                    }
                                                                                     : mi
                                                                                 ),
                                                                               };
@@ -3044,110 +3031,110 @@ const SummaryList: React.FC = () => {
                                 <Accordion type='multiple' className='space-y-3'>
                                   {cart.cart_lunchbox && cart.cart_lunchbox.length > 0
                                     ? cart.cart_lunchbox.map((lunchbox, lunchboxIdx) => (
-                                        <AccordionItem key={lunchboxIdx} value={`lunchbox-${lunchboxIdx}`} className='rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50'>
+                                      <AccordionItem key={lunchboxIdx} value={`lunchbox-${lunchboxIdx}`} className='rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50'>
+                                        <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                          <div className='flex flex-col items-start'>
+                                            <span className='truncate text-sm text-blue-800 font-bold'>
+                                              📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                            </span>
+                                            <span className='truncate text-xs text-blue-600 mt-1'>
+                                              จำนวน: {lunchbox.lunchbox_total} กล่อง | ราคา: {lunchbox.lunchbox_total_cost} บาท
+                                            </span>
+                                          </div>
+                                        </AccordionTrigger>
+
+                                        <AccordionContent className='pt-3 space-y-3'>
+                                          {lunchbox.lunchbox_menu.map((menu, menuIdx) => {
+                                            const allIngredientsChecked = menu.menu_ingredients?.every((ing) => ing.ingredient_status) ?? false;
+
+                                            return (
+                                              <AccordionItem key={menuIdx} value={`menu-${lunchboxIdx}-${menuIdx}`} className={`rounded-lg border border-slate-200 shadow-sm px-3 py-2 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                                <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                                  <div className='flex flex-col items-start'>
+                                                    <span className='truncate text-sm text-gray-700 font-medium'>
+                                                      {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
+                                                    </span>
+                                                    <span className='truncate text-xs text-gray-500 mt-1'>
+                                                      หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
+                                                    </span>
+                                                    {menu.menu_description && <span className='truncate text-xs text-gray-400 mt-1'>{menu.menu_description}</span>}
+                                                  </div>
+                                                </AccordionTrigger>
+
+                                                <AccordionContent className='pt-3 space-y-2'>
+                                                  {menu.menu_ingredients?.map((ing, idx) => (
+                                                    <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.ingredient_status ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
+                                                      <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+
+                                                      <div className='flex items-center gap-4'>
+                                                        <span className='text-gray-600'>
+                                                          ใช้ {ing.useItem} {ing.ingredient_unit || "หน่วย"} × {menu.menu_total} กล่อง ={" "}
+                                                          <strong className='text-black-600' style={{ color: "#000000" }}>
+                                                            {ing.useItem * menu.menu_total}
+                                                          </strong>{" "}
+                                                          {ing.ingredient_unit || "หน่วย"}
+                                                        </span>
+
+                                                        <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
+                                                          <input type='checkbox' checked={ing.ingredient_status || false} onChange={() => handleToggleIngredientCheck(cart.id, menu.menu_name, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
+                                                          <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.ingredient_status ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
+                                                            <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.ingredient_status ? "translate-x-5" : "translate-x-0.5"}`} />
+                                                          </span>
+                                                        </label>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </AccordionContent>
+                                              </AccordionItem>
+                                            );
+                                          })}
+                                        </AccordionContent>
+                                      </AccordionItem>
+                                    ))
+                                    : // Fallback to old structure if cart_lunchbox is not available
+                                    cart.allIngredients.map((menuGroup, groupIdx) => {
+                                      const totalBox = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName)?.menu_total || 0;
+                                      const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
+
+                                      return (
+                                        <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
                                           <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
                                             <div className='flex flex-col items-start'>
-                                              <span className='truncate text-sm text-blue-800 font-bold'>
-                                                📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
-                                              </span>
-                                              <span className='truncate text-xs text-blue-600 mt-1'>
-                                                จำนวน: {lunchbox.lunchbox_total} กล่อง | ราคา: {lunchbox.lunchbox_total_cost} บาท
-                                              </span>
+                                              <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                              {(() => {
+                                                const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                                return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
+                                              })()}
                                             </div>
                                           </AccordionTrigger>
 
-                                          <AccordionContent className='pt-3 space-y-3'>
-                                            {lunchbox.lunchbox_menu.map((menu, menuIdx) => {
-                                              const allIngredientsChecked = menu.menu_ingredients?.every((ing) => ing.ingredient_status) ?? false;
+                                          <AccordionContent className='pt-3 space-y-2'>
+                                            {menuGroup.ingredients.map((ing, idx) => (
+                                              <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
+                                                <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
 
-                                              return (
-                                                <AccordionItem key={menuIdx} value={`menu-${lunchboxIdx}-${menuIdx}`} className={`rounded-lg border border-slate-200 shadow-sm px-3 py-2 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-                                                  <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                                    <div className='flex flex-col items-start'>
-                                                      <span className='truncate text-sm text-gray-700 font-medium'>
-                                                        {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
-                                                      </span>
-                                                      <span className='truncate text-xs text-gray-500 mt-1'>
-                                                        หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
-                                                      </span>
-                                                      {menu.menu_description && <span className='truncate text-xs text-gray-400 mt-1'>{menu.menu_description}</span>}
-                                                    </div>
-                                                  </AccordionTrigger>
+                                                <div className='flex items-center gap-4'>
+                                                  <span className='text-gray-600'>
+                                                    ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
+                                                    <strong className='text-black-600' style={{ color: "#000000" }}>
+                                                      {ing.calculatedTotal}
+                                                    </strong>{" "}
+                                                    {ing.ingredient_unit}
+                                                  </span>
 
-                                                  <AccordionContent className='pt-3 space-y-2'>
-                                                    {menu.menu_ingredients?.map((ing, idx) => (
-                                                      <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.ingredient_status ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                                        <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-
-                                                        <div className='flex items-center gap-4'>
-                                                          <span className='text-gray-600'>
-                                                            ใช้ {ing.useItem} {ing.ingredient_unit || "หน่วย"} × {menu.menu_total} กล่อง ={" "}
-                                                            <strong className='text-black-600' style={{ color: "#000000" }}>
-                                                              {ing.useItem * menu.menu_total}
-                                                            </strong>{" "}
-                                                            {ing.ingredient_unit || "หน่วย"}
-                                                          </span>
-
-                                                          <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
-                                                            <input type='checkbox' checked={ing.ingredient_status || false} onChange={() => handleToggleIngredientCheck(cart.id, menu.menu_name, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
-                                                            <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.ingredient_status ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
-                                                              <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.ingredient_status ? "translate-x-5" : "translate-x-0.5"}`} />
-                                                            </span>
-                                                          </label>
-                                                        </div>
-                                                      </div>
-                                                    ))}
-                                                  </AccordionContent>
-                                                </AccordionItem>
-                                              );
-                                            })}
+                                                  <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
+                                                    <input type='checkbox' checked={ing.isChecked || false} onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
+                                                    <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
+                                                      <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked ? "translate-x-5" : "translate-x-0.5"}`} />
+                                                    </span>
+                                                  </label>
+                                                </div>
+                                              </div>
+                                            ))}
                                           </AccordionContent>
                                         </AccordionItem>
-                                      ))
-                                    : // Fallback to old structure if cart_lunchbox is not available
-                                      cart.allIngredients.map((menuGroup, groupIdx) => {
-                                        const totalBox = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName)?.menu_total || 0;
-                                        const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
-
-                                        return (
-                                          <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-                                            <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                              <div className='flex flex-col items-start'>
-                                                <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
-                                                {(() => {
-                                                  const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                                  return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
-                                                })()}
-                                              </div>
-                                            </AccordionTrigger>
-
-                                            <AccordionContent className='pt-3 space-y-2'>
-                                              {menuGroup.ingredients.map((ing, idx) => (
-                                                <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                                  <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-
-                                                  <div className='flex items-center gap-4'>
-                                                    <span className='text-gray-600'>
-                                                      ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
-                                                      <strong className='text-black-600' style={{ color: "#000000" }}>
-                                                        {ing.calculatedTotal}
-                                                      </strong>{" "}
-                                                      {ing.ingredient_unit}
-                                                    </span>
-
-                                                    <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
-                                                      <input type='checkbox' checked={ing.isChecked || false} onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
-                                                      <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
-                                                        <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked ? "translate-x-5" : "translate-x-0.5"}`} />
-                                                      </span>
-                                                    </label>
-                                                  </div>
-                                                </div>
-                                              ))}
-                                            </AccordionContent>
-                                          </AccordionItem>
-                                        );
-                                      })}
+                                      );
+                                    })}
                                 </Accordion>
                               </div>
                             </div>
