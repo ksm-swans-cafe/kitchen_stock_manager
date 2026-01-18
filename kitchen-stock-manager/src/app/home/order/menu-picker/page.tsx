@@ -467,14 +467,15 @@ export default function Order() {
       .filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว");
 
     // Add virtual flags for sequence logic
-    // Unlocks meat filter if a dish is picked or being focused
-    if (focusedDish !== null || selected.some(cat => cat === "กับข้าวที่ 1" || cat === "ข้าว+กับข้าว")) {
+
+    // 1. Unlocks the Meat Filter section once a Dish is picked (focused)
+    if (focusedDish !== null) {
       if (!selected.includes("กับข้าวที่ 1")) selected.push("กับข้าวที่ 1");
       if (!selected.includes("ข้าว+กับข้าว")) selected.push("ข้าว+กับข้าว");
     }
 
-    // Unlocks subsequent steps if meat is selected
-    if (selectedMeatType !== null) {
+    // 2. Unlocks subsequent steps (Step 4+) once BOTH Dish and Meat are picked
+    if (focusedDish !== null && selectedMeatType !== null) {
       selected.push("meat-filter");
     }
 
@@ -781,96 +782,16 @@ export default function Order() {
   const handleMeatFilterChange = (newMeatType: string | null) => {
     setSelectedMeatType(newMeatType);
 
-    // ถ้าปลดตัวเลือกเนื้อสัตว์ออก
-    if (!newMeatType) {
-      setSelectedMenuItems((prev) => {
-        // Cascade Clear: เคลียร์หมวดหมู่ที่อยู่หลัง "meat-filter" ทั้งหมด
-        const meatFilterIndex = getOrderedCategories.indexOf("meat-filter");
-        if (meatFilterIndex !== -1) {
-          const followingCategories = getOrderedCategories.slice(meatFilterIndex + 1);
-          return prev.filter((key) => {
-            const m = availableMenus.find((menu) => buildMenuKey(menu) === key);
-            // "ไม่ต้องปลดอันที่ 1" -> เก็บเมนูในหมวด ข้าว+กับข้าว ไว้
-            return !m?.lunchbox_menu_category || !followingCategories.includes(m.lunchbox_menu_category);
-          });
-        }
-        return prev;
-      });
-      // แต่เราเก็บ focusedDish ไว้ถ้ามี เพื่อให้ระบบยังจำได้ว่ากำลังจดจ่อที่จานไหน
-      return;
-    }
-
-    let newSelectedItems = [...selectedMenuItems];
-    let hasChanges = false;
-
-    // 1. ตรวจสอบเมนูที่เลือกอยู่เฉพาะในหมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว"
-    const conflictingItems = availableMenus.filter(
-      (m) =>
-        selectedMenuItems.includes(buildMenuKey(m)) &&
-        (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว")
-    );
-
-    conflictingItems.forEach((oldDish) => {
-      const oldMeatType = getMeatType(oldDish.menu_name);
-
-      // ถ้าเป็นเมนูที่มีเนื้อสัตว์ และเนื้อสัตว์ไม่ตรงกับที่เลือกใหม่
-      if (oldMeatType && oldMeatType !== newMeatType) {
-        // ลองหาเมนูใหม่ที่ประเภทเดียวกัน (Swap)
-        const dishType = getDishType(oldDish.menu_name);
-        const category = oldDish.lunchbox_menu_category;
-
-        let newDish = null;
-
-        if (dishType) {
-          newDish = availableMenus.find((m) => m.lunchbox_menu_category === category && getDishType(m.menu_name) === dishType && m.menu_name.includes(newMeatType));
-        }
-
-        // ลบเมนูเดิมออกเสมอ (เพราะมันไม่ตรงกับ Filter)
-        const oldKey = buildMenuKey(oldDish);
-        newSelectedItems = newSelectedItems.filter((k) => k !== oldKey);
-        hasChanges = true;
-
-        // ถ้าหาเมนูเปลี่ยนได้ ให้ใส่เมนูใหม่เข้าไปแทน
-        if (newDish) {
-          const newKey = buildMenuKey(newDish);
-          if (!newSelectedItems.includes(newKey)) {
-            newSelectedItems.push(newKey);
-          }
-        }
+    // Cascade Clear: ถ้าเอาเนื้อสัตว์ออก ให้เอาขั้นตอนถัดไปออกทั้งหมด
+    if (newMeatType === null) {
+      const currentCatIndex = getOrderedCategories.indexOf("meat-filter");
+      if (currentCatIndex !== -1) {
+        const followingCategories = getOrderedCategories.slice(currentCatIndex + 1);
+        setSelectedMenuItems((prev) => prev.filter((key) => {
+          const m = availableMenus.find((menu) => buildMenuKey(menu) === key);
+          return !m?.lunchbox_menu_category || !followingCategories.includes(m.lunchbox_menu_category);
+        }));
       }
-    });
-
-    // 2. จัดการเมนูที่รอเลือกเนื้อสัตว์ (Pending Focus)
-    if (focusedDish) {
-      const matchPending = availableMenus.find((m) => (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") && m.menu_name.includes(focusedDish) && m.menu_name.includes(newMeatType));
-
-      if (matchPending) {
-        const key = buildMenuKey(matchPending);
-        const category = matchPending.lunchbox_menu_category;
-
-        // ลบเมนูเดิมในหมวดเดียวกันออกก่อน (ถ้ามี) เพื่อป้องกันการเลือกซ้ำ
-        if (category && category !== "ข้าว") {
-          newSelectedItems = newSelectedItems.filter((selectedKey) => {
-            const selectedMenu = availableMenus.find((m) => buildMenuKey(m) === selectedKey);
-            return selectedMenu?.lunchbox_menu_category !== category;
-          });
-          hasChanges = true;
-        }
-
-        // เพิ่มเมนูใหม่
-        if (!newSelectedItems.includes(key)) {
-          newSelectedItems.push(key);
-          hasChanges = true;
-        }
-        setFocusedDish(null); // Clear focus after resolving
-      } else {
-        // ถ้าหาคู่ไม่ได้ แปลว่าเมนูนี้จะถูกซ่อนจาก Filter -> ต้องเอา Focus ออก
-        setFocusedDish(null);
-      }
-    }
-
-    if (hasChanges) {
-      setSelectedMenuItems(newSelectedItems);
     }
   };
 
