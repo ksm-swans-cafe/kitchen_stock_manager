@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { BsCashStack } from "react-icons/bs";
 import { FaWallet } from "react-icons/fa";
@@ -38,6 +38,8 @@ import { Ingredient, MenuItem, Cart, CartItem, RawCart, Lunchbox } from "@/types
 
 const SummaryList: React.FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const filterCartId = searchParams.get('cartId'); // รับ cartId จาก query parameter สำหรับ filter จาก dashboard
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
@@ -764,6 +766,11 @@ const SummaryList: React.FC = () => {
   const filteredAndSortedOrders = useMemo(() => {
     let filtered = [...carts].filter((cart) => cart.status === "pending" || cart.status === "completed");
 
+    // Filter ด้วย cartId จาก dashboard (ถ้ามี)
+    if (filterCartId) {
+      filtered = filtered.filter((order) => order.id === filterCartId);
+    }
+
     if (selectedDate) {
       const selectedDateISO = selectedDate.toISOString().split("T")[0];
       filtered = filtered.filter((order) => Time.convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO);
@@ -840,7 +847,7 @@ const SummaryList: React.FC = () => {
     });
 
     return sortedDates.flatMap((date) => groupedByDate[date]);
-  }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder]);
+  }, [carts, searchTerm, filterStatus, filterCreator, selectedDate, sortOrder, filterCartId]);
 
   const groupedOrders = useMemo(() => {
     const grouped = filteredAndSortedOrders.reduce((acc, cart) => {
@@ -2076,11 +2083,34 @@ const SummaryList: React.FC = () => {
     },
   };
 
+  // ฟังก์ชันล้าง filter cartId
+  const handleClearCartIdFilter = () => {
+    router.push('/home/summarylist');
+  };
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50'>
       <div className='p-6'>
         <h2 className='text-2xl font-bold mb-2'>สรุปรายการ</h2>
         <p className='text-slate-600 mb-4'>จัดการและติดตามประวัติการสั่งซื้อทั้งหมด</p>
+
+        {/* แสดง Filter Banner เมื่อมี cartId filter จาก dashboard */}
+        {filterCartId && (
+          <div className='bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-center justify-between'>
+            <div className='flex items-center gap-2'>
+              <Filter className='w-4 h-4 text-blue-600' />
+              <span className='text-blue-800 text-sm'>กำลังแสดงผลเฉพาะออเดอร์ที่เลือกจากหน้าแดชบอร์ด</span>
+            </div>
+            <Button 
+              onClick={handleClearCartIdFilter}
+              variant='outline' 
+              size='sm'
+              className='text-blue-600 border-blue-300 hover:bg-blue-100'
+            >
+              แสดงทั้งหมด
+            </Button>
+          </div>
+        )}
 
         {error && <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4'>{error.message}</div>}
 
