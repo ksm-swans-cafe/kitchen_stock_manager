@@ -191,11 +191,13 @@ export default function Order() {
     return null;
   };
 
-  // ฟังก์ชันดึงราคาที่ปรับจูนแล้ว (Normalize price for categories that shouldn't have meat surcharges)
-  const getNormalizedPrice = (menu?: Partial<MenuItemWithAutoRice>) => {
+  // ฟังก์ชันดึงราคาที่ปรับจูนแล้ว (Normalize price with meat surcharge calculation)
+  const getNormalizedPrice = (menu?: Partial<MenuItemWithAutoRice>, includeMeatSurcharge = false) => {
     if (!menu) return 0;
 
-    // ถ้าเป็นหมวดจานหลัก ให้ใช้ราคาสม่ำเสมอ (ไม่บวกราคาเนื้อสัตว์เพิ่ม)
+    let basePrice = menu.lunchbox_cost ?? 0;
+
+    // ถ้าเป็นหมวดจานหลัก ให้ใช้ราคาสม่ำเสมอของเนื้อสัตว์ที่เลือก
     if (menu.lunchbox_menu_category === "กับข้าวที่ 1" || menu.lunchbox_menu_category === "ข้าว+กับข้าว") {
       const dishType = getDishType(menu.menu_name || "");
       if (dishType) {
@@ -205,12 +207,26 @@ export default function Order() {
         );
         if (variants.length > 0) {
           // ใช้ราคาที่ถูกที่สุด (มักจะเป็น หมู/ไก่) เป็นราคากลางของจานนี้
-          return Math.min(...variants.map(v => v.lunchbox_cost || 0));
+          basePrice = Math.min(...variants.map(v => v.lunchbox_cost || 0));
         }
+      }
+
+      // เพิ่มราคาเนื้อสัตว์ถ้ารายการนี้เป็นเนื้อสัตว์ที่แพง
+      if (includeMeatSurcharge) {
+        const meatType = getMeatType(menu.menu_name || "");
+        const meatPriceMap: Record<string, number> = {
+          หมู: 0,
+          ไก่: 0,
+          หมึก: 10,
+          กุ้ง: 10,
+          ทะเล: 10,
+        };
+        const surcharge = meatPriceMap[meatType || ""] || 0;
+        basePrice += surcharge;
       }
     }
 
-    return menu.lunchbox_cost ?? 0;
+    return basePrice;
   };
 
   // สถานะสำหรับเมนูที่รอเลือกเนื้อสัตว์
@@ -388,15 +404,51 @@ export default function Order() {
     const riceMenu = resolvedMenus.find((m) => m.lunchbox_menu_category === "ข้าว");
     const nonRiceMenus = resolvedMenus.filter((m) => m.lunchbox_menu_category !== "ข้าว");
 
-    total += nonRiceMenus.reduce((sum, m) => sum + getNormalizedPrice(m), 0);
+    total += nonRiceMenus.reduce((sum, m) => sum + getNormalizedPrice(m, false), 0);
 
     if (riceMenu) {
       const riceCount = riceQuantity > 0 ? riceQuantity : 1;
-      total += getNormalizedPrice(riceMenu) * riceCount;
+      total += getNormalizedPrice(riceMenu, false) * riceCount;
+    }
+
+    // เพิ่มราคาจาก focusedDish (ไม่ว่าจะเลือกเนื้อสัตว์หรือไม่)
+    if (focusedDish) {
+      if (selectedMeatType) {
+        // ถ้าเลือก focusedDish + selectedMeatType -> หาเมนูที่ตรงกับทั้งคู่พร้อม surcharge
+        const matchingMenu = availableMenus.find((m) =>
+          (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
+          m.menu_name.includes(focusedDish) &&
+          m.menu_name.includes(selectedMeatType)
+        );
+        if (matchingMenu && !selectedMenuItems.includes(buildMenuKey(matchingMenu))) {
+          total += getNormalizedPrice(matchingMenu, true);
+        }
+      } else {
+        // ถ้าเลือก focusedDish เพียงอย่างเดียว -> หาเมนูที่มี focusedDish ที่ถูกที่สุด (หมู/ไก่)
+        const riceWithDishMenus = availableMenus.filter((m) =>
+          (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
+          m.menu_name.includes(focusedDish)
+        );
+        
+        if (riceWithDishMenus.length > 0) {
+          // หาราคาที่ถูกที่สุด (มักจะเป็น หมู/ไก่)
+          const basePriceMenu = riceWithDishMenus.find((m) => {
+            const hasPork = m.menu_name.includes("หมู");
+            const hasChicken = m.menu_name.includes("ไก่");
+            return hasPork || hasChicken;
+          });
+          
+          const menuToUse = basePriceMenu || riceWithDishMenus[0];
+          
+          if (!selectedMenuItems.includes(buildMenuKey(menuToUse))) {
+            total += getNormalizedPrice(menuToUse, false);
+          }
+        }
+      }
     }
 
     return total;
-  }, [selectedMenuItems, availableMenus, riceQuantity]);
+  }, [selectedMenuItems, availableMenus, riceQuantity, focusedDish, selectedMeatType]);
 
 
 
