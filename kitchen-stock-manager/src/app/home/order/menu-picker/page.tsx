@@ -423,6 +423,7 @@ export default function Order() {
     let totalRice = riceCount;
 
     // เพิ่มจำนวนเมนูที่เลือกแบบ Decoupled (จานหลัก + เนื้อสัตว์)
+    // ตรวจสอบว่า focusedDish menu ไม่ได้อยู่ใน selectedMenuItems แล้ว ก่อนนับ
     if (focusedDish && selectedMeatType) {
       const matchingMenu = availableMenus.find((m) =>
         (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
@@ -430,11 +431,15 @@ export default function Order() {
         m.menu_name.includes(selectedMeatType)
       );
       if (matchingMenu) {
-        if (matchingMenu.lunchbox_menu_category === "ข้าว+กับข้าว") {
-          totalNonRice += 1; // นับเป็นกับข้าว
-          totalRice += 1; // นับเป็นข้าว
-        } else {
-          totalNonRice += 1;
+        const menuKeyExists = selectedMenuItems.includes(buildMenuKey(matchingMenu));
+        // ถ้ายังไม่มีใน selectedMenuItems จึงนับ (เพราะ focusedDish ยังไม่ได้ถูกเพิ่ม)
+        if (!menuKeyExists) {
+          if (matchingMenu.lunchbox_menu_category === "ข้าว+กับข้าว") {
+            totalNonRice += 1; // นับเป็นกับข้าว
+            totalRice += 1; // นับเป็นข้าว
+          } else {
+            totalNonRice += 1;
+          }
         }
       }
     }
@@ -444,7 +449,7 @@ export default function Order() {
       riceCount: totalRice,
       total: totalNonRice + totalRice,
     };
-  }, [selectedMenuItems, availableMenus, riceQuantity]);
+  }, [selectedMenuItems, availableMenus, riceQuantity, selectedMeatType]);
 
   // ==================== Sequential Category Selection Logic ====================
   // Get ordered list of categories that exist in current menu
@@ -653,13 +658,14 @@ export default function Order() {
         });
 
         // 2. เมนูจานหลักที่เพิ่งเลือกแบบแยก (จานหลัก + เนื้อสัตว์)
+        // ตรวจสอบว่าไม่ได้เพิ่มซ้ำ
         if (focusedDish && selectedMeatType) {
           const matchingMenu = availableMenus.find((m) =>
             (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
             m.menu_name.includes(focusedDish) &&
             m.menu_name.includes(selectedMeatType)
           );
-          if (matchingMenu) {
+          if (matchingMenu && !selectedMenuItems.includes(buildMenuKey(matchingMenu))) {
             finalSelectedItems.push(matchingMenu);
           }
         }
