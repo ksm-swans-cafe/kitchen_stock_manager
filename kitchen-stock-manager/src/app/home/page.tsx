@@ -196,7 +196,7 @@ export default function Page() {
 
       {/* Main Menu */}
       <div className='flex-1 flex items-center justify-center min-h-[calc(100vh-140px)]'>
-        <div className='w-full max-w-xl flex flex-col gap-6'>
+        <div className='w-full max-w-xl flex flex-col gap-6 my-8'>
           {menuItems.map((item) => (
             <Card key={item.id} className='group hover:shadow-xl transition-all duration-300'>
               <CardContent className='relative p-0'>
