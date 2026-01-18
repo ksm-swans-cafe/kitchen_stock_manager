@@ -467,14 +467,15 @@ export default function Order() {
       .filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว");
 
     // Add virtual flags for sequence logic
-    // Unlocks meat filter if a dish is picked or being focused
-    if (focusedDish !== null || selected.some(cat => cat === "กับข้าวที่ 1" || cat === "ข้าว+กับข้าว")) {
+
+    // 1. Unlocks the Meat Filter section once a Dish is picked (focused)
+    if (focusedDish !== null) {
       if (!selected.includes("กับข้าวที่ 1")) selected.push("กับข้าวที่ 1");
       if (!selected.includes("ข้าว+กับข้าว")) selected.push("ข้าว+กับข้าว");
     }
 
-    // Unlocks subsequent steps if meat is selected
-    if (selectedMeatType !== null) {
+    // 2. Unlocks subsequent steps (Step 4+) once BOTH Dish and Meat are picked
+    if (focusedDish !== null && selectedMeatType !== null) {
       selected.push("meat-filter");
     }
 
