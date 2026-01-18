@@ -398,6 +398,8 @@ export default function Order() {
     return total;
   }, [selectedMenuItems, availableMenus, riceQuantity]);
 
+
+
   const setPriceBudget = useMemo(() => {
     if (!selectedSetMenu) return null;
     return extractPriceFromSetName(selectedSetMenu);
@@ -1237,8 +1239,7 @@ export default function Order() {
 
                           <div className='relative z-10 flex flex-col justify-between h-full'>
                             <div>
-                              <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] mb-0.5 opacity-80'>PREMIUM</div>
-                              <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] opacity-80'>LUNCH BOX</div>
+                              <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] mb-0.5 opacity-80'>PREMIUM LUNCH BOX</div>
                             </div>
 
                             <div className='my-2 xl:my-3 flex items-center gap-3'>
@@ -1275,7 +1276,7 @@ export default function Order() {
 
                               <div className='text-right'>
                                 <p className='text-[9px] xl:text-[10px] uppercase font-bold text-gray-500 tracking-wider'>Selection</p>
-                                <p className='text-xs xl:text-sm font-black text-gray-900 italic'>{selectedSetMenu}</p>
+                                <p className='text-xs xl:text-sm font-black text-gray-900 pr-5 italic'>{selectedSetMenu}</p>
                               </div>
                             </div>
                           </div>
@@ -1557,7 +1558,7 @@ export default function Order() {
                                       // Step 2: แสดงราคาตามเนื้อสัตว์ที่เลือก (แสดงราคาเดิม ไม่เพิ่มราคา)
                                       let displayPrice = 0;
 
-                                      // แสดงราคาเดิมจากเมนูหมูหรือไก่เสมอ (ไม่ว่าจะเลือกเนื้อสัตว์อะไร)
+                                      // แสดงราคาเดิมจากเมนูหมูหรือไก่เสมอ (ไม่ว่าจะเลือกเนื้อสัตว์อะไร)                                      
                                       if (basePriceMenu) {
                                         displayPrice = getPrice(basePriceMenu);
                                       } else if (representativeMenu) {
