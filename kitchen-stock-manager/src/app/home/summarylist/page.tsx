@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { BsCashStack } from "react-icons/bs";
@@ -3258,4 +3258,13 @@ const SummaryList: React.FC = () => {
   );
 };
 
-export default SummaryList;
+// Wrapper component ที่ใช้ Suspense boundary สำหรับ useSearchParams
+const SummaryListPage: React.FC = () => {
+  return (
+    <Suspense fallback={<Loading context='หน้าสรุปรายการ' icon={SummaryIcon.src} />}>
+      <SummaryList />
+    </Suspense>
+  );
+};
+
+export default SummaryListPage;
