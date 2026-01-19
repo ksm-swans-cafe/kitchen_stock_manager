@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
-import { Search, Filter, Grid3X3, List, Send, Minus, Plus } from "lucide-react";
+import { Search, Filter, Grid3X3, List, Send } from "lucide-react";
 
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/utils";
@@ -18,6 +18,8 @@ import { Loading } from "@/components/loading/loading";
 import useLoadingDots from "@/lib/hook/Dots";
 
 import SetFoodIcon from "@/assets/setfood.png";
+import { LunchboxHeaderSection } from "./components/LunchboxHeaderSection";
+import { MobileQuantitySelector } from "./components/MobileQuantitySelector";
 import FoodMenuSetIcon from "@/assets/food-menu.png";
 import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 
@@ -351,6 +353,51 @@ export default function Order() {
     if (!selectedSetMenu) setRiceQuantity(0);
   }, [selectedSetMenu]);
 
+  // ล้างการเลือก "เพิ่มเติมสำหรับเครื่องดื่ม" เมื่อเครื่องดื่มถูกปลดออก
+  useEffect(() => {
+    const hasBeverageSelected = selectedMenuItems.some((key) => {
+      const menu = availableMenus.find((m) => buildMenuKey(m) === key);
+      return menu?.lunchbox_menu_category === "เครื่องดื่ม";
+    });
+
+    // ถ้าไม่มีการเลือกเครื่องดื่ม ให้ล้างการเลือก "เพิ่มเติมสำหรับเครื่องดื่ม"
+    if (!hasBeverageSelected) {
+      const hasBeverageAddonSelected = selectedMenuItems.some((key) => {
+        const menu = availableMenus.find((m) => buildMenuKey(m) === key);
+        return menu?.lunchbox_menu_category === "เพิ่มเติมสำหรับเครื่องดื่ม";
+      });
+
+      // เรียก setState เฉพาะเมื่อมีการเลือก "เพิ่มเติมสำหรับเครื่องดื่ม" อยู่
+      if (hasBeverageAddonSelected) {
+        setSelectedMenuItems((prev) =>
+          prev.filter((key) => {
+            const menu = availableMenus.find((m) => buildMenuKey(m) === key);
+            return menu?.lunchbox_menu_category !== "เพิ่มเติมสำหรับเครื่องดื่ม";
+          })
+        );
+      }
+    }
+  }, [selectedMenuItems, availableMenus]);
+
+  // ✅ Auto-add dish when both focusedDish + selectedMeatType are selected
+  useEffect(() => {
+    if (focusedDish && selectedMeatType) {
+      const matchingMenu = availableMenus.find((m) =>
+        (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") &&
+        m.menu_name.includes(focusedDish) &&
+        m.menu_name.includes(selectedMeatType)
+      );
+
+      if (matchingMenu) {
+        const menuKey = buildMenuKey(matchingMenu);
+        // ถ้าไม่มีใน selectedMenuItems ให้เพิ่มเข้าไป
+        if (!selectedMenuItems.includes(menuKey)) {
+          setSelectedMenuItems((prev) => [...prev, menuKey]);
+        }
+      }
+    }
+  }, [focusedDish, selectedMeatType, availableMenus]);
+
   const normalizeThaiText = (text: string): string => {
     if (!text) return "";
     return text.replace(/เเ/g, "แ");
@@ -506,7 +553,7 @@ export default function Order() {
   // ==================== Sequential Category Selection Logic ====================
   // Get ordered list of categories that exist in current menu
   const getOrderedCategories = useMemo(() => {
-    const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "ข้าว+กับข้าว", "meat-filter", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
+    const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "คอหมูย่างจิ้มเเจ่ว", "ข้าว+กับข้าว", "meat-filter", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
 
     const existingCategories = [...new Set(availableMenus.map((m) => m.lunchbox_menu_category).filter((cat): cat is string => cat !== null && cat !== undefined && cat !== "ข้าว"))];
 
@@ -571,11 +618,14 @@ export default function Order() {
   const getCategoryLimit = (foodSet: string, setMenu: string, category: string) => {
     if (category === "ข้าว") return 1;
 
-    // --- กลุ่มที่เลือก "เครื่องเคียง" ได้มากกว่า 1 อย่าง ---
+    // --- กลุ่มที่เลือกได้มากกว่า 1 อย่าง ---
     if (category === "เครื่องเคียง") {
       // เฉพาะ Set F ของ Lunch Box
       if (foodSet === "Lunch Box" && setMenu === "F") return 2;
     }
+
+    // หมวด "เพิ่มเติมสำหรับเครื่องดื่ม" สามารถเลือก 2 อย่าง
+    if (category === "เพิ่มเติมสำหรับเครื่องดื่ม") return 2;
 
     // มาตรฐานปกติคือเลือกได้ 1 อย่าง (ระบบจะสลับให้อัตโนมัติ)
     return 1;
@@ -752,7 +802,7 @@ export default function Order() {
         }
 
         // เรียงลำดับเมนูตามหมวดหมู่ก่อนบันทึก
-        const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "ข้าว+กับข้าว", "meat-filter", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
+        const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "คอหมูย่างจิ้มเเจ่ว", "ข้าว+กับข้าว", "meat-filter", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
         selectedMenuObjects.sort((a, b) => {
           const catA = a.lunchbox_menu_category || "อื่นๆ";
           const catB = b.lunchbox_menu_category || "อื่นๆ";
@@ -886,7 +936,7 @@ export default function Order() {
       {/* Saving Overlay */}
       {isSaving && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
-          <div className='bg-white p-6 md:p-8 rounded-xl shadow-lg text-center max-w-sm w-full'>
+          <div className='bg-white p-6 md:p-8 xl:p-6 rounded-xl shadow-lg text-center max-w-sm w-full'>
             <div className='animate-spin w-10 h-10 md:w-12 md:h-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4'></div>
             <h3 className='text-base md:text-lg font-medium text-gray-700 mb-2'>{isEditMode ? "🔧 กำลังบันทึกการแก้ไข" : "💾 กำลังเพิ่มลงตะกร้า"}</h3>
             <p className='text-base text-gray-500'>กรุณารอสักครู่{dots}</p>
@@ -1255,95 +1305,20 @@ export default function Order() {
           <div className='flex-1 overflow-y-auto pb-[calc(80px+env(safe-area-inset-bottom))] lg:pb-6 xl:pb-8 bg-gradient-to-br from-white/80 via-gray-50/50 to-white/80 backdrop-blur-sm'>
             {/* ส่วนหัว (รูปภาพ + ค้นหา) */}
             <div className='relative z-20 transition-all duration-300 bg-transparent'>
-              {/* รูปภาพชุดอาหาร */}
-              {(() => {
-                if (!selectedSetMenu) return null;
-
-                const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
-                const setMenuImageName = setData?.lunchbox_set_name_image;
-                const apiImage = buildBlobImageUrl(setMenuImageName);
-
-                const displayImage = apiImage;
-
-                if (!displayImage || failedImages.has(displayImage)) return null;
-
-                return (
-                  <div className='relative w-full overflow-hidden transition-all duration-700 ease-in-out bg-gray-100/50 h-64 sm:h-[450px] lg:h-[550px] opacity-100'>
-                    <img
-                      src={displayImage}
-                      alt={`Set ${selectedSetMenu}`}
-                      className='w-full h-full transition-all duration-700 object-contain bg-white'
-                      onError={() => {
-                        setFailedImages((prev) => new Set(prev).add(displayImage));
-                      }}
-                    />
-                    {/* พื้นหลังไล่ระดับสี */}
-                    <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none' />
-
-                    {/* เนื้อหาบนรูปภาพ */}
-                    <div className='absolute inset-x-0 bottom-4 px-4 sm:bottom-8 sm:px-8 flex items-end justify-between pointer-events-none'>
-                      <div className='text-white transition-all duration-500 opacity-100 scale-100 pointer-events-auto'>
-                        <div className='flex flex-col gap-1'>
-                          <span className='text-[10px] sm:text-xs font-black uppercase tracking-[3px] text-orange-400 drop-shadow-md bg-black/20 w-fit px-2 py-0.5 rounded'>Selected Set</span>
-                          <h2 className='text-2xl sm:text-4xl lg:text-5xl font-black drop-shadow-2xl tracking-tighter italic'>{selectedSetMenu.toUpperCase().startsWith("SET") ? selectedSetMenu : `SET ${selectedSetMenu}`}</h2>
-                        </div>
-                      </div>
-
-                      {/* กล่องแสดงราคา */}
-                      <div className='hidden sm:block lg:w-72 xl:w-80 animate-fade-in-up pointer-events-auto sticky top-4 z-30'>
-                        <div className='bg-[#F7F3ED]/95 backdrop-blur-sm rounded-2xl p-4 xl:p-5 border border-[#E8E2D9] shadow-2xl flex flex-col justify-center relative overflow-hidden min-h-[140px]'>
-                          {/* Decorative Accent */}
-                          <div className='absolute top-0 left-0 w-full h-1 bg-orange-500' />
-
-                          <div className='relative z-10 flex flex-col justify-between h-full'>
-                            <div>
-                              <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] mb-0.5 opacity-80'>PREMIUM LUNCH BOX</div>
-                            </div>
-
-                            <div className='my-2 xl:my-3 flex items-center gap-3'>
-                              <div className='h-[1px] bg-gray-900/10 flex-1' />
-                              <div className='text-xl xl:text-3xl font-black text-gray-900 tracking-tighter tabular-nums'>{setPriceBudget ? `${(setPriceBudget - 20) * lunchboxQuantity}-${(setPriceBudget + 20) * lunchboxQuantity}` : (selectionPrice * lunchboxQuantity).toLocaleString()}</div>
-                              <div className='h-[1px] bg-gray-900/10 flex-1' />
-                            </div>
-
-                            <div className='flex items-center justify-between pb-1'>
-                              <div className='flex items-center gap-1 bg-white ring-1 ring-gray-900/5 rounded-lg p-0.5 shadow-sm'>
-                                <button
-                                  type='button'
-                                  disabled={selectedMenuItems.length === 0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setLunchboxQuantity((prev) => Math.max(1, prev - 1));
-                                  }}
-                                  className={`p-1 rounded transition-colors ${selectedMenuItems.length === 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-orange-50 text-gray-500 hover:text-orange-600'}`}>
-                                  <Minus className='w-3 h-3' />
-                                </button>
-                                <span className='w-6 text-center text-xs font-black text-gray-900 tabular-nums'>{lunchboxQuantity}</span>
-                                <button
-                                  type='button'
-                                  disabled={selectedMenuItems.length === 0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setLunchboxQuantity((prev) => prev + 1);
-                                  }}
-                                  className={`p-1 rounded transition-colors ${selectedMenuItems.length === 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-orange-50 text-gray-500 hover:text-orange-600'}`}
-                                  title='เพิ่มจำนวน'>
-                                  <Plus className='w-3 h-3' />
-                                </button>
-                              </div>
-
-                              <div className='text-right'>
-                                <p className='text-[9px] xl:text-[10px] uppercase font-bold text-gray-500 tracking-wider'>Selection</p>
-                                <p className='text-xs xl:text-sm font-black text-gray-900 pr-5 italic'>{selectedSetMenu}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
+              {/* Lunchbox Header Section Component */}
+              <LunchboxHeaderSection
+                selectedFoodSet={selectedFoodSet}
+                selectedSetMenu={selectedSetMenu}
+                lunchboxData={lunchboxData}
+                failedImages={failedImages}
+                setFailedImages={setFailedImages}
+                buildBlobImageUrl={buildBlobImageUrl}
+                setPriceBudget={setPriceBudget}
+                selectionPrice={selectionPrice}
+                lunchboxQuantity={lunchboxQuantity}
+                setLunchboxQuantity={setLunchboxQuantity}
+                selectedMenuItems={selectedMenuItems}
+              />
 
               {/* ส่วนค้นหา */}
               <div className='bg-white/70 backdrop-blur-md p-3 sm:p-4 lg:p-6 transition-all duration-300 rounded-b-2xl shadow-lg border border-white/20 mb-4 mx-3 sm:mx-4 lg:mx-6'>
@@ -1397,7 +1372,7 @@ export default function Order() {
                         const foodSetData = lunchboxData.find((item) => item.lunchbox_name === foodSet);
                         const foodSetImageName = foodSetData?.lunchbox_name_image;
                         const FoodSetFallbackIcon = (
-                          <svg width={100} height={100} version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'>
+                          <svg width={100} height={100} version='1.1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0  512 512'>
                             <path style={{ fill: "#4DA3FF" }} d='M379.089,134.898v247.18c0,11.396,9.238,20.634,20.634,20.634h91.643c11.396,0,20.634-9.238,20.634-20.634v-247.18C512,134.898,379.089,134.898,379.089,134.898z' />
                             <rect x='379.087' y='134.902' style={{ opacity: 0.3, fill: "#333333" }} width='132.913' height='20.756' />
                             <rect x='379.087' y='62.138' style={{ fill: "#8AE6A1" }} width='132.913' height='72.76' />
@@ -1577,7 +1552,7 @@ export default function Order() {
                                       1. หมวดหมู่: ข้าว+กับข้าว
                                     </h3>
                                     <div className='flex-1 h-px bg-gradient-to-r from-orange-200 to-pink-200'></div>
-                                    <span className='text-xs sm:text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full'>
+                                    <span className='text-xs sm:text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full w-fit'>
                                       {genericDishTypes.filter((dish) => riceWithDishCategory.some((m) => m.menu_name.includes(dish))).length} รายการ
                                     </span>
                                   </div>
@@ -1716,8 +1691,20 @@ export default function Order() {
                                 const menusInCategory = groupedMenus[category];
                                 const isCategoryHasSelection = availableMenus.some((m) => (m.lunchbox_menu_category || "อื่นๆ") === category && selectedMenuItems.includes(buildMenuKey(m)));
 
+                                // ตรวจสอบว่า "เครื่องดื่ม" ถูกเลือกแล้วหรือไม่
+                                let isBeverageNotSelected = false;
+                                if (category === "เพิ่มเติมสำหรับเครื่องดื่ม") {
+                                  const hasBeverageSelected = availableMenus.some((m) => 
+                                    m.lunchbox_menu_category === "เครื่องดื่ม" && 
+                                    selectedMenuItems.includes(buildMenuKey(m))
+                                  );
+                                  if (!hasBeverageSelected) {
+                                    isBeverageNotSelected = true;
+                                  }
+                                }
+
                                 // ตรวจสอบว่าหมวดนี้ถูกล็อคหรือไม่
-                                const isLocked = isCategoryLocked(category);
+                                const isLocked = isCategoryLocked(category) || isBeverageNotSelected;
                                 const previousCategory = getPreviousRequiredCategory(category);
 
                                 // คำนวณลำดับขั้นตอนภายใน Step 3
@@ -1868,20 +1855,11 @@ export default function Order() {
             {/* แถบเมนูด้านล่าง (Mobile) */}
             <div className='lg:hidden fixed bottom-0 inset-x-0 z-40 flex flex-col'>
               {/* จำนวนชุดอาหาร (Mobile) */}
-              {selectedSetMenu && (
-                <div className='bg-orange-50/90 backdrop-blur-sm border-t border-orange-100 px-4 py-2 flex items-center justify-between shadow-xs'>
-                  <span className='text-xs font-bold text-orange-800 uppercase tracking-wider'>จำนวนชุด (Set Quantity)</span>
-                  <div className='flex items-center gap-3 bg-white rounded-full p-1 shadow-sm ring-1 ring-orange-200'>
-                    <button onClick={() => setLunchboxQuantity((prev) => Math.max(1, prev - 1))} className='w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-600 active:bg-orange-100 transition-colors'>
-                      <Minus className='w-4 h-4' />
-                    </button>
-                    <span className='w-8 text-center text-base font-black text-gray-900 tabular-nums'>{lunchboxQuantity}</span>
-                    <button onClick={() => setLunchboxQuantity((prev) => prev + 1)} className='w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-600 active:bg-orange-100 transition-colors'>
-                      <Plus className='w-4 h-4' />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <MobileQuantitySelector
+                selectedSetMenu={selectedSetMenu}
+                lunchboxQuantity={lunchboxQuantity}
+                setLunchboxQuantity={setLunchboxQuantity}
+              />
 
               <MobileActionBar
                 canSubmit={(() => {
