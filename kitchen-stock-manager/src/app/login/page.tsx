@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { create } from "zustand";
 import { useAuth } from "@/lib/auth/AuthProvider";
-
 import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/share/ui/card";
@@ -96,6 +95,7 @@ const Login: React.FC = () => {
         if (matchedEmployee) {
           const token = generateToken();
           const loginResponse = await axios.post("/api/post/login", {
+          // const loginResponse = await api.post("/api/post/login", {
             token,
             username: matchedEmployee.employee_username,
             name: `${matchedEmployee.employee_firstname} ${matchedEmployee.employee_lastname}`,

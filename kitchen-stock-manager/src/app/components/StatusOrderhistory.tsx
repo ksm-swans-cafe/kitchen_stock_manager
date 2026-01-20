@@ -59,10 +59,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
       }
 
       const formData = new FormData();
-      formData.append("cart_status", selectedStatus);
-      formData.append("cart_last_update", userName ?? "unknown");
+      formData.append("status", selectedStatus);
+      formData.append("last_update", userName ?? "unknown");
 
-      const res = await axios.patch(`/api/edit/cart_status/${cartId}`, formData);
+      const res = await axios.patch(`/api/edit/status/${cartId}`, formData);
      
       if (res.status !== 200) {
         const errorData = res.data;

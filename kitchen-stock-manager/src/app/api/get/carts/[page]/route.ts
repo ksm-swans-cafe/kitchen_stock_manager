@@ -13,35 +13,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   let status: string[] = [];
 
-  if (page === "summarylist") {
-    status = ["pending", "completed"];
-  } else if (page === "orderhistory") {
-    status = ["success", "cancelled"];
-  } else {
-    return NextResponse.json({ message: "Invalid page type" }, { status: 400 });
-  }
+  if (page === "summarylist") status = ["pending", "completed"];
+  else if (page === "orderhistory") status = ["success", "cancelled"];
+  else return NextResponse.json({ message: "Invalid page type" }, { status: 400 });
+  
 
   try {
-    // Fetch carts without cart_lunchbox and cart_total_cost_lunchbox to avoid type mismatch errors
-    const cartsBasic = await prisma.cart.findMany({
-      orderBy: { cart_create_date: "desc" },
+    // Fetch carts without lunchbox and total_cost_lunchbox to avoid type mismatch errors
+    const cartsBasic = await prisma.new_cart.findMany({
+      orderBy: { create_date: "desc" },
       where: {
-        cart_status: { in: status },
-      },
-      select: {
-        cart_id: true,
-        cart_create_date: true,
-        cart_status: true,
-        cart_order_number: true,
-        cart_username: true,
-        cart_customer_tel: true,
-        cart_customer_name: true,
-        cart_location_send: true,
-        cart_delivery_date: true,
-        cart_export_time: true,
-        cart_receive_time: true,
-        cart_shipping_cost: true,
-        // Exclude cart_invoice_tex, cart_lunchbox and cart_total_cost_lunchbox to avoid type errors
+        status: { in: status },
       },
     });
 
@@ -49,65 +31,78 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: "No carts found" }, { status: 404 });
     }
 
-    const cartIds = cartsBasic.map((c) => c.cart_id);
+    const cartIds = cartsBasic.map((c) => c.id);
     let costMap = new Map<string, string>();
     let lunchboxMap = new Map<string, any[]>();
     let invoiceTexMap = new Map<string, string>();
 
-    // Fetch cart_invoice_tex, cart_lunchbox and cart_total_cost_lunchbox separately using aggregateRaw
+    // Fetch invoice_tex, lunchbox and total_cost_lunchbox separately using aggregateRaw
     if (cartIds.length > 0) {
       try {
-        const rawResults = await (prisma.cart as any).aggregateRaw({
+        // NOTE:
+        // Prisma Mongo models map `id` -> Mongo `_id` field.
+        // aggregateRaw operates on Mongo field names, so we must match on `_id` (ObjectId),
+        // otherwise no documents match and `lunchbox` will always be empty.
+        const objectIds = cartIds.map((id) => ({ $oid: id }));
+
+        const rawResults = await (prisma.new_cart as any).aggregateRaw({
           pipeline: [
-            { $match: { cart_id: { $in: cartIds }, cart_status: { $in: status } } },
+            { $match: { _id: { $in: objectIds }, status: { $in: status } } },
             {
               $project: {
-                cart_id: 1,
-                cart_lunchbox: 1,
-                cart_total_cost_lunchbox: { $ifNull: ["$cart_total_cost_lunchbox", ""] },
-                cart_invoice_tex: { $ifNull: ["$cart_invoice_tex", ""] },
+                _id: 1,
+                lunchbox: 1,
+                total_cost_lunchbox: { $ifNull: ["$total_cost_lunchbox", ""] },
+                invoice_tex: { $ifNull: ["$invoice_tex", ""] },
               },
             },
           ],
-        }) as unknown as Array<{ cart_id: string; cart_lunchbox: any; cart_total_cost_lunchbox: string; cart_invoice_tex: string }>;
+        }) as unknown as Array<{ _id: any; lunchbox: any; total_cost_lunchbox: string; invoice_tex: string }>;
 
         if (Array.isArray(rawResults)) {
           rawResults.forEach((item: any) => {
-            const cartId = item.cart_id;
-            const cost = item.cart_total_cost_lunchbox !== null && item.cart_total_cost_lunchbox !== undefined ? item.cart_total_cost_lunchbox : "";
+            const cartId: string =
+              typeof item?._id === "string"
+                ? item._id
+                : typeof item?._id?.$oid === "string"
+                  ? item._id.$oid
+                  : "";
+
+            if (!cartId) return;
+            const cost = item.total_cost_lunchbox !== null && item.total_cost_lunchbox !== undefined ? item.total_cost_lunchbox : "";
             costMap.set(cartId, cost);
 
-            // Handle cart_invoice_tex - convert null to empty string
-            const invoiceTex = item.cart_invoice_tex !== null && item.cart_invoice_tex !== undefined ? item.cart_invoice_tex : "";
+            // Handle invoice_tex - convert null to empty string
+            const invoiceTex = item.invoice_tex !== null && item.invoice_tex !== undefined ? item.invoice_tex : "";
             invoiceTexMap.set(cartId, invoiceTex);
 
-            // Handle cart_lunchbox - convert string "[]" to empty array, or parse JSON string to array
+            // Handle lunchbox - convert string "[]" to empty array, or parse JSON string to array
             let lunchbox: any[] = [];
-            if (item.cart_lunchbox !== null && item.cart_lunchbox !== undefined) {
-              if (typeof item.cart_lunchbox === "string") {
+            if (item.lunchbox !== null && item.lunchbox !== undefined) {
+              if (typeof item.lunchbox === "string") {
                 // If it's a string, try to parse it
-                if (item.cart_lunchbox === "[]" || item.cart_lunchbox.trim() === "[]") {
+                if (item.lunchbox === "[]" || item.lunchbox.trim() === "[]") {
                   lunchbox = [];
                 } else {
                   try {
-                    lunchbox = JSON.parse(item.cart_lunchbox);
+                    lunchbox = JSON.parse(item.lunchbox);
                     if (!Array.isArray(lunchbox)) {
                       lunchbox = [];
         }
                   } catch (e) {
-                    console.warn(`Failed to parse cart_lunchbox for cart ${cartId}:`, e);
+                    console.warn(`Failed to parse lunchbox for cart ${cartId}:`, e);
                     lunchbox = [];
                   }
                 }
-              } else if (Array.isArray(item.cart_lunchbox)) {
-                lunchbox = item.cart_lunchbox;
+              } else if (Array.isArray(item.lunchbox)) {
+                lunchbox = item.lunchbox;
               }
             }
             lunchboxMap.set(cartId, lunchbox);
           });
         }
       } catch (rawError) {
-        console.warn("Error fetching cart_invoice_tex, cart_lunchbox and cart_total_cost_lunchbox, using defaults:", rawError);
+        console.warn("Error fetching invoice_tex, lunchbox and total_cost_lunchbox, using defaults:", rawError);
         // If we can't fetch, use empty defaults
         cartIds.forEach((id) => {
           costMap.set(id, "");
@@ -117,12 +112,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    // Merge cart_invoice_tex, cart_lunchbox and cart_total_cost_lunchbox back into results
+    // Merge invoice_tex, lunchbox and total_cost_lunchbox back into results
     const result = cartsBasic.map((cart) => ({
       ...cart,
-      cart_invoice_tex: invoiceTexMap.get(cart.cart_id) || "",
-      cart_lunchbox: lunchboxMap.get(cart.cart_id) || [],
-      cart_total_cost_lunchbox: costMap.get(cart.cart_id) || "",
+      invoice_tex: invoiceTexMap.get(cart.id) || "",
+      lunchbox: lunchboxMap.get(cart.id) || [],
+      total_cost_lunchbox: costMap.get(cart.id) || "",
     }));
 
     const serializedResult = convertBigIntToNumber(result);

@@ -8,18 +8,18 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { cart_pinned } = body;
+    const { pinned } = body;
 
-    if (typeof cart_pinned !== "boolean") {
+    if (typeof pinned !== "boolean") {
       return NextResponse.json(
-        { error: "cart_pinned must be a boolean" },
+        { error: "pinned must be a boolean" },
         { status: 400 }
       );
     }
 
-    // Find the cart by cart_id
-    const existingCart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    // Find the cart by id
+    const existingCart = await prisma.new_cart.findFirst({
+      where: { id: id },
     });
 
     if (!existingCart) {
@@ -30,11 +30,11 @@ export async function PATCH(
     }
 
     // Update the cart with new pinned status
-    const updatedCart = await prisma.cart.update({
+    const updatedCart = await prisma.new_cart.update({
       where: { id: existingCart.id },
       data: {
-        cart_pinned: cart_pinned,
-        cart_last_update: new Date().toISOString(),
+        pinned: pinned,
+        last_update: new Date().toISOString(),
       },
     });
 

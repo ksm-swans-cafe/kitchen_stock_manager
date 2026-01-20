@@ -54,7 +54,7 @@ export interface Cart {
   price: number;
   status: string;
   createdBy: string;
-  cart_shipping_cost: string;
+  shipping_cost: string;
   menuItems: MenuItem[];
   allIngredients: {
     menuName: string;
@@ -62,14 +62,14 @@ export interface Cart {
     ingredient_status: boolean;
   }[];
   order_number: string;
-  cart_customer_name?: string;
-  cart_delivery_date?: string;
-  cart_receive_time?: string;
-  cart_export_time?: string;
-  cart_customer_tel?: string;
-  cart_location_send?: string;
-  cart_invoice_tex?: string;
-  cart_lunchbox: Lunchbox[];
+  customer_name?: string;
+  delivery_date?: string;
+  receive_time?: string;
+  export_time?: string;
+  customer_tel?: string;
+  location_send?: string;
+  invoice_tex?: string;
+  lunchbox: Lunchbox[];
 }
 
 export interface CartItem extends MenuItem {
@@ -78,25 +78,25 @@ export interface CartItem extends MenuItem {
 
 export type RawCart = {
   _id?: string; // เพิ่ม _id field
-  cart_id: string;
-  cart_menu_items: string | MenuItem[];
-  cart_create_date: string;
-  cart_total_price: number;
-  cart_total_cost_lunchbox?: string;
-  cart_status: string;
-  cart_order_number: string;
-  cart_username: string;
-  cart_customer_tel: string;
-  cart_lunch_box: string;
-  cart_lunch_box_set: string;
-  cart_customer_name: string;
-  cart_location_send: string;
-  cart_delivery_date: string;
-  cart_export_time: string;
-  cart_receive_time: string;
-  cart_shipping_cost: string;
-  cart_invoice_tex?: string;
-  cart_lunchbox: string | Lunchbox[];
+  id: string;
+  menu_items: string | MenuItem[];
+  create_date: string;
+  total_price: number;
+  total_cost_lunchbox?: string;
+  status: string;
+  order_number: string;
+  username: string;
+  customer_tel: string;
+  lunch_box: string;
+  lunch_box_set: string;
+  customer_name: string;
+  location_send: string;
+  delivery_date: string;
+  export_time: string;
+  receive_time: string;
+  shipping_cost: string;
+  invoice_tex?: string;
+  lunchbox: string | Lunchbox[];
 };
 
 export type ResponsiveOrderIdProps = {
@@ -118,8 +118,8 @@ export interface StatusDropdownProps {
   }[];
   defaultStatus?: string;
   onUpdated?: () => void;
-  cart_receive_time?: string;
-  cart_export_time?: string;
+  receive_time?: string;
+  export_time?: string;
   cart: Cart;
   onOrderSummaryClick?: (cart: Cart) => void;
 }
