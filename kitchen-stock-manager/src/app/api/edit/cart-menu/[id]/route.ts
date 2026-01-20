@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
   if (!id || !menuName || menu_total == null) {
     console.warn("Missing fields:", { id, menuName, menu_total });
-    return NextResponse.json({ error: "กรุณาระบุ cart_id, menuName และ menu_total" }, { status: 400 });
+    return NextResponse.json({ error: "กรุณาระบุ id, menuName และ menu_total" }, { status: 400 });
   }
 
   const total = Number(menu_total);
@@ -33,13 +33,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const [cart] = await prisma.cart.findMany({
+    const [cart] = await prisma.new_cart.findMany({
       where: {
-        cart_id: id,
+        id: id,
       },
       select: {
-        cart_id: true,
-        cart_menu_items: true,
+        id: true,
+        menu_items: true,
       },
     });
 
@@ -48,25 +48,25 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    console.log("Fetched cart_menu_items:", cart.cart_menu_items);
+    console.log("Fetched menu_items:", cart.menu_items);
 
     let menuItems: MenuItem[] = [];
-    if (cart.cart_menu_items) {
-      if (typeof cart.cart_menu_items === "string") {
+    if (cart.menu_items) {
+      if (typeof cart.menu_items === "string") {
         try {
-          menuItems = JSON.parse(cart.cart_menu_items);
+          menuItems = JSON.parse(cart.menu_items);
           if (!Array.isArray(menuItems)) {
-            console.error("cart_menu_items is not an array:", menuItems);
+            console.error("menu_items is not an array:", menuItems);
             return NextResponse.json({ error: "ข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
           }
         } catch (e) {
-          console.error("JSON parse error:", (e as Error).message, "Raw data:", cart.cart_menu_items);
+          console.error("JSON parse error:", (e as Error).message, "Raw data:", cart.menu_items);
           return NextResponse.json({ error: "รูปแบบข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
         }
-      } else if (Array.isArray(cart.cart_menu_items)) {
-        menuItems = (cart.cart_menu_items as unknown as MenuItem[]).filter((item): item is MenuItem => item !== null);
+      } else if (Array.isArray(cart.menu_items)) {
+        menuItems = (cart.menu_items as unknown as MenuItem[]).filter((item): item is MenuItem => item !== null);
       } else {
-        console.error("Invalid cart_menu_items format:", cart.cart_menu_items);
+        console.error("Invalid menu_items format:", cart.menu_items);
         return NextResponse.json({ error: "รูปแบบข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
       }
     }
@@ -86,14 +86,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     const updatedMenuItems = menuItems.map((item: MenuItem) => (item.menu_name?.trim() === cleanedMenuName ? { ...item, menu_total: total } : item));
 
-    const result = await prisma.cart.update({
-      where: { cart_id: id },
+    const result = await prisma.new_cart.update({
+      where: { id: id },
       data: {
-        cart_menu_items: JSON.stringify(updatedMenuItems),
+        menu_items: JSON.stringify(updatedMenuItems),
       },
     });
 
-    console.log("Update result:", result, "Updated data:", result.cart_menu_items);
+    console.log("Update result:", result, "Updated data:", result.menu_items);
 
     if (!result) {
       console.error("Failed to update cart for id:", id);

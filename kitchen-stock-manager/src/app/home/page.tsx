@@ -39,21 +39,8 @@ export default function Page() {
   // ⭐ เมนูพร้อม Dashboard ใต้ Summary List
   const menuItems: MenuHome[] = [
     {
-      id: "add-ingredients",
-      title: "เพิ่มวัตถุดิบ",
-      icon: Plus,
-      color: {
-        bg: "bg-green-500/10",
-        hover: "group-hover:bg-green-500/20",
-        icon: "text-green-600",
-      },
-      onClick: () => router.push("/home/ingredients"),
-      hasBadge: false,
-      badgeText: "",
-    },
-    {
       id: "order",
-      title: "คำสั่งซื้อ",
+      title: "สั่งอาหาร",
       icon: ShoppingCart,
       color: {
         bg: "bg-blue-500/10",
@@ -66,7 +53,7 @@ export default function Page() {
     },
     {
       id: "summary-list",
-      title: "สรุปรายการ",
+      title: "สรุปคำสั่งซื้อ/เเก้ไขออเดอร์",
       icon: FileText,
       color: {
         bg: "bg-purple-500/10",
@@ -78,10 +65,9 @@ export default function Page() {
       badgeText: "",
     },
 
-    // ⭐ Dashboard (เด่นนิดหน่อย แต่ขนาดเท่าคนอื่น)
     {
       id: "dashboard",
-      title: "Dashboard",
+      title: "กระดานข้าวกล่อง",
       icon: LayoutGrid,
       color: {
         bg: "bg-sky-500/10 border border-sky-400/40",
@@ -91,7 +77,7 @@ export default function Page() {
         icon: "text-sky-500",
       },
       onClick: () => router.push("/home/dashboard"),
-      hasBadge: false, // ❌ เอา badge ออก
+      hasBadge: false,
       badgeText: "",
     },
 
@@ -105,6 +91,19 @@ export default function Page() {
         icon: "text-gray-600",
       },
       onClick: () => router.push("/home/orderhistory"),
+      hasBadge: false,
+      badgeText: "",
+    },
+     {
+      id: "add-ingredients",
+      title: "เพิ่มวัตถุดิบ",
+      icon: Plus,
+      color: {
+        bg: "bg-green-500/10",
+        hover: "group-hover:bg-green-500/20",
+        icon: "text-green-600",
+      },
+      onClick: () => router.push("/home/ingredients"),
       hasBadge: false,
       badgeText: "",
     },

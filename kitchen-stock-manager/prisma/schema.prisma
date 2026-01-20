@@ -89,39 +89,83 @@ type CartCartDescription {
   description_value  String
 }
 
+model new_cart {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  create_date   String
+  channel_access String
+  customer_name String
+  customer_tel  String
+  delivery_date String
+  export_time   String
+  cart_id            String
+  last_update   String?
+  location_send String
+  lunchbox      CartCartLunchbox[]
+  total_cost_lunchbox String
+  order_number  String
+  order_name   String
+  receive_time  String
+  receive_name  String
+  shipping_cost String
+  shipping_by String
+  status        String
+  username      String
+  pay_type      String
+  pay_deposit   String
+  pay_isdeposit Boolean
+  pay_charge    String
+  pay_cost      String
+  ispay         String?
+  invoice_tex  String
+  total_cost    String
+  total_remain  String
+  description   CartCartDescription[]
+  pinned        Boolean?
+}
+
 model cart {
   id                 String              @id @default(auto()) @map("_id") @db.ObjectId
-  cart_create_date   String
-  cart_channel_access String
-  cart_customer_name String
-  cart_customer_tel  String
-  cart_delivery_date String
-  cart_export_time   String
+  create_date   String
+  channel_access String
+  customer_name String
+  customer_tel  String
+  delivery_date String
+  export_time   String
   cart_id            String
-  cart_last_update   String?
-  cart_location_send String
-  cart_lunchbox      CartCartLunchbox[]
-  cart_total_cost_lunchbox String
-  cart_order_number  String
-  cart_receive_time  String
-  cart_receive_name  String
-  cart_shipping_cost String
-  cart_status        String
-  cart_username      String
-  cart_pay_type      String
-  cart_pay_deposit   String
-  cart_pay_isdeposit Boolean
-  cart_pay_charge    String
-  cart_pay_cost      String
-  cart_ispay         String?
-  cart_invoice_tex  String
-  cart_total_cost    String
-  cart_total_remain  String
-  cart_description   CartCartDescription[]
-  cart_pinned        Boolean?
+  last_update   String?
+  location_send String
+  lunchbox      CartCartLunchbox[]
+  total_cost_lunchbox String
+  order_number  String
+  order_name   String
+  receive_time  String
+  receive_name  String
+  shipping_cost String
+  shipping_by String
+  status        String
+  username      String
+  pay_type      String
+  pay_deposit   String
+  pay_isdeposit Boolean
+  pay_charge    String
+  pay_cost      String
+  ispay         String?
+  invoice_tex  String
+  total_cost    String
+  total_remain  String
+  description   CartCartDescription[]
+  pinned        Boolean?
 }
 
 model cart_log {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  message String
+  status String
+  create_date String
+  create_by String
+}
+
+model new_cart_log {
   id                 String              @id @default(auto()) @map("_id") @db.ObjectId
   message String
   status String

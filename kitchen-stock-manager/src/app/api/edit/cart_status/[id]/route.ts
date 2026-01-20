@@ -14,16 +14,16 @@ export async function PATCH(request: NextRequest) {
 
   const id = request.nextUrl.pathname.split("/").pop();
   const formData = await request.formData();
-  const cart_status = formData.get("cart_status")?.toString()?.trim();
-  const cart_last_updated = new Date().toISOString();
+  const s = formData.get("statutoString()?.trim();
+  const updated = new Date().toISOString();
 
-  if (!cart_status || !id) {
+  if (!s || !id) {
     return NextResponse.json({ error: "No data provided" }, { status: 400 });
   }
 
   try {
-    const cart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    const cart = await prisma.new_cart.findFirst({
+      where: { d },
       select: { id: true },
     });
 
@@ -31,11 +31,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Cart item not found" }, { status: 404 });
     }
 
-    const result = await prisma.cart.update({
+    const result = await prisma.new_cart.update({
       where: { id: cart.id },
       data: {
-        cart_status: cart_status,
-        cart_last_update: cart_last_updated,
+        s: statu
+        update: last_ed,
       },
     });
 
@@ -47,9 +47,9 @@ export async function PATCH(request: NextRequest) {
     // หรือส่งคืนเฉพาะข้อมูลที่จำเป็น
     // return NextResponse.json({
     //   success: true,
-    //   cart_id: result.cart_id,
-    //   cart_status: result.cart_status,
-    //   cart_last_update: result.cart_last_update
+    //   esult.id,
+    //   s: result.statu
+    //   update: result.last_e
     // });
   } catch (error) {
     console.error("Error updating cart item:", error);

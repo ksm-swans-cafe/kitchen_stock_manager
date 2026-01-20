@@ -15,38 +15,38 @@ export async function PATCH(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split("/").pop();
     const body = await request.json();
-    const { cart_description } = body as { cart_description: CartDescription[] };
+    const { description } = body as { description: CartDescription[] };
 
     if (!id) {
       return NextResponse.json({ error: "Cart ID is required" }, { status: 400 });
     }
 
-    const existingCart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    const existingCart = await prisma.new_cart.findFirst({
+      where: { id: id },
     });
 
     if (!existingCart) {
       return NextResponse.json({ error: "Cart not found" }, { status: 404 });
     }
 
-    // Validate cart_description format
-    if (!Array.isArray(cart_description)) {
-      return NextResponse.json({ error: "cart_description must be an array" }, { status: 400 });
+    // Validate description format
+    if (!Array.isArray(description)) {
+      return NextResponse.json({ error: "description must be an array" }, { status: 400 });
     }
 
-    // Format the cart_description
-    const formattedDescription = cart_description.map((desc) => ({
+    // Format the description
+    const formattedDescription = description.map((desc) => ({
       description_id: desc.description_id || null,
       description_title: desc.description_title || "",
       description_value: desc.description_value || "",
     }));
 
     // Update the cart
-    const result = await prisma.cart.update({
+    const result = await prisma.new_cart.update({
       where: { id: (existingCart as { id: string }).id },
       data: {
-        cart_description: formattedDescription,
-        cart_last_update: new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString(),
+        description: formattedDescription,
+        last_update: new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString(),
       },
     });
 

@@ -31,8 +31,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "lunchbox_name and menu_name are required" }, { status: 400 });
     }
 
-    const existingCart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    const existingCart = await prisma.new_cart.findFirst({
+      where: { id: id },
     });
 
     if (!existingCart) {
@@ -51,8 +51,8 @@ export async function PATCH(request: NextRequest) {
       menu_description_value: desc.menu_description_value || "",
     }));
 
-    // Get existing cart_lunchbox and update the specific menu description
-    const cartLunchbox = (existingCart as any).cart_lunchbox || [];
+    // Get existing lunchbox and update the specific menu description
+    const cartLunchbox = (existingCart as any).lunchbox || [];
     
     const updatedLunchbox = cartLunchbox.map((lunchbox: any) => {
       if (lunchbox.lunchbox_name === lunchbox_name) {
@@ -74,11 +74,11 @@ export async function PATCH(request: NextRequest) {
     });
 
     // Update the cart
-    const result = await prisma.cart.update({
+    const result = await prisma.new_cart.update({
       where: { id: (existingCart as { id: string }).id },
       data: {
-        cart_lunchbox: updatedLunchbox,
-        cart_last_update: new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString(),
+        lunchbox: updatedLunchbox,
+        last_update: new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString(),
       },
     });
 

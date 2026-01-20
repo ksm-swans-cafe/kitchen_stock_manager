@@ -52,7 +52,7 @@ interface DayCard {
   totalText: string;
   isPinned?: boolean;
   minutesToSend?: number;
-  cart_description: CartDescription[];
+  description: CartDescription[];
 }
 
 // Edit Card Modal State Interface
@@ -85,8 +85,8 @@ interface ApiResponse {
         menu_description: MenuItemDescription[];
       }>;
     }>;
-    cart_description: CartDescription[];
-    cart_pinned: boolean;
+    description: CartDescription[];
+    pinned: boolean;
   }>;
 }
 
@@ -288,10 +288,10 @@ export default function Dashboard() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cart_delivery_date: editCardInfo.date,
-          cart_export_time: editCardInfo.sendTime,
-          cart_receive_time: editCardInfo.receiveTime,
-          cart_location_send: editCardInfo.location,
+          delivery_date: editCardInfo.date,
+          export_time: editCardInfo.sendTime,
+          receive_time: editCardInfo.receiveTime,
+          location_send: editCardInfo.location,
         }),
       });
       
@@ -328,7 +328,7 @@ export default function Dashboard() {
       const response = await fetch(`/api/edit/cart-pinned/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart_pinned: !currentPinned }),
+        body: JSON.stringify({ pinned: !currentPinned }),
       });
       if (response.ok) {
         // Refresh data
@@ -348,7 +348,7 @@ export default function Dashboard() {
       const response = await fetch(`/api/edit/cart-description/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart_description: descriptions }),
+        body: JSON.stringify({ description: descriptions }),
       });
       if (!response.ok) {
         console.error("Failed to save note");
@@ -728,7 +728,7 @@ export default function Dashboard() {
 
         return {
           id: index + 1, // แนะนำให้ใช้ ID จริงจาก API ถ้ามี เพื่อความแม่นยำในการระบุตัวตน
-          cartId: item.id, // เก็บ cart_id จริงจาก API เพื่อใช้ในการบันทึก note
+          cartId: item.id, // เก็บ id จริงจาก API เพื่อใช้ในการบันทึก note
           dayOfWeek: item.dayOfWeek,
           dateTitle: `วัน${item.dayOfWeek}ที่ ${dayNum} ${getMonthNameShort(month)} ${shortYear}`,
           rawDate: item.date, // เก็บวันที่แบบ raw (DD/MM/YYYY) สำหรับใช้ในการแก้ไข
@@ -737,9 +737,9 @@ export default function Dashboard() {
           receiveTime: item.receiveTime + " น.",
           items: sortedItems,
           totalText: `รวม ${totalQty} ชุด`,
-          isPinned: item.cart_pinned || false,
+          isPinned: item.pinned || false,
           minutesToSend,
-          cart_description: item.cart_description || [],
+          description: item.description || [],
         };
       })
       .filter((card) => card.minutesToSend >= 0)
@@ -1143,7 +1143,7 @@ export default function Dashboard() {
                 );
               })}
               {/* Notes displayed as table rows */}
-              {day.cart_description && day.cart_description.map((desc, idx) => {
+              {day.description && day.description.map((desc, idx) => {
                 const rowIndex = day.items.length + idx;
                 const hasValue = desc.description_value && desc.description_value.trim() !== "";
                 const descId = desc.description_id || idx.toString();
@@ -1189,7 +1189,7 @@ export default function Dashboard() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleSaveEditNote(descId, day.cart_description);
+                              handleSaveEditNote(descId, day.description);
                             }}
                             disabled={savingNotes[day.cartId]}
                             className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
@@ -1234,7 +1234,7 @@ export default function Dashboard() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteNote(day.cartId, desc.description_id || "", day.cart_description);
+                                handleDeleteNote(day.cartId, desc.description_id || "", day.description);
                               }}
                               className='p-2 hover:bg-red-600 rounded-l-lg transition-colors h-full'
                               title='ลบหมายเหตุ'>
@@ -1253,7 +1253,7 @@ export default function Dashboard() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteNote(day.cartId, desc.description_id || "", day.cart_description);
+                              handleDeleteNote(day.cartId, desc.description_id || "", day.description);
                             }}
                             className='p-2 hover:bg-red-600 rounded-l-lg transition-colors h-full'
                             title='ลบหมายเหตุ'>
@@ -1308,7 +1308,7 @@ export default function Dashboard() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddNote(day.cartId, day.cart_description);
+                      handleAddNote(day.cartId, day.description);
                     }}
                     disabled={savingNotes[day.cartId]}
                     className='group/save px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-300 disabled:opacity-50 active:scale-95'
@@ -1336,7 +1336,7 @@ export default function Dashboard() {
               </div>
             ) : (
               // Hide when any note is being edited
-              !day.cart_description?.some((desc, idx) => {
+              !day.description?.some((desc, idx) => {
                 const descId = desc.description_id || idx.toString();
                 return editingNote[descId] !== null && editingNote[descId] !== undefined;
               }) && (
