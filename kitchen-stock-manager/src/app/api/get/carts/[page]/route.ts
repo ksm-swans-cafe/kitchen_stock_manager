@@ -39,23 +39,36 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Fetch invoice_tex, lunchbox and total_cost_lunchbox separately using aggregateRaw
     if (cartIds.length > 0) {
       try {
+        // NOTE:
+        // Prisma Mongo models map `id` -> Mongo `_id` field.
+        // aggregateRaw operates on Mongo field names, so we must match on `_id` (ObjectId),
+        // otherwise no documents match and `lunchbox` will always be empty.
+        const objectIds = cartIds.map((id) => ({ $oid: id }));
+
         const rawResults = await (prisma.new_cart as any).aggregateRaw({
           pipeline: [
-            { $match: { id: { $in: cartIds }, status: { $in: status } } },
+            { $match: { _id: { $in: objectIds }, status: { $in: status } } },
             {
               $project: {
-                id: 1,
+                _id: 1,
                 lunchbox: 1,
                 total_cost_lunchbox: { $ifNull: ["$total_cost_lunchbox", ""] },
                 invoice_tex: { $ifNull: ["$invoice_tex", ""] },
               },
             },
           ],
-        }) as unknown as Array<{ id: string; lunchbox: any; total_cost_lunchbox: string; invoice_tex: string }>;
+        }) as unknown as Array<{ _id: any; lunchbox: any; total_cost_lunchbox: string; invoice_tex: string }>;
 
         if (Array.isArray(rawResults)) {
           rawResults.forEach((item: any) => {
-            const cartId = item.id;
+            const cartId: string =
+              typeof item?._id === "string"
+                ? item._id
+                : typeof item?._id?.$oid === "string"
+                  ? item._id.$oid
+                  : "";
+
+            if (!cartId) return;
             const cost = item.total_cost_lunchbox !== null && item.total_cost_lunchbox !== undefined ? item.total_cost_lunchbox : "";
             costMap.set(cartId, cost);
 
