@@ -7,7 +7,6 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { create } from "zustand";
 import { toast } from "sonner";
-
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/stores/store";
@@ -178,9 +177,7 @@ export default function CartList() {
     },
     TaxInvoiceNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
-      if (numericValue.length <= 13) {
-        setCustomerInfo({ invoice_tex: numericValue });
-      }
+      if (numericValue.length <= 13) setCustomerInfo({ invoice_tex: numericValue });
     },
     ChangeQuantity: (cartItemId: string, quantity: number) => {
       if (quantity >= 1) setItemQuantity(cartItemId, quantity);
@@ -194,7 +191,7 @@ export default function CartList() {
         const textarea = document.getElementById("copy-textarea") as HTMLTextAreaElement;
         if (textarea) {
           textarea.select();
-          textarea.setSelectionRange(0, 99999); // สำหรับ mobile
+          textarea.setSelectionRange(0, 99999); 
           try {
             document.execCommand("copy");
             setIsCopied(true);
@@ -212,7 +209,7 @@ export default function CartList() {
       clearCart();
 
       toast.success("ดำเนินการเสร็จสิ้น", {
-        duration: 3000, // แสดง 3 วินาที
+        duration: 3000, 
       });
 
       setTimeout(() => {
@@ -221,6 +218,243 @@ export default function CartList() {
     },
   };
 
+  const formTemplate = {
+    SelectContect: [
+      {
+        value: "facebook",
+        label: "Facebook",
+        color: "blue",
+        iconColor: "#1877F2",
+        svg: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+      },
+      {
+        value: "line",
+        label: "Line",
+        color: "green",
+        iconColor: "#00C300",
+        svg: "M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.27l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.63.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.028 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314",
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+      },
+      {
+        value: "instagram",
+        label: "Instagram",
+        color: "pink",
+        iconColor: "#E4405F",
+        svg:"M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z",
+        svgh:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+      },
+      {
+        value: "others",
+        label: "Others",
+        color: "purple",
+        iconColor: "#9333EA",
+        svg:"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
+        svgh:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+      },
+    ]
+  }
+
+  const knownChannelValues = formTemplate.SelectContect.filter((c) => c.value !== "others").map((c) => c.value);
+  const isCustomChannel = !!channel_access && channel_access !== "others" && !knownChannelValues.includes(channel_access);
+  const isOtherChannelSelected = channel_access === "others" || isCustomChannel;
+  const channelUi: Record<string, { activeContainer: string; inactiveContainer: string; activeText: string; activeCheck: string }> = {
+    facebook: {
+      activeContainer: "border-blue-500 bg-blue-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-blue-300 hover:bg-blue-50/50",
+      activeText: "text-blue-700",
+      activeCheck: "text-blue-500",
+    },
+    line: {
+      activeContainer: "border-green-500 bg-green-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50",
+      activeText: "text-green-700",
+      activeCheck: "text-green-500",
+    },
+    instagram: {
+      activeContainer: "border-pink-500 bg-pink-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-pink-300 hover:bg-pink-50/50",
+      activeText: "text-pink-700",
+      activeCheck: "text-pink-500",
+    },
+    others: {
+      activeContainer: "border-purple-500 bg-purple-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50/50",
+      activeText: "text-purple-700",
+      activeCheck: "text-purple-500",
+    },
+  };
+
+  const shippingByOptions: Array<{ value: string; label: string }> = [
+    { value: "มอเตอร์ไซด์", label: "มอเตอร์ไซด์" },
+    { value: "รถยนต์(เก๋ง)", label: "รถยนต์(เก๋ง)" },
+    { value: "รถ SUV", label: "รถ SUV" },
+    { value: "รถกระบะตูทึบ", label: "รถกระบะตูทึบ" },
+  ];
+
+  const payTypeOptions: Array<{ value: string; label: string }> = [
+    { value: "cash", label: "ชำระด้วยเงินสด" },
+    { value: "transfer", label: "ชำระด้วยโอนเงิน" },
+    { value: "card", label: "ชำระด้วยบัตรเครดิต" },
+  ];
+
+  const depositUi: Record<string, { activeContainer: string; inactiveContainer: string; activeText: string; iconActiveColor: string; iconInactiveColor: string }> = {
+    full: {
+      activeContainer: "border-orange-500 bg-orange-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-orange-300 hover:bg-orange-50/50",
+      activeText: "text-orange-700",
+      iconActiveColor: "#EA580C",
+      iconInactiveColor: "#6B7280",
+    },
+    percent: {
+      activeContainer: "border-amber-500 bg-amber-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-amber-300 hover:bg-amber-50/50",
+      activeText: "text-amber-700",
+      iconActiveColor: "#F2B851",
+      iconInactiveColor: "#6B7280",
+    },
+  };
+
+  const depositOptions: Array<{ id: string; value: "full" | "percent"; label: string; icon: React.ReactNode; onSelect: () => void }> = [
+    {
+      id: "deposit-full",
+      value: "full",
+      label: "เต็มจำนวน",
+      icon: (
+        <svg className='!w-5 !h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+        </svg>
+      ),
+      onSelect: () => setCustomerInfo({ pay_deposit: "full", ispay: "-" }),
+    },
+    {
+      id: "deposit-percent",
+      value: "percent",
+      label: "50%",
+      icon: (
+        <svg className='!w-5 !h-5' version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
+          <path
+            style={{ fill: "#F2B851" }}
+            d='M512,256.8l-67.2-54.224l43.2-74.96l-91.2-7.968l-8-87.728L312,68.608L259.2,0l-49.6,70.176
+	l-80-41.472l-4.8,90.928l-89.6,4.784l33.6,86.128L0,252.016l70.4,52.64l-35.2,74.96l88,9.568l4.8,89.328l81.6-38.288L264,512
+	l48-71.776l75.2,36.688l6.4-89.328l88-1.6l-32-73.376L512,256.8z'
+          />
+          <path
+            style={{ fill: "#FFFFFF" }}
+            d='M252.544,210.352c0,36.352-22.992,55.328-48.128,55.328c-26.464,0-47.312-19.776-47.312-52.384
+	c0-31.008,18.992-54.528,48.656-54.528C235.696,158.768,252.544,180.688,252.544,210.352z M187.296,212.224
+	c0,18.176,6.16,31.264,17.92,31.264c11.488,0,17.104-11.744,17.104-31.264c0-17.664-4.816-31.28-17.376-31.28
+	C192.928,180.944,187.296,194.832,187.296,212.224z M206.56,338.4l99.712-179.648h21.92L228.208,338.4H206.56z M377.648,282.528
+	c0,36.352-22.992,55.344-48.128,55.344c-26.192,0-47.04-19.776-47.312-52.384c0-31.008,18.992-54.544,48.656-54.544
+	C360.8,230.928,377.648,252.848,377.648,282.528z M312.688,284.4c-0.272,18.192,5.872,31.28,17.648,31.28
+	c11.504,0,17.104-11.76,17.104-31.28c0-17.648-4.544-31.28-17.104-31.28C318.032,253.12,312.688,267.024,312.688,284.4z'
+          />
+        </svg>
+      ),
+      onSelect: () => {
+        setCustomerInfo({ pay_deposit: "percent" });
+        if (!ispay || ispay === "-") setCustomerInfo({ ispay: "" });
+      },
+    },
+  ];
+
+  const paymentStatusUi: Record<"paid" | "unpaid", { activeContainer: string; inactiveContainer: string; activeText: string; iconActiveColor: string }> = {
+    paid: {
+      activeContainer: "border-green-500 bg-green-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50",
+      activeText: "text-green-700",
+      iconActiveColor: "#10B981",
+    },
+    unpaid: {
+      activeContainer: "border-red-500 bg-red-50 shadow-md",
+      inactiveContainer: "border-gray-300 bg-white hover:border-red-300 hover:bg-red-50/50",
+      activeText: "text-red-700",
+      iconActiveColor: "#EF4444",
+    },
+  };
+
+  const paymentStatusOptions: Array<{ id: string; value: "paid" | "unpaid"; label: string; icon: React.ReactNode }> = [
+    {
+      id: "payment-paid",
+      value: "paid",
+      label: "ชำระแล้ว",
+      icon: (
+        <svg xmlns='http://www.w3.org/2000/svg' className='!w-5 !h-5' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+          <path d='M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
+          <path d='m16 19 3 3 3-3' />
+          <path d='M18 12h.01' />
+          <path d='M19 16v6' />
+          <path d='M6 12h.01' />
+          <circle cx='12' cy='12' r='2' />
+        </svg>
+      ),
+    },
+    {
+      id: "payment-unpaid",
+      value: "unpaid",
+      label: "ไม่ได้ชำระ",
+      icon: (
+        <svg xmlns='http://www.w3.org/2000/svg' className='!w-5 !h-5' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+          <path d='M13 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
+          <path d='m17 17 5 5' />
+          <path d='M18 12h.01' />
+          <path d='m22 17-5 5' />
+          <path d='M6 12h.01' />
+          <circle cx='12' cy='12' r='2' />
+        </svg>
+      ),
+    },
+  ];
+
+  const missingFieldChecks: Array<{ key: string; show: boolean; label: string }> = [
+    { key: "order_name", show: !order_name.trim(), label: "ชื่อผู้สั่ง" },
+    { key: "channel_access", show: !channel_access.trim(), label: "ช่องทาง" },
+    { key: "delivery_date", show: !delivery_date.trim(), label: "วันที่รับสินค้า" },
+    { key: "export_time", show: !export_time.trim(), label: "เวลาส่งอาหาร" },
+    { key: "receive_time", show: !receive_time.trim(), label: "เวลารับอาหาร" },
+    { key: "location_send", show: !location_send.trim(), label: "สถานที่จัดส่ง" },
+    { key: "receive_name", show: !receive_name.trim(), label: "ชื่อผู้รับสินค้า" },
+    { key: "customer_tel", show: !customer_tel.trim(), label: "เบอร์ติดต่อ" },
+    { key: "shipping_cost", show: !shipping_cost.trim(), label: "ค่าจัดส่ง" },
+    { key: "shipping_by", show: !shipping_by.trim(), label: "ส่งโดย" },
+    { key: "customer_name", show: !customer_name.trim(), label: "ออกบิลในนาม" },
+    { key: "invoice_tex_required", show: !invoice_tex.trim(), label: "เลขใบกำกับภาษี" },
+    { key: "invoice_tex_len", show: !!invoice_tex.trim() && invoice_tex.length !== 13, label: "เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)" },
+  ];
+
+  const formatTimeChangeValue = (input: string): string => {
+    const raw = input.replace(/[^0-9:]/g, "");
+    const digits = raw.replace(/:/g, "");
+
+    if (digits.length === 0) return "";
+    if (digits.length <= 2) return digits;
+
+    let hours = parseInt(digits.slice(0, 2), 10);
+    if (hours > 23) hours = 23;
+    let minutes = digits.slice(2, 4);
+    if (minutes.length === 2) {
+      const mins = parseInt(minutes, 10);
+      if (mins > 59) minutes = "59";
+    }
+
+    return hours.toString().padStart(2, "0") + ":" + minutes;
+  };
+
+  const formatTimeBlurValue = (input: string): string | null => {
+    if (!input) return null;
+    const digits = input.replace(/[^0-9]/g, "");
+    if (digits.length === 0) return null;
+
+    const hours = digits.slice(0, 2).padStart(2, "0");
+    const mins = digits.slice(2, 4).padEnd(2, "0");
+
+    let h = parseInt(hours, 10);
+    let m = parseInt(mins, 10);
+    if (h > 23) h = 23;
+    if (m > 59) m = 59;
+
+    return h.toString().padStart(2, "0") + ":" + m.toString().padStart(2, "0");
+  };
   const validate = {
     BasicInfo: (): boolean => {
       return (
@@ -273,9 +507,7 @@ export default function CartList() {
               newErrors.push("กรุณาใส่จำนวนเงินมัดจำ");
             } else {
               const payCostNum = Number(pay_cost.replace(/[^\d]/g, ""));
-              if (payCostNum === 0) {
-                newErrors.push("จำนวนเงินมัดจำต้องมากกว่า 0");
-              }
+              if (payCostNum === 0) newErrors.push("จำนวนเงินมัดจำต้องมากกว่า 0");
             }
           }
         }
@@ -354,13 +586,12 @@ export default function CartList() {
         } else if (ispay === "unpaid") {
           paymentStatusText = "ยังไม่ชำระ";
         } else {
-          paymentStatusText = "ชำระแล้ว"; // default ถ้ายังไม่เลือก
+          paymentStatusText = "ชำระแล้ว";
         }
         depositValueForMessage = `${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท (${paymentStatusText})`;
       } else if (pay_deposit === "full") {
         depositAmountForMessage = Number(pay_cost.replace(/[^\d]/g, "") || 0) / 100;
         depositTextForMessage = "เต็มจำนวน";
-        // เมื่อเลือกเต็มจำนวน ispay จะเป็น "-" แต่ให้แสดงว่าชำระแล้วเพราะเต็มจำนวน = ชำระเต็มจำนวนแล้ว
         paymentStatusText = "ชำระแล้ว";
         depositValueForMessage = `${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท (${paymentStatusText})`;
       } else {
@@ -475,7 +706,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
       const chargeNum = Number(pay_charge.replace(/[^\d]/g, "")) || 0;
       const totalCostNum = totalLunchboxCost + shippingCostNum + chargeNum;
 
-      // คำนวณยอดมัดจำ
       let depositText = "";
       let depositValue = "";
       if (pay_deposit === "percent") {
@@ -491,7 +721,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
         depositText = "-";
       }
 
-      // คำนวณยอดคงเหลือ
       const remainNum = Number(total_remain.replace(/[^\d.]/g, "")) || 0;
 
       setCopyText(copyTextContent);
@@ -566,7 +795,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
 
     const shippingCost = Number(shipping_cost.replace(/[^\d]/g, "")) || 0;
 
-    // คำนวณค่าธรรมเนียม
     let charge = 0;
     if (pay_type === "card" && selected_lunchboxes.length > 0) {
       const totalForFee = lunchboxTotal + shippingCost;
@@ -582,7 +810,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
       pay_charge: charge > 0 ? charge.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : pay_type && selected_lunchboxes.length > 0 ? "0.00" : "",
     });
   }, [selected_lunchboxes, shipping_cost, pay_type]);
-  // }, [selected_lunchboxes, shipping_cost]);
 
   useEffect(() => {
     if (pay_deposit === "percent" && pay_type) {
@@ -591,7 +818,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
         setCustomerInfo({ pay_cost: "50" });
       }
     } else if (pay_deposit === "full" && total_cost) {
-      const totalCostStr = total_cost.replace(/,/g, ""); // ลบ comma
+      const totalCostStr = total_cost.replace(/,/g, ""); 
       const totalCostNum = parseFloat(totalCostStr) || 0;
       const totalCostInSatang = Math.round(totalCostNum * 100); // แปลงเป็นสตางค์เพื่อเก็บใน pay_cost
       const currentPayCost = Number(pay_cost.replace(/[^\d]/g, "")) || 0;
@@ -619,9 +846,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
     const payCostNum = Number(pay_cost?.replace(/[^\d]/g, "") || 0) || 0;
 
     if (pay_deposit === "full") {
-      if (ispay !== "-") {
-        setCustomerInfo({ ispay: "-" });
-      }
+      if (ispay !== "-") setCustomerInfo({ ispay: "-" });
       const depositAmount = payCostNum / 100;
       const remaining = totalCostNum - depositAmount;
       const formattedRemaining = remaining >= 0 && !isNaN(remaining) ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
@@ -646,7 +871,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
     const formattedRemaining = remaining >= 0 && !isNaN(remaining) ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
     setCustomerInfo({ total_remain: formattedRemaining });
   }, [total_cost, pay_deposit, pay_cost, ispay]);
-  // }, [total_cost, pay_cost]);
 
   useEffect(() => {
     if (errors.length > 0) {
@@ -665,8 +889,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
   }, [errors]);
 
   useEffect(() => {
-    if (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram" && channel_access !== "others")
-      setCustomChannelName(channel_access);
+    if (channel_access && channel_access !== "others" && !knownChannelValues.includes(channel_access)) setCustomChannelName(channel_access);
     else if (channel_access === "others") setCustomChannelName("");
     else setCustomChannelName("");
   }, [channel_access]);
@@ -795,7 +1018,6 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
             x='0px'
             y='0px'
             viewBox='0 0 115.35 122.88'
-            // style={{ enableBackground: 'new 0 0 115.35 122.88' }}
             xmlSpace='preserve'
             className='inline !w-6 !h-6'>
             <g>
@@ -824,166 +1046,50 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
 </div>
 
             <div className='grid grid-cols-2 gap-3'>
-              {/* Facebook */}
-              <label
-                htmlFor='facebook'
-                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  channel_access === "facebook" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-300 bg-white hover:border-blue-300 hover:bg-blue-50/50"
-                }`}>
-                <input
-                  type='radio'
-                  id='facebook'
-                  name='channel'
-                  value='facebook'
-                  checked={channel_access === "facebook"}
-                  onChange={(e) => {
-                    setCustomerInfo({ channel_access: e.target.value });
-                    setCustomChannelName("");
-                  }}
-                  className='sr-only'
-                />
-                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: channel_access === "facebook" ? "#1877F2" : "#6B7280" }}>
-                  <path d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' />
-                </svg>
-                <span className={`font-medium ${channel_access === "facebook" ? "text-blue-700" : "text-gray-700"}`}>Facebook</span>
-                {channel_access === "facebook" && (
-                  <div className='absolute top-2 right-2'>
-                    <svg className='w-5 h-5 text-blue-500' fill='currentColor' viewBox='0 0 20 20'>
-                      <path
-                        fillRule='evenodd'
-                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                  </div>
-                )}
-              </label>
+              {formTemplate.SelectContect.map((item) => {
+                const isSelected = item.value === "others" ? isOtherChannelSelected : channel_access === item.value;
+                const ui = channelUi[item.value] ?? channelUi.others;
 
-              {/* Line */}
-              <label
-                htmlFor='line'
-                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  channel_access === "line" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
-                }`}>
-                <input
-                  type='radio'
-                  id='line'
-                  name='channel'
-                  value='line'
-                  checked={channel_access === "line"}
-                  onChange={(e) => {
-                    setCustomerInfo({ channel_access: e.target.value });
-                    setCustomChannelName("");
-                  }}
-                  className='sr-only'
-                />
-                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: channel_access === "line" ? "#00C300" : "#6B7280" }}>
-                  <path d='M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.27l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.63.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.028 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314' />
-                </svg>
-                <span className={`font-medium ${channel_access === "line" ? "text-green-700" : "text-gray-700"}`}>Line</span>
-                {channel_access === "line" && (
-                  <div className='absolute top-2 right-2'>
-                    <svg className='w-5 h-5 text-green-500' fill='currentColor' viewBox='0 0 20 20'>
-                      <path
-                        fillRule='evenodd'
-                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                        clipRule='evenodd'
-                      />
+                return (
+                  <label
+                    key={item.value}
+                    htmlFor={item.value}
+                    className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                      isSelected ? ui.activeContainer : ui.inactiveContainer
+                    }`}>
+                    <input
+                      type='radio'
+                      id={item.value}
+                      name='channel'
+                      value={item.value}
+                      checked={isSelected}
+                      onChange={() => {
+                        setCustomerInfo({ channel_access: item.value === "others" ? "others" : item.value });
+                        setCustomChannelName("");
+                      }}
+                      className='sr-only'
+                    />
+                    <svg
+                      className='!w-5 !h-5'
+                      fill='currentColor'
+                      viewBox='0 0 24 24'
+                      style={{ color: isSelected ? item.iconColor : "#6B7280" }}>
+                      <path d={item.svg} />
                     </svg>
-                  </div>
-                )}
-              </label>
-
-              {/* Instagram */}
-              <label
-                htmlFor='instagram'
-                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  channel_access === "instagram" ? "border-pink-500 bg-pink-50 shadow-md" : "border-gray-300 bg-white hover:border-pink-300 hover:bg-pink-50/50"
-                }`}>
-                <input
-                  type='radio'
-                  id='instagram'
-                  name='channel'
-                  value='instagram'
-                  checked={channel_access === "instagram"}
-                  onChange={(e) => {
-                    setCustomerInfo({ channel_access: e.target.value });
-                    setCustomChannelName("");
-                  }}
-                  className='sr-only'
-                />
-                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: channel_access === "instagram" ? "#E4405F" : "#6B7280" }}>
-                  <path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z' />
-                </svg>
-                <span className={`font-medium ${channel_access === "instagram" ? "text-pink-700" : "text-gray-700"}`}>Instagram</span>
-                {channel_access === "instagram" && (
-                  <div className='absolute top-2 right-2'>
-                    <svg className='w-5 h-5 text-pink-500' fill='currentColor' viewBox='0 0 20 20'>
-                      <path
-                        fillRule='evenodd'
-                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                  </div>
-                )}
-              </label>
-
-              {/* Other */}
-              <label
-                htmlFor='others'
-                className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")
-                    ? "border-purple-500 bg-purple-50 shadow-md"
-                    : "border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50/50"
-                }`}>
-                <input
-                  type='radio'
-                  id='others'
-                  name='channel'
-                  value='others'
-                  checked={!!(channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram"))}
-                  onChange={(e) => {
-                    setCustomerInfo({ channel_access: "others" });
-                    setCustomChannelName("");
-                  }}
-                  className='sr-only'
-                />
-                <svg
-                  className='!w-5 !h-5'
-                  fill='currentColor'
-                  viewBox='0 0 24 24'
-                  style={{
-                    color:
-                      channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")
-                        ? "#9333EA"
-                        : "#6B7280",
-                  }}>
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' />
-                </svg>
-                <span
-                  className={`font-medium ${
-                    channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")
-                      ? "text-purple-700"
-                      : "text-gray-700"
-                  }`}>
-                  Others
-                </span>
-                {(channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")) && (
-                  <div className='absolute top-2 right-2'>
-                    <svg className='w-5 h-5 text-purple-500' fill='currentColor' viewBox='0 0 20 20'>
-                      <path
-                        fillRule='evenodd'
-                        d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                        clipRule='evenodd'
-                      />
-                    </svg>
-                  </div>
-                )}
-              </label>
+                    <span className={`font-medium ${isSelected ? ui.activeText : "text-gray-700"}`}>{item.label}</span>
+                    {isSelected && (
+                      <div className='absolute top-2 right-2'>
+                        <svg className={`w-5 h-5 ${ui.activeCheck}`} fill='currentColor' viewBox='0 0 20 20'>
+                          <path fillRule='evenodd' d={item.svgh} clipRule='evenodd' />
+                        </svg>
+                      </div>
+                    )}
+                  </label>
+                );
+              })}
             </div>
 
-            {(channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")) && (
+            {isOtherChannelSelected && (
               <div className='col-span-2 flex flex-col gap-1 -mt-5'>
                 <label className='font-bold'>ชื่อช่องทาง</label>
                 <input
@@ -1072,46 +1178,11 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
                 type='text'
                 value={export_time}
                 onChange={(e) => {
-                  let raw = e.target.value.replace(/[^0-9:]/g, "");
-                  let digits = raw.replace(/:/g, "");
-
-                  if (digits.length === 0) {
-                    setCustomerInfo({ exportTime: "" });
-                    return;
-                  }
-
-                  if (digits.length <= 2) {
-                    setCustomerInfo({ exportTime: digits });
-                    return;
-                  }
-
-                  let hours = parseInt(digits.slice(0, 2), 10);
-                  if (hours > 23) hours = 23;
-                  let minutes = digits.slice(2, 4);
-                  if (minutes.length === 2) {
-                    let mins = parseInt(minutes, 10);
-                    if (mins > 59) minutes = "59";
-                  }
-
-                  let value = hours.toString().padStart(2, "0") + ":" + minutes;
-                  setCustomerInfo({ exportTime: value });
+                  setCustomerInfo({ exportTime: formatTimeChangeValue(e.target.value) });
                 }}
                 onBlur={(e) => {
-                  let value = e.target.value;
-                  if (!value) return;
-
-                  let digits = value.replace(/[^0-9]/g, "");
-                  if (digits.length === 0) return;
-
-                  let hours = digits.slice(0, 2).padStart(2, "0");
-                  let mins = digits.slice(2, 4).padEnd(2, "0");
-
-                  let h = parseInt(hours, 10);
-                  let m = parseInt(mins, 10);
-                  if (h > 23) h = 23;
-                  if (m > 59) m = 59;
-
-                  setCustomerInfo({ exportTime: h.toString().padStart(2, "0") + ":" + m.toString().padStart(2, "0") });
+                  const normalized = formatTimeBlurValue(e.target.value);
+                  if (normalized) setCustomerInfo({ exportTime: normalized });
                 }}
                 maxLength={5}
                 className='w-full border border-gray-300 rounded px-3 py-2 font-mono'
@@ -1131,45 +1202,11 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
                 type='text'
                 value={receive_time}
                 onChange={(e) => {
-                  let raw = e.target.value.replace(/[^0-9:]/g, "");
-                  let digits = raw.replace(/:/g, "");
-
-                  if (digits.length === 0) {
-                    setCustomerInfo({ receiveTime: "" });
-                    return;
-                  }
-
-                  if (digits.length <= 2) {
-                    setCustomerInfo({ receiveTime: digits });
-                    return;
-                  }
-
-                  let hours = parseInt(digits.slice(0, 2), 10);
-                  if (hours > 23) hours = 23;
-                  let minutes = digits.slice(2, 4);
-                  if (minutes.length === 2) {
-                    let mins = parseInt(minutes, 10);
-                    if (mins > 59) minutes = "59";
-                  }
-
-                  let value = hours.toString().padStart(2, "0") + ":" + minutes;
-                  setCustomerInfo({ receiveTime: value });
+                  setCustomerInfo({ receiveTime: formatTimeChangeValue(e.target.value) });
                 }}
                 onBlur={(e) => {
-                  let value = e.target.value;
-                  if (!value) return;
-
-                  let digits = value.replace(/[^0-9]/g, "");
-                  if (digits.length === 0) return;
-
-                  let hours = digits.slice(0, 2).padStart(2, "0");
-                  let mins = digits.slice(2, 4).padEnd(2, "0");
-                  let h = parseInt(hours, 10);
-                  let m = parseInt(mins, 10);
-                  if (h > 23) h = 23;
-                  if (m > 59) m = 59;
-
-                  setCustomerInfo({ receiveTime: h.toString().padStart(2, "0") + ":" + m.toString().padStart(2, "0") });
+                  const normalized = formatTimeBlurValue(e.target.value);
+                  if (normalized) setCustomerInfo({ receiveTime: normalized });
                 }}
                 maxLength={5}
                 className='w-full border border-gray-300 rounded px-3 py-2 font-mono'
@@ -1193,26 +1230,25 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
             <label className='font-bold'>เบอร์ติดต่อ</label>
             <input type='text' value={customer_tel} onChange={handle.PhoneChange} placeholder='ระบุเบอร์ติดต่อ' className='border rounded px-3 py-2' />
           </div>
-          <div className='col-span-2 flex flex-col gap-1'>
+          <div className='flex flex-col gap-1'>
             <label className='font-bold'>ค่าจัดส่ง</label>
             <input type='text' value={shipping_cost} onChange={handle.ShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
           </div>
-  {shipping_cost && (
-                <div className='flex justify-between items-center py-2 border-b'>
+                <div className='flex flex-col gap-1'>
                   <label className='font-bold'>ส่งโดย</label>
                   <Select value={shipping_by || ""} onValueChange={(value) => setCustomerInfo({ shipping_by: value })}>
-                    <SelectTrigger className='w-auto'>
+                    <SelectTrigger className='w-auto h-auto border rounded px-3 py-2 text-base'>
                       <SelectValue placeholder='เลือกวิธีจัดส่ง' />
                     </SelectTrigger>
                     <SelectContent side='bottom' align='end' position='popper' avoidCollisions={true} collisionPadding={8} sideOffset={4} className='w-[200px] max-w-[200px]'>
-                      <SelectItem value='มอเตอร์ไซด์'>มอเตอร์ไซด์</SelectItem>
-                      <SelectItem value='รถยนต์(เก๋ง)'>รถยนต์(เก๋ง)</SelectItem>
-                      <SelectItem value='รถ SUV'>รถ SUV</SelectItem>
-                      <SelectItem value='รถกระบะตูทึบ'>รถกระบะตูทึบ</SelectItem>
+                      {shippingByOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
           <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-bold' htmlFor=''>
@@ -1430,17 +1466,11 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
             <div className='mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded'>
               <p className='text-sm font-medium text-yellow-800 mb-2'>📋 กรุณากรอกข้อมูลให้ครบถ้วน:</p>
               <ul className='text-xs text-yellow-700 space-y-1'>
-                {!channel_access.trim() && <li>• ช่องทาง</li>}
-                {!receive_name.trim() && <li>• ชื่อลูกค้า</li>}
-                {!customer_tel.trim() && <li>• เบอร์โทรลูกค้า</li>}
-                {!location_send.trim() && <li>• สถานที่จัดส่ง</li>}
-                {!delivery_date.trim() && <li>• วันที่จัดส่ง</li>}
-                {!export_time.trim() && <li>• เวลาส่งอาหาร</li>}
-                {!receive_time.trim() && <li>• เวลารับอาหาร</li>}
-                {!shipping_cost.trim() && <li>• ค่าจัดส่ง</li>}
-                {!customer_name.trim() && <li>• ออกบิลในนาม</li>}
-                {!invoice_tex.trim() && <li>• เลขใบกำกับภาษี</li>}
-                {invoice_tex.trim() && invoice_tex.length !== 13 && <li>• เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)</li>}
+                {missingFieldChecks
+                  .filter((f) => f.show)
+                  .map((f) => (
+                    <li key={f.key}>• {f.label}</li>
+                  ))}
               </ul>
             </div>
           )}
@@ -1456,9 +1486,11 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
                   <SelectValue placeholder='เลือกรูปแบบการชำระเงิน' />
                 </SelectTrigger>
                 <SelectContent side='bottom' align='start' position='popper' avoidCollisions={true} collisionPadding={8} sideOffset={4} className='w-[200px] max-w-[200px]'>
-                  <SelectItem value='cash'>ชำระด้วยเงินสด</SelectItem>
-                  <SelectItem value='transfer'>ชำระด้วยโอนเงิน</SelectItem>
-                  <SelectItem value='card'>ชำระด้วยบัตรเครดิต</SelectItem>
+                  {payTypeOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -1470,65 +1502,31 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
                     <label className='font-bold'>รูปแบบการชำระ</label>
                   </div>
                   <div className='grid grid-cols-2 gap-3'>
-                    <label
-                      htmlFor='deposit-full'
-                      className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        pay_deposit === "full" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-300 bg-white hover:border-orange-300 hover:bg-orange-50/50"
-                      }`}>
-                      <input
-                        type='radio'
-                        id='deposit-full'
-                        name='deposit'
-                        value='full'
-                        checked={pay_deposit === "full"}
-                        onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, ispay: "-" })}
-                        className='sr-only'
-                      />
-                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' style={{ color: pay_deposit === "full" ? "#EA580C" : "#6B7280" }}>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-                      </svg>
-                      <span className={`font-medium ${pay_deposit === "full" ? "text-orange-700" : "text-gray-700"}`}>เต็มจำนวน</span>
-                    </label>
+                    {depositOptions.map((opt) => {
+                      const isSelected = pay_deposit === opt.value;
+                      const ui = depositUi[opt.value];
 
-                    <label
-                      htmlFor='deposit-percent'
-                      className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        pay_deposit === "percent" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-300 bg-white hover:border-amber-300 hover:bg-amber-50/50"
-                      }`}>
-                      <input
-                        type='radio'
-                        id='deposit-percent'
-                        name='deposit'
-                        value='percent'
-                        checked={pay_deposit === "percent"}
-                        onChange={(e) => {
-                          setCustomerInfo({ pay_deposit: e.target.value });
-                          if (!ispay || ispay === "-") {
-                            setCustomerInfo({ ispay: "" });
-                          }
-                        }}
-                        className='sr-only'
-                      />
-                      <svg className='!w-5 !h-5' version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
-                        <path
-                          style={{ fill: "#F2B851" }}
-                          d='M512,256.8l-67.2-54.224l43.2-74.96l-91.2-7.968l-8-87.728L312,68.608L259.2,0l-49.6,70.176
-	l-80-41.472l-4.8,90.928l-89.6,4.784l33.6,86.128L0,252.016l70.4,52.64l-35.2,74.96l88,9.568l4.8,89.328l81.6-38.288L264,512
-	l48-71.776l75.2,36.688l6.4-89.328l88-1.6l-32-73.376L512,256.8z'
-                        />
-                        <path
-                          style={{ fill: "#FFFFFF" }}
-                          d='M252.544,210.352c0,36.352-22.992,55.328-48.128,55.328c-26.464,0-47.312-19.776-47.312-52.384
-	c0-31.008,18.992-54.528,48.656-54.528C235.696,158.768,252.544,180.688,252.544,210.352z M187.296,212.224
-	c0,18.176,6.16,31.264,17.92,31.264c11.488,0,17.104-11.744,17.104-31.264c0-17.664-4.816-31.28-17.376-31.28
-	C192.928,180.944,187.296,194.832,187.296,212.224z M206.56,338.4l99.712-179.648h21.92L228.208,338.4H206.56z M377.648,282.528
-	c0,36.352-22.992,55.344-48.128,55.344c-26.192,0-47.04-19.776-47.312-52.384c0-31.008,18.992-54.544,48.656-54.544
-	C360.8,230.928,377.648,252.848,377.648,282.528z M312.688,284.4c-0.272,18.192,5.872,31.28,17.648,31.28
-	c11.504,0,17.104-11.76,17.104-31.28c0-17.648-4.544-31.28-17.104-31.28C318.032,253.12,312.688,267.024,312.688,284.4z'
-                        />
-                      </svg>
-                      <span className={`font-medium ${pay_deposit === "percent" ? "text-amber-700" : "text-gray-700"}`}>50%</span>
-                    </label>
+                      return (
+                        <label
+                          key={opt.value}
+                          htmlFor={opt.id}
+                          className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                            isSelected ? ui.activeContainer : ui.inactiveContainer
+                          }`}>
+                          <input
+                            type='radio'
+                            id={opt.id}
+                            name='deposit'
+                            value={opt.value}
+                            checked={isSelected}
+                            onChange={opt.onSelect}
+                            className='sr-only'
+                          />
+                          <span style={{ color: isSelected ? ui.iconActiveColor : ui.iconInactiveColor }}>{opt.icon}</span>
+                          <span className={`font-medium ${isSelected ? ui.activeText : "text-gray-700"}`}>{opt.label}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1568,78 +1566,31 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
                       <label className='font-bold'>สถานะการชำระเงิน</label>
                     </div>
                     <div className='grid grid-cols-2 gap-3'>
-                      <label
-                        htmlFor='payment-paid'
-                        className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                          ispay === "paid" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
-                        }`}>
-                        <input
-                          type='radio'
-                          id='payment-paid'
-                          name='payment-status'
-                          value='paid'
-                          checked={ispay === "paid"}
-                          onChange={(e) => setCustomerInfo({ ispay: "paid" })}
-                          className='sr-only'
-                        />
+                      {paymentStatusOptions.map((opt) => {
+                        const isSelected = ispay === opt.value;
+                        const ui = paymentStatusUi[opt.value];
 
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          className='!w-5 !h-5'
-                          style={{ color: ispay === "paid" ? "#10B981" : "#6B7280" }}
-                          width='24'
-                          height='24'
-                          viewBox='0 0 24 24'
-                          fill='none'
-                          stroke='currentColor'
-                          strokeWidth='2'
-                          strokeLinecap='round'
-                          strokeLinejoin='round'>
-                          <path d='M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
-                          <path d='m16 19 3 3 3-3' />
-                          <path d='M18 12h.01' />
-                          <path d='M19 16v6' />
-                          <path d='M6 12h.01' />
-                          <circle cx='12' cy='12' r='2' />
-                        </svg>
-                        <span className={`font-medium ${ispay === "paid" ? "text-green-700" : "text-gray-700"}`}>ชำระแล้ว</span>
-                      </label>
-
-                      <label
-                        htmlFor='payment-unpaid'
-                        className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                          ispay === "unpaid" ? "border-red-500 bg-red-50 shadow-md" : "border-gray-300 bg-white hover:border-red-300 hover:bg-red-50/50"
-                        }`}>
-                        <input
-                          type='radio'
-                          id='payment-unpaid'
-                          name='payment-status'
-                          value='unpaid'
-                          checked={ispay === "unpaid"}
-                          onChange={(e) => setCustomerInfo({ ispay: "unpaid" })}
-                          className='sr-only'
-                        />
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          className='!w-5 !h-5'
-                          style={{ color: ispay === "unpaid" ? "#EF4444" : "#6B7280" }}
-                          width='24'
-                          height='24'
-                          viewBox='0 0 24 24'
-                          fill='none'
-                          stroke='currentColor'
-                          strokeWidth='2'
-                          strokeLinecap='round'
-                          strokeLinejoin='round'>
-                          <path d='M13 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
-                          <path d='m17 17 5 5' />
-                          <path d='M18 12h.01' />
-                          <path d='m22 17-5 5' />
-                          <path d='M6 12h.01' />
-                          <circle cx='12' cy='12' r='2' />
-                        </svg>
-                        <span className={`font-medium ${ispay === "unpaid" ? "text-red-700" : "text-gray-700"}`}>ไม่ได้ชำระ</span>
-                      </label>
+                        return (
+                          <label
+                            key={opt.value}
+                            htmlFor={opt.id}
+                            className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                              isSelected ? ui.activeContainer : ui.inactiveContainer
+                            }`}>
+                            <input
+                              type='radio'
+                              id={opt.id}
+                              name='payment-status'
+                              value={opt.value}
+                              checked={isSelected}
+                              onChange={() => setCustomerInfo({ ispay: opt.value })}
+                              className='sr-only'
+                            />
+                            <span style={{ color: isSelected ? ui.iconActiveColor : "#6B7280" }}>{opt.icon}</span>
+                            <span className={`font-medium ${isSelected ? ui.activeText : "text-gray-700"}`}>{opt.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1648,62 +1599,79 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
             )}
 
             <div className='border rounded p-4 mb-4 bg-gray-50'>
-              <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>ค่าอาหาร </label>
-                <span className='text-lg'>
-                  {Array.isArray(selected_lunchboxes) && selected_lunchboxes.length > 0
+              {(() => {
+                const calcTotalCost = () => {
+                  const totalCostStr = total_cost?.replace(/,/g, "") ?? "";
+                  const totalCostNum = parseFloat(totalCostStr) || 0;
+                  return totalCostNum;
+                };
+
+                const formatMoney2 = (num: number) => Number(num.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                const foodCostText =
+                  Array.isArray(selected_lunchboxes) && selected_lunchboxes.length > 0
                     ? `${selected_lunchboxes.reduce((sum, lb) => sum + (Number(lb.lunchbox_total_cost?.replace(/[^\d]/g, "")) || 0), 0).toLocaleString("th-TH")} บาท`
-                    : "-"}
-                </span>
-              </div>
-              <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>ค่าส่ง </label>
-                <span className='text-lg'>{shipping_cost ? `${shipping_cost} บาท` : "-"}</span>
-              </div>
-              <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>ค่าธรรมเนียม </label>
-                <span className='text-lg'>{pay_charge ? `${pay_charge} บาท` : "-"}</span>
-              </div>
-              <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>ยอดทั้งหมด </label>
-                <span className='text-lg'>
-                  {total_cost
-                    ? `${(() => {
-                        const totalCostStr = total_cost.replace(/,/g, "");
-                        const totalCostNum = parseFloat(totalCostStr) || 0;
-                        return Number(totalCostNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                      })()} บาท`
-                    : "-"}
-                </span>
-              </div>
-              <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>{pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ"}</label>
-                <span className='text-lg text-orange-600'>
-                  {pay_deposit && pay_cost
-                    ? pay_deposit === "percent"
-                      ? `${pay_cost}% (${(() => {
-                          const totalCostStr = total_cost.replace(/,/g, "");
-                          const totalCostNum = parseFloat(totalCostStr) || 0;
-                          const payCostNum = Number(pay_cost.replace(/[^\d]/g, "")) || 0;
-                          const depositAmount = (totalCostNum * payCostNum) / 100;
-                          return Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        })()} บาท)`
-                      : `${(Number(pay_cost.replace(/[^\d]/g, "") || 0) / 100).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
-                    : "-"}
-                </span>
-              </div>
-              <div className='flex justify-between items-center py-2'>
-                <label className='font-bold text-green-700'>คงเหลือ</label>
-                <span className='text-xl font-bold text-green-700'>
-                  {total_remain
+                    : "-";
+
+                const totalCostText = total_cost ? `${formatMoney2(calcTotalCost())} บาท` : "-";
+
+                const depositText = (() => {
+                  if (!pay_deposit || !pay_cost) return "-";
+                  if (pay_deposit === "percent") {
+                    const totalCostNum = calcTotalCost();
+                    const payCostNum = Number(pay_cost.replace(/[^\d]/g, "")) || 0;
+                    const depositAmount = (totalCostNum * payCostNum) / 100;
+                    return `${pay_cost}% (${formatMoney2(depositAmount)} บาท)`;
+                  }
+                  return `${(Number(pay_cost.replace(/[^\d]/g, "") || 0) / 100).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
+                })();
+
+                const remainText =
+                  total_remain
                     ? (() => {
                         const remainStr = typeof total_remain === "string" ? total_remain.replace(/,/g, "") : String(total_remain);
                         const remainNum = parseFloat(remainStr) || 0;
                         return remainNum > 0 ? `${remainNum.toFixed(2)} บาท` : "0.00 บาท";
                       })()
-                    : "-"}
-                </span>
-              </div>
+                    : "-";
+
+                const summaryRows: Array<{
+                  key: string;
+                  label: React.ReactNode;
+                  value: React.ReactNode;
+                  withBorder: boolean;
+                  labelClass: string;
+                  valueClass: string;
+                }> = [
+                  { key: "food", label: "ค่าอาหาร", value: <span className='text-lg'>{foodCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                  { key: "shipping", label: "ค่าส่ง", value: <span className='text-lg'>{shipping_cost ? `${shipping_cost} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                  { key: "fee", label: "ค่าธรรมเนียม", value: <span className='text-lg'>{pay_charge ? `${pay_charge} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                  { key: "total", label: "ยอดทั้งหมด", value: <span className='text-lg'>{totalCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                  {
+                    key: "deposit",
+                    label: pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ",
+                    value: <span className='text-lg text-orange-600'>{depositText}</span>,
+                    withBorder: true,
+                    labelClass: "font-bold",
+                    valueClass: "",
+                  },
+                  {
+                    key: "remain",
+                    label: "คงเหลือ",
+                    value: <span className='text-xl font-bold text-green-700'>{remainText}</span>,
+                    withBorder: false,
+                    labelClass: "font-bold text-green-700",
+                    valueClass: "",
+                  },
+                ];
+
+                return summaryRows.map((row) => (
+                  <div key={row.key} className={`flex justify-between items-center py-2 ${row.withBorder ? "border-b" : ""}`}>
+                    <label className={row.labelClass}>{row.label}</label>
+                    {row.value}
+                  </div>
+                ));
+              })()}
             </div>
             </>
             )}
