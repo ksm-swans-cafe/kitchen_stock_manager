@@ -14,16 +14,17 @@ export async function PATCH(request: NextRequest) {
 
   const id = request.nextUrl.pathname.split("/").pop();
   const formData = await request.formData();
-  const s = formData.get("statutoString()?.trim();
+  const status = formData.get("status")?.toString()?.trim();
+  const last_update = formData.get("last_update")?.toString()?.trim();
   const updated = new Date().toISOString();
 
-  if (!s || !id) {
+  if (!status || !id) {
     return NextResponse.json({ error: "No data provided" }, { status: 400 });
   }
 
   try {
     const cart = await prisma.new_cart.findFirst({
-      where: { d },
+      where: { id },
       select: { id: true },
     });
 
@@ -34,8 +35,8 @@ export async function PATCH(request: NextRequest) {
     const result = await prisma.new_cart.update({
       where: { id: cart.id },
       data: {
-        s: statu
-        update: last_ed,
+        status,
+        last_update: last_update || updated,
       },
     });
 

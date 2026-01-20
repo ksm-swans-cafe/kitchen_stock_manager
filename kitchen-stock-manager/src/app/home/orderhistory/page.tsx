@@ -1817,13 +1817,13 @@ const OrderHistory = () => {
                     </Accordion>
                   ))}
                   <div className='flex justify-center gap-3 m-4'>
-                    <Button
+                    {/* <Button
                       size='sm'
                       onClick={() => handleSummaryClick(convertThaiDateToISO(orders[0].delivery_date)!)}
                       className='h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4'
                       style={{ color: "#000000", background: "#fcf22d" }}>
                       📦 สรุปวัตถุดิบทั้งหมด
-                    </Button>
+                    </Button> */}
                     <Button
                       size='sm'
                       onClick={() => {

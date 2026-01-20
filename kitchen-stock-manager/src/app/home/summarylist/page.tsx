@@ -33,12 +33,14 @@ import { Loading } from "@/components/loading/loading";
 import SummaryIcon from "@/assets/summarylist.png";
 
 import { fetcher } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 import { Ingredient, MenuItem, Cart, CartItem, RawCart, Lunchbox } from "@/types/interface_summary_orderhistory";
 
 const SummaryList: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { userName } = useAuth();
   const filterCartId = searchParams.get('cartId'); // รับ cartId จาก query parameter สำหรับ filter จาก dashboard
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -126,6 +128,10 @@ const SummaryList: React.FC = () => {
   const isLoading = !cartsData || !ingredientData;
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentCopyText, setPaymentCopyText] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+  const [selectedPaymentCart, setSelectedPaymentCart] = useState<Cart | null>(null);
 
   // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
   useEffect(() => {
@@ -1015,6 +1021,104 @@ const SummaryList: React.FC = () => {
 
   const handleUpdateWithCheck = (cart: { id: string; allIngredients: unknown[] }) => {
     mutateCarts();
+  };
+
+  const generatePaymentCopyText = (cart: Cart): string => {
+    const customerName = cart.customer_name || "ไม่ระบุ";
+    const channelAccess = (cart as any).channel_access || "ไม่ระบุ";
+    const orderName = (cart as any).order_name || customerName;
+    const deliveryDate = cart.delivery_date || "ไม่ระบุ";
+    const exportTime = cart.export_time || "ไม่ระบุ";
+    const receiveTime = cart.receive_time || "ไม่ระบุ";
+    const locationSend = cart.location_send || "ไม่ระบุ";
+    const shippingCost = cart.shipping_cost || "0";
+    const shippingBy = (cart as any).shipping_by || "ไม่ระบุ";
+    const receiveName = (cart as any).receive_name || customerName;
+    const customerTel = cart.customer_tel || "ไม่ระบุ";
+    const invoiceTex = cart.invoice_tex || "ไม่ระบุ";
+
+    // คำนวณราคาอาหารจาก lunchbox
+    let totalFoodCost = 0;
+    let lunchboxList = "";
+    let totalBoxes = 0;
+
+    if (cart.lunchbox && cart.lunchbox.length > 0) {
+      cart.lunchbox.forEach((lunchbox, idx) => {
+        const lunchboxTotalCost = Number(lunchbox.lunchbox_total_cost) || 0;
+        const lunchboxTotal = Number(lunchbox.lunchbox_total) || 0;
+        totalBoxes += lunchboxTotal;
+        totalFoodCost += lunchboxTotalCost;
+
+        lunchboxList += `${idx + 1}.${lunchbox.lunchbox_name} - ${lunchbox.lunchbox_set_name}\n`;
+        if (lunchbox.lunchbox_menu && lunchbox.lunchbox_menu.length > 0) {
+          lunchbox.lunchbox_menu.forEach((menu) => {
+            const menuCost = Number(menu.menu_cost) || 0;
+            lunchboxList += `      + ${menu.menu_name}\n`;
+            lunchboxList += `      เซ็ตละ ${menuCost.toLocaleString("th-TH")} บาท\n`;
+          });
+        }
+        lunchboxList += `      จำนวน ${lunchboxTotal} กล่อง\n`;
+        lunchboxList += `      รวม ${lunchboxTotalCost.toLocaleString("th-TH")} บาท\n`;
+      });
+    } else {
+      // ถ้าไม่มี lunchbox ให้ใช้ราคาจาก price
+      totalFoodCost = cart.price || 0;
+      totalBoxes = cart.sets || 0;
+    }
+
+    const shippingCostNum = Number(shippingCost.replace(/[^\d]/g, "")) || 0;
+    const totalCost = totalFoodCost + shippingCostNum;
+
+    return `📌รับออเดอร์ คุณ ${orderName} 
+ช่องทางที่สั่ง : ${channelAccess}
+ผู้รับออเดอร์ : แอดมิน${userName || "ไม่ระบุ"}
+
+✅ รายละเอียดสำหรับจัดส่ง
+1.วันที่รับสินค้า : ${deliveryDate}
+2.เวลาส่งสินค้า : ${exportTime}
+3.เวลารับสินค้า : ${receiveTime}
+4.สถานที่จัดส่ง : ${locationSend}
+5.ค่าจัดส่ง ${shippingCostNum.toLocaleString("th-TH")} บาท ส่งโดย ${shippingBy}
+6.ชื่อผู้รับสินค้า : ${receiveName}
+7.เบอร์โทร : ${customerTel}
+8.ออกบิลในนาม : ${customerName}
+9.ที่อยู่ : ${locationSend}
+10.เลขประจำตัวผู้เสียภาษี : ${invoiceTex}
+
+✅รายการอาหาร ${totalBoxes} กล่อง 
+      ${lunchboxList}
+รวมค่าอาหาร ${totalFoodCost.toLocaleString("th-TH")} บาท
+
+✅รวมทั้งหมด ${totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
+`;
+  };
+
+  const handlePaymentCompleted = (cart: Cart) => {
+    const copyText = generatePaymentCopyText(cart);
+    setPaymentCopyText(copyText);
+    setSelectedPaymentCart(cart);
+    setShowPaymentModal(true);
+    // Auto copy to clipboard
+    navigator.clipboard.writeText(copyText).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }).catch(() => {
+      // ถ้า copy ไม่ได้ ไม่เป็นไร
+    });
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(paymentCopyText).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
+
+  const handleFinishPayment = () => {
+    setShowPaymentModal(false);
+    setPaymentCopyText("");
+    setSelectedPaymentCart(null);
+    setIsCopied(false);
   };
 
   const handleExport = (type: string) => {
@@ -2089,6 +2193,79 @@ const SummaryList: React.FC = () => {
   };
 
   return (
+    <>
+      {/* Payment Success Modal */}
+      {showPaymentModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+          <div className='bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col'>
+            {/* Header */}
+            <div className='flex w-full items-center justify-center p-4 border-b bg-green-50 rounded-t-lg'>
+              <div className='flex items-center gap-2 text-xl font-bold text-green-700'>
+                <svg className='!w-5 !h-5 text-green-600' viewBox='0 0 117 117' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink'>
+                  <g fill='none' fillRule='evenodd' id='Page-1' stroke='none' strokeWidth='1'>
+                    <g fillRule='nonzero' id='correct'>
+                      <path
+                        d='M34.5,55.1 C32.9,53.5 30.3,53.5 28.7,55.1 C27.1,56.7 27.1,59.3 28.7,60.9 L47.6,79.8 C48.4,80.6 49.4,81 50.5,81 C50.6,81 50.6,81 50.7,81 C51.8,80.9 52.9,80.4 53.7,79.5 L101,22.8 C102.4,21.1 102.2,18.5 100.5,17 C98.8,15.6 96.2,15.8 94.7,17.5 L50.2,70.8 L34.5,55.1 Z'
+                        fill='#17AB13'
+                        id='Shape'
+                      />
+                      <path
+                        d='M89.1,9.3 C66.1,-5.1 36.6,-1.7 17.4,17.5 C-5.2,40.1 -5.2,77 17.4,99.6 C28.7,110.9 43.6,116.6 58.4,116.6 C73.2,116.6 88.1,110.9 99.4,99.6 C118.7,80.3 122,50.7 107.5,27.7 C106.3,25.8 103.8,25.2 101.9,26.4 C100,27.6 99.4,30.1 100.6,32 C113.1,51.8 110.2,77.2 93.6,93.8 C74.2,113.2 42.5,113.2 23.1,93.8 C3.7,74.4 3.7,42.7 23.1,23.3 C39.7,6.8 65,3.9 84.8,16.2 C86.7,17.4 89.2,16.8 90.4,14.9 C91.6,13 91,10.5 89.1,9.3 Z'
+                        fill='#4A4A4A'
+                        id='Shape'
+                      />
+                    </g>
+                  </g>
+                </svg>
+                <p>สั่งซื้อสำเร็จ!</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className='p-4 flex-1 overflow-y-auto'>
+              <p className='text-gray-700 mb-4'>กรุณาคัดลอกข้อความด้านล่างเพื่อส่งให้ลูกค้า:</p>
+              <div className='overflow-y-auto border-2 py-2 pl-4 border-gray-300 rounded-xl bg-gray-50 overflow-x-hidden'>
+                <textarea id='copy-textarea' value={paymentCopyText} readOnly className='w-full resize-none text-sm overflow-y-visible select-none outline-none focus:outline-none' rows={15} />
+              </div>
+
+              {/* ปุ่มคัดลอก */}
+              <div className='mt-4 flex justify-end gap-2'>
+                <button
+                  onClick={handleCopyText}
+                  className={`w-auto px-4 py-2 rounded-lg font-semibold transition-all ${isCopied ? "!bg-green-600 !text-white" : "!bg-gray-500 !text-white hover:!bg-gray-600"}`}>
+                  {isCopied ? (
+                    <span className='flex items-center justify-end gap-2'>
+                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' strokeWidth='2' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
+                      </svg>
+                      คัดลอกสำเร็จแล้ว!
+                    </span>
+                  ) : (
+                    <span className='flex items-center justify-end gap-2'>
+                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' strokeWidth='2' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                      </svg>
+                      คัดลอกข้อความ
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <p className='text-xs text-gray-500 mt-2 text-center'>💡 หากปุ่มคัดลอกไม่ทำงาน กรุณาเลือกข้อความในช่องด้านบนแล้วกด Ctrl+C (หรือ Cmd+C บน Mac)</p>
+            </div>
+
+            {/* Footer */}
+            <div className='p-4 border-t bg-gray-50 rounded-b-lg'>
+              <div className='w-full flex justify-center items-center'>
+                <button onClick={handleFinishPayment} className='w-auto px-4 py-3 !bg-green-600 !text-white rounded-lg font-semibold hover:!bg-green-700 transition-colors'>
+                  เสร็จสิ้น
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50'>
       <div className='p-6'>
         <h2 className='text-2xl font-bold mb-2'>สรุปรายการ</h2>
@@ -2479,6 +2656,7 @@ const SummaryList: React.FC = () => {
                               cart={cart}
                               onUpdated={() => handleUpdateWithCheck(cart)}
                               onOrderSummaryClick={() => handleSummary("order", cart)}
+                              onPaymentCompleted={handlePaymentCompleted}
                             />
                           </div>
                           <AccordionContent className='mt-4'>
@@ -3174,13 +3352,13 @@ const SummaryList: React.FC = () => {
                     </Accordion>
                   ))}
                   <div className='flex justify-center m-4'>
-                    <Button
+                    {/* <Button
                       size='sm'
                       onClick={() => handleSummary("date", Time.convertThaiDateToISO(orders[0].delivery_date)!)}
                       className='h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4'
                       style={{ color: "#000000", background: "#fcf22d" }}>
                       📦 สรุปวัตถุดิบทั้งหมด
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </div>
@@ -3255,6 +3433,7 @@ const SummaryList: React.FC = () => {
         {totalPages > 1 && <PaginationComponent totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />}
       </div>
     </div>
+    </>
   );
 };
 

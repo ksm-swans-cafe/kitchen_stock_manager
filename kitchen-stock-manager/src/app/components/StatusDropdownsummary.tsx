@@ -22,7 +22,17 @@ const statusOptions: StatusOption[] = [
   { label: "ยกเลิก", value: "cancelled" },
 ];
 
-const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients, defaultStatus = "pending", onUpdated, receive_time, export_time, onOrderSummaryClick, cart }) => {
+const StatusDropdown: React.FC<StatusDropdownProps> = ({
+  cartId,
+  allIngredients,
+  defaultStatus = "pending",
+  onUpdated,
+  receive_time,
+  export_time,
+  onOrderSummaryClick,
+  cart,
+  onPaymentCompleted,
+}) => {
   const [selectedStatus, setSelectedStatus] = useState(defaultStatus);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocked, setIsLocked] = useState(defaultStatus === "success" || defaultStatus === "cancelled");
@@ -82,7 +92,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
       formData.append("status", statusToUpdate);
       formData.append("last_update", userName ?? "unknown");
 
-      const res = await axios.patch(`/api/edit/status/${cartId}`, formData);
+      const res = await axios.patch(`/api/edit/cart_status/${cartId}`, formData);
 
       if (res.status !== 200) {
         const errorData = res.data;
@@ -93,14 +103,18 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
       onUpdated?.();
 
       if (statusToUpdate === "success" || statusToUpdate === "cancelled") setIsLocked(true);
-
-      Swal.fire({
-        icon: "success",
-        title: "อัปเดตสถานะสำเร็จ",
-        text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === statusToUpdate)?.label}"`,
-        showConfirmButton: false,
-        timer: 4000,
-      });
+      if (statusToUpdate === "completed") {
+        onPaymentCompleted?.(cart);
+        // ไม่แสดง Swal.fire เพราะจะแสดง popup แทน
+      } else {
+        Swal.fire({
+          icon: "success",
+          title: "อัปเดตสถานะสำเร็จ",
+          text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === statusToUpdate)?.label}"`,
+          showConfirmButton: false,
+          timer: 4000,
+        });
+      }
 
       setSelectedStatus(statusToUpdate); // อัปเดต state ทันทีหลังสำเร็จ
       return true;
@@ -158,7 +172,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
           ))}
         </select>
       </div>
-      <button
+      {/* <button
         onClick={() => onOrderSummaryClick?.(cart)}
         className='inline-block rounded-full bg-blue-500 px-4 py-1 text-xs font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed'
         style={{
@@ -167,7 +181,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
           boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
         }}>
         สรุปวัตถุดิบของออเดอร์นี้
-      </button>
+      </button> */}
     </div>
   );
 };

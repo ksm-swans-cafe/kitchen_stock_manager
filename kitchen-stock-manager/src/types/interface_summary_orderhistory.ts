@@ -122,4 +122,5 @@ export interface StatusDropdownProps {
   export_time?: string;
   cart: Cart;
   onOrderSummaryClick?: (cart: Cart) => void;
+  onPaymentCompleted?: (cart: Cart) => void;
 }
