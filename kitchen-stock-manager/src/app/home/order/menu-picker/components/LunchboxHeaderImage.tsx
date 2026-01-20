@@ -49,7 +49,9 @@ export function LunchboxHeaderImage({
     displayImage = buildBlobImageUrl(setAImageName);
   }
 
-  if (!displayImage || failedImages.has(displayImage)) return null;
+  if (!displayImage || failedImages.has(displayImage)) {
+    displayImage = 'https://picsum.photos/1200/800';
+  }
 
   return (
     <div className='relative w-full overflow-hidden transition-all duration-700 ease-in-out bg-gray-100/50 h-64 sm:h-[450px] lg:h-[550px] opacity-100'>

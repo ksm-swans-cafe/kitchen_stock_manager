@@ -146,7 +146,7 @@ export default function Page() {
 
   // Use all menu data when searching, otherwise use paginated data
   const menuItemsToUse = searchQuery.trim() ? (allMenuData || []) : (menuData?.data || []);
-  
+
   const menuItems = menuItemsToUse;
   const totalPagesFromData = menuData?.pagination?.totalPages || 1;
   const currentError = searchQuery.trim() ? (allMenuError?.message || null) : (menuError?.message || null);
@@ -217,7 +217,7 @@ export default function Page() {
 
   // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
   useEffect(() => {
-    window.scrollTo({ top: 0,});
+    window.scrollTo({ top: 0, });
   }, [currentPage]);
 
   useEffect(() => {
@@ -970,18 +970,18 @@ export default function Page() {
                 </div>
               </form>
             </section>
-            <footer className='modal-card-foot' style={{ backgroundColor: "white" }}>
-              <button type='button' onClick={() => setDialog(false)} className='button'>
-                <span className='icon'>
-                  <i className='fas fa-times'></i>
-                </span>
-                <span>ยกเลิก</span>
-              </button>
-              <button type='submit' onClick={handleSubmit} disabled={isSubmitting} className={`button is-primary ${isSubmitting ? "is-loading" : ""}`}>
+            <footer className='modal-card-foot gap-4' style={{ backgroundColor: "white" }}>
+              <button type='submit' onClick={handleSubmit} disabled={isSubmitting} className={`button flex-1 justify-end is-primary ${isSubmitting ? "is-loading" : ""}`}>
                 <span className='icon'>
                   <i className={editMenuId ? "fas fa-save" : "fas fa-check"}></i>
                 </span>
                 <span>{editMenuId ? "อัปเดตเมนู" : "บันทึกเมนู"}</span>
+              </button>
+              <button type='button' onClick={() => setDialog(false)} className='button flex-1 justify-end'>
+                <span className='icon'>
+                  <i className='fas fa-times'></i>
+                </span>
+                <span>ยกเลิก</span>
               </button>
             </footer>
           </div>

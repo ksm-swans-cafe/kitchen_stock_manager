@@ -89,6 +89,12 @@ type CartCartDescription {
   description_value  String
 }
 
+type LunchboxOrder {
+  lunchbox_category  String
+  lunchbox_limit_category String
+  lunchbox_sequence  String
+}
+
 model new_cart {
   id                 String              @id @default(auto()) @map("_id") @db.ObjectId
   create_date   String
@@ -217,6 +223,7 @@ model lunchbox {
   lunchbox_set_name       String
   lunchbox_name_image     String?
   lunchbox_set_name_image String?
+  lunchbox_order_select   LunchboxOrder[]
 }
 
 model menu {

@@ -28,8 +28,8 @@ export function LunchboxInfoCard({
 
         <div className='relative z-10 flex flex-col justify-between h-full'>
           <div>
-            <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] mb-0.5 opacity-80'>
-              PREMIUM LUNCH BOX
+            <div className='text-[17px] font-black text-gray-900 tracking-[2px] mb-0.5 opacity-80'>
+              {selectedSetMenu.startsWith('Selected Menu Set') ? selectedSetMenu : `Selected Menu Set ${selectedSetMenu}`}
             </div>
           </div>
 
@@ -37,7 +37,7 @@ export function LunchboxInfoCard({
             <div className='h-[1px] bg-gray-900/10 flex-1' />
             <div className='text-xl xl:text-3xl font-black text-gray-900 tracking-tighter tabular-nums'>
               {setPriceBudget
-                ? `${(setPriceBudget - 20) * lunchboxQuantity}-${(setPriceBudget + 20) * lunchboxQuantity}`
+                ? `${setPriceBudget * lunchboxQuantity}`
                 : (selectionPrice * lunchboxQuantity).toLocaleString()}
             </div>
             <div className='h-[1px] bg-gray-900/10 flex-1' />
@@ -73,7 +73,7 @@ export function LunchboxInfoCard({
               <p className='text-[9px] xl:text-[10px] uppercase font-bold text-gray-500 tracking-wider'>
                 Selection
               </p>
-              <p className='text-xs xl:text-sm font-black text-gray-900 pr-5 italic'>{selectedSetMenu}</p>
+              <p className='text-xs xl:text-sm font-black text-gray-900 text-center italic'>{selectedSetMenu}</p>
             </div>
           </div>
         </div>
