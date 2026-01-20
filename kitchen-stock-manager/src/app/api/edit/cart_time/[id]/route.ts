@@ -8,7 +8,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   
   const params = await context.params;
   const { id } = params;
-  const { cart_export_time, cart_receive_time } = await request.json();
+  const { export_time, receive_time } = await request.json();
 
   if (!id || typeof id !== "string") return NextResponse.json({ error: "ID ออเดอร์ไม่ถูกต้อง" }, { status: 400 });
   
@@ -23,10 +23,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     else return null;
   };
 
-  const parsedExportTime = parseTime(cart_export_time);
-  const parsedReceiveTime = parseTime(cart_receive_time);
+  const parsedExportTime = parseTime(export_time);
+  const parsedReceiveTime = parseTime(receive_time);
 
-  if ((cart_export_time && parsedExportTime === null) || (cart_receive_time && parsedReceiveTime === null)) {
+  if ((export_time && parsedExportTime === null) || (receive_time && parsedReceiveTime === null)) {
     return NextResponse.json(
       {
         error: "รูปแบบเวลาไม่ถูกต้อง ต้องเป็น HH:mm หรือ HH.mm น. (เช่น 14.00 น.)",
@@ -36,11 +36,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const result = await prisma.cart.updateMany({
-      where: { cart_id: id },
+    const result = await prisma.new_cart.updateMany({
+      where: { id: id },
       data: {
-        cart_export_time: parsedExportTime || null,
-        cart_receive_time: parsedReceiveTime || null,
+        export_time: parsedExportTime || null,
+        receive_time: parsedReceiveTime || null,
       },
     });
 

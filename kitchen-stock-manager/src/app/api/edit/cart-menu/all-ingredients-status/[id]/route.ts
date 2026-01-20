@@ -22,17 +22,17 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   });
   if (!id || isChecked == null) {
     console.warn("Missing fields:", { id, isChecked });
-    return NextResponse.json({ error: "กรุณาระบุ cart_id และ isChecked" }, { status: 400 });
+    return NextResponse.json({ error: "กรุณาระบุ id และ isChecked" }, { status: 400 });
   }
 
   try {
-    const cart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    const cart = await prisma.new_cart.findFirst({
+      where: { id: id },
       select: {
         id: true,
-        cart_id: true,
-        cart_lunchbox: true,
-        cart_total_cost_lunchbox: true,
+        id: true,
+        lunchbox: true,
+        total_cost_lunchbox: true,
       },
     });
 
@@ -41,20 +41,20 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    // Parse cart_lunchbox
+    // Parse lunchbox
     let lunchboxes: any[] = [];
-    if (typeof cart.cart_lunchbox === "string") {
+    if (typeof cart.lunchbox === "string") {
       try {
-        lunchboxes = JSON.parse(cart.cart_lunchbox);
-        console.log("Parsed cart_lunchbox:", lunchboxes);
+        lunchboxes = JSON.parse(cart.lunchbox);
+        console.log("Parsed lunchbox:", lunchboxes);
       } catch (e) {
         console.error("JSON parse error:", (e as Error).message);
         return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
       }
-    } else if (Array.isArray(cart.cart_lunchbox)) {
-      lunchboxes = cart.cart_lunchbox;
+    } else if (Array.isArray(cart.lunchbox)) {
+      lunchboxes = cart.lunchbox;
     } else {
-      console.error("Invalid cart_lunchbox format:", cart.cart_lunchbox);
+      console.error("Invalid lunchbox format:", cart.lunchbox);
       return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
     }
 
@@ -70,11 +70,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       })),
     }));
 
-    const result = await prisma.cart.update({
-      where: { id: cart.id }, // เปลี่ยนจาก cart_id เป็น id
+    const result = await prisma.new_cart.update({
+      where: { id: cart.id }, // เปลี่ยนจาก id เป็น id
       data: {
-        cart_lunchbox: updatedLunchboxes as any,
-        cart_total_cost_lunchbox: cart.cart_total_cost_lunchbox || "0", // Ensure non-null value
+        lunchbox: updatedLunchboxes as any,
+        total_cost_lunchbox: cart.total_cost_lunchbox || "0", // Ensure non-null value
       },
     });
 

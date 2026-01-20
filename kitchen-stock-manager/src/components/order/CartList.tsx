@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { registerLocale, DatePicker } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
@@ -77,26 +77,28 @@ export default function CartList() {
     removeItem,
     clearCart,
     setItemQuantity,
-    cart_customer_name,
-    cart_channel_access,
-    cart_customer_tel,
-    cart_location_send,
-    cart_delivery_date,
-    cart_export_time,
-    cart_receive_time,
-    cart_shipping_cost,
-    cart_receive_name,
-    cart_invoice_tex,
-    cart_pay_type,
-    cart_pay_deposit,
-    cart_pay_isdeposit,
-    cart_pay_cost,
-    cart_pay_charge,
-    cart_total_remain,
-    cart_total_cost,
-    cart_lunch_box,
+    customer_name,
+    channel_access,
+    customer_tel,
+    location_send,
+    delivery_date,
+    export_time,
+    receive_time,
+    shipping_cost,
+    shipping_by,
+    receive_name,
+    invoice_tex,
+    pay_type,
+    pay_deposit,
+    pay_isdeposit,
+    pay_cost,
+    pay_charge,
+    total_remain,
+    total_cost,
+    lunch_box,
     selected_lunchboxes,
-    cart_ispay,
+    order_name,
+    ispay,
     setCustomerInfo,
     removeLunchbox,
     updateLunchboxQuantity,
@@ -168,11 +170,11 @@ export default function CartList() {
     ShippingCostChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
       if (!numericValue) {
-        setCustomerInfo({ cart_shipping_cost: "" });
+        setCustomerInfo({ shipping_cost: "" });
         return;
       }
       const formattedValue = Number(numericValue).toLocaleString("th-TH");
-      setCustomerInfo({ cart_shipping_cost: formattedValue });
+      setCustomerInfo({ shipping_cost: formattedValue });
     },
     TaxInvoiceNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
@@ -222,52 +224,55 @@ export default function CartList() {
   const validate = {
     BasicInfo: (): boolean => {
       return (
-        cart_receive_name.trim() !== "" &&
-        cart_channel_access.trim() !== "" &&
-        cart_customer_tel.trim() !== "" &&
-        cart_location_send.trim() !== "" &&
-        cart_delivery_date.trim() !== "" &&
-        cart_export_time.trim() !== "" &&
-        cart_receive_time.trim() !== "" &&
-        cart_shipping_cost.trim() !== "" &&
-        cart_customer_name.trim() !== "" &&
-        cart_invoice_tex.trim() !== "" &&
-        cart_invoice_tex.length === 13
+        order_name.trim() !== "" &&
+        receive_name.trim() !== "" &&
+        channel_access.trim() !== "" &&
+        customer_tel.trim() !== "" &&
+        location_send.trim() !== "" &&
+        delivery_date.trim() !== "" &&
+        export_time.trim() !== "" &&
+        receive_time.trim() !== "" &&
+        shipping_cost.trim() !== "" &&
+        shipping_by.trim() !== "" &&
+        customer_name.trim() !== "" &&
+        invoice_tex.trim() !== "" &&
+        invoice_tex.length === 13
       );
     },
     Inputs: (): boolean => {
       const newErrors: string[] = [];
 
-      if (!cart_customer_name.trim()) newErrors.push("กรุณากรอกชื่อลูกค้า");
-      if (!cart_customer_tel.trim()) {
+      if (!order_name.trim()) newErrors.push("กรุณากรอกชื่อผู้สั่งอาหาร");
+      if (!customer_name.trim()) newErrors.push("กรุณากรอกชื่อลูกค้า");
+      if (!customer_tel.trim()) {
         newErrors.push("กรุณากรอกเบอร์โทรลูกค้า");
       } else {
         const phonePattern8 = /^\d{4}-\d{4}$/;
         const phonePattern9 = /^0\d-\d{3}-\d{4}$/;
         const phonePattern10 = /^\d{3}-\d{3}-\d{4}$/;
-        if (!phonePattern8.test(cart_customer_tel) && !phonePattern9.test(cart_customer_tel) && !phonePattern10.test(cart_customer_tel)) {
+        if (!phonePattern8.test(customer_tel) && !phonePattern9.test(customer_tel) && !phonePattern10.test(customer_tel)) {
           newErrors.push("เบอร์โทรต้องอยู่ในรูปแบบ 1234-5678, 02-123-4567 หรือ 081-234-5678");
         }
       }
-      if (!cart_location_send.trim()) newErrors.push("กรุณากรอกสถานที่จัดส่ง");
-      if (!cart_delivery_date.trim()) newErrors.push("กรุณาเลือกวันที่จัดส่ง");
-      if (!cart_export_time.trim()) newErrors.push("กรุณาเลือกเวลาส่งอาหาร");
-      if (!cart_receive_time.trim()) newErrors.push("กรุณาเลือกเวลารับอาหาร");
+      if (!location_send.trim()) newErrors.push("กรุณากรอกสถานที่จัดส่ง");
+      if (!delivery_date.trim()) newErrors.push("กรุณาเลือกวันที่รับสินค้า");
+      if (!export_time.trim()) newErrors.push("กรุณาเลือกเวลาส่งอาหาร");
+      if (!receive_time.trim()) newErrors.push("กรุณาเลือกเวลารับอาหาร");
 
-      if (!cart_invoice_tex.trim()) newErrors.push("กรุณากรอกเลขใบกำกับภาษี");
-      else if (cart_invoice_tex.length !== 13) newErrors.push("เลขใบกำกับภาษีต้องเป็น 13 หลักเท่านั้น");
+      if (!invoice_tex.trim()) newErrors.push("กรุณากรอกเลขใบกำกับภาษี");
+      else if (invoice_tex.length !== 13) newErrors.push("เลขใบกำกับภาษีต้องเป็น 13 หลักเท่านั้น");
 
       if (selected_lunchboxes.length > 0) {
-        if (!cart_pay_type.trim()) {
+        if (!pay_type.trim()) {
           newErrors.push("กรุณาเลือกรูปแบบการชำระเงิน");
         } else {
-          if (!cart_pay_deposit || !cart_pay_deposit.trim()) {
+          if (!pay_deposit || !pay_deposit.trim()) {
             newErrors.push("กรุณาเลือกรูปแบบการมัดจำ");
-          } else if (cart_pay_deposit !== "no") {
-            if (!cart_pay_cost.trim()) {
+          } else if (pay_deposit !== "no") {
+            if (!pay_cost.trim()) {
               newErrors.push("กรุณาใส่จำนวนเงินมัดจำ");
             } else {
-              const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, ""));
+              const payCostNum = Number(pay_cost.replace(/[^\d]/g, ""));
               if (payCostNum === 0) {
                 newErrors.push("จำนวนเงินมัดจำต้องมากกว่า 0");
               }
@@ -284,8 +289,9 @@ export default function CartList() {
   };
 
   const confirmOrder = async () => {
+    if (loading) return;
     if (!validate.Inputs()) return;
-    if (cart_export_time >= cart_receive_time) {
+    if (export_time >= receive_time) {
       Swal.fire({
         icon: "error",
         title: "เวลาไม่ถูกต้อง",
@@ -330,8 +336,8 @@ export default function CartList() {
         return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
       }, 0);
 
-      const shippingCostNumForMessage = Number(cart_shipping_cost.replace(/[^\d]/g, "")) || 0;
-      const chargeNumForMessage = Number(cart_pay_charge.replace(/[^\d.]/g, "") || 0);
+      const shippingCostNumForMessage = Number(shipping_cost.replace(/[^\d]/g, "")) || 0;
+      const chargeNumForMessage = Number(pay_charge.replace(/[^\d.]/g, "") || 0);
       const totalCostNumForMessage = totalLunchboxCostForMessage + shippingCostNumForMessage + chargeNumForMessage;
 
       let depositTextForMessage = "";
@@ -339,22 +345,22 @@ export default function CartList() {
       let depositAmountForMessage = 0;
       let paymentStatusText = "";
 
-      if (cart_pay_deposit === "percent") {
-        const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, "") || 0);
+      if (pay_deposit === "percent") {
+        const payCostNum = Number(pay_cost.replace(/[^\d]/g, "") || 0);
         depositAmountForMessage = (totalCostNumForMessage * payCostNum) / 100;
-        depositTextForMessage = `${cart_pay_cost}%`;
-        if (cart_ispay === "paid") {
+        depositTextForMessage = `${pay_cost}%`;
+        if (ispay === "paid") {
           paymentStatusText = "ชำระแล้ว";
-        } else if (cart_ispay === "unpaid") {
+        } else if (ispay === "unpaid") {
           paymentStatusText = "ยังไม่ชำระ";
         } else {
           paymentStatusText = "ชำระแล้ว"; // default ถ้ายังไม่เลือก
         }
         depositValueForMessage = `${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท (${paymentStatusText})`;
-      } else if (cart_pay_deposit === "full") {
-        depositAmountForMessage = Number(cart_pay_cost.replace(/[^\d]/g, "") || 0) / 100;
+      } else if (pay_deposit === "full") {
+        depositAmountForMessage = Number(pay_cost.replace(/[^\d]/g, "") || 0) / 100;
         depositTextForMessage = "เต็มจำนวน";
-        // เมื่อเลือกเต็มจำนวน cart_ispay จะเป็น "-" แต่ให้แสดงว่าชำระแล้วเพราะเต็มจำนวน = ชำระเต็มจำนวนแล้ว
+        // เมื่อเลือกเต็มจำนวน ispay จะเป็น "-" แต่ให้แสดงว่าชำระแล้วเพราะเต็มจำนวน = ชำระเต็มจำนวนแล้ว
         paymentStatusText = "ชำระแล้ว";
         depositValueForMessage = `${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท (${paymentStatusText})`;
       } else {
@@ -362,49 +368,52 @@ export default function CartList() {
         depositValueForMessage = "";
       }
 
-      const copyTextContent = `📌รับออเดอร์ คุณ ${cart_receive_name} 
-ช่องทางที่สั่ง : ${cart_channel_access}
-ผู้รับออเดอร์ : ${userName}
+      const copyTextContent = `📌รับออเดอร์ คุณ ${order_name} 
+ช่องทางที่สั่ง : ${channel_access}
+ผู้รับออเดอร์ : แอดมิน${userName}
 
 ✅ รายละเอียดสำหรับจัดส่ง
-1.วันที่รับสินค้า : ${cart_delivery_date}
-2.เวลาส่งสินค้า : ${cart_export_time}
-3.เวลารับสินค้า : ${cart_receive_time}
-4.สถานที่จัดส่ง : ${cart_location_send}
-5.ชื่อผู้รับสินค้า : ${cart_receive_name}
-6.เบอร์โทร : ${cart_customer_tel}
-7.ออกบิลในนาม : ${cart_customer_name}
-8.ที่อยู่ : ${cart_location_send}
-9.เลขประจำตัวผู้เสียภาษี : ${cart_invoice_tex}
+1.วันที่รับสินค้า : ${delivery_date}
+2.เวลาส่งสินค้า : ${export_time}
+3.เวลารับสินค้า : ${receive_time}
+4.สถานที่จัดส่ง : ${location_send}
+5.ค่าจัดส่ง ${shipping_cost} บาท ส่งโดย ${shipping_by}
+6.ชื่อผู้รับสินค้า : ${receive_name}
+7.เบอร์โทร : ${customer_tel}
+8.ออกบิลในนาม : ${customer_name}
+9.ที่อยู่ : ${location_send}
+10.เลขประจำตัวผู้เสียภาษี : ${invoice_tex}
 
 ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
       ${lunchboxListForMessage}
 
 รวมค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท
-ค่าจัดส่ง ${cart_shipping_cost} บาท
-${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${cart_pay_charge} บาท\n` : ""}
+${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} บาท\n` : ""}
 ✅รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
-${
-  cart_pay_deposit && cart_pay_deposit !== "no"
-    ? cart_pay_deposit === "full"
-      ? "ชำระเต็มจำนวนเเล้ว"
-      : `มัดจำ ${depositTextForMessage}
-ชำระ ${depositValueForMessage}
-${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือชำระ ${cart_total_remain} บาท` : ""}`
-    : ""
-}`;
+`;
+// ${
+//   pay_deposit && pay_deposit !== "no"
+//     ? pay_deposit === "full"
+//       ? "ชำระเต็มจำนวนเเล้ว"
+//       : `มัดจำ ${depositTextForMessage}
+// ชำระ ${depositValueForMessage}
+// ${pay_deposit === "percent" && total_remain ? `คงเหลือชำระ ${total_remain} บาท` : ""}`
+//     : ""
+// }
 
       const response = await axios.post("/api/post/cart", {
-        cart_username: userName,
-        cart_channel_access,
-        cart_customer_name,
-        cart_customer_tel,
-        cart_location_send,
-        cart_delivery_date,
-        cart_export_time,
-        cart_receive_time,
-        cart_shipping_cost: cart_shipping_cost.replace(/[^\d]/g, ""),
-        cart_menu_items: items.map((item, index) => ({
+        order_name: order_name,
+        username: userName,
+        channel_access,
+        customer_name,
+        customer_tel,
+        location_send,
+        delivery_date,
+        export_time,
+        receive_time,
+        shipping_cost: shipping_cost.replace(/[^\d]/g, ""),
+        shipping_by: shipping_by,
+        menu_items: items.map((item, index) => ({
           menu_name: item.menu_name,
           menu_subname: item.menu_subname,
           menu_category: item.menu_category,
@@ -413,7 +422,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
           menu_description: item.menu_description,
           menu_order_id: index + 1,
         })),
-        cart_lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
+        lunchboxes: selected_lunchboxes.map((lunchbox, index) => ({
           lunchbox_name: lunchbox.lunchbox_name,
           lunchbox_set: lunchbox.lunchbox_set,
           lunchbox_limit: lunchbox.lunchbox_limit,
@@ -434,45 +443,48 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
             menu_order_id: menuIndex + 1,
           })),
         })),
-        cart_receive_name: cart_receive_name,
-        cart_invoice_tex: cart_invoice_tex,
-        cart_pay_type: cart_pay_type,
-        cart_pay_deposit: cart_pay_deposit,
-        cart_pay_isdeposit: cart_pay_isdeposit,
-        cart_total_cost_lunchbox: selected_lunchboxes
+        receive_name: receive_name,
+        invoice_tex: invoice_tex,
+        pay_type: pay_type,
+        pay_deposit: pay_deposit,
+        pay_isdeposit: pay_isdeposit,
+        total_cost_lunchbox: selected_lunchboxes
           .reduce((sum, lb) => {
             return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
           }, 0)
           .toString(),
-        cart_total_cost: cart_total_cost,
-        cart_pay_cost: cart_pay_cost,
-        cart_pay_charge: cart_pay_charge,
-        cart_total_remain: cart_total_remain,
-        cart_message: copyTextContent,
-        cart_ispay: cart_ispay,
+        total_cost: total_cost,
+        pay_cost: pay_cost,
+        pay_charge: pay_charge,
+        total_remain: total_remain,
+        message: copyTextContent,
+        ispay: ispay,
       });
 
       if (response.status !== 201) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
 
-      // คำนวณยอดรวม
+      clearCart();
+      sessionStorage.removeItem("editingLunchboxIndex");
+      sessionStorage.removeItem("editingLunchboxData");
+
       const totalLunchboxCost = selected_lunchboxes.reduce((sum, lb) => {
         return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
       }, 0);
 
-      const shippingCostNum = Number(cart_shipping_cost.replace(/[^\d]/g, "")) || 0;
-      const chargeNum = Number(cart_pay_charge.replace(/[^\d]/g, "")) || 0;
+      const shippingCostNum = Number(shipping_cost.replace(/[^\d]/g, "")) || 0;
+      const chargeNum = Number(pay_charge.replace(/[^\d]/g, "")) || 0;
       const totalCostNum = totalLunchboxCost + shippingCostNum + chargeNum;
 
       // คำนวณยอดมัดจำ
       let depositText = "";
       let depositValue = "";
-      if (cart_pay_deposit === "percent") {
-        const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, "")) || 0;
+      if (pay_deposit === "percent") {
+        const payCostNum = Number(pay_cost.replace(/[^\d]/g, "")) || 0;
         const depositAmount = (totalCostNum * payCostNum) / 100;
-        depositText = `${cart_pay_cost}%`;
+        depositText = `${pay_cost}%`;
         depositValue = `(${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท)`;
-      } else if (cart_pay_deposit === "full") {
-        const depositAmount = Number(cart_pay_cost.replace(/[^\d]/g, "")) / 100;
+      } else if (pay_deposit === "full") {
+        const depositAmount = Number(pay_cost.replace(/[^\d]/g, "")) / 100;
         depositText = `${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
         depositValue = `(${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท)`;
       } else {
@@ -480,7 +492,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
       }
 
       // คำนวณยอดคงเหลือ
-      const remainNum = Number(cart_total_remain.replace(/[^\d.]/g, "")) || 0;
+      const remainNum = Number(total_remain.replace(/[^\d.]/g, "")) || 0;
 
       setCopyText(copyTextContent);
       setSuccess(true);
@@ -514,8 +526,8 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
   };
 
   useEffect(() => {
-    if (cart_delivery_date) {
-      const parts = cart_delivery_date.split("/");
+    if (delivery_date) {
+      const parts = delivery_date.split("/");
       if (parts.length === 3) {
         const day = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10) - 1;
@@ -524,7 +536,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
         if (!isNaN(d.getTime())) setRawDate(d.toISOString());
       }
     } else setRawDate("");
-  }, [cart_delivery_date]);
+  }, [delivery_date]);
 
   useEffect(() => {
     const fetchLunchbox = async () => {
@@ -540,11 +552,11 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
   }, []);
 
   useEffect(() => {
-    if (cart_lunch_box && lunchbox.length > 0) {
-      const sets = lunchbox.filter((item) => item.lunchbox_name === cart_lunch_box).map((item) => item.lunchbox_set);
+    if (lunch_box && lunchbox.length > 0) {
+      const sets = lunchbox.filter((item) => item.lunchbox_name === lunch_box).map((item) => item.lunchbox_set);
       setAvailableSets([...new Set(sets)]);
     } else setAvailableSets([]);
-  }, [cart_lunch_box, lunchbox]);
+  }, [lunch_box, lunchbox]);
 
   useEffect(() => {
     const lunchboxTotal = selected_lunchboxes.reduce((sum, lb) => {
@@ -552,14 +564,14 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
       return sum + cost;
     }, 0);
 
-    const shippingCost = Number(cart_shipping_cost.replace(/[^\d]/g, "")) || 0;
+    const shippingCost = Number(shipping_cost.replace(/[^\d]/g, "")) || 0;
 
     // คำนวณค่าธรรมเนียม
     let charge = 0;
-    if (cart_pay_type === "card" && selected_lunchboxes.length > 0) {
+    if (pay_type === "card" && selected_lunchboxes.length > 0) {
       const totalForFee = lunchboxTotal + shippingCost;
       charge = totalForFee * 0.03;
-    } else if (cart_pay_type === "cash" || cart_pay_type === "transfer") {
+    } else if (pay_type === "cash" || pay_type === "transfer") {
       charge = 0;
     }
 
@@ -567,35 +579,36 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
 
     setCustomerInfo({
       total_cost: totalCost > 0 ? totalCost.toLocaleString("th-TH") : "",
-      pay_charge: charge > 0 ? charge.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : cart_pay_type && selected_lunchboxes.length > 0 ? "0.00" : "",
+      pay_charge: charge > 0 ? charge.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : pay_type && selected_lunchboxes.length > 0 ? "0.00" : "",
     });
-  }, [selected_lunchboxes, cart_shipping_cost, cart_pay_type]);
+  }, [selected_lunchboxes, shipping_cost, pay_type]);
+  // }, [selected_lunchboxes, shipping_cost]);
 
   useEffect(() => {
-    if (cart_pay_deposit === "percent" && cart_pay_type) {
-      const currentPayCost = cart_pay_cost.replace(/[^\d]/g, "");
+    if (pay_deposit === "percent" && pay_type) {
+      const currentPayCost = pay_cost.replace(/[^\d]/g, "");
       if (currentPayCost !== "50") {
         setCustomerInfo({ pay_cost: "50" });
       }
-    } else if (cart_pay_deposit === "full" && cart_total_cost) {
-      const totalCostStr = cart_total_cost.replace(/,/g, ""); // ลบ comma
+    } else if (pay_deposit === "full" && total_cost) {
+      const totalCostStr = total_cost.replace(/,/g, ""); // ลบ comma
       const totalCostNum = parseFloat(totalCostStr) || 0;
       const totalCostInSatang = Math.round(totalCostNum * 100); // แปลงเป็นสตางค์เพื่อเก็บใน pay_cost
-      const currentPayCost = Number(cart_pay_cost.replace(/[^\d]/g, "")) || 0;
+      const currentPayCost = Number(pay_cost.replace(/[^\d]/g, "")) || 0;
 
       if (currentPayCost !== totalCostInSatang && totalCostInSatang > 0) {
         setCustomerInfo({ pay_cost: totalCostInSatang.toString() });
       }
     }
-  }, [cart_pay_deposit, cart_pay_type, cart_pay_cost, cart_total_cost]);
+  }, [pay_deposit, pay_type, pay_cost, total_cost]);
 
   useEffect(() => {
-    if (!cart_total_cost || !cart_pay_deposit) {
+    if (!total_cost || !pay_deposit) {
       setCustomerInfo({ total_remain: "" });
       return;
     }
 
-    const totalCostStr = cart_total_cost.replace(/,/g, "");
+    const totalCostStr = total_cost.replace(/,/g, "");
     const totalCostNum = parseFloat(totalCostStr) || 0;
 
     if (totalCostNum === 0 || isNaN(totalCostNum)) {
@@ -603,10 +616,10 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
       return;
     }
 
-    const payCostNum = Number(cart_pay_cost?.replace(/[^\d]/g, "") || 0) || 0;
+    const payCostNum = Number(pay_cost?.replace(/[^\d]/g, "") || 0) || 0;
 
-    if (cart_pay_deposit === "full") {
-      if (cart_ispay !== "-") {
+    if (pay_deposit === "full") {
+      if (ispay !== "-") {
         setCustomerInfo({ ispay: "-" });
       }
       const depositAmount = payCostNum / 100;
@@ -616,7 +629,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
       return;
     }
 
-    if (cart_pay_deposit === "percent" && cart_ispay === "unpaid") {
+    if (pay_deposit === "percent" && ispay === "unpaid") {
       if (totalCostNum > 0 && !isNaN(totalCostNum)) {
         const formattedRemaining = Number(totalCostNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         setCustomerInfo({ total_remain: formattedRemaining });
@@ -627,12 +640,13 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
     }
 
     let depositAmount = 0;
-    if (cart_pay_deposit === "percent") depositAmount = (totalCostNum * payCostNum) / 100;
+    if (pay_deposit === "percent") depositAmount = (totalCostNum * payCostNum) / 100;
 
     const remaining = totalCostNum - depositAmount;
     const formattedRemaining = remaining >= 0 && !isNaN(remaining) ? Number(remaining.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
     setCustomerInfo({ total_remain: formattedRemaining });
-  }, [cart_total_cost, cart_pay_deposit, cart_pay_cost, cart_ispay]);
+  }, [total_cost, pay_deposit, pay_cost, ispay]);
+  // }, [total_cost, pay_cost]);
 
   useEffect(() => {
     if (errors.length > 0) {
@@ -651,11 +665,11 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
   }, [errors]);
 
   useEffect(() => {
-    if (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram" && cart_channel_access !== "other")
-      setCustomChannelName(cart_channel_access);
-    else if (cart_channel_access === "other") setCustomChannelName("");
+    if (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram" && channel_access !== "others")
+      setCustomChannelName(channel_access);
+    else if (channel_access === "others") setCustomChannelName("");
     else setCustomChannelName("");
-  }, [cart_channel_access]);
+  }, [channel_access]);
 
   return (
     <main className='min-h-screen text-black'>
@@ -793,33 +807,46 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
 
         <div className='grid grid-cols-2 gap-4 mb-4'>
           <div className='col-span-2 flex flex-col gap-2'>
-            <div className='flex items-center gap-2'>
-              <label className='font-bold'>ช่องทาง</label>
-            </div>
+            <div className="flex items-center gap-3 w-full">
+  <label className="font-bold whitespace-nowrap">
+    ชื่อผู้สั่ง:
+  </label>
+
+  <input
+    type="text"
+    value={order_name}
+    onChange={(e) =>
+      setCustomerInfo({ order_name: e.target.value })
+    }
+    placeholder="ระบุชื่อผู้สั่ง"
+    className="flex-1 border rounded px-3 py-2"
+  />
+</div>
+
             <div className='grid grid-cols-2 gap-3'>
               {/* Facebook */}
               <label
                 htmlFor='facebook'
                 className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  cart_channel_access === "facebook" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-300 bg-white hover:border-blue-300 hover:bg-blue-50/50"
+                  channel_access === "facebook" ? "border-blue-500 bg-blue-50 shadow-md" : "border-gray-300 bg-white hover:border-blue-300 hover:bg-blue-50/50"
                 }`}>
                 <input
                   type='radio'
                   id='facebook'
                   name='channel'
                   value='facebook'
-                  checked={cart_channel_access === "facebook"}
+                  checked={channel_access === "facebook"}
                   onChange={(e) => {
                     setCustomerInfo({ channel_access: e.target.value });
                     setCustomChannelName("");
                   }}
                   className='sr-only'
                 />
-                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "facebook" ? "#1877F2" : "#6B7280" }}>
+                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: channel_access === "facebook" ? "#1877F2" : "#6B7280" }}>
                   <path d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' />
                 </svg>
-                <span className={`font-medium ${cart_channel_access === "facebook" ? "text-blue-700" : "text-gray-700"}`}>Facebook</span>
-                {cart_channel_access === "facebook" && (
+                <span className={`font-medium ${channel_access === "facebook" ? "text-blue-700" : "text-gray-700"}`}>Facebook</span>
+                {channel_access === "facebook" && (
                   <div className='absolute top-2 right-2'>
                     <svg className='w-5 h-5 text-blue-500' fill='currentColor' viewBox='0 0 20 20'>
                       <path
@@ -836,25 +863,25 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               <label
                 htmlFor='line'
                 className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  cart_channel_access === "line" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
+                  channel_access === "line" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
                 }`}>
                 <input
                   type='radio'
                   id='line'
                   name='channel'
                   value='line'
-                  checked={cart_channel_access === "line"}
+                  checked={channel_access === "line"}
                   onChange={(e) => {
                     setCustomerInfo({ channel_access: e.target.value });
                     setCustomChannelName("");
                   }}
                   className='sr-only'
                 />
-                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "line" ? "#00C300" : "#6B7280" }}>
+                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: channel_access === "line" ? "#00C300" : "#6B7280" }}>
                   <path d='M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.27l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.63.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.028 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314' />
                 </svg>
-                <span className={`font-medium ${cart_channel_access === "line" ? "text-green-700" : "text-gray-700"}`}>Line</span>
-                {cart_channel_access === "line" && (
+                <span className={`font-medium ${channel_access === "line" ? "text-green-700" : "text-gray-700"}`}>Line</span>
+                {channel_access === "line" && (
                   <div className='absolute top-2 right-2'>
                     <svg className='w-5 h-5 text-green-500' fill='currentColor' viewBox='0 0 20 20'>
                       <path
@@ -871,25 +898,25 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               <label
                 htmlFor='instagram'
                 className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  cart_channel_access === "instagram" ? "border-pink-500 bg-pink-50 shadow-md" : "border-gray-300 bg-white hover:border-pink-300 hover:bg-pink-50/50"
+                  channel_access === "instagram" ? "border-pink-500 bg-pink-50 shadow-md" : "border-gray-300 bg-white hover:border-pink-300 hover:bg-pink-50/50"
                 }`}>
                 <input
                   type='radio'
                   id='instagram'
                   name='channel'
                   value='instagram'
-                  checked={cart_channel_access === "instagram"}
+                  checked={channel_access === "instagram"}
                   onChange={(e) => {
                     setCustomerInfo({ channel_access: e.target.value });
                     setCustomChannelName("");
                   }}
                   className='sr-only'
                 />
-                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: cart_channel_access === "instagram" ? "#E4405F" : "#6B7280" }}>
+                <svg className='!w-5 !h-5' fill='currentColor' viewBox='0 0 24 24' style={{ color: channel_access === "instagram" ? "#E4405F" : "#6B7280" }}>
                   <path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z' />
                 </svg>
-                <span className={`font-medium ${cart_channel_access === "instagram" ? "text-pink-700" : "text-gray-700"}`}>Instagram</span>
-                {cart_channel_access === "instagram" && (
+                <span className={`font-medium ${channel_access === "instagram" ? "text-pink-700" : "text-gray-700"}`}>Instagram</span>
+                {channel_access === "instagram" && (
                   <div className='absolute top-2 right-2'>
                     <svg className='w-5 h-5 text-pink-500' fill='currentColor' viewBox='0 0 20 20'>
                       <path
@@ -904,20 +931,20 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
 
               {/* Other */}
               <label
-                htmlFor='other'
+                htmlFor='others'
                 className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                  cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")
+                  channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")
                     ? "border-purple-500 bg-purple-50 shadow-md"
                     : "border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50/50"
                 }`}>
                 <input
                   type='radio'
-                  id='other'
+                  id='others'
                   name='channel'
-                  value='other'
-                  checked={!!(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram"))}
+                  value='others'
+                  checked={!!(channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram"))}
                   onChange={(e) => {
-                    setCustomerInfo({ channel_access: "other" });
+                    setCustomerInfo({ channel_access: "others" });
                     setCustomChannelName("");
                   }}
                   className='sr-only'
@@ -928,7 +955,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                   viewBox='0 0 24 24'
                   style={{
                     color:
-                      cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")
+                      channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")
                         ? "#9333EA"
                         : "#6B7280",
                   }}>
@@ -936,13 +963,13 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                 </svg>
                 <span
                   className={`font-medium ${
-                    cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")
+                    channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")
                       ? "text-purple-700"
                       : "text-gray-700"
                   }`}>
-                  Other
+                  Others
                 </span>
-                {(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")) && (
+                {(channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")) && (
                   <div className='absolute top-2 right-2'>
                     <svg className='w-5 h-5 text-purple-500' fill='currentColor' viewBox='0 0 20 20'>
                       <path
@@ -956,17 +983,17 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               </label>
             </div>
 
-            {(cart_channel_access === "other" || (cart_channel_access && cart_channel_access !== "facebook" && cart_channel_access !== "line" && cart_channel_access !== "instagram")) && (
+            {(channel_access === "others" || (channel_access && channel_access !== "facebook" && channel_access !== "line" && channel_access !== "instagram")) && (
               <div className='col-span-2 flex flex-col gap-1 -mt-5'>
                 <label className='font-bold'>ชื่อช่องทาง</label>
                 <input
                   type='text'
-                  value={cart_channel_access === "other" ? customChannelName : cart_channel_access || customChannelName}
+                  value={channel_access === "others" ? customChannelName : channel_access || customChannelName}
                   onChange={(e) => {
                     const value = e.target.value;
                     setCustomChannelName(value);
                     if (value.trim()) setCustomerInfo({ channel_access: value });
-                    else setCustomerInfo({ channel_access: "other" });
+                    else setCustomerInfo({ channel_access: "others" });
                   }}
                   placeholder='ระบุชื่อช่องทาง'
                   className='border rounded px-3 py-2 w-full'
@@ -975,23 +1002,8 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
             )}
           </div>
 
-          <div className='flex flex-col gap-1'>
-            <label className='font-bold'>ชื่อลูกค้า</label>
-            <input type='text' value={cart_receive_name} onChange={(e) => setCustomerInfo({ receive_name: e.target.value })} placeholder='ระบุชื่อลูกค้า' className='border rounded px-3 py-2' />
-          </div>
-
-          <div className='flex flex-col gap-1'>
-            <label className='font-bold'>เบอร์ติดต่อ</label>
-            <input type='text' value={cart_customer_tel} onChange={handle.PhoneChange} placeholder='ระบุเบอร์ติดต่อ' className='border rounded px-3 py-2' />
-          </div>
-
           <div className='col-span-2 flex flex-col gap-1'>
-            <label className='font-bold'>สถานที่จัดส่ง</label>
-            <input type='text' value={cart_location_send} onChange={(e) => setCustomerInfo({ location: e.target.value })} placeholder='ระบุสถานที่จัดส่ง' className='w-full border rounded px-3 py-2' />
-          </div>
-
-          <div className='col-span-2 flex flex-col gap-1'>
-            <label className='font-bold'>วันที่จัดส่ง</label>
+            <label className='font-bold'>วันที่รับสินค้า</label>
             <DatePicker
               selected={rawDate ? new Date(rawDate) : null}
               onChange={(date: Date | null) => {
@@ -1048,7 +1060,6 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                 );
               }}
             />
-            {/* {cart_delivery_date && <p className='text-sm text-gray-500 mt-1'>วันที่จัดส่ง: {cart_delivery_date}</p>} */}
           </div>
 
           <div className='flex flex-col gap-1'>
@@ -1059,7 +1070,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               <input
                 id='food-delivery-time'
                 type='text'
-                value={cart_export_time}
+                value={export_time}
                 onChange={(e) => {
                   let raw = e.target.value.replace(/[^0-9:]/g, "");
                   let digits = raw.replace(/:/g, "");
@@ -1118,7 +1129,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               <input
                 id='food-pickup-time'
                 type='text'
-                value={cart_receive_time}
+                value={receive_time}
                 onChange={(e) => {
                   let raw = e.target.value.replace(/[^0-9:]/g, "");
                   let digits = raw.replace(/:/g, "");
@@ -1168,17 +1179,47 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
             </div>
           </div>
 
+<div className='col-span-2 flex flex-col gap-1'>
+            <label className='font-bold'>สถานที่จัดส่ง</label>
+            <input type='text' value={location_send} onChange={(e) => setCustomerInfo({ location: e.target.value })} placeholder='ระบุสถานที่จัดส่ง' className='w-full border rounded px-3 py-2' />
+          </div>
+
+<div className='flex flex-col gap-1'>
+            <label className='font-bold'>ชื่อผู้รับสินค้า</label>
+            <input type='text' value={receive_name} onChange={(e) => setCustomerInfo({ receive_name: e.target.value })} placeholder='ระบุชื่อผู้รับสินค้า' className='border rounded px-3 py-2' />
+          </div>
+
+          <div className='flex flex-col gap-1'>
+            <label className='font-bold'>เบอร์ติดต่อ</label>
+            <input type='text' value={customer_tel} onChange={handle.PhoneChange} placeholder='ระบุเบอร์ติดต่อ' className='border rounded px-3 py-2' />
+          </div>
           <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-bold'>ค่าจัดส่ง</label>
-            <input type='text' value={cart_shipping_cost} onChange={handle.ShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
+            <input type='text' value={shipping_cost} onChange={handle.ShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
           </div>
+  {shipping_cost && (
+                <div className='flex justify-between items-center py-2 border-b'>
+                  <label className='font-bold'>ส่งโดย</label>
+                  <Select value={shipping_by || ""} onValueChange={(value) => setCustomerInfo({ shipping_by: value })}>
+                    <SelectTrigger className='w-auto'>
+                      <SelectValue placeholder='เลือกวิธีจัดส่ง' />
+                    </SelectTrigger>
+                    <SelectContent side='bottom' align='end' position='popper' avoidCollisions={true} collisionPadding={8} sideOffset={4} className='w-[200px] max-w-[200px]'>
+                      <SelectItem value='มอเตอร์ไซด์'>มอเตอร์ไซด์</SelectItem>
+                      <SelectItem value='รถยนต์(เก๋ง)'>รถยนต์(เก๋ง)</SelectItem>
+                      <SelectItem value='รถ SUV'>รถ SUV</SelectItem>
+                      <SelectItem value='รถกระบะตูทึบ'>รถกระบะตูทึบ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
           <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-bold' htmlFor=''>
               ออกบิลในนาม
             </label>
             <textarea
-              value={cart_customer_name}
+              value={customer_name}
               onChange={(e) => setCustomerInfo({ name: e.target.value })}
               className='border rounded px-3 py-2 min-h-[80px] resize-none overflow-hidden'
               placeholder='ออกบิลในนาม'
@@ -1200,7 +1241,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               type='text'
               inputMode='numeric'
               pattern='[0-9]*'
-              value={cart_invoice_tex}
+              value={invoice_tex}
               onChange={handle.TaxInvoiceNumberChange}
               placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
               maxLength={13}
@@ -1211,17 +1252,17 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
         {/* Regular Menu Items */}
         <ul className='space-y-4 mb-4'>
           {items.map((item) =>
-            item.cart_item_id ? (
-              <li key={item.cart_item_id} className='border p-4 rounded flex justify-between items-start'>
+            item.item_id ? (
+              <li key={item.item_id} className='border p-4 rounded flex justify-between items-start'>
                 <div className='flex-1'>
                   <div className='font-medium'>{item.menu_name}</div>
                   {item.menu_description && <div className='text-sm text-gray-600 mt-1 italic'>หมายเหตุ: {item.menu_description}</div>}
                 </div>
                 <div className='flex items-center space-x-2'>
-                  <button onClick={() => removeItem(item.cart_item_id!)} className='px-3 py-1 bg-red-500 text-white rounded'>
+                  <button onClick={() => removeItem(item.item_id!)} className='px-3 py-1 bg-red-500 text-white rounded'>
                     −
                   </button>
-                  <input type='number' value={item.menu_total} onChange={(e) => handle.ChangeQuantity(item.cart_item_id!, Number(e.target.value))} className='w-16 text-center border rounded' />
+                  <input type='number' value={item.menu_total} onChange={(e) => handle.ChangeQuantity(item.item_id!, Number(e.target.value))} className='w-16 text-center border rounded' />
                   <button onClick={() => addItem(item, item.menu_description || "")} className='px-3 py-1 bg-green-500 text-white rounded'>
                     +
                   </button>
@@ -1296,7 +1337,6 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                     <div className='flex items-center gap-2 mb-2'>
                       <label className='text-sm'>ราคารวม:</label>
                       <input
-                        disabled={true}
                         type='text'
                         value={lunchbox.lunchbox_total_cost}
                         onChange={(e) => handle.LunchboxTotalCostChange(actualIndex, e)}
@@ -1352,17 +1392,17 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                 router.push("/home/order/menu-picker");
               } else {
                 const missingFields = [];
-                if (!cart_channel_access.trim()) missingFields.push("• ช่องทาง");
-                if (!cart_receive_name.trim()) missingFields.push("• ชื่อลูกค้า");
-                if (!cart_customer_tel.trim()) missingFields.push("• เบอร์โทรลูกค้า");
-                if (!cart_location_send.trim()) missingFields.push("• สถานที่จัดส่ง");
-                if (!cart_delivery_date.trim()) missingFields.push("• วันที่จัดส่ง");
-                if (!cart_export_time.trim()) missingFields.push("• เวลาส่งอาหาร");
-                if (!cart_receive_time.trim()) missingFields.push("• เวลารับอาหาร");
-                if (!cart_shipping_cost.trim()) missingFields.push("• ค่าจัดส่ง");
-                if (!cart_customer_name.trim()) missingFields.push("• ออกบิลในนาม");
-                if (!cart_invoice_tex.trim()) missingFields.push("• เลขใบกำกับภาษี");
-                else if (cart_invoice_tex.length !== 13) missingFields.push("• เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)");
+                if (!channel_access.trim()) missingFields.push("• ช่องทาง");
+                if (!receive_name.trim()) missingFields.push("• ชื่อลูกค้า");
+                if (!customer_tel.trim()) missingFields.push("• เบอร์โทรลูกค้า");
+                if (!location_send.trim()) missingFields.push("• สถานที่จัดส่ง");
+                if (!delivery_date.trim()) missingFields.push("• วันที่จัดส่ง");
+                if (!export_time.trim()) missingFields.push("• เวลาส่งอาหาร");
+                if (!receive_time.trim()) missingFields.push("• เวลารับอาหาร");
+                if (!shipping_cost.trim()) missingFields.push("• ค่าจัดส่ง");
+                if (!customer_name.trim()) missingFields.push("• ออกบิลในนาม");
+                if (!invoice_tex.trim()) missingFields.push("• เลขใบกำกับภาษี");
+                else if (invoice_tex.length !== 13) missingFields.push("• เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)");
 
                 Swal.fire({
                   icon: "warning",
@@ -1390,17 +1430,17 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
             <div className='mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded'>
               <p className='text-sm font-medium text-yellow-800 mb-2'>📋 กรุณากรอกข้อมูลให้ครบถ้วน:</p>
               <ul className='text-xs text-yellow-700 space-y-1'>
-                {!cart_channel_access.trim() && <li>• ช่องทาง</li>}
-                {!cart_receive_name.trim() && <li>• ชื่อลูกค้า</li>}
-                {!cart_customer_tel.trim() && <li>• เบอร์โทรลูกค้า</li>}
-                {!cart_location_send.trim() && <li>• สถานที่จัดส่ง</li>}
-                {!cart_delivery_date.trim() && <li>• วันที่จัดส่ง</li>}
-                {!cart_export_time.trim() && <li>• เวลาส่งอาหาร</li>}
-                {!cart_receive_time.trim() && <li>• เวลารับอาหาร</li>}
-                {!cart_shipping_cost.trim() && <li>• ค่าจัดส่ง</li>}
-                {!cart_customer_name.trim() && <li>• ออกบิลในนาม</li>}
-                {!cart_invoice_tex.trim() && <li>• เลขใบกำกับภาษี</li>}
-                {cart_invoice_tex.trim() && cart_invoice_tex.length !== 13 && <li>• เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)</li>}
+                {!channel_access.trim() && <li>• ช่องทาง</li>}
+                {!receive_name.trim() && <li>• ชื่อลูกค้า</li>}
+                {!customer_tel.trim() && <li>• เบอร์โทรลูกค้า</li>}
+                {!location_send.trim() && <li>• สถานที่จัดส่ง</li>}
+                {!delivery_date.trim() && <li>• วันที่จัดส่ง</li>}
+                {!export_time.trim() && <li>• เวลาส่งอาหาร</li>}
+                {!receive_time.trim() && <li>• เวลารับอาหาร</li>}
+                {!shipping_cost.trim() && <li>• ค่าจัดส่ง</li>}
+                {!customer_name.trim() && <li>• ออกบิลในนาม</li>}
+                {!invoice_tex.trim() && <li>• เลขใบกำกับภาษี</li>}
+                {invoice_tex.trim() && invoice_tex.length !== 13 && <li>• เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)</li>}
               </ul>
             </div>
           )}
@@ -1411,7 +1451,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
           <>
             <div className='flex items-center gap-2 mb-4'>
               <label className='font-bold'>รูปแบบการชำระเงิน</label>
-              <Select value={cart_pay_type || ""} onValueChange={(value) => setCustomerInfo({ pay_type: value })}>
+              <Select value={pay_type || ""} onValueChange={(value) => setCustomerInfo({ pay_type: value })}>
                 <SelectTrigger className='w-auto'>
                   <SelectValue placeholder='เลือกรูปแบบการชำระเงิน' />
                 </SelectTrigger>
@@ -1423,50 +1463,47 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               </Select>
             </div>
 
-            {/* Show deposit section only when payment method is selected */}
-            {cart_pay_type && (
+            {pay_type && (
               <>
                 <div className='flex flex-col gap-2 mb-4'>
                   <div className='flex items-center gap-2'>
                     <label className='font-bold'>รูปแบบการชำระ</label>
                   </div>
                   <div className='grid grid-cols-2 gap-3'>
-                    {/* จำนวนเต็ม */}
                     <label
                       htmlFor='deposit-full'
                       className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        cart_pay_deposit === "full" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-300 bg-white hover:border-orange-300 hover:bg-orange-50/50"
+                        pay_deposit === "full" ? "border-orange-500 bg-orange-50 shadow-md" : "border-gray-300 bg-white hover:border-orange-300 hover:bg-orange-50/50"
                       }`}>
                       <input
                         type='radio'
                         id='deposit-full'
                         name='deposit'
                         value='full'
-                        checked={cart_pay_deposit === "full"}
+                        checked={pay_deposit === "full"}
                         onChange={(e) => setCustomerInfo({ pay_deposit: e.target.value, ispay: "-" })}
                         className='sr-only'
                       />
-                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' style={{ color: cart_pay_deposit === "full" ? "#EA580C" : "#6B7280" }}>
+                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' style={{ color: pay_deposit === "full" ? "#EA580C" : "#6B7280" }}>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
                       </svg>
-                      <span className={`font-medium ${cart_pay_deposit === "full" ? "text-orange-700" : "text-gray-700"}`}>เต็มจำนวน</span>
+                      <span className={`font-medium ${pay_deposit === "full" ? "text-orange-700" : "text-gray-700"}`}>เต็มจำนวน</span>
                     </label>
 
-                    {/* 50% */}
                     <label
                       htmlFor='deposit-percent'
                       className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        cart_pay_deposit === "percent" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-300 bg-white hover:border-amber-300 hover:bg-amber-50/50"
+                        pay_deposit === "percent" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-300 bg-white hover:border-amber-300 hover:bg-amber-50/50"
                       }`}>
                       <input
                         type='radio'
                         id='deposit-percent'
                         name='deposit'
                         value='percent'
-                        checked={cart_pay_deposit === "percent"}
+                        checked={pay_deposit === "percent"}
                         onChange={(e) => {
                           setCustomerInfo({ pay_deposit: e.target.value });
-                          if (!cart_ispay || cart_ispay === "-") {
+                          if (!ispay || ispay === "-") {
                             setCustomerInfo({ ispay: "" });
                           }
                         }}
@@ -1490,13 +1527,12 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
 	c11.504,0,17.104-11.76,17.104-31.28c0-17.648-4.544-31.28-17.104-31.28C318.032,253.12,312.688,267.024,312.688,284.4z'
                         />
                       </svg>
-                      <span className={`font-medium ${cart_pay_deposit === "percent" ? "text-amber-700" : "text-gray-700"}`}>50%</span>
+                      <span className={`font-medium ${pay_deposit === "percent" ? "text-amber-700" : "text-gray-700"}`}>50%</span>
                     </label>
                   </div>
                 </div>
 
-                {/* แสดงสถานะชำระแล้วเมื่อเลือกเต็มจำนวน */}
-                {cart_pay_deposit === "full" && (
+                {pay_deposit === "full" && (
                   <div className='flex flex-col gap-2 mb-4'>
                     <div className='flex items-center gap-2'>
                       <label className='font-bold'>สถานะการชำระเงิน</label>
@@ -1526,25 +1562,23 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                   </div>
                 )}
 
-                {/* สถานะการชำระเงิน - แสดงเมื่อเลือกรูปแบบการชำระ 50% เท่านั้น */}
-                {cart_pay_deposit && cart_pay_deposit === "percent" && (
+                {pay_deposit && pay_deposit === "percent" && (
                   <div className='flex flex-col gap-2 mb-4'>
                     <div className='flex items-center gap-2'>
                       <label className='font-bold'>สถานะการชำระเงิน</label>
                     </div>
                     <div className='grid grid-cols-2 gap-3'>
-                      {/* ชำระแล้ว */}
                       <label
                         htmlFor='payment-paid'
                         className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                          cart_ispay === "paid" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
+                          ispay === "paid" ? "border-green-500 bg-green-50 shadow-md" : "border-gray-300 bg-white hover:border-green-300 hover:bg-green-50/50"
                         }`}>
                         <input
                           type='radio'
                           id='payment-paid'
                           name='payment-status'
                           value='paid'
-                          checked={cart_ispay === "paid"}
+                          checked={ispay === "paid"}
                           onChange={(e) => setCustomerInfo({ ispay: "paid" })}
                           className='sr-only'
                         />
@@ -1552,7 +1586,7 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                         <svg
                           xmlns='http://www.w3.org/2000/svg'
                           className='!w-5 !h-5'
-                          style={{ color: cart_ispay === "paid" ? "#10B981" : "#6B7280" }}
+                          style={{ color: ispay === "paid" ? "#10B981" : "#6B7280" }}
                           width='24'
                           height='24'
                           viewBox='0 0 24 24'
@@ -1568,28 +1602,27 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                           <path d='M6 12h.01' />
                           <circle cx='12' cy='12' r='2' />
                         </svg>
-                        <span className={`font-medium ${cart_ispay === "paid" ? "text-green-700" : "text-gray-700"}`}>ชำระแล้ว</span>
+                        <span className={`font-medium ${ispay === "paid" ? "text-green-700" : "text-gray-700"}`}>ชำระแล้ว</span>
                       </label>
 
-                      {/* ไม่ได้ชำระ */}
                       <label
                         htmlFor='payment-unpaid'
                         className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                          cart_ispay === "unpaid" ? "border-red-500 bg-red-50 shadow-md" : "border-gray-300 bg-white hover:border-red-300 hover:bg-red-50/50"
+                          ispay === "unpaid" ? "border-red-500 bg-red-50 shadow-md" : "border-gray-300 bg-white hover:border-red-300 hover:bg-red-50/50"
                         }`}>
                         <input
                           type='radio'
                           id='payment-unpaid'
                           name='payment-status'
                           value='unpaid'
-                          checked={cart_ispay === "unpaid"}
+                          checked={ispay === "unpaid"}
                           onChange={(e) => setCustomerInfo({ ispay: "unpaid" })}
                           className='sr-only'
                         />
                         <svg
                           xmlns='http://www.w3.org/2000/svg'
                           className='!w-5 !h-5'
-                          style={{ color: cart_ispay === "unpaid" ? "#EF4444" : "#6B7280" }}
+                          style={{ color: ispay === "unpaid" ? "#EF4444" : "#6B7280" }}
                           width='24'
                           height='24'
                           viewBox='0 0 24 24'
@@ -1605,23 +1638,12 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                           <path d='M6 12h.01' />
                           <circle cx='12' cy='12' r='2' />
                         </svg>
-                        <span className={`font-medium ${cart_ispay === "unpaid" ? "text-red-700" : "text-gray-700"}`}>ไม่ได้ชำระ</span>
+                        <span className={`font-medium ${ispay === "unpaid" ? "text-red-700" : "text-gray-700"}`}>ไม่ได้ชำระ</span>
                       </label>
                     </div>
                   </div>
                 )}
 
-                {/* แสดง "-" เมื่อเลือกเต็มจำนวน */}
-                {/* {cart_pay_deposit && cart_pay_deposit === "full" && (
-                  <div className='flex flex-col gap-2 mb-4'>
-                    <div className='flex items-center gap-2'>
-                      <label className='font-bold'>สถานะการชำระเงิน</label>
-                    </div>
-                    <div className='p-4 border-2 border-gray-300 rounded-lg bg-gray-50'>
-                      <span className='text-gray-700 font-medium'>-</span>
-                    </div>
-                  </div>
-                )} */}
               </>
             )}
 
@@ -1636,18 +1658,18 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
                 <label className='font-bold'>ค่าส่ง </label>
-                <span className='text-lg'>{cart_shipping_cost ? `${cart_shipping_cost} บาท` : "-"}</span>
+                <span className='text-lg'>{shipping_cost ? `${shipping_cost} บาท` : "-"}</span>
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
                 <label className='font-bold'>ค่าธรรมเนียม </label>
-                <span className='text-lg'>{cart_pay_charge ? `${cart_pay_charge} บาท` : "-"}</span>
+                <span className='text-lg'>{pay_charge ? `${pay_charge} บาท` : "-"}</span>
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
                 <label className='font-bold'>ยอดทั้งหมด </label>
                 <span className='text-lg'>
-                  {cart_total_cost
+                  {total_cost
                     ? `${(() => {
-                        const totalCostStr = cart_total_cost.replace(/,/g, "");
+                        const totalCostStr = total_cost.replace(/,/g, "");
                         const totalCostNum = parseFloat(totalCostStr) || 0;
                         return Number(totalCostNum.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                       })()} บาท`
@@ -1655,27 +1677,27 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                 </span>
               </div>
               <div className='flex justify-between items-center py-2 border-b'>
-                <label className='font-bold'>{cart_pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ"}</label>
+                <label className='font-bold'>{pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ"}</label>
                 <span className='text-lg text-orange-600'>
-                  {cart_pay_deposit && cart_pay_cost
-                    ? cart_pay_deposit === "percent"
-                      ? `${cart_pay_cost}% (${(() => {
-                          const totalCostStr = cart_total_cost.replace(/,/g, "");
+                  {pay_deposit && pay_cost
+                    ? pay_deposit === "percent"
+                      ? `${pay_cost}% (${(() => {
+                          const totalCostStr = total_cost.replace(/,/g, "");
                           const totalCostNum = parseFloat(totalCostStr) || 0;
-                          const payCostNum = Number(cart_pay_cost.replace(/[^\d]/g, "")) || 0;
+                          const payCostNum = Number(pay_cost.replace(/[^\d]/g, "")) || 0;
                           const depositAmount = (totalCostNum * payCostNum) / 100;
                           return Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         })()} บาท)`
-                      : `${(Number(cart_pay_cost.replace(/[^\d]/g, "") || 0) / 100).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+                      : `${(Number(pay_cost.replace(/[^\d]/g, "") || 0) / 100).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
                     : "-"}
                 </span>
               </div>
               <div className='flex justify-between items-center py-2'>
                 <label className='font-bold text-green-700'>คงเหลือ</label>
                 <span className='text-xl font-bold text-green-700'>
-                  {cart_total_remain
+                  {total_remain
                     ? (() => {
-                        const remainStr = typeof cart_total_remain === "string" ? cart_total_remain.replace(/,/g, "") : String(cart_total_remain);
+                        const remainStr = typeof total_remain === "string" ? total_remain.replace(/,/g, "") : String(total_remain);
                         const remainNum = parseFloat(remainStr) || 0;
                         return remainNum > 0 ? `${remainNum.toFixed(2)} บาท` : "0.00 บาท";
                       })()
@@ -1683,8 +1705,8 @@ ${cart_pay_deposit === "percent" && cart_total_remain ? `คงเหลือ�
                 </span>
               </div>
             </div>
-          </>
-        )}
+            </>
+            )}
         <button
           onClick={confirmOrder}
           disabled={loading}

@@ -54,17 +54,17 @@ export async function GET() {
       return getDayOfWeekThai(date.getDay());
     };
 
-    const result = await (prisma.cart as any).aggregateRaw({
+    const result = await (prisma.new_cart as any).aggregateRaw({
       pipeline: [
         {
           $addFields: {
             comparable_date: {
               $concat: [
-                { $substr: ["$cart_delivery_date", 6, 4] }, // year
+                { $substr: ["$delivery_date", 6, 4] }, // year
                 "/",
-                { $substr: ["$cart_delivery_date", 3, 2] }, // month
+                { $substr: ["$delivery_date", 3, 2] }, // month
                 "/",
-                { $substr: ["$cart_delivery_date", 0, 2] }, // day
+                { $substr: ["$delivery_date", 0, 2] }, // day
               ],
             },
           },
@@ -79,19 +79,19 @@ export async function GET() {
         {
           $sort: {
             comparable_date: 1,
-            cart_export_time: 1,
+            export_time: 1,
           },
         },
         {
           $project: {
-            cart_id: 1,
-            cart_location_send: 1,
-            cart_delivery_date: 1,
-            cart_export_time: 1,
-            cart_receive_time: 1,
-            cart_lunchbox: 1,
-            cart_description: 1,
-            cart_pinned: 1,
+            id: 1,
+            location_send: 1,
+            delivery_date: 1,
+            export_time: 1,
+            receive_time: 1,
+            lunchbox: 1,
+            description: 1,
+            pinned: 1,
           },
         },
       ],
@@ -108,13 +108,13 @@ export async function GET() {
     const convertedResult = convertBigIntToString(result);
     
     const resultWithDayOfWeek = convertedResult.map((item: any) => ({
-      id: item.cart_id,
-      date: item.cart_delivery_date,
-      dayOfWeek: getDayFromDateString(item.cart_delivery_date),
-      location: item.cart_location_send,
-      sendTime: item.cart_export_time,
-      receiveTime: item.cart_receive_time,
-      items: item.cart_lunchbox.map((lunchbox: any) => ({
+      id: item.id,
+      date: item.delivery_date,
+      dayOfWeek: getDayFromDateString(item.delivery_date),
+      location: item.location_send,
+      sendTime: item.export_time,
+      receiveTime: item.receive_time,
+      items: item.lunchbox.map((lunchbox: any) => ({
         lunchbox_name: lunchbox.lunchbox_name,
         set: lunchbox.lunchbox_set_name,
         quantity: lunchbox.lunchbox_total,
@@ -125,8 +125,8 @@ export async function GET() {
           menu_description: menu.menu_description || [],
         })),
       })),
-      cart_description: item.cart_description || [],
-      cart_pinned: item.cart_pinned || false,
+      description: item.description || [],
+      pinned: item.pinned || false,
     }));
     
     return NextResponse.json({

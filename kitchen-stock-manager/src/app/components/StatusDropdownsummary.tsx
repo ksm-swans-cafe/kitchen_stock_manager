@@ -22,7 +22,7 @@ const statusOptions: StatusOption[] = [
   { label: "ยกเลิก", value: "cancelled" },
 ];
 
-const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients, defaultStatus = "pending", onUpdated, cart_receive_time, cart_export_time, onOrderSummaryClick, cart }) => {
+const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients, defaultStatus = "pending", onUpdated, receive_time, export_time, onOrderSummaryClick, cart }) => {
   const [selectedStatus, setSelectedStatus] = useState(defaultStatus);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocked, setIsLocked] = useState(defaultStatus === "success" || defaultStatus === "cancelled");
@@ -57,7 +57,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
           return false;
         }
 
-        if (!cart_receive_time || !isValidTimeFormat(cart_receive_time)) {
+        if (!receive_time || !isValidTimeFormat(receive_time)) {
           Swal.fire({
             icon: "error",
             title: "เวลารับไม่ถูกต้อง",
@@ -67,7 +67,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
           return false;
         }
 
-        if (!cart_export_time || !isValidTimeFormat(cart_export_time)) {
+        if (!export_time || !isValidTimeFormat(export_time)) {
           Swal.fire({
             icon: "error",
             title: "เวลาส่งไม่ถูกต้อง",
@@ -79,10 +79,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
       }
 
       const formData = new FormData();
-      formData.append("cart_status", statusToUpdate);
-      formData.append("cart_last_update", userName ?? "unknown");
+      formData.append("status", statusToUpdate);
+      formData.append("last_update", userName ?? "unknown");
 
-      const res = await axios.patch(`/api/edit/cart_status/${cartId}`, formData);
+      const res = await axios.patch(`/api/edit/status/${cartId}`, formData);
 
       if (res.status !== 200) {
         const errorData = res.data;

@@ -12,31 +12,34 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      cart_channel_access,
-      cart_username,
-      cart_lunchboxes,
-      cart_customer_name,
-      cart_customer_tel,
-      cart_delivery_date,
-      cart_location_send,
-      cart_export_time,
-      cart_receive_time,
-      cart_receive_name,
-      cart_total_cost_lunchbox,
-      cart_invoice_tex,
-      cart_shipping_cost,
-      cart_pay_type,
-      cart_pay_deposit,
-      cart_pay_isdeposit,
-      cart_pay_cost,
-      cart_pay_charge,
-      cart_total_remain,
-      cart_total_cost,
-      cart_message,
-      cart_ispay,
+      order_name,
+      channel_access,
+      username,
+      lunchboxes,
+      customer_name,
+      customer_tel,
+      delivery_date,
+      location_send,
+      export_time,
+      receive_time,
+      receive_name,
+      total_cost_lunchbox,
+      invoice_tex,
+      shipping_cost,
+      shipping_by,
+      pay_type,
+      pay_deposit,
+      pay_isdeposit,
+      pay_cost,
+      pay_charge,
+      total_remain,
+      total_cost,
+      message,
+      ispay,
+      description,
     } = body;
 
-    if (!cart_channel_access || !cart_username || !cart_lunchboxes) {
+    if (!channel_access || !username || !lunchboxes) {
       return NextResponse.json({ error: "Channel access, username and lunchboxes are required" }, { status: 400 });
     }
 
@@ -51,9 +54,9 @@ export async function POST(request: NextRequest) {
     todayEnd.setHours(23, 59, 59, 999);
     const todayEndString = todayEnd.toISOString();
 
-    const orderCount = await prisma.cart.count({
+    const orderCount = await prisma.new_cart.count({
       where: {
-        cart_create_date: {
+        create_date: {
           gte: todayStartString,
           lte: todayEndString,
         },
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = String(orderCount + 1).padStart(3, "0");
     const cartId = `CART-${orderNumber}-${Date.now()}`;
 
-    const rawLunchboxes = cart_lunchboxes.map((lunchbox: any) => ({
+    const rawLunchboxes = lunchboxes.map((lunchbox: any) => ({
       lunchbox_name: lunchbox.lunchbox_name || "",
       lunchbox_set_name: lunchbox.lunchbox_set || "",
       lunchbox_limit: parseInt(lunchbox.lunchbox_limit?.toString() || "0"),
@@ -86,45 +89,48 @@ export async function POST(request: NextRequest) {
 
     const formattedLunchboxes = convertBigIntToNumber(rawLunchboxes);
 
-    const cart_status = cart_ispay === "-" ? "completed" : cart_ispay === "paid" ? "completed" : cart_ispay === "unpaid" ? "pending" : "pending";
+    const status = ispay === "-" ? "completed" : ispay === "paid" ? "completed" : ispay === "unpaid" ? "pending" : "pending";
     const cartData = {
       cart_id: cartId,
-      cart_channel_access: cart_channel_access || "",
-      cart_username: cart_username,
-      cart_lunchbox: formattedLunchboxes,
-      cart_create_date: cartCreateDateString,
-      cart_last_update: cartCreateDateString,
-      cart_order_number: orderNumber,
-      cart_customer_name: cart_customer_name || "",
-      cart_customer_tel: cart_customer_tel || "",
-      cart_delivery_date: cart_delivery_date || "",
-      cart_location_send: cart_location_send || "",
-      cart_export_time: cart_export_time || "",
-      cart_receive_time: cart_receive_time || "",
-      cart_shipping_cost: cart_shipping_cost || "",
-      cart_status: cart_status,
-      cart_receive_name: cart_receive_name || "",
-      cart_total_cost_lunchbox: cart_total_cost_lunchbox || "",
-      cart_invoice_tex: cart_invoice_tex || "",
-      cart_pay_type: cart_pay_type || "",
-      cart_pay_deposit: cart_pay_deposit || "",
-      cart_pay_isdeposit: cart_pay_isdeposit || false,
-      cart_pay_cost: cart_pay_cost || "",
-      cart_pay_charge: cart_pay_charge || "",
-      cart_total_remain: cart_total_remain || "",
-      cart_total_cost: cart_total_cost || "",
-      cart_ispay: cart_ispay || "",
+      order_name: order_name || "",
+      channel_access: channel_access || "",
+      username: username,
+      lunchbox: formattedLunchboxes,
+      create_date: cartCreateDateString,
+      last_update: cartCreateDateString,
+      order_number: orderNumber,
+      customer_name: customer_name || "",
+      customer_tel: customer_tel || "",
+      delivery_date: delivery_date || "",
+      location_send: location_send || "",
+      export_time: export_time || "",
+      receive_time: receive_time || "",
+      shipping_cost: shipping_cost || "",
+      shipping_by: shipping_by || "",
+      status: status,
+      receive_name: receive_name || "",
+      total_cost_lunchbox: total_cost_lunchbox || "",
+      invoice_tex: invoice_tex || "",
+      pay_type: pay_type || "",
+      pay_deposit: pay_deposit || "",
+      pay_isdeposit: pay_isdeposit || false,
+      pay_cost: pay_cost || "",
+      pay_charge: pay_charge || "",
+      total_remain: total_remain || "",
+      total_cost: total_cost || "",
+      ispay: ispay || "",
+      description: description || [],
     };
 
     const cartLogData = {
-      message: cart_message || `สร้างออเดอร์ ${cartId} โดย ${cart_username}`,
+      message: message || `สร้างออเดอร์ ${cartId} โดย ${username}`,
       create_date: cartCreateDateString,
-      create_by: cart_username,
+      create_by: username,
       status: "created",
     };
     const finalCartData = convertBigIntToNumber(cartData);
 
-    const result = await prisma.cart.create({
+    const result = await prisma.new_cart.create({
       data: finalCartData,
     });
     const cartLogResult = await prisma.cart_log.create({
@@ -133,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     const finalResult = convertBigIntToNumber(result);
 
-    return NextResponse.json({ message: "Cart created successfully", cart: finalResult, cart_log: cartLogResult }, { status: 201 });
+    return NextResponse.json({ message: "Cart created successfully", cart: finalResult, log: cartLogResult }, { status: 201 });
   } catch (error: string | unknown) {
     console.error("Error creating cart:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(

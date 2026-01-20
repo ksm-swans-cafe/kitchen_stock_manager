@@ -8,14 +8,14 @@ export async function PATCH(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split("/").pop();
     const body = await request.json();
-    const { cart_username, cart_lunchboxes, cart_menu_items, cart_customer_name, cart_customer_tel, cart_delivery_date, cart_location_send, cart_export_time, cart_receive_time, cart_shipping_cost } = body;
+    const { username, lunchboxes, menu_items, customer_name, customer_tel, delivery_date, location_send, export_time, receive_time, shipping_cost } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Cart ID is required" }, { status: 400 });
     }
 
-    const existingCart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    const existingCart = await prisma.new_cart.findFirst({
+      where: { id: id },
     });
 
     if (!existingCart) {
@@ -23,26 +23,26 @@ export async function PATCH(request: NextRequest) {
     }
 
     type UpdateData = {
-      cart_last_update: string;
-      cart_username?: string;
-      cart_lunchbox?: any;
-      cart_menu_items?: any;
-      cart_customer_name?: string;
-      cart_customer_tel?: string;
-      cart_delivery_date?: string;
-      cart_location_send?: string;
-      cart_export_time?: string;
-      cart_receive_time?: string;
-      cart_shipping_cost?: any;
+      last_update: string;
+      username?: string;
+      lunchbox?: any;
+      menu_items?: any;
+      customer_name?: string;
+      customer_tel?: string;
+      delivery_date?: string;
+      location_send?: string;
+      export_time?: string;
+      receive_time?: string;
+      shipping_cost?: any;
     };
 
     const updateData: UpdateData = {
-      cart_last_update: new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString(),
+      last_update: new Date(new Date().getTime() + 7 * 60 * 60 * 1000).toISOString(),
     };
 
-    if (cart_username !== undefined) updateData.cart_username = cart_username;
-    if (cart_lunchboxes !== undefined) {
-      const formattedLunchboxes = cart_lunchboxes.map((lunchbox: any) => ({
+    if (username !== undefined) updateData.username = username;
+    if (lunchboxes !== undefined) {
+      const formattedLunchboxes = lunchboxes.map((lunchbox: any) => ({
         lunchbox_name: lunchbox.lunchbox_name,
         lunchbox_set_name: lunchbox.lunchbox_set,
         lunchbox_limit: lunchbox.lunchbox_limit || 0,
@@ -62,11 +62,11 @@ export async function PATCH(request: NextRequest) {
           })),
         })),
       }));
-      updateData.cart_lunchbox = formattedLunchboxes;
+      updateData.lunchbox = formattedLunchboxes;
     }
-    if (cart_menu_items !== undefined) {
+    if (menu_items !== undefined) {
       // Only keep fields that exist in Prisma schema
-      const cleanedMenuItems = cart_menu_items.map((item: any) => ({
+      const cleanedMenuItems = menu_items.map((item: any) => ({
         menu_name: item.menu_name,
         menu_subname: item.menu_subname,
         menu_category: item.menu_category,
@@ -80,19 +80,19 @@ export async function PATCH(request: NextRequest) {
           ingredient_status: ing.ingredient_status,
         })) || [],
       }));
-      updateData.cart_menu_items = cleanedMenuItems;
+      updateData.menu_items = cleanedMenuItems;
     }
-    if (cart_customer_name !== undefined) updateData.cart_customer_name = cart_customer_name;
-    if (cart_customer_tel !== undefined) updateData.cart_customer_tel = cart_customer_tel;
-    if (cart_delivery_date !== undefined) updateData.cart_delivery_date = cart_delivery_date;
-    if (cart_location_send !== undefined) updateData.cart_location_send = cart_location_send;
-    if (cart_export_time !== undefined) updateData.cart_export_time = cart_export_time;
-    if (cart_receive_time !== undefined) updateData.cart_receive_time = cart_receive_time;
-    if (cart_shipping_cost !== undefined) updateData.cart_shipping_cost = cart_shipping_cost;
+    if (customer_name !== undefined) updateData.customer_name = customer_name;
+    if (customer_tel !== undefined) updateData.customer_tel = customer_tel;
+    if (delivery_date !== undefined) updateData.delivery_date = delivery_date;
+    if (location_send !== undefined) updateData.location_send = location_send;
+    if (export_time !== undefined) updateData.export_time = export_time;
+    if (receive_time !== undefined) updateData.receive_time = receive_time;
+    if (shipping_cost !== undefined) updateData.shipping_cost = shipping_cost;
 
     // Update the cart using updateMany to avoid null field validation errors
-    const result = await prisma.cart.updateMany({
-      where: { cart_id: id },
+    const result = await prisma.new_cart.updateMany({
+      where: { id: id },
       data: updateData,
     });
 
@@ -101,8 +101,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Fetch the updated cart to return
-    const updatedCart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    const updatedCart = await prisma.new_cart.findFirst({
+      where: { id: id },
     });
 
     if (!updatedCart) {

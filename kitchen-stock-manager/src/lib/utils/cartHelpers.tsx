@@ -40,14 +40,14 @@ export const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, setCus
 
 export const confirmOrder = async (
   data: {
-    cart_username: string;
-    cart_customer_name: string;
-    cart_customer_tel: string;
-    cart_location_send: string;
-    cart_delivery_date: string;
-    cart_export_time: string;
-    cart_receive_time: string;
-    cart_menu_items: CartItem[];
+    username: string;
+    customer_name: string;
+    customer_tel: string;
+    location_send: string;
+    delivery_date: string;
+    export_time: string;
+    receive_time: string;
+    menu_items: CartItem[];
   },
   setLoading: Dispatch<SetStateAction<boolean>>,
   setErrors: Dispatch<SetStateAction<string[]>>,
