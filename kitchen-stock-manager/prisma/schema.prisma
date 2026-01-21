@@ -8,13 +8,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+type CartCartDescription {
+  description_id    String
+  description_title String
+  description_value String
+}
+
 type CartCartLunchbox {
-  /// Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
+  /// Multiple data types found: Int: 99.5%, BigInt: 0.5% out of 188 sampled entries
   lunchbox_limit      Json
   lunchbox_menu       CartCartLunchboxLunchboxMenu[]
   lunchbox_name       String
   lunchbox_set_name   String
-  /// Multiple data types found: Int: 92.9%, BigInt: 7.1% out of 14 sampled entries
+  /// Multiple data types found: Int: 99.5%, BigInt: 0.5% out of 188 sampled entries
   lunchbox_total      Json
   lunchbox_total_cost BigInt?
 }
@@ -22,18 +28,19 @@ type CartCartLunchbox {
 type CartCartLunchboxLunchboxMenu {
   menu_category    String
   menu_cost        BigInt?
-  menu_description CartCartLunchboxLunchboxDescription[]
+  /// Multiple data types found: String: 98.2%, Array(CartCartLunchboxLunchboxMenuMenuDescription): 1.8% out of 658 sampled entries
+  menu_description Json?
   menu_ingredients CartCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String
-  /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
+  /// Multiple data types found: Int: 99.7%, BigInt: 0.3% out of 658 sampled entries
   menu_order_id    Json
   menu_subname     String
-  /// Multiple data types found: Int: 93.8%, BigInt: 6.3% out of 32 sampled entries
+  /// Multiple data types found: Int: 99.7%, BigInt: 0.3% out of 658 sampled entries
   menu_total       Json
 }
 
-type CartCartLunchboxLunchboxDescription {
-  menu_description_id String?
+type CartCartLunchboxLunchboxMenuMenuDescription {
+  menu_description_id    String
   menu_description_title String
   menu_description_value String
 }
@@ -41,7 +48,7 @@ type CartCartLunchboxLunchboxDescription {
 type CartCartLunchboxLunchboxMenuMenuIngredients {
   ingredient_name   String
   ingredient_status Boolean?
-  /// Multiple data types found: Int: 95.2%, BigInt: 4.8% out of 146 sampled entries
+  /// Multiple data types found: Int: 99.6%, BigInt: 0.4% out of 1967 sampled entries
   useItem           Json
 }
 
@@ -51,15 +58,15 @@ type CartCartMenuItems {
   menu_name        String
   menu_notes       CartCartMenuItemsMenuNotes[]
   menu_order_id    Int?
-  /// Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 683 sampled entries
+  /// Multiple data types found: Int: 99.4%, BigInt: 0.6% out of 716 sampled entries
   menu_total       Json
 }
 
 type CartCartMenuItemsMenuIngredients {
-  ingredient_name   String?
+  ingredient_name   String
   ingredient_status Boolean?
-  /// Multiple data types found: Int: 98.6%, BigInt: 1.4% out of 2659 sampled entries
-  useItem           Json?
+  /// Multiple data types found: Int: 99.4%, BigInt: 0.6% out of 2804 sampled entries
+  useItem           Json
 }
 
 type CartCartMenuItemsMenuNotes {
@@ -67,116 +74,147 @@ type CartCartMenuItemsMenuNotes {
   qty  Int
 }
 
+type CartLunchbox {
+  lunchbox_limit      Int
+  lunchbox_menu       CartLunchboxLunchboxMenu[]
+  lunchbox_name       String
+  lunchbox_set_name   String
+  lunchbox_total      Int
+  lunchbox_total_cost BigInt
+}
+
+type CartLunchboxLunchboxMenu {
+  menu_category    String
+  menu_cost        BigInt
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  menu_description Json?
+  menu_ingredients CartLunchboxLunchboxMenuMenuIngredients[]
+  menu_name        String
+  menu_order_id    Int
+  menu_subname     String
+  menu_total       Int
+}
+
+type CartLunchboxLunchboxMenuMenuIngredients {
+  ingredient_name String
+  useItem         Int
+}
+
 type MenuMenuIngredients {
   ingredient_name String
-  /// Multiple data types found: Int: 98.8%, BigInt: 1.2% out of 337 sampled entries
-  useItem         Json
+  useItem         Int
 }
 
 type MenuMenuLunchbox {
-  lunchbox_menuid String?
-  lunchbox_cost     BigInt?
-  lunchbox_name     String
-  lunchbox_set_name String
+  lunchbox_AutoRice      Boolean
+  lunchbox_cost          BigInt?
   lunchbox_menu_category String?
-  lunchbox_showPrice Boolean?
-  lunchbox_AutoRice Boolean?
+  lunchbox_menuid        String?
+  lunchbox_name          String
+  lunchbox_set_name      String
+  lunchbox_showPrice     Boolean
 }
 
-type CartCartDescription {
-  description_id     String?
-  description_title  String
-  description_value  String
+type NewCartLunchbox {
+  lunchbox_limit      Int
+  lunchbox_menu       NewCartLunchboxLunchboxMenu[]
+  lunchbox_name       String
+  lunchbox_set_name   String
+  lunchbox_total      Int
+  lunchbox_total_cost BigInt
+}
+
+type NewCartLunchboxLunchboxMenu {
+  menu_category    String
+  menu_cost        BigInt
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  menu_description Json?
+  menu_ingredients NewCartLunchboxLunchboxMenuMenuIngredients[]
+  menu_name        String
+  menu_order_id    Int
+  menu_subname     String
+  menu_total       Int
+}
+
+type NewCartLunchboxLunchboxMenuMenuIngredients {
+  ingredient_name String
+  useItem         Int
 }
 
 type LunchboxOrder {
-  lunchbox_category  String
-  lunchbox_limit_category String
-  lunchbox_sequence  String
-}
-
-model new_cart {
-  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
-  create_date   String
-  channel_access String
-  customer_name String
-  customer_tel  String
-  delivery_date String
-  export_time   String
-  cart_id            String
-  last_update   String?
-  location_send String
-  lunchbox      CartCartLunchbox[]
-  total_cost_lunchbox String
-  order_number  String
-  order_name   String
-  receive_time  String
-  receive_name  String
-  shipping_cost String
-  shipping_by String
-  status        String
-  username      String
-  pay_type      String
-  pay_deposit   String
-  pay_isdeposit Boolean
-  pay_charge    String
-  pay_cost      String
-  ispay         String?
-  invoice_tex  String
-  total_cost    String
-  total_remain  String
-  description   CartCartDescription[]
-  pinned        Boolean?
+  lunchbox_menu_category          String
+  lunchbox_menu_category_limit    String
+  lunchbox_menu_category_sequence String
 }
 
 model cart {
-  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
-  create_date   String
-  channel_access String
-  customer_name String
-  customer_tel  String
-  delivery_date String
-  export_time   String
-  cart_id            String
-  last_update   String?
-  location_send String
-  lunchbox      CartCartLunchbox[]
-  total_cost_lunchbox String
-  order_number  String
-  order_name   String
-  receive_time  String
-  receive_name  String
-  shipping_cost String
-  shipping_by String
-  status        String
-  username      String
-  pay_type      String
-  pay_deposit   String
-  pay_isdeposit Boolean
-  pay_charge    String
-  pay_cost      String
-  ispay         String?
-  invoice_tex  String
-  total_cost    String
-  total_remain  String
-  description   CartCartDescription[]
-  pinned        Boolean?
+  id                       String                @id @default(auto()) @map("_id") @db.ObjectId
+  cart_channel_access      String?
+  cart_create_date         String?
+  cart_customer_name       String?
+  cart_customer_tel        String?
+  cart_delivery_date       String?
+  cart_description         CartCartDescription[]
+  cart_export_time         String?
+  cart_id                  String
+  cart_invoice_tex         String?
+  cart_ispay               String?
+  cart_last_update         String?
+  cart_location_send       String?
+  cart_lunchbox            CartCartLunchbox[]
+  cart_menu_items          CartCartMenuItems[]
+  cart_order_number        String?
+  cart_pay_charge          String?
+  cart_pay_cost            String?
+  cart_pay_deposit         String?
+  cart_pay_isdeposit       Boolean?
+  cart_pay_type            String?
+  cart_pinned              Boolean?
+  cart_receive_name        String?
+  cart_receive_time        String?
+  cart_shipping_cost       String?
+  cart_status              String?
+  cart_total_cost          String?
+  cart_total_cost_lunchbox String?
+  cart_total_remain        String?
+  cart_username            String?
+  channel_access           String?
+  create_date              String?
+  customer_name            String?
+  customer_tel             String?
+  delivery_date            String?
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  description              Json?
+  export_time              String?
+  invoice_tex              String?
+  ispay                    String?
+  last_update              String?
+  location_send            String?
+  lunchbox                 CartLunchbox[]
+  order_name               String?
+  order_number             String?
+  pay_charge               String?
+  pay_cost                 String?
+  pay_deposit              String?
+  pay_isdeposit            Boolean?
+  pay_type                 String?
+  receive_name             String?
+  receive_time             String?
+  shipping_by              String?
+  shipping_cost            String?
+  status                   String?
+  total_cost               String?
+  total_cost_lunchbox      String?
+  total_remain             String?
+  username                 String?
 }
 
 model cart_log {
-  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
-  message String
-  status String
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  create_by   String
   create_date String
-  create_by String
-}
-
-model new_cart_log {
-  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
-  message String
-  status String
-  create_date String
-  create_by String
+  message     String
+  status      String
 }
 
 model employee {
@@ -217,24 +255,60 @@ model ingredients {
 }
 
 model lunchbox {
-  id                      String  @id @default(auto()) @map("_id") @db.ObjectId
-  lunchbox_limit          Int
+  id                      String          @id @default(auto()) @map("_id") @db.ObjectId
+  /// Multiple data types found: Int: 68.8%, BigInt: 31.3% out of 32 sampled entries
+  lunchbox_limit          Json
   lunchbox_name           String
+  lunchbox_name_image     String
   lunchbox_set_name       String
-  lunchbox_name_image     String?
-  lunchbox_set_name_image String?
+  lunchbox_set_name_image String
+  lunchbox_check_all      Boolean         @default(false)
   lunchbox_order_select   LunchboxOrder[]
 }
 
 model menu {
   id               String                @id @default(auto()) @map("_id") @db.ObjectId
   menu_category    String
-  /// Multiple data types found: Int: 99.1%, BigInt: 0.9% out of 110 sampled entries
-  menu_cost        Json
-  menu_id          Int                   @unique
+  menu_cost        Int?
+  /// Multiple data types found: Int: 80.6%, BigInt: 19.4% out of 129 sampled entries
+  menu_id          Json                  @unique
   menu_image       String
   menu_ingredients MenuMenuIngredients[]
   menu_lunchbox    MenuMenuLunchbox[]
   menu_name        String
   menu_subname     String
+}
+
+model new_cart {
+  id                  String            @id @default(auto()) @map("_id") @db.ObjectId
+  cart_id             String
+  channel_access      String
+  create_date         String
+  customer_name       String
+  customer_tel        String
+  delivery_date       String
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  description         Json?
+  export_time         String
+  invoice_tex         String
+  ispay               String
+  last_update         String
+  location_send       String
+  lunchbox            NewCartLunchbox[]
+  order_name          String
+  order_number        String
+  pay_charge          String
+  pay_cost            String
+  pay_deposit         String
+  pay_isdeposit       Boolean
+  pay_type            String
+  receive_name        String
+  receive_time        String
+  shipping_by         String
+  shipping_cost       String
+  status              String
+  total_cost          String
+  total_cost_lunchbox String
+  total_remain        String
+  username            String
 }

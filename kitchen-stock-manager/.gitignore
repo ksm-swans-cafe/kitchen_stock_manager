@@ -43,5 +43,5 @@ next-env.d.ts
 .vercel
 
 # Prisma generated files
-/generated/
-generated/
+# /generated/
+# generated/
