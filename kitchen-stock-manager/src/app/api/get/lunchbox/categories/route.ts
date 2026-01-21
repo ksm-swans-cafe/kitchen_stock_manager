@@ -30,11 +30,10 @@ export async function GET(request: NextRequest) {
     });
 
     const result = (menus as unknown as any[]).map((menu: any) => {
-      // หา matchingLunchbox โดยเช็ค menu_name (จาก menu document) และ lunchbox_set_name แทน lunchbox_name
-      // เพื่อให้แน่ใจว่าได้ lunchbox_cost ที่ถูกต้องสำหรับ menu_name นั้นๆ ใน set ที่เลือก
-      const matchingLunchbox = menu.menu_lunchbox?.find(
-        (lb: any) => lb.lunchbox_set_name === lunchbox_set_name
-      );
+      // IMPORTANT: ต้อง match ทั้ง lunchbox_name + lunchbox_set_name
+      // เพราะชื่อ set เช่น "ทั่วไป" อาจซ้ำข้ามชุด (เช่น Custom/คอหมูย่าง/ไก่ย่าง)
+      // ถ้าเช็คแค่ set_name จะหยิบ cost/category ของชุดอื่นมาปนได้
+      const matchingLunchbox = menu.menu_lunchbox?.find((lb: any) => lb.lunchbox_name === lunchbox_name && lb.lunchbox_set_name === lunchbox_set_name);
 
       return {
         menu_id: menu.menu_id,

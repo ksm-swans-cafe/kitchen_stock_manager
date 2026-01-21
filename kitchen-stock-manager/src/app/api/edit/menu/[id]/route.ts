@@ -113,7 +113,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   try {
     // ใช้ menu_id เพื่อหา record ก่อน (select เฉพาะ id เพื่อหลีกเลี่ยงปัญหา menu_cost เป็น null)
     const existing = await prisma.menu.findFirst({
-      where: { menu_id: Number(id) },
+      where: { menu_id: { equals: Number(id) } },
       select: {
         id: true,
         menu_id: true,
