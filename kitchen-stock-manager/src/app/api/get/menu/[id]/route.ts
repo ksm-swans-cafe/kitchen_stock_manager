@@ -81,7 +81,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   try {
     // ดึงข้อมูลเมนูโดยไม่โหลด menu_cost เพื่อเลี่ยงปัญหา null กับ Prisma Json non-nullable
     const menuWithoutCost = await prisma.menu.findFirst({
-      where: { menu_id: menuId },
+      where: { menu_id: { equals: menuId } },
       select: {
         id: true,
         menu_id: true,

@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import useSWR from "swr";
-import { Search, Filter, Grid3X3, List, Send, Minus, Plus } from "lucide-react";
-
+import { Search, Send, Minus, Plus } from "lucide-react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
-import { fetcher } from "@/lib/utils";
 
 import { useCartStore } from "@/stores/store";
 
@@ -19,10 +17,15 @@ import useLoadingDots from "@/lib/hook/Dots";
 
 import SetFoodIcon from "@/assets/setfood.png";
 import FoodMenuSetIcon from "@/assets/food-menu.png";
-import FoodMenuIcon from "@/assets/kung-pao-chicken.png";
 
 // ==================== ชนิดข้อมูล (Types) ====================
 type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null; lunchbox_showPrice?: boolean };
+
+type LunchboxOrderSelectItem = {
+  lunchbox_menu_category: string;
+  lunchbox_menu_category_limit?: string | null;
+  lunchbox_menu_category_sequence?: string | null;
+};
 
 interface LunchBoxFromAPI {
   lunchbox_name: string;
@@ -30,20 +33,15 @@ interface LunchBoxFromAPI {
   lunchbox_limit: number;
   lunchbox_name_image?: string;
   lunchbox_set_name_image?: string;
+  lunchbox_cost?: number;
+  lunchbox_order_select?: LunchboxOrderSelectItem[];
+  lunchbox_check_all?: boolean;
 }
 
 export default function Order() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedMeatType, setSelectedMeatType] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  const [Optional, setOptional] = useState<object>({
-    lunchbox_name: "Drinks",
-    lunchbox_set_name: "เครื่องดื่ม",
-    lunchbox_limit: 0,
-  });
-
-  // สถานะสำหรับการแสดงผลบนมือถือ
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   const router = useRouter();
@@ -61,6 +59,7 @@ export default function Order() {
   const [availableSetMenus, setAvailableSetMenus] = useState<string[]>([]);
   const [availableMenus, setAvailableMenus] = useState<MenuItemWithAutoRice[]>([]);
   const [note, setNote] = useState<string>("");
+  const [didAutoSelectAll, setDidAutoSelectAll] = useState<boolean>(false);
   // สร้างคีย์เมนูที่ไม่ซ้ำกัน
   const buildMenuKey = (menu: Partial<MenuItemWithAutoRice>) => menu.lunchbox_menuid ?? `${menu.menu_id ?? ""}-${menu.lunchbox_menu_category ?? ""}-${menu.menu_name ?? ""}`;
   // ฟังก์ชันดึงราคา
@@ -69,6 +68,13 @@ export default function Order() {
   // ==================== ฟังก์ชันช่วยทำงาน ====================
   // ค้นหาข้อมูลชุดอาหาร
   const getSetData = (foodSet: string, setMenu: string) => lunchboxData.find((item) => item.lunchbox_name === foodSet && item.lunchbox_set_name === setMenu);
+
+  const parsePositiveIntOrNull = (value?: string | null): number | null => {
+    const trimmed = (value ?? "").toString().trim();
+    if (!trimmed) return null;
+    const n = parseInt(trimmed, 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
 
   // ตรวจสอบจำนวนเมนูที่เลือกได้
   const getSetLimit = (foodSet: string, setMenu: string) => getSetData(foodSet, setMenu)?.lunchbox_limit ?? 0;
@@ -169,15 +175,14 @@ export default function Order() {
   // ==================== ตรรกะกลุ่มเมนู ====================
   // ตัวแปรสำหรับจัดการกลุ่มเมนู
   const dishOrder = ["กะเพรา", "กระเทียม", "พริกแกง", "พะแนง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
-  const meatOrder = ["หมู", "ไก่", "หมึก", "กุ้ง", "ทะเล"];
+  const meatOrder = ["หมู", "ไก่", "หมึก", "กุ้ง"];
   const genericDishTypes = ["กะเพรา", "กระเทียม", "พริกแกง", "พะแนง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
 
-  const getMeatType = (menuName: string): "หมู" | "ไก่" | "หมึก" | "กุ้ง" | "ทะเล" | null => {
+  const getMeatType = (menuName: string): "หมู" | "ไก่" | "หมึก" | "กุ้ง" | null => {
     if (menuName.includes("หมู")) return "หมู";
     if (menuName.includes("ไก่")) return "ไก่";
     if (menuName.includes("หมึก")) return "หมึก";
     if (menuName.includes("กุ้ง")) return "กุ้ง";
-    if (menuName.includes("ทะเล")) return "ทะเล";
     return null;
   };
 
@@ -198,10 +203,10 @@ export default function Order() {
     const fetchLunchboxData = async () => {
       setIsLoadingLunchboxData(true);
       try {
-        const response = await fetch("/api/get/lunchbox");
-        const data = await response.json();
-
-        const items = (Array.isArray(data) ? data : data?.data) as LunchBoxFromAPI[] | undefined;
+        const response = await axios.get("/api/get/lunchbox");
+        const data = response.data;
+        console.log("lunchbox data: ", data);
+        const items = data as LunchBoxFromAPI[] | undefined;
         if (items) {
           setLunchboxData(items);
 
@@ -352,7 +357,7 @@ export default function Order() {
   }, [availableMenus, searchQuery, selectedMeatType]);
 
   const dynamicMeatTypes = useMemo(() => {
-    const keywords = ["หมู", "ไก่", "กุ้ง", "หมึก", "ทะเล"];
+    const keywords = ["หมู", "ไก่", "หมึก", "กุ้ง"];
     const mainDish1Menus = availableMenus.filter((m) => m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว");
     return keywords.filter((k) => mainDish1Menus.some((m) => (m.menu_name || "").includes(k)));
   }, [availableMenus]);
@@ -402,6 +407,198 @@ export default function Order() {
     };
   }, [selectedMenuItems, availableMenus, riceQuantity]);
 
+  const selectedSetData = useMemo(() => {
+    if (!selectedFoodSet || !selectedSetMenu) return null;
+    return getSetData(selectedFoodSet, selectedSetMenu) ?? null;
+  }, [selectedFoodSet, selectedSetMenu, lunchboxData]);
+
+  // นับจำนวนที่เลือกต่อหมวด (ใช้สำหรับ step-based selection)
+  const selectedCountByCategory = useMemo(() => {
+    const map = new Map<string, number>();
+
+    selectedMenuItems.forEach((menuKey) => {
+      const menu = availableMenus.find((m) => buildMenuKey(m) === menuKey);
+      if (!menu) return;
+
+      const category = menu.lunchbox_menu_category || "อื่นๆ";
+      if (category === "ข้าว") {
+        const riceCount = riceQuantity > 0 ? riceQuantity : 1;
+        map.set(category, riceCount);
+      } else {
+        map.set(category, (map.get(category) || 0) + 1);
+      }
+    });
+
+    return map;
+  }, [selectedMenuItems, availableMenus, riceQuantity]);
+
+  // Step definitions (sequence + limit) จาก lunchbox_order_select ของ set ที่เลือก (รองรับ Drinks + Premium Snack Box ฯลฯ)
+  const orderSelectSteps = useMemo(() => {
+    if (!selectedSetData) return [];
+    const raw = (selectedSetData.lunchbox_order_select ?? []).filter((s) => (s?.lunchbox_menu_category || "").trim().length > 0);
+
+    return raw
+      .map((s, i) => {
+        const parsedSeq = parsePositiveIntOrNull(s.lunchbox_menu_category_sequence);
+        return {
+          category: s.lunchbox_menu_category,
+          limit: parsePositiveIntOrNull(s.lunchbox_menu_category_limit),
+          sequence: parsedSeq ?? i + 1, // ถ้าไม่มี sequence ให้ใช้ลำดับใน array เป็น fallback
+        };
+      })
+      .sort((a, b) => a.sequence - b.sequence);
+  }, [selectedSetData]);
+
+  const isStepBasedSet = orderSelectSteps.length > 0;
+  const stepCategories = useMemo(() => new Set(orderSelectSteps.map((s) => s.category)), [orderSelectSteps]);
+  const optionalStepCategories = useMemo(() => new Set(orderSelectSteps.filter((s) => s.limit === null).map((s) => s.category)), [orderSelectSteps]);
+  const isCustomUnlimited = selectedFoodSet === "Custom" && (selectedSetData?.lunchbox_limit ?? 0) === 0;
+
+  // นับจำนวนตาม step (รองรับ "ข้าว+กับข้าว" รวม "กับข้าวที่ 1", และ "เนื้อสัตว์" = selectedMeatType)
+  const getStepCategoryCount = useMemo(() => {
+    return (stepCategory: string): number => {
+      if (stepCategory === "ข้าว+กับข้าว") {
+        const a = selectedCountByCategory.get("ข้าว+กับข้าว") || 0;
+        const b = selectedCountByCategory.get("กับข้าวที่ 1") || 0;
+        const fromMenus = a + b;
+        if (fromMenus > 0) return fromMenus;
+        return focusedDish ? 1 : 0;
+      }
+      if (stepCategory === "เนื้อสัตว์") return selectedMeatType ? 1 : 0;
+      return selectedCountByCategory.get(stepCategory) || 0;
+    };
+  }, [selectedCountByCategory, selectedMeatType, focusedDish]);
+  const hasExplicitOrderSequence = useMemo(() => {
+    const raw = selectedSetData?.lunchbox_order_select ?? [];
+    return raw.some((s) => ((s.lunchbox_menu_category_sequence ?? "").toString().trim().length > 0));
+  }, [selectedSetData]);
+
+  // ใช้สำหรับกำหนดเลขลำดับ "เลือกเนื้อสัตว์" เป็นหมวดที่ 2 เสมอ
+  // (อิงจากเมนูที่โหลดได้จริง ไม่ผูกกับการกรอง/search)
+  const hasRiceWithDishCategoryForDisplay = useMemo(() => {
+    return availableMenus.some((m) => m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว");
+  }, [availableMenus]);
+
+  // โหมด combo: หมวด 1 (ข้าว+กับข้าว) + หมวด 2 (เลือกเนื้อสัตว์) นับเป็น 1 รายการ
+  const isRiceDishMeatComboSet = useMemo(() => {
+    return !!(
+      isStepBasedSet &&
+      hasRiceWithDishCategoryForDisplay &&
+      stepCategories.has("ข้าว+กับข้าว") &&
+      stepCategories.has("เนื้อสัตว์")
+    );
+  }, [isStepBasedSet, hasRiceWithDishCategoryForDisplay, stepCategories]);
+
+  const comboComplete = useMemo(() => {
+    if (!isRiceDishMeatComboSet) return false;
+    return getStepCategoryCount("ข้าว+กับข้าว") >= 1 && getStepCategoryCount("เนื้อสัตว์") >= 1;
+  }, [isRiceDishMeatComboSet, getStepCategoryCount]);
+
+  const effectiveSelectionDisplay = useMemo(() => {
+    const limit = selectedSetData?.lunchbox_limit ?? 0;
+    if (isRiceDishMeatComboSet) {
+      const comboPart = comboComplete ? 1 : 0;
+      const otherPart = orderSelectSteps
+        .filter((s) => s.category !== "ข้าว+กับข้าว" && s.category !== "เนื้อสัตว์")
+        .reduce((sum, s) => sum + getStepCategoryCount(s.category), 0);
+      return { selected: comboPart + otherPart, limit };
+    }
+    return { selected: selectionCount.total, limit };
+  }, [isRiceDishMeatComboSet, comboComplete, orderSelectSteps, getStepCategoryCount, selectionCount.total, selectedSetData?.lunchbox_limit]);
+
+  // reset auto-select flag when changing set
+  useEffect(() => {
+    setDidAutoSelectAll(false);
+  }, [selectedFoodSet, selectedSetMenu]);
+
+  // Auto select all (ตาม lunchbox_limit) เมื่อ set เปิดใช้งาน lunchbox_check_all
+  useEffect(() => {
+    if (!selectedSetData?.lunchbox_check_all) return;
+    if (didAutoSelectAll) return;
+    if (isLoadingMenus) return;
+    if (!selectedFoodSet || !selectedSetMenu) return;
+    if (availableMenus.length === 0) return;
+
+    // ถ้าผู้ใช้เลือกเองแล้ว ไม่ override
+    if (selectedMenuItems.length > 0) {
+      setDidAutoSelectAll(true);
+      return;
+    }
+
+    const overallLimit = selectedSetData.lunchbox_limit ?? 0;
+
+    const keys: string[] = [];
+    const pushKey = (m: MenuItemWithAutoRice) => {
+      const key = buildMenuKey(m);
+      if (!keys.includes(key)) keys.push(key);
+    };
+
+    if (isStepBasedSet) {
+      // เลือกเฉพาะหมวดที่อยู่ใน orderSelectSteps ตามลำดับ
+      for (const step of orderSelectSteps) {
+        availableMenus.filter((m) => (m.lunchbox_menu_category || "อื่นๆ") === step.category).forEach(pushKey);
+      }
+    } else {
+      // fallback: เลือกตามลำดับที่ได้จาก API
+      availableMenus.forEach(pushKey);
+    }
+
+    const finalKeys = overallLimit > 0 ? keys.slice(0, overallLimit) : keys;
+    setSelectedMenuItems(finalKeys);
+    setDidAutoSelectAll(true);
+  }, [
+    selectedSetData,
+    didAutoSelectAll,
+    isLoadingMenus,
+    selectedFoodSet,
+    selectedSetMenu,
+    availableMenus,
+    selectedMenuItems.length,
+    isStepBasedSet,
+    orderSelectSteps,
+  ]);
+
+  const canSubmitSelection = useMemo(() => {
+    if (!selectedFoodSet || !selectedSetMenu) return false;
+
+    // โหมด combo: หมวด 1+2 = 1 รายการ — ใช้ comboComplete แทน selectionCount.total
+    if (isRiceDishMeatComboSet) {
+      if (!comboComplete) return false;
+      for (const step of orderSelectSteps) {
+        if (step.limit === null) continue;
+        const count = getStepCategoryCount(step.category);
+        if (count !== step.limit) return false;
+      }
+      return true;
+    }
+
+    if (selectionCount.total === 0) return false;
+
+    // Step-based: ตรวจสอบตาม step/limit ของแต่ละหมวด + ห้ามเลือกนอกหมวดที่กำหนด (ยกเว้นข้าว)
+    if (isStepBasedSet) {
+      const overallLimit = selectedSetData?.lunchbox_limit ?? 0;
+      if (overallLimit > 0 && selectionCount.total !== overallLimit) return false;
+
+      for (const step of orderSelectSteps) {
+        if (step.limit === null) continue; // ไม่มี limit = optional/unlimited (จะเลือกหรือไม่เลือกก็ได้)
+        const count = getStepCategoryCount(step.category);
+        if (count !== step.limit) return false;
+      }
+
+      for (const [cat] of selectedCountByCategory.entries()) {
+        if (cat === "ข้าว") continue;
+        if (!stepCategories.has(cat)) return false;
+      }
+
+      return true;
+    }
+
+    // Default: ตรวจสอบตาม lunchbox_limit เดิม
+    const limit = getSetLimit(selectedFoodSet, selectedSetMenu);
+    if (limit > 0) return selectionCount.total === limit;
+    return true;
+  }, [selectedFoodSet, selectedSetMenu, selectionCount.total, isStepBasedSet, isRiceDishMeatComboSet, comboComplete, orderSelectSteps, getStepCategoryCount, stepCategories, selectedSetData]);
+
   // ==================== Sequential Category Selection Logic ====================
   // Get list of categories that have been selected (excluding rice)
   const getSelectedCategories = useMemo(() => {
@@ -423,32 +620,80 @@ export default function Order() {
   // Check if a category is locked (requires previous category to be selected first)
   const isCategoryLocked = useMemo(() => {
     return (category: string) => {
+      // Custom limit=0 (ไม่จำกัด): ไม่ล็อคหมวด (เลือกได้อิสระ)
+      if (isCustomUnlimited) return false;
+
+      // Step-based: lock ตาม step sequence โดยใช้หมวดที่ "ต้องเลือกครบ limit" เป็นเงื่อนไขปลดล็อค
+      if (isStepBasedSet) {
+        const idx = orderSelectSteps.findIndex((s) => s.category === category);
+        if (idx <= 0) return false;
+
+        for (let i = 0; i < idx; i++) {
+          const prev = orderSelectSteps[i];
+          if (prev.limit === null) continue; // optional step ไม่ล็อค step ถัดไป
+          const count = getStepCategoryCount(prev.category);
+          if (count < prev.limit) return true;
+        }
+        return false;
+      }
+
       const categoryIndex = getOrderedCategories.indexOf(category);
-
-      // If not in ordered list, not locked
       if (categoryIndex === -1) return false;
-
-      // First category is always unlocked
       if (categoryIndex === 0) return false;
-
-      // Check if previous category is selected
       const prevCategory = getOrderedCategories[categoryIndex - 1];
       return !getSelectedCategories.includes(prevCategory);
     };
-  }, [getOrderedCategories, getSelectedCategories]);
+  }, [isCustomUnlimited, isStepBasedSet, orderSelectSteps, getStepCategoryCount, getOrderedCategories, getSelectedCategories]);
 
   // Get the previous category that needs to be selected
   const getPreviousRequiredCategory = useMemo(() => {
     return (category: string) => {
+      // Custom limit=0 (ไม่จำกัด): ไม่มีหมวดบังคับก่อนหน้า
+      if (isCustomUnlimited) return null;
+
+      // Step-based: ให้แจ้งหมวดล่าสุดที่ "ต้องเลือกให้ครบ limit" แต่ยังเลือกไม่ครบ
+      if (isStepBasedSet) {
+        const idx = orderSelectSteps.findIndex((s) => s.category === category);
+        if (idx <= 0) return null;
+
+        for (let i = idx - 1; i >= 0; i--) {
+          const prev = orderSelectSteps[i];
+          if (prev.limit === null) continue;
+          const count = getStepCategoryCount(prev.category);
+          if (count < prev.limit) return prev.category;
+        }
+        // ถ้าครบหมดแล้ว ให้คืนหมวดก่อนหน้าแบบตรงไปตรงมา (ถ้ามี)
+        return orderSelectSteps[idx - 1]?.category ?? null;
+      }
+
       const categoryIndex = getOrderedCategories.indexOf(category);
       if (categoryIndex <= 0) return null;
       return getOrderedCategories[categoryIndex - 1];
     };
-  }, [getOrderedCategories]);
+  }, [isCustomUnlimited, isStepBasedSet, orderSelectSteps, getStepCategoryCount, getOrderedCategories]);
 
   // --- ข้อมูลเงื่อนไขพิเศษของชุดอาหาร (กำหนดโควตาแต่ละหมวด) ---
   const getCategoryLimit = (foodSet: string, setMenu: string, category: string) => {
     if (category === "ข้าว") return 1;
+
+    // Custom + limit=0 (ไม่จำกัด): เลือกได้กี่อย่างก็ได้ในทุกหมวด (ยกเว้น "ข้าว" ที่คุมด้วย riceQuantity)
+    // NOTE: บางชุดอื่นอาจ limit=0 แต่ยังอยากคุม per-category; เคสนี้ต้องปล่อยอิสระตาม requirement ของ Custom
+    const setDataUnlimited = getSetData(foodSet, setMenu);
+    if (foodSet === "Custom" && (setDataUnlimited?.lunchbox_limit ?? 0) === 0) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    // Step-based: ใช้ limit ตาม lunchbox_order_select (ถ้า limit ว่าง = ไม่จำกัด/optional)
+    const setData = getSetData(foodSet, setMenu);
+    const order = setData?.lunchbox_order_select ?? [];
+    if (order.length > 0) {
+      const matched = order.find((o) => o.lunchbox_menu_category === category);
+      if (matched) {
+        const parsed = parsePositiveIntOrNull(matched.lunchbox_menu_category_limit);
+        if (parsed === null) return Number.POSITIVE_INFINITY; // limit ว่าง = เลือกกี่อย่างก็ได้/หรือไม่เลือกก็ได้
+        return parsed;
+      }
+    }
 
     // --- กลุ่มที่เลือก "เครื่องเคียง" ได้มากกว่า 1 อย่าง ---
     if (category === "เครื่องเคียง") {
@@ -549,7 +794,23 @@ export default function Order() {
 
           // 3. ตรวจสอบขีดจำกัดจำนวนเมนู (สำหรับชุดปกติ)
           // ถ้าเกินกำหนด (และรายการใหม่ไม่ได้ไปสลับกับใคร) ให้เตะรายการที่เก่าที่สุดออก
-          if (!isUnlimited && newItems.length >= limit) {
+          // Step-based: ถ้า set มี lunchbox_limit รวม ให้คุมจำนวนรวมด้วย
+          // (เช่น Snack Box S/M ที่ไม่มี limit รายหมวด แต่มี limit รวม)
+          if (!isUnlimited && limit > 0 && newItems.length >= limit) {
+            if (isStepBasedSet) {
+              // พยายามเอาอันที่ "optional" ออกก่อน เพื่อไม่ทำให้ required step หลุด
+              const idxToRemove = newItems.findIndex((k) => {
+                const m = availableMenus.find((mm) => buildMenuKey(mm) === k);
+                const cat = m?.lunchbox_menu_category || "อื่นๆ";
+                return cat !== "ข้าว" && optionalStepCategories.has(cat);
+              });
+
+              if (idxToRemove !== -1) {
+                const trimmed = newItems.filter((_, i) => i !== idxToRemove);
+                return [...trimmed, menuKey];
+              }
+            }
+
             return [...newItems.slice(1), menuKey];
           }
 
@@ -567,9 +828,39 @@ export default function Order() {
       const setDataInfo = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
       const limit = setDataInfo?.lunchbox_limit ?? 0;
 
-      // แจ้งเตือนเมื่อเลือกไม่ครบ
-      if (limit > 0 && selectedMenuItems.length < limit) {
-        alert(`กรุณาเลือกเมนูให้ครบ ${limit} เมนู (เลือกแล้ว ${selectedMenuItems.length} เมนู)`);
+      // Step-based: ตรวจสอบตาม step/limit ของแต่ละหมวด (limit ว่าง = optional/unlimited)
+      if (isStepBasedSet) {
+        if (!isRiceDishMeatComboSet) {
+          if (limit > 0 && selectionCount.total !== limit) {
+            alert(`กรุณาเลือกเมนูให้ครบ ${limit} เมนู (เลือกแล้ว ${selectionCount.total} เมนู)`);
+            return;
+          }
+        }
+
+        for (const step of orderSelectSteps) {
+          if (step.limit === null) continue;
+          const count = getStepCategoryCount(step.category);
+          const label = step.category === "เนื้อสัตว์" ? "เลือกเนื้อสัตว์" : step.category;
+          if (count !== step.limit) {
+            alert(`กรุณาเลือกจากหมวด "${label}" ให้ครบ ${step.limit} รายการ (เลือกแล้ว ${count} รายการ)`);
+            return;
+          }
+        }
+
+        if (!isRiceDishMeatComboSet) {
+          for (const [cat] of selectedCountByCategory.entries()) {
+            if (cat === "ข้าว") continue;
+            if (!stepCategories.has(cat)) {
+              alert(`ไม่สามารถเลือกเมนูจากหมวด "${cat}" ในชุดนี้ได้`);
+              return;
+            }
+          }
+        }
+      }
+
+      // แจ้งเตือนเมื่อเลือกไม่ครบ (ข้ามถ้าเป็น combo: หมวด 1+2 = 1 รายการ)
+      if (!isRiceDishMeatComboSet && limit > 0 && selectionCount.total < limit) {
+        alert(`กรุณาเลือกเมนูให้ครบ ${limit} เมนู (เลือกแล้ว ${selectionCount.total} เมนู)`);
         return;
       }
 
@@ -692,7 +983,6 @@ export default function Order() {
 
   // แสดงหน้าจอรอโหลดข้อมูล
   if (isLoadingEditData) {
-    return <Loading context='ข้อมูลแก้ไข' />;
     return <Loading context='ข้อมูลแก้ไข' />;
   }
 
@@ -907,17 +1197,6 @@ export default function Order() {
           }
         }
 
-        /* การแสดงผลบนมือถือ */
-        @media (max-width: 640px) {
-          .mobile-compact {
-            padding: 0.5rem;
-          }
-
-          .mobile-text-sm {
-            font-size: 0.75rem;
-            line-height: 1rem;
-          }
-        }
       `}</style>
 
       <div className='flex min-h-[100svh]'>
@@ -1101,16 +1380,11 @@ export default function Order() {
                     onClick={handle.Submit}
                     disabled={(() => {
                       if (isSaving) return true;
-                      if (selectionCount.total === 0) return true;
-                      const limit = getSetLimit(selectedFoodSet, selectedSetMenu);
-                      if (limit > 0) return selectionCount.total !== limit;
-                      return false;
+                      return !canSubmitSelection;
                     })()}
                     className={`w-full px-4 py-4 md:px-5 md:py-5 xl:px-6 xl:py-6 text-white text-sm md:text-base xl:text-lg font-medium rounded-xl transition-all duration-200 shadow-lg flex items-center justify-center gap-2 xl:gap-3 min-h-[50px] md:min-h-[60px] xl:min-h-[70px] ${isSaving ||
                       (() => {
-                        if (selectionCount.total === 0) return true;
-                        const limit = getSetLimit(selectedFoodSet, selectedSetMenu);
-                        return limit > 0 && selectionCount.total !== limit;
+                        return !canSubmitSelection;
                       })()
                       ? "!bg-gray-200 !cursor-not-allowed"
                       : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
@@ -1233,25 +1507,28 @@ export default function Order() {
                             </div>
 
                             <div className='flex items-center justify-between pb-1'>
-                              <div className='flex items-center gap-1 bg-white ring-1 ring-gray-900/5 rounded-lg p-0.5 shadow-sm'>
+                              <div className={`flex items-center gap-1 rounded-lg p-0.5 shadow-sm ${selectionCount.total > 0 ? "bg-white ring-1 ring-gray-900/5" : "bg-gray-100 ring-1 ring-gray-200"}`}>
                                 <button
                                   type='button'
+                                  disabled={selectionCount.total === 0}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setLunchboxQuantity((prev) => Math.max(1, prev - 1));
+                                    if (selectionCount.total > 0) setLunchboxQuantity((prev) => Math.max(1, prev - 1));
                                   }}
-                                  className='p-1 hover:bg-orange-50 text-gray-500 hover:text-orange-600 rounded transition-colors'>
+                                  className={`p-1 rounded transition-colors ${selectionCount.total > 0 ? "hover:bg-orange-50 text-gray-500 hover:text-orange-600" : "cursor-not-allowed text-gray-300"}`}
+                                  title={selectionCount.total === 0 ? "กรุณาเลือกเมนูก่อน" : "ลดจำนวน"}>
                                   <Minus className='w-3 h-3' />
                                 </button>
-                                <span className='w-6 text-center text-xs font-black text-gray-900 tabular-nums'>{lunchboxQuantity}</span>
+                                <span className={`w-6 text-center text-xs font-black tabular-nums ${selectionCount.total > 0 ? "text-gray-900" : "text-gray-400"}`}>{lunchboxQuantity}</span>
                                 <button
                                   type='button'
+                                  disabled={selectionCount.total === 0}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setLunchboxQuantity((prev) => prev + 1);
+                                    if (selectionCount.total > 0) setLunchboxQuantity((prev) => prev + 1);
                                   }}
-                                  className='p-1 hover:bg-orange-50 text-gray-500 hover:text-orange-600 rounded transition-colors'
-                                  title='เพิ่มจำนวน'>
+                                  className={`p-1 rounded transition-colors ${selectionCount.total > 0 ? "hover:bg-orange-50 text-gray-500 hover:text-orange-600" : "cursor-not-allowed text-gray-300"}`}
+                                  title={selectionCount.total === 0 ? "กรุณาเลือกเมนูก่อน" : "เพิ่มจำนวน"}>
                                   <Plus className='w-3 h-3' />
                                 </button>
                               </div>
@@ -1288,21 +1565,6 @@ export default function Order() {
                     )}
                   </div>
 
-                  <div className='flex items-center gap-2'>
-                    <div className='flex items-center gap-1 bg-gray-50 rounded-lg p-1 border border-gray-100'>
-                      <button onClick={() => setViewMode("grid")} className={`p-2 rounded-md transition-all duration-200 ${viewMode === "grid" ? "bg-white shadow-sm text-orange-600 border border-gray-100" : "text-gray-500 hover:text-gray-700"}`}>
-                        <Grid3X3 className='w-4 h-4' />
-                      </button>
-                      <button onClick={() => setViewMode("list")} className={`p-2 rounded-md transition-all duration-200 ${viewMode === "list" ? "bg-white shadow-sm text-orange-600 border border-gray-100" : "text-gray-500 hover:text-gray-700"}`}>
-                        <List className='w-4 h-4' />
-                      </button>
-                    </div>
-
-                    <button className='flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg hover:border-orange-300 transition-all duration-200 text-gray-700 shadow-sm'>
-                      <Filter className='w-4 h-4' />
-                      <span className='text-sm font-medium hidden sm:inline'>ตัวกรอง</span>
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -1414,14 +1676,11 @@ export default function Order() {
                     <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 flex flex-col flex-wrap gap-2'>
                       <span className='bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>3. เลือกเมนูอาหาร</span>
                       {(() => {
-                        const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
-                        const limit = setData?.lunchbox_limit || 0;
-                        const selected = selectionCount.total;
+                        const { selected, limit } = effectiveSelectionDisplay;
                         const isUnlimited = limit === 0;
 
                         return (
                           <div className='flex gap-2 flex-wrap'>
-                            {/* แสดงข้อความแตกต่างกันตาม limit */}
                             {isUnlimited ? (
                               <span className='text-xs sm:text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-full w-fit'>เลือกแล้ว {selected} เมนู</span>
                             ) : (
@@ -1473,12 +1732,14 @@ export default function Order() {
                           }, {} as Record<string, typeof availableMenus>);
 
                           // ตรวจสอบว่ามีหมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว" หรือไม่
-                          const hasRiceWithDishCategory = groupedMenus["กับข้าวที่ 1"] || groupedMenus["ข้าว+กับข้าว"];
                           const riceWithDishCategory = groupedMenus["กับข้าวที่ 1"] || groupedMenus["ข้าว+กับข้าว"] || [];
+                          const hasRiceWithDishCategoryLocal = riceWithDishCategory.length > 0;
 
                           // กำหนดลำดับหมวดหมู่ (เอา "กับข้าวที่ 1" และ "ข้าว+กับข้าว" ออกก่อน)
                           const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
-                          const sortedCategories = Object.keys(groupedMenus)
+
+                          const allCategories = Object.keys(groupedMenus);
+                          const baseSortedCategories = allCategories
                             .sort((a, b) => {
                               const indexA = categoryOrder.indexOf(a);
                               const indexB = categoryOrder.indexOf(b);
@@ -1491,13 +1752,33 @@ export default function Order() {
                             })
                             .filter((category) => category !== "ข้าว" && category !== "กับข้าวที่ 1" && category !== "ข้าว+กับข้าว");
 
+                          const sortedCategories = (() => {
+                            // Step-based: ให้เรียงหมวดตาม orderSelectSteps ก่อน และซ่อนหมวดที่ไม่อยู่ใน step (ยกเว้น rice/หมวดพิเศษที่ถูกกรองไว้แล้ว)
+                            if (isStepBasedSet && orderSelectSteps.length > 0) {
+                              const stepCats = orderSelectSteps.map((s) => s.category).filter((c) => allCategories.includes(c));
+                              const dedupStepCats = [...new Set(stepCats)].filter((c) => c !== "ข้าว" && c !== "กับข้าวที่ 1" && c !== "ข้าว+กับข้าว");
+                              return dedupStepCats;
+                            }
+                            return baseSortedCategories;
+                          })();
+
+                          const seqRiceWithDish = isStepBasedSet ? (orderSelectSteps.find((s) => s.category === "ข้าว+กับข้าว")?.sequence ?? 1) : 1;
+                          const seqMeat = isStepBasedSet ? (orderSelectSteps.find((s) => s.category === "เนื้อสัตว์")?.sequence ?? 2) : 2;
+                          const isMeatStepLocked = isStepBasedSet && hasRiceWithDishCategoryLocal && isCategoryLocked("เนื้อสัตว์");
+                          const prevCategoryForMeat = getPreviousRequiredCategory("เนื้อสัตว์");
+
                           return (
                             <>
-                              {/* Step 1: แสดงหมวด "ข้าว+กับข้าว" ก่อน */}
-                              {hasRiceWithDishCategory && (
+                              {/* Step: แสดงหมวด "ข้าว+กับข้าว" ตาม sequence */}
+                              {hasRiceWithDishCategoryLocal && (
                                 <div className='space-y-3 sm:space-y-4 lg:space-y-6 mb-6 sm:mb-8'>
                                   <div className='flex items-center gap-2 sm:gap-4'>
-                                    <h3 className='text-sm sm:text-base lg:text-lg font-bold text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>1. หมวดหมู่: ข้าว+กับข้าว</h3>
+                                    <h3 className='text-sm sm:text-base lg:text-lg font-bold flex items-center gap-2 text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>
+                                      <span className='inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-black tabular-nums bg-white/80 text-gray-900 ring-1 ring-gray-900/10'>
+                                        {seqRiceWithDish}
+                                      </span>
+                                      หมวดหมู่: ข้าว+กับข้าว
+                                    </h3>
                                     <div className='flex-1 h-px bg-gradient-to-r from-orange-200 to-pink-200'></div>
                                     <span className='text-xs sm:text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full'>{riceWithDishCategory.length} เมนู</span>
                                   </div>
@@ -1507,24 +1788,6 @@ export default function Order() {
                                       // ค้นหาเมนูที่ตรงกัน (ถ้าเลือกเนื้อสัตว์แล้ว)
                                       const matchingMenu = selectedMeatType ? riceWithDishCategory.find((m) => m.menu_name.includes(dishType) && m.menu_name.includes(selectedMeatType)) : null;
 
-                                      // หาราคาเดิมจากเมนูหมูหรือไก่ (ราคาไม่เพิ่ม) เสมอ
-                                      const basePriceMenu = riceWithDishCategory.find((m) => {
-                                        const hasDishType = m.menu_name.includes(dishType);
-                                        const hasPork = m.menu_name.includes("หมู");
-                                        const hasChicken = m.menu_name.includes("ไก่");
-                                        return hasDishType && (hasPork || hasChicken);
-                                      });
-
-                                      // ถ้าไม่มีเมนูหมูหรือไก่ ให้หาเมนูอื่นที่ไม่มีราคาเพิ่มเติม (ไม่ใช่หมึก, กุ้ง, ทะเล)
-                                      const representativeMenu =
-                                        basePriceMenu ||
-                                        riceWithDishCategory.find((m) => {
-                                          const hasDishType = m.menu_name.includes(dishType);
-                                          const hasExpensiveMeat = m.menu_name.includes("หมึก") || m.menu_name.includes("กุ้ง") || m.menu_name.includes("ทะเล");
-                                          return hasDishType && !hasExpensiveMeat;
-                                        }) ||
-                                        riceWithDishCategory.find((m) => m.menu_name.includes(dishType));
-
                                       // ตรวจสอบสถานะการเลือก
                                       const isDishTypeSelected = selectedMeatType ? (matchingMenu ? selectedMenuItems.includes(buildMenuKey(matchingMenu)) : false) : focusedDish === dishType;
 
@@ -1533,15 +1796,38 @@ export default function Order() {
 
                                       if (isUnavailable) return null;
 
-                                      // Step 2: แสดงราคาตามเนื้อสัตว์ที่เลือก (แสดงราคาเดิม ไม่เพิ่มราคา)
+                                      // แสดงราคาเดิมเสมอ (ไม่ว่าจะเลือกเนื้อสัตว์อะไร) - ไม่บวกราคาเพิ่มเติม
+                                      // ใช้ราคาจากเมนูหมูหรือไก่ (ราคาพื้นฐาน) เท่านั้น - ห้ามใช้ราคาจากเมนูที่มีราคาเพิ่มเติม (หมึก/กุ้ง/ทะเล)
                                       let displayPrice = 0;
-
-                                      // แสดงราคาเดิมจากเมนูหมูหรือไก่เสมอ (ไม่ว่าจะเลือกเนื้อสัตว์อะไร)
-                                      if (basePriceMenu) {
-                                        displayPrice = getPrice(basePriceMenu);
-                                      } else if (representativeMenu) {
-                                        // ถ้าไม่มีเมนูหมูหรือไก่ ให้แสดงราคาจากเมนูที่ไม่มีราคาเพิ่มเติม
-                                        displayPrice = getPrice(representativeMenu);
+                                      
+                                      // หาเมนูหมูก่อน (ราคาพื้นฐาน) - ต้องมี dishType และ "หมู"
+                                      const porkMenu = riceWithDishCategory.find((m) => 
+                                        m.menu_name.includes(dishType) && m.menu_name.includes("หมู")
+                                      );
+                                      
+                                      // ถ้าไม่มีหมู ให้หาไก่ (ราคาพื้นฐาน) - ต้องมี dishType และ "ไก่"
+                                      const chickenMenu = !porkMenu ? riceWithDishCategory.find((m) => 
+                                        m.menu_name.includes(dishType) && m.menu_name.includes("ไก่")
+                                      ) : null;
+                                      
+                                      // ใช้ราคาจากเมนูหมูหรือไก่เท่านั้น (ไม่ใช้ราคาจากเมนูที่มีราคาเพิ่มเติม เช่น หมึก/กุ้ง/ทะเล)
+                                      const priceSourceMenu = porkMenu || chickenMenu;
+                                      
+                                      if (priceSourceMenu) {
+                                        // ใช้ราคาจากเมนูหมูหรือไก่เท่านั้น (ราคาพื้นฐาน)
+                                        displayPrice = getPrice(priceSourceMenu);
+                                      } else {
+                                        // ถ้าไม่มีหมูหรือไก่เลย ให้หาเมนูอื่นที่ไม่มีราคาเพิ่มเติม (ไม่ใช่หมึก, กุ้ง, ทะเล)
+                                        const fallbackMenu = riceWithDishCategory.find((m) => {
+                                          const hasDishType = m.menu_name.includes(dishType);
+                                          const hasExpensiveMeat = m.menu_name.includes("หมึก") || m.menu_name.includes("กุ้ง") || m.menu_name.includes("ทะเล");
+                                          return hasDishType && !hasExpensiveMeat;
+                                        });
+                                        
+                                        if (fallbackMenu) {
+                                          displayPrice = getPrice(fallbackMenu);
+                                        }
+                                        // ถ้าไม่มีเมนูที่เหมาะสมเลย ให้แสดง 0 หรือไม่แสดงราคา (ไม่ใช้เมนูที่มีราคาเพิ่มเติม)
                                       }
 
                                       return (
@@ -1591,18 +1877,31 @@ export default function Order() {
                                 </div>
                               )}
 
-                              {/* Step 3: แสดงตัวกรองเนื้อสัตว์ (หลังจากหมวด "ข้าว+กับข้าว") */}
-                              {hasRiceWithDishCategory && (
-                                <div className='space-y-3 sm:space-y-4 lg:space-y-6 mb-6 sm:mb-8'>
+                              {/* Step: แสดงตัวกรองเนื้อสัตว์ ตาม sequence (ล็อคจนกว่า ข้าว+กับข้าว จะครบ) */}
+                              {hasRiceWithDishCategoryLocal && (
+                                <div className={`space-y-3 sm:space-y-4 lg:space-y-6 mb-6 sm:mb-8 ${isMeatStepLocked ? "opacity-60" : ""}`}>
                                   <div className='flex items-center gap-2 sm:gap-4'>
-                                    <h3 className='text-sm sm:text-base lg:text-lg font-bold text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>2. หมวดหมู่: เลือกเนื้อสัตว์</h3>
+                                    <h3 className={`text-sm sm:text-base lg:text-lg font-bold flex items-center gap-2 ${isMeatStepLocked ? "text-gray-500" : "text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent"}`}>
+                                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-black tabular-nums ${isMeatStepLocked ? "bg-gray-200 text-gray-600" : "bg-white/80 text-gray-900 ring-1 ring-gray-900/10"}`}>
+                                        {seqMeat}
+                                      </span>
+                                      หมวดหมู่: เลือกเนื้อสัตว์
+                                    </h3>
                                     <div className='flex-1 h-px bg-gradient-to-r from-orange-200 to-pink-200'></div>
                                     <span className='text-xs sm:text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full whitespace-nowrap'>{dynamicMeatTypes.length} รายการ</span>
                                   </div>
 
-                                  <div className='flex flex-wrap gap-3 sm:gap-4'>
+                                  {isMeatStepLocked && prevCategoryForMeat && (
+                                    <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3'>
+                                      <p className='text-xs sm:text-sm text-yellow-800 flex items-center gap-2'>
+                                        <span>⚠️</span>
+                                        <span>กรุณาเลือก &quot;{prevCategoryForMeat}&quot; ก่อน</span>
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  <div className={`flex flex-wrap gap-3 sm:gap-4 ${isMeatStepLocked ? "pointer-events-none" : ""}`}>
                                     {dynamicMeatTypes.map((meat) => {
-                                      // กำหนดราคาเพิ่มเติมตามประเภทเนื้อสัตว์
                                       const meatPriceMap: Record<string, number> = {
                                         หมู: 0,
                                         ไก่: 0,
@@ -1626,7 +1925,7 @@ export default function Order() {
                                           price={additionalPrice}
                                           isAdditionalPrice={isAdditional}
                                           size={isMobile ? "sm" : "md"}
-                                          onClick={() => handleMeatFilterChange(selectedMeatType === meat ? null : meat)}
+                                          onClick={() => !isMeatStepLocked && handleMeatFilterChange(selectedMeatType === meat ? null : meat)}
                                         />
                                       );
                                     })}
@@ -1678,11 +1977,32 @@ export default function Order() {
                                   return a.menu_name.localeCompare(b.menu_name, "th");
                                 });
 
+                                const categorySeqNumber = (() => {
+                                  // Step-based: ยึดตามลำดับใน lunchbox_order_select (sorted แล้ว)
+                                  if (isStepBasedSet && orderSelectSteps.length > 0) {
+                                    const idx = orderSelectSteps.findIndex((s) => s.category === category);
+                                    if (idx !== -1) return idx + 1;
+                                  }
+
+                                  // Default: ยึดตามลำดับ category list ที่ระบบใช้ (ถ้าพบ)
+                                  const idx = getOrderedCategories.indexOf(category);
+                                  if (idx !== -1) return idx + 1;
+
+                                  return null;
+                                })();
+
+                                const categorySeqNumberForDisplay = categorySeqNumber;
+
                                 return (
                                   <div key={category} className={`space-y-3 sm:space-y-4 lg:space-y-6 ${isLocked ? "opacity-40 pointer-events-none" : ""}`}>
                                     <div className='flex items-center gap-2 sm:gap-4'>
                                       <h3 className={`text-sm sm:text-base lg:text-lg font-bold flex items-center gap-2 ${isLocked ? "text-gray-500" : "text-gray-800 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent"}`}>
-                                        {isLocked ? "🔒" : isCategoryHasSelection ? "✓" : "🔓"} หมวดหมู่: {category}
+                                        {hasExplicitOrderSequence && (
+                                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-black tabular-nums ${isLocked ? "bg-gray-200 text-gray-600" : "bg-white/80 text-gray-900 ring-1 ring-gray-900/10"}`}>
+                                            {categorySeqNumberForDisplay ?? "-"}
+                                          </span>
+                                        )}
+                                        หมวดหมู่: {category}
                                       </h3>
                                       <div className='flex-1 h-px bg-gradient-to-r from-orange-200 to-pink-200'></div>
                                       <span className={`text-xs sm:text-sm px-2 py-1 rounded-full ${isLocked ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-600"}`}>{menusInCategory.length} เมนู</span>
@@ -1753,6 +2073,15 @@ export default function Order() {
                                             size={isMobile ? "sm" : "md"}
                                             showPrice={menu.lunchbox_showPrice ?? true}
                                             onClick={() => {
+                                              // Step-based: อนุญาตเฉพาะหมวดที่อยู่ใน lunchbox_order_select (ยกเว้น "ข้าว")
+                                              if (isStepBasedSet) {
+                                                const cat = menu.lunchbox_menu_category || "อื่นๆ";
+                                                if (cat !== "ข้าว" && !stepCategories.has(cat)) {
+                                                  alert(`ไม่สามารถเลือกเมนูจากหมวด "${cat}" ในชุดนี้ได้`);
+                                                  return;
+                                                }
+                                              }
+
                                               // ตรวจสอบว่าหมวดนี้ถูกล็อคหรือไม่
                                               if (isLocked && menu.lunchbox_menu_category) {
                                                 const prevCat = getPreviousRequiredCategory(menu.lunchbox_menu_category);
@@ -1801,8 +2130,8 @@ export default function Order() {
 
             {/* แถบเมนูด้านล่าง (Mobile) */}
             <div className='lg:hidden fixed bottom-0 inset-x-0 z-40 flex flex-col'>
-              {/* จำนวนชุดอาหาร (Mobile) */}
-              {selectedSetMenu && (
+              {/* จำนวนชุดอาหาร (Mobile) - แสดงเฉพาะเมื่อเลือกเมนูแล้ว */}
+              {selectedSetMenu && selectionCount.total > 0 && (
                 <div className='bg-orange-50/90 backdrop-blur-sm border-t border-orange-100 px-4 py-2 flex items-center justify-between shadow-xs'>
                   <span className='text-xs font-bold text-orange-800 uppercase tracking-wider'>จำนวนชุด (Set Quantity)</span>
                   <div className='flex items-center gap-3 bg-white rounded-full p-1 shadow-sm ring-1 ring-orange-200'>
@@ -1818,13 +2147,7 @@ export default function Order() {
               )}
 
               <MobileActionBar
-                canSubmit={(() => {
-                  if (selectionCount.total === 0) return false;
-                  const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
-                  const limit = setData?.lunchbox_limit ?? 0;
-                  if (limit > 0) return selectionCount.total === limit;
-                  return true;
-                })()}
+                canSubmit={canSubmitSelection}
                 saving={isSaving}
                 editMode={isEditMode}
                 totalCost={(() => {

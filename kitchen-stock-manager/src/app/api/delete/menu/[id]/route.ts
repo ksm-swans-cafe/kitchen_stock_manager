@@ -16,7 +16,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   try {
     // ใช้ menu_id เพื่อหา record ก่อน
     const existing = await prisma.menu.findFirst({
-      where: { menu_id: Number(id) },
+      where: { menu_id: { equals: Number(id) } },
     });
 
     if (!existing) return NextResponse.json({ error: "ไม่พบเมนูที่ต้องการลบ" }, { status: 404 });
