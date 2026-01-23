@@ -560,7 +560,7 @@ export default function CartList() {
       ${menuList}
       เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท 
       จำนวน ${lb.quantity} กล่อง 
-      รวม ${lunchboxCost.toLocaleString("th-TH")} บาท`;
+      รวม ${lunchboxCost.toLocaleString("th-TH")} x ${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`;
         })
         .join("\n\n      ");
 
@@ -605,10 +605,10 @@ export default function CartList() {
 
 ✅ รายละเอียดสำหรับจัดส่ง
 1.วันที่รับสินค้า : ${delivery_date}
-2.เวลาส่งสินค้า : ${export_time}
-3.เวลารับสินค้า : ${receive_time}
+2.เวลาส่งสินค้า : ${export_time} น.
+3.เวลารับสินค้า : ${receive_time} น.
 4.สถานที่จัดส่ง : ${location_send}
-5.ค่าจัดส่ง ${shipping_cost} บาท ส่งโดย ${shipping_by}
+5.ค่าจัดส่ง: ${shipping_cost} บาท ส่งโดย ${shipping_by}
 6.ชื่อผู้รับสินค้า : ${receive_name}
 7.เบอร์โทร : ${customer_tel}
 8.ออกบิลในนาม : ${customer_name}
@@ -618,19 +618,19 @@ export default function CartList() {
 ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
       ${lunchboxListForMessage}
 
-รวมค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท
-${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} บาท\n` : ""}
-✅รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
+✅สรุปค่าใช้จ่าย
+ค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท
+ค่าจัดส่ง ${shippingCostNumForMessage.toLocaleString("th-TH")} บาท
+${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${chargeNumForMessage.toLocaleString("th-TH")} บาท` : ""}
+รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
+${
+  pay_deposit && pay_deposit !== "no"
+    ? pay_deposit === "full"
+      ? `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+      : `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+    : ""
+}
 `;
-// ${
-//   pay_deposit && pay_deposit !== "no"
-//     ? pay_deposit === "full"
-//       ? "ชำระเต็มจำนวนเเล้ว"
-//       : `มัดจำ ${depositTextForMessage}
-// ชำระ ${depositValueForMessage}
-// ${pay_deposit === "percent" && total_remain ? `คงเหลือชำระ ${total_remain} บาท` : ""}`
-//     : ""
-// }
 
       const response = await axios.post("/api/post/cart", {
         order_name: order_name,
@@ -1045,6 +1045,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
   />
 </div>
 
+            <label className='font-bold mt-2 whitespace-nowrap'>ช่องทางที่สั่ง</label>
             <div className='grid grid-cols-2 gap-3'>
               {formTemplate.SelectContect.map((item) => {
                 const isSelected = item.value === "others" ? isOtherChannelSelected : channel_access === item.value;
@@ -1054,7 +1055,7 @@ ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${pay_charge} 
                   <label
                     key={item.value}
                     htmlFor={item.value}
-                    className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`relative flex items-center justify-center gap-2 p-4 mb-2 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       isSelected ? ui.activeContainer : ui.inactiveContainer
                     }`}>
                     <input
