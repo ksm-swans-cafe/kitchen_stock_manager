@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { registerLocale, DatePicker } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
@@ -69,6 +69,22 @@ const useCartList = create<cartList>((set) => ({
   setCustomChannelName: (customChannelName) => set({ customChannelName }),
 }));
 
+const CustomDateInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ value, onClick, onChange, ...props }, ref) => (
+    <input
+      ref={ref}
+      value={value}
+      onClick={onClick}
+      onChange={onChange}
+      readOnly
+      className='w-full border rounded px-3 py-2 font-inherit'
+      style={{ fontFamily: 'inherit' }}
+      {...props}
+    />
+  )
+);
+CustomDateInput.displayName = 'CustomDateInput';
+
 export default function CartList() {
   const {
     items,
@@ -128,6 +144,7 @@ export default function CartList() {
   } = useCartList();
   const { userName, userRole } = useAuth();
   const router = useRouter();
+  const locationTextareaRef = useRef<HTMLTextAreaElement>(null);
   const handle = {
     LunchboxTotalCostChange: (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
@@ -146,7 +163,7 @@ export default function CartList() {
 
       router.push("/home/order/menu-picker?edit=true");
     },
-    PhoneChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+    PhoneChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       let value = e.target.value.replace(/\D/g, "");
       const digitsOnly = value;
       const len = digitsOnly.length;
@@ -166,7 +183,7 @@ export default function CartList() {
       }
       setCustomerInfo({ tel: value });
     },
-    ShippingCostChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+    ShippingCostChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
       if (!numericValue) {
         setCustomerInfo({ shipping_cost: "" });
@@ -191,7 +208,7 @@ export default function CartList() {
         const textarea = document.getElementById("copy-textarea") as HTMLTextAreaElement;
         if (textarea) {
           textarea.select();
-          textarea.setSelectionRange(0, 99999); 
+          textarea.setSelectionRange(0, 99999);
           try {
             document.execCommand("copy");
             setIsCopied(true);
@@ -209,7 +226,7 @@ export default function CartList() {
       clearCart();
 
       toast.success("ดำเนินการเสร็จสิ้น", {
-        duration: 3000, 
+        duration: 3000,
       });
 
       setTimeout(() => {
@@ -241,16 +258,16 @@ export default function CartList() {
         label: "Instagram",
         color: "pink",
         iconColor: "#E4405F",
-        svg:"M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z",
-        svgh:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        svg: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z",
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
       },
       {
         value: "others",
         label: "Others",
         color: "purple",
         iconColor: "#9333EA",
-        svg:"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
-        svgh:"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        svg: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
       },
     ]
   }
@@ -623,13 +640,12 @@ export default function CartList() {
 ค่าจัดส่ง ${shippingCostNumForMessage.toLocaleString("th-TH")} บาท
 ${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${chargeNumForMessage.toLocaleString("th-TH")} บาท` : ""}
 รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
-${
-  pay_deposit && pay_deposit !== "no"
-    ? pay_deposit === "full"
-      ? `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
-      : `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
-    : ""
-}
+${pay_deposit && pay_deposit !== "no"
+          ? pay_deposit === "full"
+            ? `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+            : `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+          : ""
+        }
 `;
 
       const response = await axios.post("/api/post/cart", {
@@ -818,7 +834,7 @@ ${
         setCustomerInfo({ pay_cost: "50" });
       }
     } else if (pay_deposit === "full" && total_cost) {
-      const totalCostStr = total_cost.replace(/,/g, ""); 
+      const totalCostStr = total_cost.replace(/,/g, "");
       const totalCostNum = parseFloat(totalCostStr) || 0;
       const totalCostInSatang = Math.round(totalCostNum * 100); // แปลงเป็นสตางค์เพื่อเก็บใน pay_cost
       const currentPayCost = Number(pay_cost.replace(/[^\d]/g, "")) || 0;
@@ -893,6 +909,13 @@ ${
     else if (channel_access === "others") setCustomChannelName("");
     else setCustomChannelName("");
   }, [channel_access]);
+
+  useEffect(() => {
+    if (locationTextareaRef.current) {
+      locationTextareaRef.current.style.height = "auto";
+      locationTextareaRef.current.style.height = Math.max(40, locationTextareaRef.current.scrollHeight) + "px";
+    }
+  }, [location_send]);
 
   return (
     <main className='min-h-screen text-black'>
@@ -972,9 +995,8 @@ ${
       {/* Error Notification Toast - Top Right */}
       {errors.length > 0 && (
         <div
-          className={`fixed top-4 right-4 z-50 flex w-3/4 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${
-            isErrorVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
-          }`}>
+          className={`fixed top-4 right-4 z-50 flex w-3/4 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${isErrorVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
+            }`}>
           <svg xmlns='http://www.w3.org/2000/svg' height='96' width='16'>
             <path
               strokeLinecap='round'
@@ -1019,7 +1041,7 @@ ${
             y='0px'
             viewBox='0 0 115.35 122.88'
             xmlSpace='preserve'
-            className='inline !w-6 !h-6'>
+            className='inline w-6! h-6!'>
             <g>
               <path d='M25.27,86.92c-1.81,0-3.26-1.46-3.26-3.26s1.47-3.26,3.26-3.26h21.49c1.81,0,3.26,1.46,3.26,3.26s-1.46,3.26-3.26,3.26 H25.27L25.27,86.92L25.27,86.92z M61.1,77.47c-0.96,0-1.78-0.82-1.78-1.82c0-0.96,0.82-1.78,1.78-1.78h4.65c0.04,0,0.14,0,0.18,0 c1.64,0.04,3.1,0.36,4.33,1.14c1.37,0.87,2.37,2.19,2.92,4.15c0,0.04,0,0.09,0.05,0.14l0.46,1.82h39.89c1,0,1.78,0.82,1.78,1.78 c0,0.18-0.05,0.36-0.09,0.55l-4.65,18.74c-0.18,0.82-0.91,1.37-1.73,1.37l0,0l-29.18,0c0.64,2.37,1.28,3.65,2.14,4.24 c1.05,0.68,2.87,0.73,5.93,0.68h0.04l0,0h20.61c1,0,1.78,0.82,1.78,1.78c0,1-0.82,1.78-1.78,1.78H87.81l0,0 c-3.79,0.04-6.11-0.05-7.98-1.28c-1.92-1.28-2.92-3.46-3.92-7.43l0,0L69.8,80.2c0-0.05,0-0.05-0.04-0.09 c-0.27-1-0.73-1.69-1.37-2.05c-0.64-0.41-1.5-0.59-2.51-0.59c-0.05,0-0.09,0-0.14,0H61.1L61.1,77.47L61.1,77.47z M103.09,114.13 c2.42,0,4.38,1.96,4.38,4.38s-1.96,4.38-4.38,4.38s-4.38-1.96-4.38-4.38S100.67,114.13,103.09,114.13L103.09,114.13L103.09,114.13z M83.89,114.13c2.42,0,4.38,1.96,4.38,4.38s-1.96,4.38-4.38,4.38c-2.42,0-4.38-1.96-4.38-4.38S81.48,114.13,83.89,114.13 L83.89,114.13L83.89,114.13z M25.27,33.58c-1.81,0-3.26-1.47-3.26-3.26c0-1.8,1.47-3.26,3.26-3.26h50.52 c1.81,0,3.26,1.46,3.26,3.26c0,1.8-1.46,3.26-3.26,3.26H25.27L25.27,33.58L25.27,33.58z M7.57,0h85.63c2.09,0,3.99,0.85,5.35,2.21 s2.21,3.26,2.21,5.35v59.98h-6.5V7.59c0-0.29-0.12-0.56-0.31-0.76c-0.2-0.19-0.47-0.31-0.76-0.31l0,0H7.57 c-0.29,0-0.56,0.12-0.76,0.31S6.51,7.3,6.51,7.59v98.67c0,0.29,0.12,0.56,0.31,0.76s0.46,0.31,0.76,0.31h55.05 c0.61,2.39,1.3,4.48,2.23,6.47H7.57c-2.09,0-3.99-0.85-5.35-2.21C0.85,110.24,0,108.34,0,106.25V7.57c0-2.09,0.85-4,2.21-5.36 S5.48,0,7.57,0L7.57,0L7.57,0z M25.27,60.25c-1.81,0-3.26-1.46-3.26-3.26s1.47-3.26,3.26-3.26h50.52c1.81,0,3.26,1.46,3.26,3.26 s-1.46,3.26-3.26,3.26H25.27L25.27,60.25L25.27,60.25z' />
             </g>
@@ -1030,20 +1052,23 @@ ${
         <div className='grid grid-cols-2 gap-4 mb-4'>
           <div className='col-span-2 flex flex-col gap-2'>
             <div className="flex items-center gap-3 w-full">
-  <label className="font-bold whitespace-nowrap">
-    ชื่อผู้สั่ง:
-  </label>
+              <label className="font-bold whitespace-nowrap">
+                ชื่อผู้สั่ง:
+              </label>
 
-  <input
-    type="text"
-    value={order_name}
-    onChange={(e) =>
-      setCustomerInfo({ order_name: e.target.value })
-    }
-    placeholder="ระบุชื่อผู้สั่ง"
-    className="flex-1 border rounded px-3 py-2"
-  />
-</div>
+              <textarea
+                rows={1}
+                value={order_name}
+                onChange={(e) => setCustomerInfo({ order_name: e.target.value })}
+                placeholder="ระบุชื่อผู้สั่ง"
+                className="
+    flex-1 border rounded px-3 py-2
+    resize-none
+    leading-relaxed
+  "
+                style={{ fontFamily: 'inherit' }}
+              />
+            </div>
 
             <label className='font-bold mt-2 whitespace-nowrap'>ช่องทางที่สั่ง</label>
             <div className='grid grid-cols-2 gap-3'>
@@ -1055,9 +1080,8 @@ ${
                   <label
                     key={item.value}
                     htmlFor={item.value}
-                    className={`relative flex items-center justify-center gap-2 p-4 mb-2 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                      isSelected ? ui.activeContainer : ui.inactiveContainer
-                    }`}>
+                    className={`relative flex items-center justify-center gap-2 p-4 mb-2 border-2 rounded-lg cursor-pointer transition-all duration-200 ${isSelected ? ui.activeContainer : ui.inactiveContainer
+                      }`}>
                     <input
                       type='radio'
                       id={item.value}
@@ -1093,8 +1117,8 @@ ${
             {isOtherChannelSelected && (
               <div className='col-span-2 flex flex-col gap-1 -mt-5'>
                 <label className='font-bold'>ชื่อช่องทาง</label>
-                <input
-                  type='text'
+                <textarea
+                  rows={1}
                   value={channel_access === "others" ? customChannelName : channel_access || customChannelName}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -1103,7 +1127,8 @@ ${
                     else setCustomerInfo({ channel_access: "others" });
                   }}
                   placeholder='ระบุชื่อช่องทาง'
-                  className='border rounded px-3 py-2 w-full'
+                  className='border rounded px-3 py-2 w-full resize-none leading-relaxed'
+                  style={{ fontFamily: 'inherit' }}
                 />
               </div>
             )}
@@ -1131,7 +1156,8 @@ ${
               minDate={userRole === "admin" ? undefined : new Date()}
               locale='th'
               placeholderText='เลือกวัน/เดือน/ปี ที่จัดส่ง'
-              className='w-full border rounded px-3 py-2'
+              className='w-full border rounded px-3 py-2 font-inherit'
+              customInput={<CustomDateInput />}
               renderCustomHeader={({ date, changeYear, changeMonth, decreaseMonth, increaseMonth, prevMonthButtonDisabled, nextMonthButtonDisabled }) => {
                 const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
                 const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -1217,39 +1243,52 @@ ${
             </div>
           </div>
 
-<div className='col-span-2 flex flex-col gap-1'>
+          <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-bold'>สถานที่จัดส่ง</label>
-            <input type='text' value={location_send} onChange={(e) => setCustomerInfo({ location: e.target.value })} placeholder='ระบุสถานที่จัดส่ง' className='w-full border rounded px-3 py-2' />
+            <textarea
+              ref={locationTextareaRef}
+              rows={1}
+              value={location_send}
+              onChange={(e) => setCustomerInfo({ location: e.target.value })}
+              placeholder='ระบุสถานที่จัดส่ง'
+              className='w-full border rounded px-3 py-2 resize-none leading-relaxed overflow-hidden'
+              style={{ fontFamily: 'inherit' }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = Math.max(40, target.scrollHeight) + "px";
+              }}
+            />
           </div>
 
-<div className='flex flex-col gap-1'>
+          <div className='flex flex-col gap-1'>
             <label className='font-bold'>ชื่อผู้รับสินค้า</label>
-            <input type='text' value={receive_name} onChange={(e) => setCustomerInfo({ receive_name: e.target.value })} placeholder='ระบุชื่อผู้รับสินค้า' className='border rounded px-3 py-2' />
+            <textarea rows={1} value={receive_name} onChange={(e) => setCustomerInfo({ receive_name: e.target.value })} placeholder='ระบุชื่อผู้รับสินค้า' className='border rounded px-3 py-2 resize-none leading-relaxed' style={{ fontFamily: 'inherit' }} />
           </div>
 
           <div className='flex flex-col gap-1'>
             <label className='font-bold'>เบอร์ติดต่อ</label>
-            <input type='text' value={customer_tel} onChange={handle.PhoneChange} placeholder='ระบุเบอร์ติดต่อ' className='border rounded px-3 py-2' />
+            <textarea rows={1} value={customer_tel} onChange={handle.PhoneChange} placeholder='ระบุเบอร์ติดต่อ' className='border rounded px-3 py-2 resize-none leading-relaxed' style={{ fontFamily: 'inherit' }} />
           </div>
           <div className='flex flex-col gap-1'>
             <label className='font-bold'>ค่าจัดส่ง</label>
-            <input type='text' value={shipping_cost} onChange={handle.ShippingCostChange} placeholder='ใส่ค่าจัดส่ง' className='border rounded px-3 py-2' />
+            <textarea rows={1} value={shipping_cost} onChange={handle.ShippingCostChange} placeholder='ระบุค่าจัดส่ง' className='border rounded px-3 py-2 resize-none leading-relaxed' style={{ fontFamily: 'inherit' }} />
           </div>
-                <div className='flex flex-col gap-1'>
-                  <label className='font-bold'>ส่งโดย</label>
-                  <Select value={shipping_by || ""} onValueChange={(value) => setCustomerInfo({ shipping_by: value })}>
-                    <SelectTrigger className='w-auto h-auto border rounded px-3 py-2 text-base'>
-                      <SelectValue placeholder='เลือกวิธีจัดส่ง' />
-                    </SelectTrigger>
-                    <SelectContent side='bottom' align='end' position='popper' avoidCollisions={true} collisionPadding={8} sideOffset={4} className='w-[200px] max-w-[200px]'>
-                      {shippingByOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className='flex flex-col gap-1'>
+            <label className='font-bold'>ส่งโดย</label>
+            <Select value={shipping_by || ""} onValueChange={(value) => setCustomerInfo({ shipping_by: value })}>
+              <SelectTrigger className='w-auto h-auto border rounded px-3 py-2 text-base leading-relaxed min-h-10.5' style={{ fontFamily: 'inherit' }}>
+                <SelectValue placeholder='เลือกวิธีจัดส่ง' />
+              </SelectTrigger>
+              <SelectContent side='bottom' align='end' position='popper' avoidCollisions={true} collisionPadding={8} sideOffset={4} className='w-[200px] max-w-[200px]'>
+                {shippingByOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
             <label className='font-bold' htmlFor=''>
@@ -1260,6 +1299,7 @@ ${
               onChange={(e) => setCustomerInfo({ name: e.target.value })}
               className='border rounded px-3 py-2 min-h-[80px] resize-none overflow-hidden'
               placeholder='ออกบิลในนาม'
+              style={{ fontFamily: 'inherit' }}
               rows={3}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
@@ -1273,15 +1313,13 @@ ${
             <label className='font-bold' htmlFor=''>
               เลขใบกำกับภาษี
             </label>
-            <input
-              className='border rounded px-3 py-2'
-              type='text'
-              inputMode='numeric'
-              pattern='[0-9]*'
+            <textarea
+              className='border rounded px-3 py-2 resize-none'
               value={invoice_tex}
-              onChange={handle.TaxInvoiceNumberChange}
+              onChange={(e) => setCustomerInfo({ invoice_tex: e.target.value })}
               placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
-              maxLength={13}
+              style={{ fontFamily: 'inherit' }}
+              rows={1}
             />
           </div>
         </div>
@@ -1451,9 +1489,8 @@ ${
               }
             }}
             disabled={!validate.BasicInfo()}
-            className={`w-full text-center px-4 py-2 text-white rounded !transition-all duration-300 ${
-              validate.BasicInfo() ? "bg-green-500 hover:bg-green-600 hover:scale-110 hover:font-semibold cursor-pointer" : "bg-gray-400 cursor-not-allowed opacity-60"
-            }`}>
+            className={`w-full text-center px-4 py-2 text-white rounded !transition-all duration-300 ${validate.BasicInfo() ? "bg-green-500 hover:bg-green-600 hover:scale-110 hover:font-semibold cursor-pointer" : "bg-gray-400 cursor-not-allowed opacity-60"
+              }`}>
             <svg viewBox='0 0 1024 1024' className='icon relative -top-0.5 !w-10 !h-10' version='1.1' xmlns='http://www.w3.org/2000/svg'>
               <path d='M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z' fill={validate.BasicInfo() ? "#4CAF50" : "#9CA3AF"} />
               <path d='M448 298.666667h128v426.666666h-128z' fill='#FFFFFF' />
@@ -1511,9 +1548,8 @@ ${
                         <label
                           key={opt.value}
                           htmlFor={opt.id}
-                          className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                            isSelected ? ui.activeContainer : ui.inactiveContainer
-                          }`}>
+                          className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${isSelected ? ui.activeContainer : ui.inactiveContainer
+                            }`}>
                           <input
                             type='radio'
                             id={opt.id}
@@ -1575,9 +1611,8 @@ ${
                           <label
                             key={opt.value}
                             htmlFor={opt.id}
-                            className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                              isSelected ? ui.activeContainer : ui.inactiveContainer
-                            }`}>
+                            className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${isSelected ? ui.activeContainer : ui.inactiveContainer
+                              }`}>
                             <input
                               type='radio'
                               id={opt.id}
@@ -1630,10 +1665,10 @@ ${
                 const remainText =
                   total_remain
                     ? (() => {
-                        const remainStr = typeof total_remain === "string" ? total_remain.replace(/,/g, "") : String(total_remain);
-                        const remainNum = parseFloat(remainStr) || 0;
-                        return remainNum > 0 ? `${remainNum.toFixed(2)} บาท` : "0.00 บาท";
-                      })()
+                      const remainStr = typeof total_remain === "string" ? total_remain.replace(/,/g, "") : String(total_remain);
+                      const remainNum = parseFloat(remainStr) || 0;
+                      return remainNum > 0 ? `${remainNum.toFixed(2)} บาท` : "0.00 บาท";
+                    })()
                     : "-";
 
                 const summaryRows: Array<{
@@ -1644,27 +1679,27 @@ ${
                   labelClass: string;
                   valueClass: string;
                 }> = [
-                  { key: "food", label: "ค่าอาหาร", value: <span className='text-lg'>{foodCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                  { key: "shipping", label: "ค่าส่ง", value: <span className='text-lg'>{shipping_cost ? `${shipping_cost} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                  { key: "fee", label: "ค่าธรรมเนียม", value: <span className='text-lg'>{pay_charge ? `${pay_charge} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                  { key: "total", label: "ยอดทั้งหมด", value: <span className='text-lg'>{totalCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                  {
-                    key: "deposit",
-                    label: pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ",
-                    value: <span className='text-lg text-orange-600'>{depositText}</span>,
-                    withBorder: true,
-                    labelClass: "font-bold",
-                    valueClass: "",
-                  },
-                  {
-                    key: "remain",
-                    label: "คงเหลือ",
-                    value: <span className='text-xl font-bold text-green-700'>{remainText}</span>,
-                    withBorder: false,
-                    labelClass: "font-bold text-green-700",
-                    valueClass: "",
-                  },
-                ];
+                    { key: "food", label: "ค่าอาหาร", value: <span className='text-lg'>{foodCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                    { key: "shipping", label: "ค่าส่ง", value: <span className='text-lg'>{shipping_cost ? `${shipping_cost} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                    { key: "fee", label: "ค่าธรรมเนียม", value: <span className='text-lg'>{pay_charge ? `${pay_charge} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                    { key: "total", label: "ยอดทั้งหมด", value: <span className='text-lg'>{totalCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                    {
+                      key: "deposit",
+                      label: pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ",
+                      value: <span className='text-lg text-orange-600'>{depositText}</span>,
+                      withBorder: true,
+                      labelClass: "font-bold",
+                      valueClass: "",
+                    },
+                    {
+                      key: "remain",
+                      label: "คงเหลือ",
+                      value: <span className='text-xl font-bold text-green-700'>{remainText}</span>,
+                      withBorder: false,
+                      labelClass: "font-bold text-green-700",
+                      valueClass: "",
+                    },
+                  ];
 
                 return summaryRows.map((row) => (
                   <div key={row.key} className={`flex justify-between items-center py-2 ${row.withBorder ? "border-b" : ""}`}>
@@ -1674,8 +1709,8 @@ ${
                 ));
               })()}
             </div>
-            </>
-            )}
+          </>
+        )}
         <button
           onClick={confirmOrder}
           disabled={loading}

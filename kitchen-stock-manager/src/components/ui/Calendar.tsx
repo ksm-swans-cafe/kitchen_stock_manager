@@ -16,7 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../app/components/ui/dialog";
+} from "@/components/ui/dialog";
 
 const Calendar: React.FC = () => {
   const [currentEvents, setCurrentEvents] = useState<EventApi[]>([]);
