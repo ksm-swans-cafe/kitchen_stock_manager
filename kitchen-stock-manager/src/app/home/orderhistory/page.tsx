@@ -445,7 +445,7 @@ const OrderHistory = () => {
         export_time: exportTime,
         receive_time: receiveTime,
       };
-      const response = await fetch(`/api/edit/time/${cartId}`, {
+      const response = await fetch(`/api/edit/cart_time/${cartId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

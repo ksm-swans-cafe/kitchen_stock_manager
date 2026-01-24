@@ -74,6 +74,7 @@ const SummaryList: React.FC = () => {
   const [selectedMenuForLunchbox, setSelectedMenuForLunchbox] = useState<{ [key: number]: string }>({}); // Store selected menu index for each lunchbox
   const [editMenuDialog, setEditMenuDialog] = useState<{
     id: string;
+    order_number: string;
     delivery_date: string;
     receive_time: string;
     export_time: string;
@@ -120,6 +121,12 @@ const SummaryList: React.FC = () => {
       menu_total: number;
       menu_description: string;
     };
+  } | null>(null);
+  const [editMenuDialogTimes, setEditMenuDialogTimes] = useState<{
+    exportHour: string;
+    exportMinute: string;
+    receiveHour: string;
+    receiveMinute: string;
   } | null>(null);
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts/summarylist", fetcher, { refreshInterval: 30000 });
 
@@ -442,7 +449,7 @@ const SummaryList: React.FC = () => {
         export_time: exportTime,
         receive_time: receiveTime,
       };
-      const response = await axios.patch(`/api/edit/time/${cartId}`, payload);
+      const response = await axios.patch(`/api/edit/cart_time/${cartId}`, payload);
 
       if (response.status !== 200) {
         const errorData = response.data;
@@ -2170,6 +2177,7 @@ const SummaryList: React.FC = () => {
 
         mutateCarts();
         setEditMenuDialog(null);
+        setEditMenuDialogTimes(null);
         setShouldFetchMenu(false);
         setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
       } catch (err) {
@@ -2217,7 +2225,7 @@ const SummaryList: React.FC = () => {
                     </g>
                   </g>
                 </svg>
-                <p>สั่งซื้อสำเร็จ!</p>
+                <p>รายการทั้งหมด</p>
               </div>
             </div>
 
@@ -2658,6 +2666,12 @@ const SummaryList: React.FC = () => {
                               onOrderSummaryClick={() => handleSummary("order", cart)}
                               onPaymentCompleted={handlePaymentCompleted}
                             />
+                            <Button
+                              onClick={() => handlePaymentCompleted(cart)}
+                              className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 text-xs font-bold rounded-full shadow'
+                              style={{ boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)" }}>
+                              📋
+                            </Button>
                           </div>
                           <AccordionContent className='mt-4'>
                             <div className='grid md:grid-cols-2 gap-6'>
@@ -2708,6 +2722,7 @@ const SummaryList: React.FC = () => {
 
                                         setEditMenuDialog({
                                           id: cart.id,
+                                          order_number: cart.order_number || "",
                                           delivery_date: cart.delivery_date || "",
                                           receive_time: cart.receive_time || "",
                                           export_time: cart.export_time || "",
@@ -2722,6 +2737,23 @@ const SummaryList: React.FC = () => {
                                             menu_total: 1,
                                             menu_description: "",
                                           },
+                                        });
+
+                                        // Initialize time editing state
+                                        const parseTime = (time: string) => {
+                                          if (!time) return { hour: "00", minute: "00" };
+                                          const [hour, minute] = time.split(":").map((h) => h.padStart(2, "0"));
+                                          return { hour: hour || "00", minute: minute || "00" };
+                                        };
+
+                                        const exportParsed = parseTime(cart.export_time || "");
+                                        const receiveParsed = parseTime(cart.receive_time || "");
+
+                                        setEditMenuDialogTimes({
+                                          exportHour: exportParsed.hour,
+                                          exportMinute: exportParsed.minute,
+                                          receiveHour: receiveParsed.hour,
+                                          receiveMinute: receiveParsed.minute,
                                         });
 
                                         // Fetch lunchboxes and menus
@@ -2739,6 +2771,7 @@ const SummaryList: React.FC = () => {
                                     // Only reset when explicitly closing (not when SweetAlert shows or deleting)
                                     if (!open && editMenuDialog !== null && !isDeleting) {
                                       setEditMenuDialog(null);
+                                      setEditMenuDialogTimes(null);
                                       setShouldFetchMenu(false);
                                       setSelectedLunchboxName("");
                                       setSelectedLunchboxSet("");
@@ -2752,7 +2785,7 @@ const SummaryList: React.FC = () => {
                                       {editMenuDialog && (
                                         <div className='space-y-6'>
                                           <div style={{ color: "#000000" }} className='text-xl font-bold mb-4'>
-                                            แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.id}
+                                            แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.order_number || editMenuDialog?.id}
                                           </div>
                                           <div style={{ color: "#000000" }} className='bg-gray-100 p-4 rounded-lg'>
                                             <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
@@ -2772,8 +2805,82 @@ const SummaryList: React.FC = () => {
                                               <div>
                                                 <span className='font-medium'>วันที่ส่ง:</span> {editMenuDialog.delivery_date}
                                               </div>
-                                              <div>
-                                                <span className='font-medium'>เวลาส่ง/รับ:</span> {editMenuDialog.export_time} / {editMenuDialog.receive_time}
+                                              <div className='col-span-2'>
+                                                {/* <span className='font-medium'>เวลาส่ง/รับ:</span> */}
+                                                <div className='flex items-center gap-4 mt-2'>
+                                                  <div className='flex items-center gap-2'>
+                                                    <span className='text-sm'>เวลาส่ง:</span>
+                                                    <select
+                                                      value={editMenuDialogTimes?.exportHour || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, exportHour: e.target.value }
+                                                            : { exportHour: e.target.value, exportMinute: "00", receiveHour: "00", receiveMinute: "00" }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                                        <option key={h} value={h}>
+                                                          {h}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                    :
+                                                    <select
+                                                      value={editMenuDialogTimes?.exportMinute || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, exportMinute: e.target.value }
+                                                            : { exportHour: "00", exportMinute: e.target.value, receiveHour: "00", receiveMinute: "00" }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                                        <option key={m} value={m}>
+                                                          {m}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
+                                                  <div className='flex items-center gap-2'>
+                                                    <span className='text-sm'>เวลารับ:</span>
+                                                    <select
+                                                      value={editMenuDialogTimes?.receiveHour || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, receiveHour: e.target.value }
+                                                            : { exportHour: "00", exportMinute: "00", receiveHour: e.target.value, receiveMinute: "00" }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                                        <option key={h} value={h}>
+                                                          {h}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                    :
+                                                    <select
+                                                      value={editMenuDialogTimes?.receiveMinute || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, receiveMinute: e.target.value }
+                                                            : { exportHour: "00", exportMinute: "00", receiveHour: "00", receiveMinute: e.target.value }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                                        <option key={m} value={m}>
+                                                          {m}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
+                                                </div>
                                               </div>
                                             </div>
                                           </div>
@@ -2781,7 +2888,7 @@ const SummaryList: React.FC = () => {
                                           {/* แสดงข้อมูล lunchbox */}
                                           <div className='space-y-4'>
                                             <div className='bg-gray-50 p-4 rounded-lg border border-gray-200'>
-                                              <h3 className='font-semibold text-gray-800 mb-3'>🍱 เพิ่มกล่องอาหาร</h3>
+                                              <h3 className='font-semibold text-gray-800 mb-3' style={{ color: "#000000" }}>🍱 เพิ่มกล่องอาหาร</h3>
 
                                               <div className='grid grid-cols-2 gap-3 mb-3'>
                                                 <div className='flex flex-col gap-1'>
@@ -2829,7 +2936,7 @@ const SummaryList: React.FC = () => {
                                                 </div>
                                               )}
 
-                                              <Button type='button' size='sm' className='w-full bg-green-600 hover:bg-green-700 text-white' onClick={handleAddLunchbox} disabled={!selectedLunchboxName || !selectedLunchboxSet}>
+                                              <Button type='button' size='sm' className='w-full bg-green-600 hover:bg-green-700 text-white' style={{ color: "#000000" }} onClick={handleAddLunchbox} disabled={!selectedLunchboxName || !selectedLunchboxSet}>
                                                 <Container className='w-4 h-4 mr-1' />➕ เพิ่มกล่องอาหาร
                                               </Button>
                                             </div>
@@ -2849,6 +2956,7 @@ const SummaryList: React.FC = () => {
                                                           <Button
                                                             type='button'
                                                             size='sm'
+                                                            style={{ color: "#000000" }}
                                                             variant='destructive'
                                                             onClick={() => {
                                                               handleRemoveLunchbox(lunchboxIdx);
@@ -3026,6 +3134,7 @@ const SummaryList: React.FC = () => {
                                                           <Button
                                                             type='button'
                                                             size='sm'
+                                                            style={{ color: "#000000" }}
                                                             className='bg-green-600 hover:bg-green-700 text-white text-xs'
                                                             disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
                                                             onClick={() => {
@@ -3067,6 +3176,7 @@ const SummaryList: React.FC = () => {
                                                                   icon: "warning",
                                                                   title: "กรุณาเลือกเมนู",
                                                                   showConfirmButton: false,
+                                                                  
                                                                   timer: 2000,
                                                                 });
                                                               }
@@ -3097,7 +3207,7 @@ const SummaryList: React.FC = () => {
                                                               </Button>
                                                             </div>
                                                             <div className='text-sm text-gray-500 mt-2'>
-                                                              <label className='block text-xs text-gray-600 mb-1'>คำอธิบายเมนู</label>
+                                                              <label className='block text-sm text-gray-600 mb-1 ' style={{ color: "#000000" }}>คำอธิบายเมนู</label>
                                                               {(() => {
                                                                 const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
                                                                 const valueDesc = editableItem?.menu_description ?? menu.menu_description ?? "";
@@ -3124,7 +3234,7 @@ const SummaryList: React.FC = () => {
 
                                                             {/* แก้ไขจำนวนกล่องของเมนู */}
                                                             <div className='mt-2 flex items-center gap-2'>
-                                                              <span className='text-sm text-gray-700'>จำนวนกล่อง:</span>
+                                                              <span className='text-sm text-gray-700' style={{ color: "#000000" }}>จำนวนกล่อง:</span>
                                                               {(() => {
                                                                 const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
                                                                 const valueTotal = editableItem?.menu_total ?? menu.menu_total ?? 0;
@@ -3151,7 +3261,7 @@ const SummaryList: React.FC = () => {
 
                                                             {/* แก้ไขจำนวนวัตถุดิบ */}
                                                             <div className='mt-3'>
-                                                              <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
+                                                              <h6 className='text-sm font-medium text-gray-700 mb-1' style={{ color: "#000000" }}>วัตถุดิบ:</h6>
                                                               <div className='space-y-1'>
                                                                 {(() => {
                                                                   const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
@@ -3203,9 +3313,11 @@ const SummaryList: React.FC = () => {
                                           {/* ปุ่มควบคุม */}
                                           <div className='flex justify-end gap-2 pt-4 border-t'>
                                             <Button
+                                              style={{ color: "#000000" }}  
                                               variant='outline'
                                               onClick={() => {
                                                 setEditMenuDialog(null);
+                                                setEditMenuDialogTimes(null);
                                                 setShouldFetchMenu(false);
                                                 setSelectedLunchboxName("");
                                                 setSelectedLunchboxSet("");
@@ -3216,13 +3328,50 @@ const SummaryList: React.FC = () => {
                                               ยกเลิก
                                             </Button>
                                             <Button
-                                              onClick={() => {
+                                              style={{ color: "#000000" }}  
+                                              onClick={async () => {
                                                 // เรียกใช้ฟังก์ชัน handleEdit.Menu
                                                 if (editMenuDialog) {
                                                   console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
                                                   console.log("📦 id:", editMenuDialog.id);
                                                   console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
                                                   console.log("🍱 lunchbox:", JSON.stringify(editMenuDialog.lunchbox, null, 2));
+
+                                                  // Save times if they were changed
+                                                  if (editMenuDialogTimes) {
+                                                    const exportTime = `${editMenuDialogTimes.exportHour}:${editMenuDialogTimes.exportMinute}`;
+                                                    const receiveTime = `${editMenuDialogTimes.receiveHour}:${editMenuDialogTimes.receiveMinute}`;
+                                                    
+                                                    // Check if times changed
+                                                    const timesChanged = 
+                                                      exportTime !== editMenuDialog.export_time || 
+                                                      receiveTime !== editMenuDialog.receive_time;
+
+                                                    if (timesChanged) {
+                                                      try {
+                                                        const payload = {
+                                                          export_time: exportTime,
+                                                          receive_time: receiveTime,
+                                                        };
+                                                        const response = await axios.patch(`/api/edit/cart_time/${editMenuDialog.id}`, payload);
+
+                                                        if (response.status !== 200) {
+                                                          const errorData = response.data;
+                                                          throw new Error(errorData.error || "Failed to update times");
+                                                        }
+                                                      } catch (err) {
+                                                        console.error("Error updating times:", err);
+                                                        Swal.fire({
+                                                          icon: "error",
+                                                          title: "เกิดข้อผิดพลาด",
+                                                          text: err instanceof Error ? err.message : "ไม่สามารถอัปเดตเวลาได้",
+                                                          showConfirmButton: false,
+                                                          timer: 3000,
+                                                        });
+                                                        return;
+                                                      }
+                                                    }
+                                                  }
 
                                                   handleEdit.Menu(editMenuDialog.id, editMenuDialog.menuItems, editMenuDialog.lunchbox);
                                                 }

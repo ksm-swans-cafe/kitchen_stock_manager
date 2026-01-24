@@ -132,7 +132,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
           const menuIngredients = updatedMenu.menu_ingredients.map((ing) => ({
             ingredient_name: ing.ingredient_name,
             useItem: ing.useItem,
-            ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
+            // ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
           }));
 
           // Handle menu_description - must be array of objects, not string

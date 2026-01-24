@@ -54,39 +54,39 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     try {
       setIsSubmitting(true);
 
-      if (statusToUpdate === "success") {
-        const allIngredientsChecked = allIngredients.every((menu) => menu.ingredients.every((ing) => ing.isChecked));
+      // if (statusToUpdate === "success") {
+      //   const allIngredientsChecked = allIngredients.every((menu) => menu.ingredients.every((ing) => ing.isChecked));
 
-        if (!allIngredientsChecked) {
-          Swal.fire({
-            icon: "warning",
-            title: "วัตถุดิบยังไม่ครบ",
-            text: "กรุณาเลือกวัตถุดิบทุกตัวก่อนเปลี่ยนสถานะเป็น 'ส่งแล้ว'",
-            confirmButtonText: "ตกลง",
-          });
-          return false;
-        }
+      //   if (!allIngredientsChecked) {
+      //     Swal.fire({
+      //       icon: "warning",
+      //       title: "วัตถุดิบยังไม่ครบ",
+      //       text: "กรุณาเลือกวัตถุดิบทุกตัวก่อนเปลี่ยนสถานะเป็น 'ส่งแล้ว'",
+      //       confirmButtonText: "ตกลง",
+      //     });
+      //     return false;
+      //   }
 
-        if (!receive_time || !isValidTimeFormat(receive_time)) {
-          Swal.fire({
-            icon: "error",
-            title: "เวลารับไม่ถูกต้อง",
-            text: "กรุณากรอกเวลารับอาหารให้ถูกต้อง (รูปแบบ HH:mm)",
-            confirmButtonText: "เข้าใจแล้ว",
-          });
-          return false;
-        }
+      //   if (!receive_time || !isValidTimeFormat(receive_time)) {
+      //     Swal.fire({
+      //       icon: "error",
+      //       title: "เวลารับไม่ถูกต้อง",
+      //       text: "กรุณากรอกเวลารับอาหารให้ถูกต้อง (รูปแบบ HH:mm)",
+      //       confirmButtonText: "เข้าใจแล้ว",
+      //     });
+      //     return false;
+      //   }
 
-        if (!export_time || !isValidTimeFormat(export_time)) {
-          Swal.fire({
-            icon: "error",
-            title: "เวลาส่งไม่ถูกต้อง",
-            text: "กรุณากรอกเวลาส่งอาหารให้ถูกต้อง (รูปแบบ HH:mm)",
-            confirmButtonText: "รับทราบ",
-          });
-          return false;
-        }
-      }
+      //   if (!export_time || !isValidTimeFormat(export_time)) {
+      //     Swal.fire({
+      //       icon: "error",
+      //       title: "เวลาส่งไม่ถูกต้อง",
+      //       text: "กรุณากรอกเวลาส่งอาหารให้ถูกต้อง (รูปแบบ HH:mm)",
+      //       confirmButtonText: "รับทราบ",
+      //     });
+      //     return false;
+      //   }
+      // }
 
       const formData = new FormData();
       formData.append("status", statusToUpdate);
@@ -103,18 +103,14 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       onUpdated?.();
 
       if (statusToUpdate === "success" || statusToUpdate === "cancelled") setIsLocked(true);
-      if (statusToUpdate === "completed") {
-        onPaymentCompleted?.(cart);
-        // ไม่แสดง Swal.fire เพราะจะแสดง popup แทน
-      } else {
-        Swal.fire({
-          icon: "success",
-          title: "อัปเดตสถานะสำเร็จ",
-          text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === statusToUpdate)?.label}"`,
-          showConfirmButton: false,
-          timer: 4000,
-        });
-      }
+      
+      Swal.fire({
+        icon: "success",
+        title: "อัปเดตสถานะสำเร็จ",
+        text: `สถานะถูกเปลี่ยนเป็น "${statusOptions.find((o) => o.value === statusToUpdate)?.label}"`,
+        showConfirmButton: false,
+        timer: 4000,
+      });
 
       setSelectedStatus(statusToUpdate); // อัปเดต state ทันทีหลังสำเร็จ
       return true;
