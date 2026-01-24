@@ -77,7 +77,7 @@ export interface CartItem extends MenuItem {
 }
 
 export type RawCart = {
-  _id?: string; // เพิ่ม _id field
+  _id?: string;
   id: string;
   menu_items: string | MenuItem[];
   create_date: string;

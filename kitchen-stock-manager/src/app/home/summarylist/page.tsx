@@ -17,7 +17,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { formatDate, EventInput } from "@fullcalendar/core";
 
-import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
@@ -25,8 +25,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
 import { Input } from "@/share/ui/input";
 
-import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
-import StatusDropdown from "@/app/components/StatusDropdownsummary";
+import ResponsiveOrderId from "@/components/summary&history/ResponsiveOrderId";
+import StatusDropdown from "@/components/summary&history/StatusDropdownsummary";
 import PaginationComponent from "@/components/ui/Totalpage";
 import { Loading } from "@/components/loading/loading";
 
