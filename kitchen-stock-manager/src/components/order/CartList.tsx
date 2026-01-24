@@ -435,7 +435,6 @@ export default function CartList() {
     { key: "shipping_cost", show: !shipping_cost.trim(), label: "ค่าจัดส่ง" },
     { key: "shipping_by", show: !shipping_by.trim(), label: "ส่งโดย" },
     { key: "customer_name", show: !customer_name.trim(), label: "ออกบิลในนาม" },
-    { key: "invoice_tex_required", show: !invoice_tex.trim(), label: "เลขใบกำกับภาษี" },
     { key: "invoice_tex_len", show: !!invoice_tex.trim() && invoice_tex.length !== 13, label: "เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)" },
   ];
 
@@ -486,8 +485,7 @@ export default function CartList() {
         shipping_cost.trim() !== "" &&
         shipping_by.trim() !== "" &&
         customer_name.trim() !== "" &&
-        invoice_tex.trim() !== "" &&
-        invoice_tex.length === 13
+        (invoice_tex.trim() === "" || invoice_tex.length === 13)
       );
     },
     Inputs: (): boolean => {
@@ -510,8 +508,9 @@ export default function CartList() {
       if (!export_time.trim()) newErrors.push("กรุณาเลือกเวลาส่งอาหาร");
       if (!receive_time.trim()) newErrors.push("กรุณาเลือกเวลารับอาหาร");
 
-      if (!invoice_tex.trim()) newErrors.push("กรุณากรอกเลขใบกำกับภาษี");
-      else if (invoice_tex.length !== 13) newErrors.push("เลขใบกำกับภาษีต้องเป็น 13 หลักเท่านั้น");
+      if (invoice_tex.trim() !== "" && invoice_tex.length !== 13) {
+        newErrors.push("เลขใบกำกับภาษีต้องเป็น 13 หลักเท่านั้น");
+      }
 
       if (selected_lunchboxes.length > 0) {
         if (!pay_type.trim()) {
@@ -535,6 +534,28 @@ export default function CartList() {
       setErrors(newErrors);
       return newErrors.length === 0;
     },
+  };
+
+  const formatDateToThai = (dateStr: string): string => {
+    if (!dateStr || !dateStr.trim()) return dateStr;
+
+    const parts = dateStr.split("/");
+    if (parts.length !== 3) return dateStr;
+
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parts[2];
+
+    const thaiMonthNames = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+
+    if (month >= 1 && month <= 12) {
+      return `${day} ${thaiMonthNames[month - 1]} ${year}`;
+    }
+
+    return dateStr;
   };
 
   const confirmOrder = async () => {
@@ -618,10 +639,10 @@ export default function CartList() {
 
       const copyTextContent = `📌รับออเดอร์ คุณ ${order_name} 
 ช่องทางที่สั่ง : ${channel_access}
-ผู้รับออเดอร์ : แอดมิน${userName}
+ผู้รับออเดอร์ : แอดมิน ${userName}
 
 ✅ รายละเอียดสำหรับจัดส่ง
-1.วันที่รับสินค้า : ${delivery_date}
+1.วันที่รับสินค้า : ${formatDateToThai(delivery_date)}
 2.เวลาส่งสินค้า : ${export_time} น.
 3.เวลารับสินค้า : ${receive_time} น.
 4.สถานที่จัดส่ง : ${location_send}
@@ -630,7 +651,7 @@ export default function CartList() {
 7.เบอร์โทร : ${customer_tel}
 8.ออกบิลในนาม : ${customer_name}
 9.ที่อยู่ : ${location_send}
-10.เลขประจำตัวผู้เสียภาษี : ${invoice_tex}
+${invoice_tex.trim() !== "" ? `10.เลขประจำตัวผู้เสียภาษี : ${invoice_tex}` : ""}
 
 ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
       ${lunchboxListForMessage}
@@ -1476,8 +1497,9 @@ ${pay_deposit && pay_deposit !== "no"
                 if (!receive_time.trim()) missingFields.push("• เวลารับอาหาร");
                 if (!shipping_cost.trim()) missingFields.push("• ค่าจัดส่ง");
                 if (!customer_name.trim()) missingFields.push("• ออกบิลในนาม");
-                if (!invoice_tex.trim()) missingFields.push("• เลขใบกำกับภาษี");
-                else if (invoice_tex.length !== 13) missingFields.push("• เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)");
+                if (invoice_tex.trim() !== "" && invoice_tex.length !== 13) {
+                  missingFields.push("• เลขใบกำกับภาษี (ต้องเป็น 13 หลัก)");
+                }
 
                 Swal.fire({
                   icon: "warning",
