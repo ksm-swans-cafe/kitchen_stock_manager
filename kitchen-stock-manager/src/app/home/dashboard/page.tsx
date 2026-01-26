@@ -715,6 +715,15 @@ export default function Dashboard() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Listen for fullscreen event from Navigatebar
+  useEffect(() => {
+    const handleDashboardFullscreen = () => {
+      toggleFullscreen();
+    };
+    window.addEventListener('dashboard-fullscreen', handleDashboardFullscreen);
+    return () => window.removeEventListener('dashboard-fullscreen', handleDashboardFullscreen);
+  }, []);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -1661,43 +1670,32 @@ export default function Dashboard() {
       {/* Main Content */}
       {!isLoading && !error && allCards.length > 0 && (
         <>
-          {/* Header Bar (Legend & Toggle) - Fixed Height */}
-          <div className='flex-none transition-all'>
-            {!fullscreen && (
-              <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
-                <div className='hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs'>
-                  {dayColorLegend.map((day) => (
-                    <div key={day.label} className='flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100'>
-                      <span className={`w-2.5 h-2.5 rounded-full ${day.className}`} />
-                      <span>{day.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Button className='hidden lg:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 shadow-md' size='sm' onClick={toggleFullscreen}>
-                  <Maximize2 className='w-5 h-5' />
-                  เต็มหน้าจอ
-                </Button>
+          {/* Fullscreen Exit Button - Fixed position when in fullscreen mode */}
+          {fullscreen && (
+            <div className='fixed top-4 left-4 z-50 flex items-center gap-2'>
+              {/* Exit Fullscreen Button - Icon only */}
+              <button 
+                onClick={toggleFullscreen} 
+                className='flex items-center justify-center w-8 h-8 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-110'
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                title='ออกจากโหมดเต็มจอ'
+              >
+                <Minimize2 className='w-4 h-4' style={{ color: 'white' }} />
+              </button>
+              {/* Day Color Legend */}
+              <div 
+                className='flex items-center gap-1.5 text-[11px] text-white backdrop-blur-sm px-3 py-1.5 rounded-full'
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+              >
+                {dayColorLegend.map((day) => (
+                  <div key={day.label} className='flex items-center gap-1'>
+                    <span className={`w-2.5 h-2.5 rounded-full ${day.className}`} />
+                    <span>{day.label}</span>
+                  </div>
+                ))}
               </div>
-            )}
-
-            {fullscreen && (
-              <div className='flex justify-end mb-2'>
-                <button onClick={toggleFullscreen} className='flex items-center gap-1 text-[11px] sm:text-xs text-white/80 bg-black/40 px-3 py-1.5 rounded-full mr-2 hover:bg-black/60 transition-colors'>
-                  <Minimize2 className='w-4 h-4' />
-                  ออกจากโหมดเต็มจอ
-                </button>
-                <div className='flex items-center gap-1 text-[10px] text-white/90 bg-black/30 px-2 py-1 rounded-full'>
-                  {dayColorLegend.map((day) => (
-                    <div key={day.label} className='flex items-center gap-1'>
-                      <span className={`w-2 h-2 rounded-full ${day.className}`} />
-                      <span>{day.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* [LAYOUT หลัก] แสดงการ์ดทั้งหมด พร้อม highlight สำหรับการ์ดที่ปักหมุด */}
           <div className='flex-1 flex gap-4 overflow-hidden min-h-0'>

@@ -5,6 +5,18 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCartStore } from "@/stores/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { Maximize2 } from "lucide-react";
+
+// สีของวันสำหรับ Legend
+const dayColorLegend = [
+  { label: "จ.", className: "bg-yellow-400" },
+  { label: "อ.", className: "bg-pink-400" },
+  { label: "พ.", className: "bg-emerald-400" },
+  { label: "พฤ.", className: "bg-orange-400" },
+  { label: "ศ.", className: "bg-sky-400" },
+  { label: "ส.", className: "bg-indigo-400" },
+  { label: "อา.", className: "bg-rose-400" },
+];
 
 // สร้าง mapping สำหรับแปลง path เป็นชื่อภาษาไทย
 const pathNameMap: Record<string, string> = {
@@ -19,6 +31,7 @@ const pathNameMap: Record<string, string> = {
   ingredients: "วัตถุดิบ",
   finance: "การเงิน",
   summarylist: "สรุปรายการ",
+  dashboard: "แดชบอร์ด",
   // "summaryprice": "ราคาสรุปรายการ",
 };
 
@@ -31,6 +44,8 @@ export default function Navigatebar() {
 
   const items = useCartStore((state: { items: { menu_total: number }[] }) => state.items);
   const selected_lunchboxes = useCartStore((state: { selected_lunchboxes: { quantity: number }[] }) => state.selected_lunchboxes);
+
+  const isDashboardPage = pathname === "/home/dashboard";
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -129,8 +144,32 @@ export default function Navigatebar() {
           })}
         </ul>
 
-        {(isOrderPage || isScrolled) && (
-          <div className='absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 flex gap-2'>
+        {(isOrderPage || isScrolled || isDashboardPage) && (
+          <div className='absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 flex gap-2 items-center'>
+            {/* Dashboard: Day Color Legend + Fullscreen Button */}
+            {isDashboardPage && (
+              <>
+                <div className='hidden md:flex items-center gap-1 text-[10px] bg-white/80 px-2 py-1 rounded-full shadow-sm'>
+                  {dayColorLegend.map((day) => (
+                    <div key={day.label} className='flex items-center gap-0.5'>
+                      <span className={`w-2.5 h-2.5 rounded-full ${day.className}`} />
+                      <span className='text-gray-600'>{day.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => {
+                    // Dispatch custom event for dashboard to handle fullscreen
+                    window.dispatchEvent(new CustomEvent('dashboard-fullscreen'));
+                  }}
+                  className='hidden lg:flex items-center gap-1 text-[10px] bg-white/80 hover:bg-white px-2 py-1 rounded-full shadow-sm transition-colors'
+                  title='เข้าสู่โหมดเต็มจอ'
+                >
+                  <Maximize2 className='w-3 h-3 text-gray-600' />
+                  <span className='text-gray-600'>เต็มจอ</span>
+                </button>
+              </>
+            )}
             {isOrderPage && (
               <Link href='/home/order/cart' className='bg-gray-300 hover:bg-gray-400 rounded-full p-2 transition-colors inline-flex items-center justify-center' aria-label='ตะกร้าสินค้า'>
                 <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round'>
@@ -152,7 +191,7 @@ export default function Navigatebar() {
                 )}
               </Link>
             )}
-            {!isOrderPage && (
+            {!isOrderPage && !isDashboardPage && (
               <button onClick={scrollToTop} className='bg-gray-300 hover:bg-gray-400 rounded-full p-2 transition-colors' aria-label='เลื่อนขึ้นด้านบน'>
                 <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
                   <path d='M18 15l-6-6-6 6' />
