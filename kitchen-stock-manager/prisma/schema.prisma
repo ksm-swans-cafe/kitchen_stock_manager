@@ -119,9 +119,16 @@ type NewCartLunchbox {
   lunchbox_limit      Int
   lunchbox_menu       NewCartLunchboxLunchboxMenu[]
   lunchbox_name       String
+  lunchbox_packaging  NewCartLunchboxPackaging?
   lunchbox_set_name   String
   lunchbox_total      Int
   lunchbox_total_cost BigInt
+}
+
+type NewCartLunchboxPackaging {
+  fukYai    Int
+  box2Chan  Int
+  box3Chan  Int
 }
 
 type NewCartLunchboxLunchboxMenu {

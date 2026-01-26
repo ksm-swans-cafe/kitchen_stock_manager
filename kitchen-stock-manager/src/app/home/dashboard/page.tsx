@@ -53,7 +53,47 @@ interface DayCard {
   isPinned?: boolean;
   minutesToSend?: number;
   description: CartDescription[];
+  packaging: PackagingInfo;
 }
+
+// Packaging Info Interface
+interface PackagingInfo {
+  fukYai: number;      // ฟูกใหญ่
+  box2Chan: number;    // กล่อง 2 ช่องดำ
+  box3Chan: number;    // กล่อง 3 ช่องดำ
+}
+
+// คำนวณ packaging จาก set name และ quantity
+const calculatePackaging = (setName: string, quantity: number): { fukYai: number; box2Chan: number; box3Chan: number } => {
+  const normalizedSet = setName.toUpperCase().trim();
+  
+  // Set A = กล่อง 2 ช่องดำ
+  // Set B = กล่อง 3 ช่องดำ
+  // Set C = กล่อง 2 ช่องดำ, ฟูกใหญ่
+  // Set D = กล่อง 2 ช่องดำ, ฟูกใหญ่
+  // Set E = กล่อง 2 ช่องดำ, ฟูกใหญ่
+  // Set F = กล่อง 2 ช่องดำ, ฟูกใหญ่
+  // Set G = กล่อง 2 ช่องดำ, ฟูกใหญ่
+  
+  let fukYai = 0;
+  let box2Chan = 0;
+  let box3Chan = 0;
+  
+  if (normalizedSet.includes('A') || normalizedSet === 'A') {
+    box2Chan = quantity;
+  } else if (normalizedSet.includes('B') || normalizedSet === 'B') {
+    box3Chan = quantity;
+  } else if (normalizedSet.includes('C') || normalizedSet === 'C' ||
+             normalizedSet.includes('D') || normalizedSet === 'D' ||
+             normalizedSet.includes('E') || normalizedSet === 'E' ||
+             normalizedSet.includes('F') || normalizedSet === 'F' ||
+             normalizedSet.includes('G') || normalizedSet === 'G') {
+    box2Chan = quantity;
+    fukYai = quantity;
+  }
+  
+  return { fukYai, box2Chan, box3Chan };
+};
 
 // Edit Card Modal State Interface
 interface EditCardState {
@@ -78,6 +118,11 @@ interface ApiResponse {
       lunchbox_name: string;
       set: string;
       quantity: number;
+      packaging?: {
+        fukYai: number;
+        box2Chan: number;
+        box3Chan: number;
+      } | null;
       lunchbox_menu: Array<{
         menu_name: string;
         menu_quantity: number;
@@ -726,6 +771,23 @@ export default function Dashboard() {
         // แปลงปี พ.ศ. เป็น 2 หลักท้าย (เช่น 2569 -> 69)
         const shortYear = String(year).slice(-2);
 
+        // คำนวณ packaging จากแต่ละ lunchbox (ใช้จาก DB ถ้ามี, fallback คำนวณถ้าไม่มี)
+        const packaging: PackagingInfo = { fukYai: 0, box2Chan: 0, box3Chan: 0 };
+        item.items.forEach((lunchbox) => {
+          if (lunchbox.packaging) {
+            // ใช้ packaging จาก database
+            packaging.fukYai += lunchbox.packaging.fukYai;
+            packaging.box2Chan += lunchbox.packaging.box2Chan;
+            packaging.box3Chan += lunchbox.packaging.box3Chan;
+          } else {
+            // Fallback: คำนวณ packaging สำหรับข้อมูลเก่าที่ยังไม่มี packaging
+            const packResult = calculatePackaging(lunchbox.set, lunchbox.quantity);
+            packaging.fukYai += packResult.fukYai;
+            packaging.box2Chan += packResult.box2Chan;
+            packaging.box3Chan += packResult.box3Chan;
+          }
+        });
+
         return {
           id: index + 1, // แนะนำให้ใช้ ID จริงจาก API ถ้ามี เพื่อความแม่นยำในการระบุตัวตน
           cartId: item.id, // เก็บ id จริงจาก API เพื่อใช้ในการบันทึก note
@@ -740,6 +802,7 @@ export default function Dashboard() {
           isPinned: item.pinned || false,
           minutesToSend,
           description: item.description || [],
+          packaging,
         };
       })
       .filter((card) => card.minutesToSend >= 0)
@@ -802,7 +865,7 @@ export default function Dashboard() {
         key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")}
         style={isPinned ? auraConfig.style : undefined}
         // Logic ความสูง: h-full เพื่อให้ยืดตาม Container, min-w เพื่อกำหนดความกว้างขั้นต่ำ
-        className={`group/card bg-white rounded-2xl overflow-hidden flex flex-col h-full 
+        className={`group/card bg-white rounded-2xl overflow-hidden flex flex-col h-full
           min-w-[300px] transition-all duration-300
           ${isPinned ? auraConfig.class : "shadow"}
           ${timeAlert && isPinned ? "ring-4 ring-amber-300" : ""}
@@ -895,7 +958,7 @@ export default function Dashboard() {
         </div>
 
         {/* CONTENT (Scrollable Y) */}
-        <div className='flex-1 bg-white overflow-y-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'>
+        <div className='flex-1 bg-white overflow-y-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent min-h-0'>
           <table className='w-full table-fixed'>
             <colgroup>
               <col className='w-[70%]' />
@@ -918,7 +981,7 @@ export default function Dashboard() {
                   <React.Fragment key={index}>
                     {/* Main menu item row */}
                     <tr 
-                      className={`group/menuitem cursor-pointer transition-colors ${index % 2 === 0 ? "bg-white hover:bg-gray-100" : "bg-gray-50 hover:bg-gray-100"}`}
+                      className={`group/menuitem cursor-pointer transition-colors ${index % 2 === 0 ? "bg-white hover:bg-gray-100" : "bg-gray-200 hover:bg-gray-300"}`}
                       onClick={() => toggleExpandMenuItem(menuKey)}
                     >
                       <td className='px-4 py-2 !text-black align-middle'>
@@ -1355,10 +1418,34 @@ export default function Dashboard() {
               )
             )}
           </div>
+
         </div>
 
-        {/* FOOTER (Fixed) */}
-        <div className='flex-none border-t bg-white py-3'>
+        {/* FOOTER - Fixed at bottom of card using flex */}
+        <div className='flex-none border-t bg-white py-2 px-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'>
+          {/* Packaging Info */}
+          {(day.packaging.fukYai > 0 || day.packaging.box2Chan > 0 || day.packaging.box3Chan > 0) && (
+            <div className='mb-2 text-sm'>
+              {day.packaging.fukYai > 0 && (
+                <div className='flex justify-between items-center py-1 px-2 bg-purple-200 rounded mb-1'>
+                  <span className='font-semibold text-purple-900'>ฟูกใหญ่</span>
+                  <span className='font-bold text-purple-900'>{day.packaging.fukYai}</span>
+                </div>
+              )}
+              {day.packaging.box2Chan > 0 && (
+                <div className='flex justify-between items-center py-1 px-2 bg-blue-200 rounded mb-1'>
+                  <span className='font-semibold text-blue-900'>กล่อง 2 ช่องดำ</span>
+                  <span className='font-bold text-blue-900'>{day.packaging.box2Chan}</span>
+                </div>
+              )}
+              {day.packaging.box3Chan > 0 && (
+                <div className='flex justify-between items-center py-1 px-2 bg-green-200 rounded mb-1'>
+                  <span className='font-semibold text-green-900'>กล่อง 3 ช่องดำ</span>
+                  <span className='font-bold text-green-900'>{day.packaging.box3Chan}</span>
+                </div>
+              )}
+            </div>
+          )}
           <p className='text-center font-semibold text-red-600'>{day.totalText}</p>
         </div>
       </div>
@@ -1572,9 +1659,9 @@ export default function Dashboard() {
                   ))}
                 </div>
 
-                <Button className='hidden lg:flex items-center gap-2' size='sm' onClick={toggleFullscreen}>
-                  <Maximize2 className='w-4 h-4' />
-                  FullScreen
+                <Button className='hidden lg:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 shadow-md' size='sm' onClick={toggleFullscreen}>
+                  <Maximize2 className='w-5 h-5' />
+                  เต็มหน้าจอ
                 </Button>
               </div>
             )}
@@ -1598,16 +1685,17 @@ export default function Dashboard() {
           </div>
 
           {/* [LAYOUT หลัก] แสดงการ์ดทั้งหมด พร้อม highlight สำหรับการ์ดที่ปักหมุด */}
-          <div className='flex-1 flex gap-4 overflow-hidden'>
+          <div className='flex-1 flex gap-4 overflow-hidden min-h-0'>
             {/* Scrollable Cards Area */}
-            <div className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden pb-2 snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2`}>
+            <div className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2`}>
               {allCards.length > 0
                 ? allCards.map((day) => (
                     <div
                       key={day.id}
-                      className={`h-full flex-none transition-all duration-300
+                      className={`flex-none transition-all duration-300
                       w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]
-                    `}>
+                    `}
+                      style={{ height: '100%' }}>
                       {renderDayCard(day, false)}
                     </div>
                   ))

@@ -21,6 +21,37 @@ export interface LunchBox {
   lunchbox_total_price: number;
 }
 
+// Packaging Info Interface
+export interface PackagingInfo {
+  fukYai: number;      // ฟูกใหญ่
+  box2Chan: number;    // กล่อง 2 ช่องดำ
+  box3Chan: number;    // กล่อง 3 ช่องดำ
+}
+
+// คำนวณ packaging จาก set name และ quantity
+export const calculatePackaging = (setName: string, quantity: number): PackagingInfo => {
+  const normalizedSet = setName.toUpperCase().replace(/^SET\s*/i, '').trim();
+  
+  let fukYai = 0;
+  let box2Chan = 0;
+  let box3Chan = 0;
+  
+  if (normalizedSet === 'A' || normalizedSet.startsWith('A ')) {
+    box2Chan = quantity;
+  } else if (normalizedSet === 'B' || normalizedSet.startsWith('B ')) {
+    box3Chan = quantity;
+  } else if (normalizedSet === 'C' || normalizedSet.startsWith('C ') ||
+             normalizedSet === 'D' || normalizedSet.startsWith('D ') ||
+             normalizedSet === 'E' || normalizedSet.startsWith('E ') ||
+             normalizedSet === 'F' || normalizedSet.startsWith('F ') ||
+             normalizedSet === 'G' || normalizedSet.startsWith('G ')) {
+    box2Chan = quantity;
+    fukYai = quantity;
+  }
+  
+  return { fukYai, box2Chan, box3Chan };
+};
+
 interface SelectedLunchbox {
   lunchbox_name: string;
   lunchbox_set: string;
@@ -28,7 +59,8 @@ interface SelectedLunchbox {
   selected_menus: MenuItem[];
   quantity: number;
   lunchbox_total_cost: string;
-  note?: string; // เพิ่ม note field
+  note?: string;
+  packaging?: PackagingInfo;
 }
 
 interface CartCartDescription {

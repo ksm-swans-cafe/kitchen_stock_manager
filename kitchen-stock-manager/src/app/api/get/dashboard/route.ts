@@ -118,6 +118,7 @@ export async function GET() {
         lunchbox_name: lunchbox.lunchbox_name,
         set: lunchbox.lunchbox_set_name,
         quantity: lunchbox.lunchbox_total,
+        packaging: lunchbox.lunchbox_packaging || null,
         lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => ({
           menu_name: menu.menu_name,
           menu_quantity: menu.menu_total,

@@ -696,6 +696,7 @@ ${pay_deposit && pay_deposit !== "no"
           lunchbox_limit: lunchbox.lunchbox_limit,
           lunchbox_quantity: lunchbox.quantity,
           lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
+          lunchbox_packaging: lunchbox.packaging || null,
           lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
             menu_name: menu.menu_name,
             menu_subname: menu.menu_subname,
