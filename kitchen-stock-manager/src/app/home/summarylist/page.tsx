@@ -17,7 +17,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { formatDate, EventInput } from "@fullcalendar/core";
 
-import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
@@ -25,20 +25,22 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
 import { Input } from "@/share/ui/input";
 
-import ResponsiveOrderId from "@/app/components/ResponsiveOrderId";
-import StatusDropdown from "@/app/components/StatusDropdownsummary";
+import ResponsiveOrderId from "@/components/summary&history/ResponsiveOrderId";
+import StatusDropdown from "@/components/summary&history/StatusDropdownsummary";
 import PaginationComponent from "@/components/ui/Totalpage";
 import { Loading } from "@/components/loading/loading";
 
 import SummaryIcon from "@/assets/summarylist.png";
 
 import { fetcher } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 import { Ingredient, MenuItem, Cart, CartItem, RawCart, Lunchbox } from "@/types/interface_summary_orderhistory";
 
 const SummaryList: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { userName } = useAuth();
   const filterCartId = searchParams.get('cartId'); // รับ cartId จาก query parameter สำหรับ filter จาก dashboard
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -71,15 +73,16 @@ const SummaryList: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false); // Flag to prevent dialog reset during deletion
   const [selectedMenuForLunchbox, setSelectedMenuForLunchbox] = useState<{ [key: number]: string }>({}); // Store selected menu index for each lunchbox
   const [editMenuDialog, setEditMenuDialog] = useState<{
-    cart_id: string;
-    cart_delivery_date: string;
-    cart_receive_time: string;
-    cart_export_time: string;
-    cart_customer_tel: string;
-    cart_customer_name: string;
-    cart_location_send: string;
-    cart_shipping_cost: number;
-    cart_lunchbox: {
+    id: string;
+    order_number: string;
+    delivery_date: string;
+    receive_time: string;
+    export_time: string;
+    customer_tel: string;
+    customer_name: string;
+    location_send: string;
+    shipping_cost: number;
+    lunchbox: {
       lunchbox_name: string;
       lunchbox_set_name: string;
       lunchbox_limit: number;
@@ -119,6 +122,12 @@ const SummaryList: React.FC = () => {
       menu_description: string;
     };
   } | null>(null);
+  const [editMenuDialogTimes, setEditMenuDialogTimes] = useState<{
+    exportHour: string;
+    exportMinute: string;
+    receiveHour: string;
+    receiveMinute: string;
+  } | null>(null);
   const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts/summarylist", fetcher, { refreshInterval: 30000 });
 
   const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
@@ -126,6 +135,10 @@ const SummaryList: React.FC = () => {
   const isLoading = !cartsData || !ingredientData;
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
   const [carts, setCarts] = useState<Cart[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentCopyText, setPaymentCopyText] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+  const [selectedPaymentCart, setSelectedPaymentCart] = useState<Cart | null>(null);
 
   // เลื่อนหน้าจอขึ้นด้านบนทุกครั้งที่เปลี่ยนหน้า
   useEffect(() => {
@@ -170,35 +183,35 @@ const SummaryList: React.FC = () => {
 
         const formattedOrders: Cart[] = cartsData.map((cart: RawCart) => {
           // ตรวจสอบและให้ค่าเริ่มต้น
-          if (!cart.cart_create_date) {
-            // console.warn(`Cart ${cart.cart_id} has no cart_create_date`);
+          if (!cart.create_date) {
+            // console.warn(`Cart ${cart.id} has no create_date`);
             return {
-              id: cart.cart_id || "no-id",
-              orderNumber: `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
+              id: cart.id || "no-id",
+              orderNumber: `ORD${cart.id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`,
               name: "ไม่มีข้อมูลวันที่",
               date: "ไม่ระบุ",
               dateISO: "",
               time: "ไม่ระบุ",
               sets: 0,
-              price: cart.cart_total_price || 0,
-              status: cart.cart_status,
-              createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
+              price: cart.total_price || 0,
+              status: cart.status,
+              createdBy: cart.username || "ไม่ทราบผู้สร้าง",
               menuItems: [],
               allIngredients: [],
-              order_number: cart.cart_order_number,
-              cart_lunchbox: [],
-              cart_delivery_date: cart.cart_delivery_date,
-              cart_receive_time: cart.cart_receive_time,
-              cart_export_time: cart.cart_export_time,
-              cart_customer_tel: cart.cart_customer_tel,
-              cart_customer_name: cart.cart_customer_name,
-              cart_location_send: cart.cart_location_send,
-              cart_shipping_cost: cart.cart_shipping_cost,
+              order_number: cart.order_number,
+              lunchbox: [],
+              delivery_date: cart.delivery_date,
+              receive_time: cart.receive_time,
+              export_time: cart.export_time,
+              customer_tel: cart.customer_tel,
+              customer_name: cart.customer_name,
+              location_send: cart.location_send,
+              shipping_cost: cart.shipping_cost,
             };
           }
 
           // Normalize datetime string to support both "YYYY-MM-DD HH:mm" และ ISO "YYYY-MM-DDTHH:mm"
-          const normalizedDateTime = cart.cart_create_date.replace("T", " ");
+          const normalizedDateTime = cart.create_date.replace("T", " ");
           const [rawDate, timePartWithZone] = normalizedDateTime.split(" ");
           const [year, month, day] = rawDate.split("-");
           const dateObjectForLocale = new Date(Number(year), Number(month) - 1, Number(day));
@@ -212,7 +225,7 @@ const SummaryList: React.FC = () => {
               })
               .replace(/ /g, " ");
 
-          const date = new Date(cart.cart_create_date);
+          const date = new Date(cart.create_date);
           const formattedDateISO = Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
 
           // แก้ไขการแยกเวลา - รองรับทั้ง +timezone และ Z
@@ -226,20 +239,20 @@ const SummaryList: React.FC = () => {
             formattedTime = date.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", hour12: false }).trim();
           }
 
-          // ประมวลผล cart_lunchbox
+          // ประมวลผล lunchbox
           let cartLunchbox: Lunchbox[] = [];
-          if (cart.cart_lunchbox) {
-            if (typeof cart.cart_lunchbox === "string") {
-              const parsedLunchbox = safeParseJSON(cart.cart_lunchbox);
+          if (cart.lunchbox) {
+            if (typeof cart.lunchbox === "string") {
+              const parsedLunchbox = safeParseJSON(cart.lunchbox);
               if (parsedLunchbox && Array.isArray(parsedLunchbox)) {
                 cartLunchbox = parsedLunchbox;
               }
-            } else if (Array.isArray(cart.cart_lunchbox)) {
-              cartLunchbox = cart.cart_lunchbox;
+            } else if (Array.isArray(cart.lunchbox)) {
+              cartLunchbox = cart.lunchbox;
             }
           }
 
-          // ประมวลผล menuItems จาก cart_lunchbox
+          // ประมวลผล menuItems จาก lunchbox
           const menuItems: MenuItem[] = [];
           cartLunchbox.forEach((lunchbox) => {
             lunchbox.lunchbox_menu.forEach((menu) => {
@@ -283,36 +296,36 @@ const SummaryList: React.FC = () => {
             ingredient_status: menu.menu_ingredients.every((ing: Ingredient) => ing.ingredient_status ?? false),
           }));
 
-          const orderNumber = cart.cart_order_number || `ORD${cart.cart_id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
+          const orderNumber = cart.order_number || `ORD${cart.id?.slice(0, 5)?.toUpperCase() || "XXXXX"}`;
           return {
-            id: cart.cart_id || "no-id",
+            id: cart.id || "no-id",
             orderNumber,
             name: menuDisplayName,
             date: formattedDate,
             dateISO: formattedDateISO,
             time: formattedTime,
             sets: totalSets,
-            price: cart.cart_total_price || 0,
-            status: cart.cart_status,
-            createdBy: cart.cart_username || "ไม่ทราบผู้สร้าง",
+            price: cart.total_price || 0,
+            status: cart.status,
+            createdBy: cart.username || "ไม่ทราบผู้สร้าง",
             menuItems,
             allIngredients,
-            order_number: cart.cart_order_number,
-            cart_delivery_date: cart.cart_delivery_date,
-            cart_receive_time: cart.cart_receive_time,
-            cart_export_time: cart.cart_export_time,
-            cart_customer_tel: cart.cart_customer_tel,
-            cart_customer_name: cart.cart_customer_name,
-            cart_location_send: cart.cart_location_send,
-            cart_shipping_cost: cart.cart_shipping_cost,
-            cart_invoice_tex: cart.cart_invoice_tex,
-            cart_lunchbox: cartLunchbox,
+            order_number: cart.order_number,
+            delivery_date: cart.delivery_date,
+            receive_time: cart.receive_time,
+            export_time: cart.export_time,
+            customer_tel: cart.customer_tel,
+            customer_name: cart.customer_name,
+            location_send: cart.location_send,
+            shipping_cost: cart.shipping_cost,
+            invoice_tex: cart.invoice_tex,
+            lunchbox: cartLunchbox,
           };
         });
 
         formattedOrders.sort((a, b) => {
-          const dateA = Time.convertThaiDateToISO(a.cart_delivery_date);
-          const dateB = Time.convertThaiDateToISO(b.cart_delivery_date);
+          const dateA = Time.convertThaiDateToISO(a.delivery_date);
+          const dateB = Time.convertThaiDateToISO(b.delivery_date);
 
           if (!dateA) return 1;
           if (!dateB) return -1;
@@ -373,8 +386,8 @@ const SummaryList: React.FC = () => {
     const allowedStatuses = ["pending", "completed"];
 
     cartsData.forEach((cart: RawCart) => {
-      if (!allowedStatuses.includes(cart.cart_status)) return;
-      const deliveryDate = Time.convertThaiDateToISO(cart.cart_delivery_date);
+      if (!allowedStatuses.includes(cart.status)) return;
+      const deliveryDate = Time.convertThaiDateToISO(cart.delivery_date);
       if (!deliveryDate) return;
       if (!groupedByDate[deliveryDate]) groupedByDate[deliveryDate] = [];
 
@@ -433,8 +446,8 @@ const SummaryList: React.FC = () => {
     setIsSaving(cartId);
     try {
       const payload = {
-        cart_export_time: exportTime,
-        cart_receive_time: receiveTime,
+        export_time: exportTime,
+        receive_time: receiveTime,
       };
       const response = await axios.patch(`/api/edit/cart_time/${cartId}`, payload);
 
@@ -617,7 +630,7 @@ const SummaryList: React.FC = () => {
     AllIngredientsForDate: async (date: string) => {
       const previousCarts = [...carts];
 
-      const targetCarts = carts.filter((cart) => Time.convertThaiDateToISO(cart.cart_delivery_date) === date);
+      const targetCarts = carts.filter((cart) => Time.convertThaiDateToISO(cart.delivery_date) === date);
 
       // ตรวจสอบว่ามี cart ที่ยังไม่ได้ชำระเงินหรือไม่
       const unpaidCarts = targetCarts.filter((cart) => cart.status !== "completed");
@@ -710,7 +723,7 @@ const SummaryList: React.FC = () => {
 
   const handleDateClick = (info: { dateStr: string }) => {
     const selectedDateStr = info.dateStr;
-    const filteredOrders = allCarts.filter((cart) => Time.convertThaiDateToISO(cart.cart_delivery_date) === selectedDateStr);
+    const filteredOrders = allCarts.filter((cart) => Time.convertThaiDateToISO(cart.delivery_date) === selectedDateStr);
     setSelectedOrders(filteredOrders);
     setIsOrderModalOpen(true);
     setSelectedDate(new Date(selectedDateStr));
@@ -773,11 +786,11 @@ const SummaryList: React.FC = () => {
 
     if (selectedDate) {
       const selectedDateISO = selectedDate.toISOString().split("T")[0];
-      filtered = filtered.filter((order) => Time.convertThaiDateToISO(order.cart_delivery_date) === selectedDateISO);
+      filtered = filtered.filter((order) => Time.convertThaiDateToISO(order.delivery_date) === selectedDateISO);
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy, order.cart_customer_tel, order.cart_customer_name, order.order_number, order.cart_location_send].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
+      filtered = filtered.filter((order) => [order.name, order.id, order.createdBy, order.customer_tel, order.customer_name, order.order_number, order.location_send].some((field) => (field ?? "").toLowerCase().includes(searchTerm.toLowerCase())));
     }
     if (filterStatus !== "ทั้งหมด") {
       filtered = filtered.filter((order) => getStatus("text", order.status) === filterStatus);
@@ -787,7 +800,7 @@ const SummaryList: React.FC = () => {
     }
 
     const groupedByDate = filtered.reduce((acc, cart) => {
-      const deliveryDateISO = Time.convertThaiDateToISO(cart.cart_delivery_date) || "no-date";
+      const deliveryDateISO = Time.convertThaiDateToISO(cart.delivery_date) || "no-date";
       if (!acc[deliveryDateISO]) acc[deliveryDateISO] = [];
 
       acc[deliveryDateISO].push(cart);
@@ -796,10 +809,10 @@ const SummaryList: React.FC = () => {
 
     Object.values(groupedByDate).forEach((orders) => {
       orders.sort((a, b) => {
-        const exportTimeA = Time.InMinutes(a.cart_export_time);
-        const exportTimeB = Time.InMinutes(b.cart_export_time);
-        const receiveTimeA = Time.InMinutes(a.cart_receive_time);
-        const receiveTimeB = Time.InMinutes(b.cart_receive_time);
+        const exportTimeA = Time.InMinutes(a.export_time);
+        const exportTimeB = Time.InMinutes(b.export_time);
+        const receiveTimeA = Time.InMinutes(a.receive_time);
+        const receiveTimeB = Time.InMinutes(b.receive_time);
 
         if (exportTimeA !== exportTimeB) return exportTimeA - exportTimeB;
         if (receiveTimeA !== receiveTimeB) return receiveTimeA - receiveTimeB;
@@ -851,7 +864,7 @@ const SummaryList: React.FC = () => {
 
   const groupedOrders = useMemo(() => {
     const grouped = filteredAndSortedOrders.reduce((acc, cart) => {
-      const deliveryDateISO = Time.convertThaiDateToISO(cart.cart_delivery_date);
+      const deliveryDateISO = Time.convertThaiDateToISO(cart.delivery_date);
       const dateDisplay = deliveryDateISO
         ? new Date(deliveryDateISO)
           .toLocaleDateString("th-TH", {
@@ -867,10 +880,10 @@ const SummaryList: React.FC = () => {
 
     Object.values(grouped).forEach((orders) => {
       orders.sort((a, b) => {
-        const exportTimeA = Time.InMinutes(a.cart_export_time);
-        const exportTimeB = Time.InMinutes(b.cart_export_time);
-        const receiveTimeA = Time.InMinutes(a.cart_receive_time);
-        const receiveTimeB = Time.InMinutes(b.cart_receive_time);
+        const exportTimeA = Time.InMinutes(a.export_time);
+        const exportTimeB = Time.InMinutes(b.export_time);
+        const receiveTimeA = Time.InMinutes(a.receive_time);
+        const receiveTimeB = Time.InMinutes(b.receive_time);
 
         if (exportTimeA !== exportTimeB) {
           return exportTimeA - exportTimeB;
@@ -902,8 +915,8 @@ const SummaryList: React.FC = () => {
     const otherDateGroups = Object.entries(grouped).filter(([date]) => date !== currentDateDisplay);
 
     const sortedOtherDates = otherDateGroups.sort((a, b) => {
-      const dateA = Time.convertThaiDateToISO(a[1][0].cart_delivery_date);
-      const dateB = Time.convertThaiDateToISO(b[1][0].cart_delivery_date);
+      const dateA = Time.convertThaiDateToISO(a[1][0].delivery_date);
+      const dateB = Time.convertThaiDateToISO(b[1][0].delivery_date);
 
       if (!dateA) return 1;
       if (!dateB) return -1;
@@ -939,7 +952,7 @@ const SummaryList: React.FC = () => {
         [key: string]: { checked: number; total: number };
       } = {};
 
-      const ordersOnDate = filteredAndSortedOrders.filter((cart) => Time.convertThaiDateToISO(cart.cart_delivery_date) === date);
+      const ordersOnDate = filteredAndSortedOrders.filter((cart) => Time.convertThaiDateToISO(cart.delivery_date) === date);
 
       ordersOnDate.forEach((cart) => {
         cart.allIngredients.forEach((menuGroup) => {
@@ -1017,6 +1030,104 @@ const SummaryList: React.FC = () => {
     mutateCarts();
   };
 
+  const generatePaymentCopyText = (cart: Cart): string => {
+    const customerName = cart.customer_name || "ไม่ระบุ";
+    const channelAccess = (cart as any).channel_access || "ไม่ระบุ";
+    const orderName = (cart as any).order_name || customerName;
+    const deliveryDate = cart.delivery_date || "ไม่ระบุ";
+    const exportTime = cart.export_time || "ไม่ระบุ";
+    const receiveTime = cart.receive_time || "ไม่ระบุ";
+    const locationSend = cart.location_send || "ไม่ระบุ";
+    const shippingCost = cart.shipping_cost || "0";
+    const shippingBy = (cart as any).shipping_by || "ไม่ระบุ";
+    const receiveName = (cart as any).receive_name || customerName;
+    const customerTel = cart.customer_tel || "ไม่ระบุ";
+    const invoiceTex = cart.invoice_tex || "ไม่ระบุ";
+
+    // คำนวณราคาอาหารจาก lunchbox
+    let totalFoodCost = 0;
+    let lunchboxList = "";
+    let totalBoxes = 0;
+
+    if (cart.lunchbox && cart.lunchbox.length > 0) {
+      cart.lunchbox.forEach((lunchbox, idx) => {
+        const lunchboxTotalCost = Number(lunchbox.lunchbox_total_cost) || 0;
+        const lunchboxTotal = Number(lunchbox.lunchbox_total) || 0;
+        totalBoxes += lunchboxTotal;
+        totalFoodCost += lunchboxTotalCost;
+
+        lunchboxList += `${idx + 1}.${lunchbox.lunchbox_name} - ${lunchbox.lunchbox_set_name}\n`;
+        if (lunchbox.lunchbox_menu && lunchbox.lunchbox_menu.length > 0) {
+          lunchbox.lunchbox_menu.forEach((menu) => {
+            const menuCost = Number(menu.menu_cost) || 0;
+            lunchboxList += `      + ${menu.menu_name}\n`;
+            lunchboxList += `      เซ็ตละ ${menuCost.toLocaleString("th-TH")} บาท\n`;
+          });
+        }
+        lunchboxList += `      จำนวน ${lunchboxTotal} กล่อง\n`;
+        lunchboxList += `      รวม ${lunchboxTotalCost.toLocaleString("th-TH")} บาท\n`;
+      });
+    } else {
+      // ถ้าไม่มี lunchbox ให้ใช้ราคาจาก price
+      totalFoodCost = cart.price || 0;
+      totalBoxes = cart.sets || 0;
+    }
+
+    const shippingCostNum = Number(shippingCost.replace(/[^\d]/g, "")) || 0;
+    const totalCost = totalFoodCost + shippingCostNum;
+
+    return `📌รับออเดอร์ คุณ ${orderName} 
+ช่องทางที่สั่ง : ${channelAccess}
+ผู้รับออเดอร์ : แอดมิน${userName || "ไม่ระบุ"}
+
+✅ รายละเอียดสำหรับจัดส่ง
+1.วันที่รับสินค้า : ${deliveryDate}
+2.เวลาส่งสินค้า : ${exportTime}
+3.เวลารับสินค้า : ${receiveTime}
+4.สถานที่จัดส่ง : ${locationSend}
+5.ค่าจัดส่ง ${shippingCostNum.toLocaleString("th-TH")} บาท ส่งโดย ${shippingBy}
+6.ชื่อผู้รับสินค้า : ${receiveName}
+7.เบอร์โทร : ${customerTel}
+8.ออกบิลในนาม : ${customerName}
+9.ที่อยู่ : ${locationSend}
+10.เลขประจำตัวผู้เสียภาษี : ${invoiceTex}
+
+✅รายการอาหาร ${totalBoxes} กล่อง 
+      ${lunchboxList}
+รวมค่าอาหาร ${totalFoodCost.toLocaleString("th-TH")} บาท
+
+✅รวมทั้งหมด ${totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
+`;
+  };
+
+  const handlePaymentCompleted = (cart: Cart) => {
+    const copyText = generatePaymentCopyText(cart);
+    setPaymentCopyText(copyText);
+    setSelectedPaymentCart(cart);
+    setShowPaymentModal(true);
+    // Auto copy to clipboard
+    navigator.clipboard.writeText(copyText).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }).catch(() => {
+      // ถ้า copy ไม่ได้ ไม่เป็นไร
+    });
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(paymentCopyText).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
+
+  const handleFinishPayment = () => {
+    setShowPaymentModal(false);
+    setPaymentCopyText("");
+    setSelectedPaymentCart(null);
+    setIsCopied(false);
+  };
+
   const handleExport = (type: string) => {
     if (type === "csv") {
       const headers = ["เลขที่ออเดอร์", "ชื่อเมนู", "คำอธิบายเมนู", "วันที่", "เวลา", "จำนวน Set", "ราคา", "สถานะ", "ผู้สร้าง"];
@@ -1059,7 +1170,7 @@ const SummaryList: React.FC = () => {
       doc.save("order_history.pdf");
     } else if (type === "excel") {
       const worksheetData = filteredAndSortedOrders.map((cart) => {
-        const foodPrice = cart.cart_lunchbox && cart.cart_lunchbox.length > 0 ? cart.cart_lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0) : cart.price || 0;
+        const foodPrice = cart.lunchbox && cart.lunchbox.length > 0 ? cart.lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0) : cart.price || 0;
         const menuDescriptions = cart.menuItems.map((item) => item.menu_description || "").join("; ");
         return {
           เลขที่ออเดอร์: cart.id,
@@ -1069,7 +1180,7 @@ const SummaryList: React.FC = () => {
           เวลา: cart.time,
           "จำนวน Set": cart.sets,
           "ราคาอาหาร": foodPrice,
-          "ค่าส่ง": Number(cart.cart_shipping_cost || 0),
+          "ค่าส่ง": Number(cart.shipping_cost || 0),
           สถานะ: getStatus("text", cart.status),
           ผู้สร้าง: cart.createdBy,
         };
@@ -1089,12 +1200,12 @@ const SummaryList: React.FC = () => {
       ชื่อเมนู: item.menu_name,
       คำอธิบายเมนู: item.menu_description || "",
       "จำนวน Set": item.menu_total,
-      ลูกค้า: cart.cart_customer_name,
-      เบอร์โทร: cart.cart_customer_tel,
-      สถานที่จัดส่ง: cart.cart_location_send,
-      วันที่ส่ง: cart.cart_delivery_date,
-      เวลาส่ง: cart.cart_export_time,
-      เวลารับ: cart.cart_receive_time,
+      ลูกค้า: cart.customer_name,
+      เบอร์โทร: cart.customer_tel,
+      สถานที่จัดส่ง: cart.location_send,
+      วันที่ส่ง: cart.delivery_date,
+      เวลาส่ง: cart.export_time,
+      เวลารับ: cart.receive_time,
       สถานะ: getStatus("text", cart.status),
     }));
 
@@ -1104,12 +1215,12 @@ const SummaryList: React.FC = () => {
         ชื่อเมนู: "ไม่มีข้อมูลเมนู",
         คำอธิบายเมนู: "",
         "จำนวน Set": 0,
-        ลูกค้า: cart.cart_customer_name,
-        เบอร์โทร: cart.cart_customer_tel,
-        สถานที่จัดส่ง: cart.cart_location_send,
-        วันที่ส่ง: cart.cart_delivery_date,
-        เวลาส่ง: cart.cart_export_time,
-        เวลารับ: cart.cart_receive_time,
+        ลูกค้า: cart.customer_name,
+        เบอร์โทร: cart.customer_tel,
+        สถานที่จัดส่ง: cart.location_send,
+        วันที่ส่ง: cart.delivery_date,
+        เวลาส่ง: cart.export_time,
+        เวลารับ: cart.receive_time,
         สถานะ: getStatus("text", cart.status),
       });
     }
@@ -1207,9 +1318,9 @@ const SummaryList: React.FC = () => {
 
   // Auto-fetch menus when lunchbox is added to cart
   useEffect(() => {
-    if (editMenuDialog && editMenuDialog.cart_lunchbox && editMenuDialog.cart_lunchbox.length > 0) {
+    if (editMenuDialog && editMenuDialog.lunchbox && editMenuDialog.lunchbox.length > 0) {
       // ดึงเมนูสำหรับทุกกล่องที่ยังไม่มีข้อมูล
-      editMenuDialog.cart_lunchbox.forEach((lunchbox, idx) => {
+      editMenuDialog.lunchbox.forEach((lunchbox, idx) => {
         const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${idx}`;
         // ดึงเฉพาะที่ยังไม่มีข้อมูล
         if (!availableMenusForLunchbox[key]) {
@@ -1217,7 +1328,7 @@ const SummaryList: React.FC = () => {
         }
       });
     }
-  }, [editMenuDialog?.cart_lunchbox]);
+  }, [editMenuDialog?.lunchbox]);
 
   // Add new lunchbox to the cart
   const handleAddLunchbox = () => {
@@ -1256,7 +1367,7 @@ const SummaryList: React.FC = () => {
       if (!prev) return prev;
       return {
         ...prev,
-        cart_lunchbox: [newLunchbox, ...prev.cart_lunchbox],
+        lunchbox: [newLunchbox, ...prev.lunchbox],
       };
     });
 
@@ -1332,7 +1443,7 @@ const SummaryList: React.FC = () => {
           }
 
           // Get menus from the lunchbox to be removed
-          const removedLunchbox = prev.cart_lunchbox[lunchboxIdx];
+          const removedLunchbox = prev.lunchbox[lunchboxIdx];
 
           const menuNamesToDecrement = (removedLunchbox?.lunchbox_menu || []).map((m) => m.menu_name);
 
@@ -1348,7 +1459,7 @@ const SummaryList: React.FC = () => {
 
           const updatedState = {
             ...prev,
-            cart_lunchbox: prev.cart_lunchbox.filter((_, idx) => idx !== lunchboxIdx),
+            lunchbox: prev.lunchbox.filter((_, idx) => idx !== lunchboxIdx),
             menuItems: updatedMenuItems,
           };
 
@@ -1375,7 +1486,7 @@ const SummaryList: React.FC = () => {
     if (!editMenuDialog || !selectedMenu) return;
 
     // ตรวจสอบว่า category นี้เลือกไปแล้วหรือไม่
-    const currentLunchbox = editMenuDialog.cart_lunchbox[lunchboxIdx];
+    const currentLunchbox = editMenuDialog.lunchbox[lunchboxIdx];
     const selectedMenuCategory = selectedMenu.lunchbox_menu_category;
 
     // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs lunchbox_limit
@@ -1733,7 +1844,7 @@ const SummaryList: React.FC = () => {
 
         return {
           ...prev,
-          cart_lunchbox: prev.cart_lunchbox.map((lb, idx) => {
+          lunchbox: prev.lunchbox.map((lb, idx) => {
             if (idx === lunchboxIdx) {
               return {
                 ...lb,
@@ -1837,12 +1948,12 @@ const SummaryList: React.FC = () => {
           }
 
           // คำนวณราคาใหม่หลังลบเมนู
-          const key = `${prev.cart_lunchbox[lunchboxIdx].lunchbox_name}_${prev.cart_lunchbox[lunchboxIdx].lunchbox_set_name}_${lunchboxIdx}`;
+          const key = `${prev.lunchbox[lunchboxIdx].lunchbox_name}_${prev.lunchbox[lunchboxIdx].lunchbox_set_name}_${lunchboxIdx}`;
           const menusForThisBox = availableMenusForLunchbox[key] || [];
 
           const updatedState = {
             ...prev,
-            cart_lunchbox: prev.cart_lunchbox.map((lb, idx) => {
+            lunchbox: prev.lunchbox.map((lb, idx) => {
               if (idx === lunchboxIdx) {
                 const updatedMenus = (lb.lunchbox_menu || []).filter((_, mIdx) => mIdx !== menuIdx);
                 const newCost = calculateLunchboxCost(updatedMenus, lb.lunchbox_total, menusForThisBox);
@@ -1978,12 +2089,12 @@ const SummaryList: React.FC = () => {
         // Sync cart document via general cart edit endpoint
         // Build lunchbox structure from menuItems
         const foundCart = carts.find((cart) => cart.id === cartId);
-        const lunchboxesToUse = updatedLunchboxes || foundCart?.cart_lunchbox || [];
+        const lunchboxesToUse = updatedLunchboxes || foundCart?.lunchbox || [];
 
         // สร้าง Map ของ updatedMenuItems เพื่อค้นหาข้อมูลที่อัปเดตแล้วได้เร็วขึ้น
         const updatedMenuMap = new globalThis.Map(updatedMenuItems.map((item) => [item.menu_name, item]));
 
-        const cart_lunchboxes = lunchboxesToUse.map((lunchbox: any) => ({
+        const lunchboxes = lunchboxesToUse.map((lunchbox: any) => ({
           lunchbox_name: lunchbox.lunchbox_name,
           lunchbox_set: lunchbox.lunchbox_set_name,
           lunchbox_limit: lunchbox.lunchbox_limit || 0,
@@ -2020,13 +2131,13 @@ const SummaryList: React.FC = () => {
 
         console.log("✅ [API #2] กำลังส่งข้อมูลไปยัง PATCH /api/edit/cart");
         console.log("🔗 URL:", `/api/edit/cart/${cartId}`);
-        console.log("📦 Body:", JSON.stringify({ cart_lunchboxes }, null, 2));
+        console.log("📦 Body:", JSON.stringify({ lunchboxes }, null, 2));
 
         try {
           await fetch(`/api/edit/cart/${cartId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ cart_lunchboxes }),
+            body: JSON.stringify({ lunchboxes }),
           });
         } catch (syncErr) {
           console.warn("Warning: secondary sync to /api/edit/cart failed", syncErr);
@@ -2038,7 +2149,7 @@ const SummaryList: React.FC = () => {
               ? {
                 ...cart,
                 menuItems: updatedMenuItems,
-                cart_lunchbox: lunchboxesToUse as any,
+                lunchbox: lunchboxesToUse as any,
                 allIngredients: updatedMenuItems.map((item) => ({
                   menuName: item.menu_name,
                   ingredients: item.menu_ingredients.map((ing: { useItem: number; ingredient_name: string; ingredient_status: boolean }) => ({
@@ -2066,6 +2177,7 @@ const SummaryList: React.FC = () => {
 
         mutateCarts();
         setEditMenuDialog(null);
+        setEditMenuDialogTimes(null);
         setShouldFetchMenu(false);
         setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
       } catch (err) {
@@ -2089,6 +2201,79 @@ const SummaryList: React.FC = () => {
   };
 
   return (
+    <>
+      {/* Payment Success Modal */}
+      {showPaymentModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+          <div className='bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col'>
+            {/* Header */}
+            <div className='flex w-full items-center justify-center p-4 border-b bg-green-50 rounded-t-lg'>
+              <div className='flex items-center gap-2 text-xl font-bold text-green-700'>
+                <svg className='!w-5 !h-5 text-green-600' viewBox='0 0 117 117' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink'>
+                  <g fill='none' fillRule='evenodd' id='Page-1' stroke='none' strokeWidth='1'>
+                    <g fillRule='nonzero' id='correct'>
+                      <path
+                        d='M34.5,55.1 C32.9,53.5 30.3,53.5 28.7,55.1 C27.1,56.7 27.1,59.3 28.7,60.9 L47.6,79.8 C48.4,80.6 49.4,81 50.5,81 C50.6,81 50.6,81 50.7,81 C51.8,80.9 52.9,80.4 53.7,79.5 L101,22.8 C102.4,21.1 102.2,18.5 100.5,17 C98.8,15.6 96.2,15.8 94.7,17.5 L50.2,70.8 L34.5,55.1 Z'
+                        fill='#17AB13'
+                        id='Shape'
+                      />
+                      <path
+                        d='M89.1,9.3 C66.1,-5.1 36.6,-1.7 17.4,17.5 C-5.2,40.1 -5.2,77 17.4,99.6 C28.7,110.9 43.6,116.6 58.4,116.6 C73.2,116.6 88.1,110.9 99.4,99.6 C118.7,80.3 122,50.7 107.5,27.7 C106.3,25.8 103.8,25.2 101.9,26.4 C100,27.6 99.4,30.1 100.6,32 C113.1,51.8 110.2,77.2 93.6,93.8 C74.2,113.2 42.5,113.2 23.1,93.8 C3.7,74.4 3.7,42.7 23.1,23.3 C39.7,6.8 65,3.9 84.8,16.2 C86.7,17.4 89.2,16.8 90.4,14.9 C91.6,13 91,10.5 89.1,9.3 Z'
+                        fill='#4A4A4A'
+                        id='Shape'
+                      />
+                    </g>
+                  </g>
+                </svg>
+                <p>รายการทั้งหมด</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className='p-4 flex-1 overflow-y-auto'>
+              <p className='text-gray-700 mb-4'>กรุณาคัดลอกข้อความด้านล่างเพื่อส่งให้ลูกค้า:</p>
+              <div className='overflow-y-auto border-2 py-2 pl-4 border-gray-300 rounded-xl bg-gray-50 overflow-x-hidden'>
+                <textarea id='copy-textarea' value={paymentCopyText} readOnly className='w-full resize-none text-sm overflow-y-visible select-none outline-none focus:outline-none' rows={15} />
+              </div>
+
+              {/* ปุ่มคัดลอก */}
+              <div className='mt-4 flex justify-end gap-2'>
+                <button
+                  onClick={handleCopyText}
+                  className={`w-auto px-4 py-2 rounded-lg font-semibold transition-all ${isCopied ? "!bg-green-600 !text-white" : "!bg-gray-500 !text-white hover:!bg-gray-600"}`}>
+                  {isCopied ? (
+                    <span className='flex items-center justify-end gap-2'>
+                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' strokeWidth='2' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' d='M5 13l4 4L19 7' />
+                      </svg>
+                      คัดลอกสำเร็จแล้ว!
+                    </span>
+                  ) : (
+                    <span className='flex items-center justify-end gap-2'>
+                      <svg className='!w-5 !h-5' fill='none' stroke='currentColor' strokeWidth='2' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                      </svg>
+                      คัดลอกข้อความ
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <p className='text-xs text-gray-500 mt-2 text-center'>💡 หากปุ่มคัดลอกไม่ทำงาน กรุณาเลือกข้อความในช่องด้านบนแล้วกด Ctrl+C (หรือ Cmd+C บน Mac)</p>
+            </div>
+
+            {/* Footer */}
+            <div className='p-4 border-t bg-gray-50 rounded-b-lg'>
+              <div className='w-full flex justify-center items-center'>
+                <button onClick={handleFinishPayment} className='w-auto px-4 py-3 !bg-green-600 !text-white rounded-lg font-semibold hover:!bg-green-700 transition-colors'>
+                  เสร็จสิ้น
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50'>
       <div className='p-6'>
         <h2 className='text-2xl font-bold mb-2'>สรุปรายการ</h2>
@@ -2267,8 +2452,9 @@ const SummaryList: React.FC = () => {
           ) : (
             paginatedGroupedOrders.map(([date, orders], index) => (
               <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
-                <h3 style={{ fontSize: "28px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
-                  วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
+                <h3 style={{ fontSize: "24px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
+                  วันที่ส่งอาหาร {date} 
+                  {/* ( จำนวน {orders.length} รายการ) */}
                 </h3>
 
                 <div className='space-y-4'>
@@ -2380,10 +2566,10 @@ const SummaryList: React.FC = () => {
                               ) : (
                                 <div className='flex items-center gap-2'>
                                   🕒
-                                  <span>เวลาส่งอาหาร {cart.cart_export_time || "ไม่ระบุ"} น.</span>
+                                  <span>เวลาส่งอาหาร {cart.export_time || "ไม่ระบุ"} น.</span>
                                   🕒
-                                  <span>เวลารับอาหาร {cart.cart_receive_time || "ไม่ระบุ"} น.</span>
-                                  <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.cart_export_time || "", cart.cart_receive_time || "")}>
+                                  <span>เวลารับอาหาร {cart.receive_time || "ไม่ระบุ"} น.</span>
+                                  <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.export_time || "", cart.receive_time || "")}>
                                     {/* <Edit2 className='w-4 h-4' /> */}
                                   </span>
                                 </div>
@@ -2404,8 +2590,8 @@ const SummaryList: React.FC = () => {
                                     <span>
                                       ราคาอาหาร{" "}
                                       {(() => {
-                                        const foodPrice = cart.cart_lunchbox && cart.cart_lunchbox.length > 0
-                                          ? cart.cart_lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+                                        const foodPrice = cart.lunchbox && cart.lunchbox.length > 0
+                                          ? cart.lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
                                           : cart.price || 0;
                                         return foodPrice.toLocaleString("th-TH");
                                       })()}{" "}
@@ -2414,50 +2600,56 @@ const SummaryList: React.FC = () => {
                                   </div>
                                   <div className='flex items-center gap-2'>
                                     🚚
-                                    <span>ค่าจัดส่ง {Number(cart.cart_shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
+                                    <span>ค่าจัดส่ง {Number(cart.shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
                                   </div>
                                 </div>
                               </div>
                               <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
                                 <div className='flex items-center gap-2 text-base'>
                                   📍
-                                  <span>สถานที่จัดส่ง {cart.cart_location_send} </span>
+                                  <span>สถานที่จัดส่ง {cart.location_send} </span>
                                 </div>
                               </div>
                               <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
                                 <div className='flex items-center gap-2 text-base'>
                                   👤
-                                  <span>ส่งถึงคุณ {cart.cart_customer_name}</span>
-                                  <div className="flex items-center gap-2 ml-2 sm:ml-4">
-                                    📞
-                                    <span>เบอร์ {cart.cart_customer_tel} </span>
-                                  </div>
+                                  <span>ส่งถึงคุณ {cart.customer_name}</span>
+                                  
                                 </div>
+                                
                               </div>
+                              <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
+                              <div className="flex items-center gap-2 text-base">
+                                   📞
+                                    <span>เบอร์ {cart.customer_tel} </span>
+                                  </div>
+                                
+                              </div>
+                              
                               <div className='flex flex-wrap items-center gap-4 text-base font-normal text-black'>
                                 <div className='flex items-center gap-2'>
                                   📅
                                   <span>วันที่สั่งอาหาร {cart.date}</span>
                                 </div>
                               </div>
-                              {(cart.cart_invoice_tex || cart.cart_customer_name || cart.cart_location_send) && (
+                              {(cart.invoice_tex || cart.customer_name || cart.location_send) && (
                                 <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
-                                  {cart.cart_invoice_tex && (
-                                    <div className='flex items-center gap-2'>
-                                      📄
-                                      <span>เลขกำกับภาษี: {cart.cart_invoice_tex}</span>
-                                    </div>
-                                  )}
-                                  {cart.cart_customer_name && (
+                                  {cart.customer_name && (
                                     <div className='flex items-center gap-2'>
                                       👤
-                                      <span>ออกบิลในนาม: {cart.cart_customer_name}</span>
+                                      <span>ออกบิลในนาม: {cart.customer_name}</span>
                                     </div>
                                   )}
-                                  {cart.cart_location_send && (
+                                  {cart.location_send && (
                                     <div className='flex items-center gap-2'>
                                       📍
-                                      <span>ที่อยู่: {cart.cart_location_send}</span>
+                                      <span>ที่อยู่: {cart.location_send}</span>
+                                    </div>
+                                  )}
+                                  {cart.invoice_tex && (
+                                    <div className='flex items-center gap-2'>
+                                      📄
+                                      <span>เลขกำกับภาษี: {cart.invoice_tex}</span>
                                     </div>
                                   )}
                                 </div>
@@ -2474,12 +2666,19 @@ const SummaryList: React.FC = () => {
                               cartId={cart.id}
                               allIngredients={cart.allIngredients}
                               defaultStatus={cart.status}
-                              cart_receive_time={Time.formatToHHMM(cart.cart_receive_time)}
-                              cart_export_time={Time.formatToHHMM(cart.cart_export_time)}
+                              receive_time={Time.formatToHHMM(cart.receive_time)}
+                              export_time={Time.formatToHHMM(cart.export_time)}
                               cart={cart}
                               onUpdated={() => handleUpdateWithCheck(cart)}
                               onOrderSummaryClick={() => handleSummary("order", cart)}
+                              onPaymentCompleted={handlePaymentCompleted}
                             />
+                            <Button
+                              onClick={() => handlePaymentCompleted(cart)}
+                              className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 text-xs font-bold rounded-full shadow'
+                              style={{ boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)" }}>
+                              📋
+                            </Button>
                           </div>
                           <AccordionContent className='mt-4'>
                             <div className='grid md:grid-cols-2 gap-6'>
@@ -2506,9 +2705,9 @@ const SummaryList: React.FC = () => {
                                           return;
                                         }
 
-                                        // Extract menuItems from cart_lunchbox
+                                        // Extract menuItems from lunchbox
                                         const menuItemsFromLunchbox: any[] = [];
-                                        (cart.cart_lunchbox || []).forEach((lunchbox: any) => {
+                                        (cart.lunchbox || []).forEach((lunchbox: any) => {
                                           (lunchbox.lunchbox_menu || []).forEach((menu: any) => {
                                             menuItemsFromLunchbox.push({
                                               menu_name: menu.menu_name || "เมนูไม่ระบุ",
@@ -2529,21 +2728,39 @@ const SummaryList: React.FC = () => {
                                         });
 
                                         setEditMenuDialog({
-                                          cart_id: cart.id,
-                                          cart_delivery_date: cart.cart_delivery_date || "",
-                                          cart_receive_time: cart.cart_receive_time || "",
-                                          cart_export_time: cart.cart_export_time || "",
-                                          cart_customer_tel: cart.cart_customer_tel || "",
-                                          cart_customer_name: cart.cart_customer_name || "",
-                                          cart_location_send: cart.cart_location_send || "",
-                                          cart_shipping_cost: Number(cart.cart_shipping_cost) || 0,
-                                          cart_lunchbox: (cart.cart_lunchbox || []) as any,
+                                          id: cart.id,
+                                          order_number: cart.order_number || "",
+                                          delivery_date: cart.delivery_date || "",
+                                          receive_time: cart.receive_time || "",
+                                          export_time: cart.export_time || "",
+                                          customer_tel: cart.customer_tel || "",
+                                          customer_name: cart.customer_name || "",
+                                          location_send: cart.location_send || "",
+                                          shipping_cost: Number(cart.shipping_cost) || 0,
+                                          lunchbox: (cart.lunchbox || []) as any,
                                           menuItems: menuItemsFromLunchbox,
                                           newMenu: {
                                             menu_name: "",
                                             menu_total: 1,
                                             menu_description: "",
                                           },
+                                        });
+
+                                        // Initialize time editing state
+                                        const parseTime = (time: string) => {
+                                          if (!time) return { hour: "00", minute: "00" };
+                                          const [hour, minute] = time.split(":").map((h) => h.padStart(2, "0"));
+                                          return { hour: hour || "00", minute: minute || "00" };
+                                        };
+
+                                        const exportParsed = parseTime(cart.export_time || "");
+                                        const receiveParsed = parseTime(cart.receive_time || "");
+
+                                        setEditMenuDialogTimes({
+                                          exportHour: exportParsed.hour,
+                                          exportMinute: exportParsed.minute,
+                                          receiveHour: receiveParsed.hour,
+                                          receiveMinute: receiveParsed.minute,
                                         });
 
                                         // Fetch lunchboxes and menus
@@ -2561,6 +2778,7 @@ const SummaryList: React.FC = () => {
                                     // Only reset when explicitly closing (not when SweetAlert shows or deleting)
                                     if (!open && editMenuDialog !== null && !isDeleting) {
                                       setEditMenuDialog(null);
+                                      setEditMenuDialogTimes(null);
                                       setShouldFetchMenu(false);
                                       setSelectedLunchboxName("");
                                       setSelectedLunchboxSet("");
@@ -2574,36 +2792,110 @@ const SummaryList: React.FC = () => {
                                       {editMenuDialog && (
                                         <div className='space-y-6'>
                                           <div style={{ color: "#000000" }} className='text-xl font-bold mb-4'>
-                                            แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.cart_id}
+                                            แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.order_number || editMenuDialog?.id}
                                           </div>
                                           <div style={{ color: "#000000" }} className='bg-gray-100 p-4 rounded-lg'>
                                             <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
                                             <div className='grid grid-cols-2 gap-4 text-sm'>
                                               <div>
-                                                <span className='font-medium'>ชื่อ:</span> {editMenuDialog.cart_customer_name}
+                                                <span className='font-medium'>ชื่อ:</span> {editMenuDialog.customer_name}
                                               </div>
                                               <div>
-                                                <span className='font-medium'>เบอร์โทร:</span> {editMenuDialog.cart_customer_tel}
+                                                <span className='font-medium'>เบอร์โทร:</span> {editMenuDialog.customer_tel}
                                               </div>
                                               <div>
-                                                <span className='font-medium'>สถานที่ส่ง:</span> {editMenuDialog.cart_location_send}
+                                                <span className='font-medium'>สถานที่ส่ง:</span> {editMenuDialog.location_send}
                                               </div>
                                               <div>
-                                                <span className='font-medium'>ค่าจัดส่ง:</span> {editMenuDialog.cart_shipping_cost} บาท
+                                                <span className='font-medium'>ค่าจัดส่ง:</span> {editMenuDialog.shipping_cost} บาท
                                               </div>
                                               <div>
-                                                <span className='font-medium'>วันที่ส่ง:</span> {editMenuDialog.cart_delivery_date}
+                                                <span className='font-medium'>วันที่ส่ง:</span> {editMenuDialog.delivery_date}
                                               </div>
-                                              <div>
-                                                <span className='font-medium'>เวลาส่ง/รับ:</span> {editMenuDialog.cart_export_time} / {editMenuDialog.cart_receive_time}
+                                              <div className='col-span-2'>
+                                                {/* <span className='font-medium'>เวลาส่ง/รับ:</span> */}
+                                                <div className='flex items-center gap-4 mt-2'>
+                                                  <div className='flex items-center gap-2'>
+                                                    <span className='text-sm'>เวลาส่ง:</span>
+                                                    <select
+                                                      value={editMenuDialogTimes?.exportHour || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, exportHour: e.target.value }
+                                                            : { exportHour: e.target.value, exportMinute: "00", receiveHour: "00", receiveMinute: "00" }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                                        <option key={h} value={h}>
+                                                          {h}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                    :
+                                                    <select
+                                                      value={editMenuDialogTimes?.exportMinute || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, exportMinute: e.target.value }
+                                                            : { exportHour: "00", exportMinute: e.target.value, receiveHour: "00", receiveMinute: "00" }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                                        <option key={m} value={m}>
+                                                          {m}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
+                                                  <div className='flex items-center gap-2'>
+                                                    <span className='text-sm'>เวลารับ:</span>
+                                                    <select
+                                                      value={editMenuDialogTimes?.receiveHour || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, receiveHour: e.target.value }
+                                                            : { exportHour: "00", exportMinute: "00", receiveHour: e.target.value, receiveMinute: "00" }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                                        <option key={h} value={h}>
+                                                          {h}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                    :
+                                                    <select
+                                                      value={editMenuDialogTimes?.receiveMinute || "00"}
+                                                      onChange={(e) =>
+                                                        setEditMenuDialogTimes((prev) =>
+                                                          prev
+                                                            ? { ...prev, receiveMinute: e.target.value }
+                                                            : { exportHour: "00", exportMinute: "00", receiveHour: "00", receiveMinute: e.target.value }
+                                                        )
+                                                      }
+                                                      className='border rounded px-2 py-1 text-sm'>
+                                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                                        <option key={m} value={m}>
+                                                          {m}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
+                                                </div>
                                               </div>
                                             </div>
                                           </div>
 
-                                          {/* แสดงข้อมูล cart_lunchbox */}
+                                          {/* แสดงข้อมูล lunchbox */}
                                           <div className='space-y-4'>
                                             <div className='bg-gray-50 p-4 rounded-lg border border-gray-200'>
-                                              <h3 className='font-semibold text-gray-800 mb-3'>🍱 เพิ่มกล่องอาหาร</h3>
+                                              <h3 className='font-semibold text-gray-800 mb-3' style={{ color: "#000000" }}>🍱 เพิ่มกล่องอาหาร</h3>
 
                                               <div className='grid grid-cols-2 gap-3 mb-3'>
                                                 <div className='flex flex-col gap-1'>
@@ -2651,16 +2943,16 @@ const SummaryList: React.FC = () => {
                                                 </div>
                                               )}
 
-                                              <Button type='button' size='sm' className='w-full bg-green-600 hover:bg-green-700 text-white' onClick={handleAddLunchbox} disabled={!selectedLunchboxName || !selectedLunchboxSet}>
+                                              <Button type='button' size='sm' className='w-full bg-green-600 hover:bg-green-700 text-white' style={{ color: "#000000" }} onClick={handleAddLunchbox} disabled={!selectedLunchboxName || !selectedLunchboxSet}>
                                                 <Container className='w-4 h-4 mr-1' />➕ เพิ่มกล่องอาหาร
                                               </Button>
                                             </div>
 
-                                            {editMenuDialog.cart_lunchbox && editMenuDialog.cart_lunchbox.length > 0 && (
+                                            {editMenuDialog.lunchbox && editMenuDialog.lunchbox.length > 0 && (
                                               <>
                                                 <h3 className='font-semibold text-gray-800'>ข้อมูลกล่องอาหารที่เลือก</h3>
                                                 <br />
-                                                {editMenuDialog.cart_lunchbox.map((lunchbox, lunchboxIdx) => (
+                                                {editMenuDialog.lunchbox.map((lunchbox, lunchboxIdx) => (
                                                   <div key={`${lunchbox.lunchbox_name}-${lunchbox.lunchbox_set_name}-${lunchboxIdx}`} className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
                                                     <div className='flex justify-between items-start mb-3'>
                                                       <div className='flex-1'>
@@ -2671,6 +2963,7 @@ const SummaryList: React.FC = () => {
                                                           <Button
                                                             type='button'
                                                             size='sm'
+                                                            style={{ color: "#000000" }}
                                                             variant='destructive'
                                                             onClick={() => {
                                                               handleRemoveLunchbox(lunchboxIdx);
@@ -2697,8 +2990,8 @@ const SummaryList: React.FC = () => {
                                                                   const menusForThisBox = availableMenusForLunchbox[key] || [];
                                                                   const newTotalCost = calculateLunchboxCost(lunchbox.lunchbox_menu || [], newTotal, menusForThisBox);
 
-                                                                  // อัปเดต cart_lunchbox และ menu_total ของเมนูทั้งหมดใน lunchbox นี้
-                                                                  const updatedCartLunchbox = prev.cart_lunchbox.map((lb, idx) => {
+                                                                  // อัปเดต lunchbox และ menu_total ของเมนูทั้งหมดใน lunchbox นี้
+                                                                  const updatedCartLunchbox = prev.lunchbox.map((lb, idx) => {
                                                                     if (idx === lunchboxIdx) {
                                                                       return {
                                                                         ...lb,
@@ -2729,7 +3022,7 @@ const SummaryList: React.FC = () => {
 
                                                                   return {
                                                                     ...prev,
-                                                                    cart_lunchbox: updatedCartLunchbox,
+                                                                    lunchbox: updatedCartLunchbox,
                                                                     menuItems: updatedMenuItems,
                                                                   };
                                                                 });
@@ -2848,6 +3141,7 @@ const SummaryList: React.FC = () => {
                                                           <Button
                                                             type='button'
                                                             size='sm'
+                                                            style={{ color: "#000000" }}
                                                             className='bg-green-600 hover:bg-green-700 text-white text-xs'
                                                             disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
                                                             onClick={() => {
@@ -2889,6 +3183,7 @@ const SummaryList: React.FC = () => {
                                                                   icon: "warning",
                                                                   title: "กรุณาเลือกเมนู",
                                                                   showConfirmButton: false,
+                                                                  
                                                                   timer: 2000,
                                                                 });
                                                               }
@@ -2919,7 +3214,7 @@ const SummaryList: React.FC = () => {
                                                               </Button>
                                                             </div>
                                                             <div className='text-sm text-gray-500 mt-2'>
-                                                              <label className='block text-xs text-gray-600 mb-1'>คำอธิบายเมนู</label>
+                                                              <label className='block text-sm text-gray-600 mb-1 ' style={{ color: "#000000" }}>คำอธิบายเมนู</label>
                                                               {(() => {
                                                                 const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
                                                                 const valueDesc = editableItem?.menu_description ?? menu.menu_description ?? "";
@@ -2946,7 +3241,7 @@ const SummaryList: React.FC = () => {
 
                                                             {/* แก้ไขจำนวนกล่องของเมนู */}
                                                             <div className='mt-2 flex items-center gap-2'>
-                                                              <span className='text-sm text-gray-700'>จำนวนกล่อง:</span>
+                                                              <span className='text-sm text-gray-700' style={{ color: "#000000" }}>จำนวนกล่อง:</span>
                                                               {(() => {
                                                                 const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
                                                                 const valueTotal = editableItem?.menu_total ?? menu.menu_total ?? 0;
@@ -2973,7 +3268,7 @@ const SummaryList: React.FC = () => {
 
                                                             {/* แก้ไขจำนวนวัตถุดิบ */}
                                                             <div className='mt-3'>
-                                                              <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
+                                                              <h6 className='text-sm font-medium text-gray-700 mb-1' style={{ color: "#000000" }}>วัตถุดิบ:</h6>
                                                               <div className='space-y-1'>
                                                                 {(() => {
                                                                   const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
@@ -3025,9 +3320,11 @@ const SummaryList: React.FC = () => {
                                           {/* ปุ่มควบคุม */}
                                           <div className='flex justify-end gap-2 pt-4 border-t'>
                                             <Button
+                                              style={{ color: "#000000" }}  
                                               variant='outline'
                                               onClick={() => {
                                                 setEditMenuDialog(null);
+                                                setEditMenuDialogTimes(null);
                                                 setShouldFetchMenu(false);
                                                 setSelectedLunchboxName("");
                                                 setSelectedLunchboxSet("");
@@ -3038,15 +3335,52 @@ const SummaryList: React.FC = () => {
                                               ยกเลิก
                                             </Button>
                                             <Button
-                                              onClick={() => {
+                                              style={{ color: "#000000" }}  
+                                              onClick={async () => {
                                                 // เรียกใช้ฟังก์ชัน handleEdit.Menu
                                                 if (editMenuDialog) {
                                                   console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
-                                                  console.log("📦 cart_id:", editMenuDialog.cart_id);
+                                                  console.log("📦 id:", editMenuDialog.id);
                                                   console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
-                                                  console.log("🍱 cart_lunchbox:", JSON.stringify(editMenuDialog.cart_lunchbox, null, 2));
+                                                  console.log("🍱 lunchbox:", JSON.stringify(editMenuDialog.lunchbox, null, 2));
 
-                                                  handleEdit.Menu(editMenuDialog.cart_id, editMenuDialog.menuItems, editMenuDialog.cart_lunchbox);
+                                                  // Save times if they were changed
+                                                  if (editMenuDialogTimes) {
+                                                    const exportTime = `${editMenuDialogTimes.exportHour}:${editMenuDialogTimes.exportMinute}`;
+                                                    const receiveTime = `${editMenuDialogTimes.receiveHour}:${editMenuDialogTimes.receiveMinute}`;
+                                                    
+                                                    // Check if times changed
+                                                    const timesChanged = 
+                                                      exportTime !== editMenuDialog.export_time || 
+                                                      receiveTime !== editMenuDialog.receive_time;
+
+                                                    if (timesChanged) {
+                                                      try {
+                                                        const payload = {
+                                                          export_time: exportTime,
+                                                          receive_time: receiveTime,
+                                                        };
+                                                        const response = await axios.patch(`/api/edit/cart_time/${editMenuDialog.id}`, payload);
+
+                                                        if (response.status !== 200) {
+                                                          const errorData = response.data;
+                                                          throw new Error(errorData.error || "Failed to update times");
+                                                        }
+                                                      } catch (err) {
+                                                        console.error("Error updating times:", err);
+                                                        Swal.fire({
+                                                          icon: "error",
+                                                          title: "เกิดข้อผิดพลาด",
+                                                          text: err instanceof Error ? err.message : "ไม่สามารถอัปเดตเวลาได้",
+                                                          showConfirmButton: false,
+                                                          timer: 3000,
+                                                        });
+                                                        return;
+                                                      }
+                                                    }
+                                                  }
+
+                                                  handleEdit.Menu(editMenuDialog.id, editMenuDialog.menuItems, editMenuDialog.lunchbox);
                                                 }
                                               }}
                                               disabled={isSaving !== null}>
@@ -3059,8 +3393,8 @@ const SummaryList: React.FC = () => {
                                   </DialogContent>
                                 </Dialog>
                                 <Accordion type='multiple' className='space-y-3'>
-                                  {cart.cart_lunchbox && cart.cart_lunchbox.length > 0
-                                    ? cart.cart_lunchbox.map((lunchbox, lunchboxIdx) => (
+                                  {cart.lunchbox && cart.lunchbox.length > 0
+                                    ? cart.lunchbox.map((lunchbox, lunchboxIdx) => (
                                       <AccordionItem key={lunchboxIdx} value={`lunchbox-${lunchboxIdx}`} className='rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50'>
                                         <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
                                           <div className='flex flex-col items-start'>
@@ -3121,7 +3455,7 @@ const SummaryList: React.FC = () => {
                                         </AccordionContent>
                                       </AccordionItem>
                                     ))
-                                    : // Fallback to old structure if cart_lunchbox is not available
+                                    : // Fallback to old structure if lunchbox is not available
                                     cart.allIngredients.map((menuGroup, groupIdx) => {
                                       const totalBox = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName)?.menu_total || 0;
                                       const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
@@ -3174,13 +3508,13 @@ const SummaryList: React.FC = () => {
                     </Accordion>
                   ))}
                   <div className='flex justify-center m-4'>
-                    <Button
+                    {/* <Button
                       size='sm'
-                      onClick={() => handleSummary("date", Time.convertThaiDateToISO(orders[0].cart_delivery_date)!)}
+                      onClick={() => handleSummary("date", Time.convertThaiDateToISO(orders[0].delivery_date)!)}
                       className='h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4'
                       style={{ color: "#000000", background: "#fcf22d" }}>
                       📦 สรุปวัตถุดิบทั้งหมด
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               </div>
@@ -3200,7 +3534,7 @@ const SummaryList: React.FC = () => {
                       <>
                         <div className='space-y-2'>
                           <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบของออเดอร์: {selectedCartForSummary.orderNumber}</h5>
-                          (วันที่ส่ง: {selectedCartForSummary.cart_delivery_date})
+                          (วันที่ส่ง: {selectedCartForSummary.delivery_date})
                           {summary.map((ing, idx) => (
                             <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
                               <span className='text-gray-700'>{ing.name}</span>
@@ -3255,6 +3589,7 @@ const SummaryList: React.FC = () => {
         {totalPages > 1 && <PaginationComponent totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />}
       </div>
     </div>
+    </>
   );
 };
 

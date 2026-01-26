@@ -9,7 +9,7 @@ function generateCartItemId(menuId: string, description: string): string {
 export interface CartItem extends MenuItem {
   menu_total: number;
   menu_description: string;
-  cart_item_id: string;
+  item_id: string;
 }
 
 export interface LunchBox {
@@ -21,6 +21,37 @@ export interface LunchBox {
   lunchbox_total_price: number;
 }
 
+// Packaging Info Interface
+export interface PackagingInfo {
+  fukYai: number;      // ฟูกใหญ่
+  box2Chan: number;    // กล่อง 2 ช่องดำ
+  box3Chan: number;    // กล่อง 3 ช่องดำ
+}
+
+// คำนวณ packaging จาก set name และ quantity
+export const calculatePackaging = (setName: string, quantity: number): PackagingInfo => {
+  const normalizedSet = setName.toUpperCase().replace(/^SET\s*/i, '').trim();
+  
+  let fukYai = 0;
+  let box2Chan = 0;
+  let box3Chan = 0;
+  
+  if (normalizedSet === 'A' || normalizedSet.startsWith('A ')) {
+    box2Chan = quantity;
+  } else if (normalizedSet === 'B' || normalizedSet.startsWith('B ')) {
+    box3Chan = quantity;
+  } else if (normalizedSet === 'C' || normalizedSet.startsWith('C ') ||
+             normalizedSet === 'D' || normalizedSet.startsWith('D ') ||
+             normalizedSet === 'E' || normalizedSet.startsWith('E ') ||
+             normalizedSet === 'F' || normalizedSet.startsWith('F ') ||
+             normalizedSet === 'G' || normalizedSet.startsWith('G ')) {
+    box2Chan = quantity;
+    fukYai = quantity;
+  }
+  
+  return { fukYai, box2Chan, box3Chan };
+};
+
 interface SelectedLunchbox {
   lunchbox_name: string;
   lunchbox_set: string;
@@ -28,7 +59,8 @@ interface SelectedLunchbox {
   selected_menus: MenuItem[];
   quantity: number;
   lunchbox_total_cost: string;
-  note?: string; // เพิ่ม note field
+  note?: string;
+  packaging?: PackagingInfo;
 }
 
 interface CartCartDescription {
@@ -38,17 +70,18 @@ interface CartCartDescription {
 }
 interface CartState {
   items: CartItem[];
-  cart_channel_access: string;
-  cart_customer_name: string;
-  cart_customer_tel: string;
-  cart_location_send: string;
-  cart_delivery_date: string;
-  cart_lunchbox: LunchBox[];
-  cart_export_time: string;
-  cart_receive_time: string;
-  cart_shipping_cost: string;
-  cart_lunch_box: string;
-  cart_lunch_box_set: string;
+  channel_access: string;
+  customer_name: string;
+  customer_tel: string;
+  location_send: string;
+  delivery_date: string;
+  lunchbox: LunchBox[];
+  export_time: string;
+  receive_time: string;
+  shipping_cost: string;
+  shipping_by: string;
+  lunch_box: string;
+  lunch_box_set: string;
   selected_lunchboxes: SelectedLunchbox[];
   addItem: (item: MenuItem, description?: string) => void;
   removeItem: (cartItemId: string) => void;
@@ -62,7 +95,8 @@ interface CartState {
     deliveryDate?: string;
     exportTime?: string;
     receiveTime?: string;
-    cart_shipping_cost?: string;
+    shipping_cost?: string;
+    shipping_by?: string;
     lunchbox?: string;
     lunchbox_set?: string;
     receive_name?: string;
@@ -77,6 +111,7 @@ interface CartState {
     total_cost?: string;
     description?: CartCartDescription[];
     ispay?: string;
+    order_name?: string;
   }) => void;
   addLunchbox: (lunchbox: SelectedLunchbox) => void;
   removeLunchbox: (index: number) => void;
@@ -84,49 +119,51 @@ interface CartState {
   updateLunchboxMenus: (index: number, menus: MenuItem[]) => void;
   updateLunchboxTotalCost: (index: number, totalCost: string) => void;
   updateLunchboxNote: (index: number, note: string) => void;
-  cart_receive_name: string;
-  cart_invoice_tex: string;
-  cart_pay_type: string;
-  cart_pay_deposit: string;
-  cart_pay_isdeposit: boolean;
-  cart_pay_cost: string;
-  cart_pay_charge: string;
-  cart_total_cost_lunchbox: string;
-  cart_total_remain: string;
-  cart_total_cost: string;
-  cart_description: CartCartDescription[];
-  cart_ispay: string;
+  receive_name: string;
+  invoice_tex: string;
+  pay_type: string;
+  pay_deposit: string;
+  pay_isdeposit: boolean;
+  pay_cost: string;
+  pay_charge: string;
+  total_cost_lunchbox: string;
+  total_remain: string;
+  total_cost: string;
+  description: CartCartDescription[];
+  ispay: string;
+  order_name: string;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
-      cart_channel_access: "",
-      cart_customer_name: "",
-      cart_customer_tel: "",
-      cart_location_send: "",
-      cart_delivery_date: "",
-      cart_lunchbox: [],
-      cart_export_time: "",
-      cart_receive_time: "",
-      cart_shipping_cost: "",
-      cart_lunch_box: "",
-      cart_lunch_box_set: "",
+      channel_access: "",
+      customer_name: "",
+      customer_tel: "",
+      location_send: "",
+      delivery_date: "",
+      lunchbox: [],
+      export_time: "",
+      receive_time: "",
+      shipping_cost: "",
+      shipping_by: "",
+      lunch_box: "",
+      lunch_box_set: "",
       selected_lunchboxes: [],
-      cart_receive_name: "",
-      cart_invoice_tex: "",
-      cart_pay_type: "",
-      cart_pay_deposit: "",
-      cart_pay_isdeposit: false,
-      cart_pay_cost: "",
-      cart_pay_charge: "",
-      cart_total_cost_lunchbox: "",
-      cart_total_remain: "",
-      cart_total_cost: "",
-      cart_description: [],
-      cart_ispay: "",
-
+      receive_name: "",
+      invoice_tex: "",
+      pay_type: "",
+      pay_deposit: "",
+      pay_isdeposit: false,
+      pay_cost: "",
+      pay_charge: "",
+      total_cost_lunchbox: "",
+      total_remain: "",
+      total_cost: "",
+      description: [],
+      ispay: "",
+      order_name: "",
       addItem: (item, description = "") => {
         const { items } = get();
         const finalDescription = description || item.menu_description || "";
@@ -146,7 +183,7 @@ export const useCartStore = create<CartState>()(
                 ...item,
                 menu_total: 1,
                 menu_description: finalDescription,
-                cart_item_id: cartItemId,
+                item_id: cartItemId,
               },
             ],
           });
@@ -155,7 +192,7 @@ export const useCartStore = create<CartState>()(
 
       removeItem: (cartItemId) => {
         const { items } = get();
-        const existingIndex = items.findIndex((i) => i.cart_item_id === cartItemId);
+        const existingIndex = items.findIndex((i) => i.item_id === cartItemId);
 
         if (existingIndex !== -1) {
           const existing = items[existingIndex];
@@ -165,7 +202,7 @@ export const useCartStore = create<CartState>()(
             });
           } else {
             set({
-              items: items.filter((i) => i.cart_item_id !== cartItemId),
+              items: items.filter((i) => i.item_id !== cartItemId),
             });
           }
         }
@@ -174,65 +211,69 @@ export const useCartStore = create<CartState>()(
       setItemQuantity: (cartItemId, quantity) => {
         const { items } = get();
         set({
-          items: items.map((i) => (i.cart_item_id === cartItemId ? { ...i, menu_total: quantity } : i)),
+          items: items.map((i) => (i.item_id === cartItemId ? { ...i, menu_total: quantity } : i)),
         });
       },
 
       clearCart: () => {
         set({
           items: [],
-          cart_channel_access: "",
-          cart_customer_name: "",
-          cart_customer_tel: "",
-          cart_location_send: "",
-          cart_delivery_date: "",
-          cart_lunchbox: [],
-          cart_export_time: "",
-          cart_receive_time: "",
-          cart_shipping_cost: "",
-          cart_lunch_box: "",
-          cart_lunch_box_set: "",
+          channel_access: "",
+          customer_name: "",
+          customer_tel: "",
+          location_send: "",
+          delivery_date: "",
+          lunchbox: [],
+          export_time: "",
+          receive_time: "",
+          shipping_cost: "",
+          shipping_by: "",
+          lunch_box: "",
+          lunch_box_set: "",
           selected_lunchboxes: [],
-          cart_receive_name: "",
-          cart_invoice_tex: "",
-          cart_pay_type: "",
-          cart_pay_deposit: "",
-          cart_pay_isdeposit: false,
-          cart_pay_cost: "",
-          cart_pay_charge: "",
-          cart_total_cost_lunchbox: "",
-          cart_total_remain: "",
-          cart_total_cost: "",
-          cart_description: [],
-          cart_ispay: "",
+          receive_name: "",
+          invoice_tex: "",
+          pay_type: "",
+          pay_deposit: "",
+          pay_isdeposit: false,
+          pay_cost: "",
+          pay_charge: "",
+          total_cost_lunchbox: "",
+          total_remain: "",
+          total_cost: "",
+          description: [],
+          ispay: "",
+          order_name: "",
         });
       },
 
       setCustomerInfo: (info) => {
         set((state) => ({
-          cart_channel_access: info.channel_access ?? state.cart_channel_access,
-          cart_customer_name: info.name ?? state.cart_customer_name,
-          cart_customer_tel: info.tel ?? state.cart_customer_tel,
-          cart_location_send: info.location ?? state.cart_location_send,
-          cart_delivery_date: info.deliveryDate ?? state.cart_delivery_date,
-          cart_export_time: info.exportTime ?? state.cart_export_time,
-          cart_receive_time: info.receiveTime ?? state.cart_receive_time,
-          cart_shipping_cost: info.cart_shipping_cost ?? state.cart_shipping_cost,
-          cart_lunchbox: typeof info.lunchbox === "string" ? state.cart_lunchbox : info.lunchbox ?? state.cart_lunchbox,
-          cart_lunch_box: typeof info.lunchbox === "string" ? info.lunchbox : state.cart_lunch_box,
-          cart_lunch_box_set: info.lunchbox_set ?? state.cart_lunch_box_set,
-          cart_receive_name: info.receive_name ?? state.cart_receive_name,
-          cart_invoice_tex: info.invoice_tex ?? state.cart_invoice_tex,
-          cart_pay_type: info.pay_type ?? state.cart_pay_type,
-          cart_pay_deposit: info.pay_deposit ?? state.cart_pay_deposit,
-          cart_pay_isdeposit: info.pay_isdeposit ?? state.cart_pay_isdeposit,
-          cart_pay_cost: info.pay_cost ?? state.cart_pay_cost,
-          cart_pay_charge: info.pay_charge ?? state.cart_pay_charge,
-          cart_total_cost_lunchbox: info.total_cost_lunchbox ?? state.cart_total_cost_lunchbox,
-          cart_total_remain: info.total_remain ?? state.cart_total_remain,
-          cart_total_cost: info.total_cost ?? state.cart_total_cost,
-          cart_description: info.description ?? state.cart_description,
-          cart_ispay: info.ispay ?? state.cart_ispay,
+          channel_access: info.channel_access ?? state.channel_access,
+          customer_name: info.name ?? state.customer_name,
+          customer_tel: info.tel ?? state.customer_tel,
+          location_send: info.location ?? state.location_send,
+          delivery_date: info.deliveryDate ?? state.delivery_date,
+          export_time: info.exportTime ?? state.export_time,
+          receive_time: info.receiveTime ?? state.receive_time,
+          shipping_cost: info.shipping_cost ?? state.shipping_cost,
+          shipping_by: info.shipping_by ?? state.shipping_by,
+          lunchbox: typeof info.lunchbox === "string" ? state.lunchbox : info.lunchbox ?? state.lunchbox,
+          lunch_box: typeof info.lunchbox === "string" ? info.lunchbox : state.lunch_box,
+          lunch_box_set: info.lunchbox_set ?? state.lunch_box_set,
+          receive_name: info.receive_name ?? state.receive_name,
+          invoice_tex: info.invoice_tex ?? state.invoice_tex,
+          pay_type: info.pay_type ?? state.pay_type,
+          pay_deposit: info.pay_deposit ?? state.pay_deposit,
+          pay_isdeposit: info.pay_isdeposit ?? state.pay_isdeposit,
+          pay_cost: info.pay_cost ?? state.pay_cost,
+          pay_charge: info.pay_charge ?? state.pay_charge,
+          total_cost_lunchbox: info.total_cost_lunchbox ?? state.total_cost_lunchbox,
+          total_remain: info.total_remain ?? state.total_remain,
+          total_cost: info.total_cost ?? state.total_cost,
+          description: info.description ?? state.description,
+          ispay: info.ispay ?? state.ispay,
+          order_name: info.order_name ?? state.order_name,
         }));
       },
 

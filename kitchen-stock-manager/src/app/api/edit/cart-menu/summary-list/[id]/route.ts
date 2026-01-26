@@ -36,14 +36,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    // Fetch cart without cart_total_cost_lunchbox to avoid null error
-    const cart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    // Fetch cart without total_cost_lunchbox to avoid null error
+    const cart = await prisma.new_cart.findFirst({
+      where: { id: id },
       select: {
         id: true,
-        cart_id: true,
-        cart_lunchbox: true,
-        // Exclude cart_total_cost_lunchbox to avoid null error
+        id: true,
+        lunchbox: true,
+        // Exclude total_cost_lunchbox to avoid null error
       },
     });
 
@@ -51,44 +51,44 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    // Fetch cart_total_cost_lunchbox separately using aggregateRaw
+    // Fetch total_cost_lunchbox separately using aggregateRaw
     let cartTotalCostLunchbox = "0";
     try {
-      const costResult = await (prisma.cart as any).aggregateRaw({
+      const costResult = await (prisma.new_cart as any).aggregateRaw({
         pipeline: [
-          { $match: { cart_id: id } },
+          { $match: { id: id } },
           {
             $project: {
-              cart_total_cost_lunchbox: { $ifNull: ["$cart_total_cost_lunchbox", "0"] },
+              total_cost_lunchbox: { $ifNull: ["$total_cost_lunchbox", "0"] },
             },
           },
         ],
-      }) as unknown as Array<{ cart_total_cost_lunchbox: string }>;
+      }) as unknown as Array<{ total_cost_lunchbox: string }>;
 
       if (Array.isArray(costResult) && costResult.length > 0) {
-        cartTotalCostLunchbox = costResult[0].cart_total_cost_lunchbox || "0";
+        cartTotalCostLunchbox = costResult[0].total_cost_lunchbox || "0";
       }
     } catch (costError) {
-      console.warn("Error fetching cart_total_cost_lunchbox, using default '0':", costError);
+      console.warn("Error fetching total_cost_lunchbox, using default '0':", costError);
       cartTotalCostLunchbox = "0";
     }
 
-    // Parse cart_lunchbox and extract menu items
+    // Parse lunchbox and extract menu items
     let lunchboxes: any[] = [];
-    if (typeof cart.cart_lunchbox === "string") {
+    if (typeof cart.lunchbox === "string") {
       try {
-        lunchboxes = JSON.parse(cart.cart_lunchbox);
+        lunchboxes = JSON.parse(cart.lunchbox);
       } catch (e) {
         console.error("JSON parse error:", (e as Error).message);
         return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
       }
-    } else if (Array.isArray(cart.cart_lunchbox)) {
-      lunchboxes = cart.cart_lunchbox;
+    } else if (Array.isArray(cart.lunchbox)) {
+      lunchboxes = cart.lunchbox;
     } else {
       lunchboxes = [];
     }
 
-    // Extract existing menu items from cart_lunchbox structure
+    // Extract existing menu items from lunchbox structure
     let existingMenuItems: MenuItem[] = [];
     lunchboxes.forEach((lunchbox: any) => {
       if (lunchbox.lunchbox_menu && Array.isArray(lunchbox.lunchbox_menu)) {
@@ -121,7 +121,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: `เมนูต่อไปนี้ไม่มีอยู่ในระบบ: ${invalidMenus.join(", ")}` }, { status: 400 });
     }
 
-    // Update menu items in cart_lunchbox structure
+    // Update menu items in lunchbox structure
     const updatedLunchboxes = lunchboxes.map((lunchbox: any) => {
       const updatedLunchboxMenu = (lunchbox.lunchbox_menu || []).map((menu: any) => {
         // Find the updated menu item from the request
@@ -132,7 +132,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
           const menuIngredients = updatedMenu.menu_ingredients.map((ing) => ({
             ingredient_name: ing.ingredient_name,
             useItem: ing.useItem,
-            ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
+            // ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
           }));
 
           // Handle menu_description - must be array of objects, not string
@@ -168,12 +168,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const serializedLunchboxes = convertBigIntToNumber(updatedLunchboxes);
     console.log("Updated lunchboxes to save:", JSON.stringify(serializedLunchboxes, null, 2));
 
-    const result = await prisma.cart.updateMany({
-      where: { cart_id: id },
+    const result = await prisma.new_cart.updateMany({
+      where: { id: id },
       data: {
-        cart_lunchbox: serializedLunchboxes as any,
-        cart_total_cost_lunchbox: cartTotalCostLunchbox, // Use value from aggregateRaw
-        cart_last_update: new Date().toISOString(),
+        lunchbox: serializedLunchboxes as any,
+        total_cost_lunchbox: cartTotalCostLunchbox, // Use value from aggregateRaw
+        last_update: new Date().toISOString(),
       },
     });
 

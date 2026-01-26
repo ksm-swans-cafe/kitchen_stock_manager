@@ -27,11 +27,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const [cart] = await prisma.cart.findMany({
-      where: { cart_id: id },
+    const [cart] = await prisma.new_cart.findMany({
+      where: { id: id },
       select: {
-        cart_id: true,
-        cart_menu_items: true,
+        id: true,
+        menu_items: true,
       },
     });
 
@@ -71,20 +71,20 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       menu_total: number;
       menu_ingredients: Ingredient[];
     }[] = [];
-    if (cart.cart_menu_items) {
+    if (cart.menu_items) {
       try {
-        if (typeof cart.cart_menu_items === "string") {
-          existingMenuItems = JSON.parse(cart.cart_menu_items);
+        if (typeof cart.menu_items === "string") {
+          existingMenuItems = JSON.parse(cart.menu_items);
         } else {
-          console.warn("cart_menu_items is not a string, resetting to empty array");
+          console.warn("menu_items is not a string, resetting to empty array");
           existingMenuItems = [];
         }
         if (!Array.isArray(existingMenuItems)) {
-          console.warn("cart_menu_items is not an array, resetting to empty array");
+          console.warn("menu_items is not an array, resetting to empty array");
           existingMenuItems = [];
         }
       } catch (parseError) {
-        console.error("Failed to parse cart_menu_items:", parseError);
+        console.error("Failed to parse menu_items:", parseError);
         existingMenuItems = [];
       }
     }
@@ -114,11 +114,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       });
     }
 
-    const result = await prisma.cart.update({
-      where: { cart_id: id },
+    const result = await prisma.new_cart.update({
+      where: { id: id },
       data: {
-        cart_menu_items: JSON.stringify(updatedMenuItems),
-        cart_last_update: new Date().toISOString(),
+        menu_items: JSON.stringify(updatedMenuItems),
+        last_update: new Date().toISOString(),
       },
     });
 

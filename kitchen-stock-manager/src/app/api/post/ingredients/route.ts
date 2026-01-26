@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import sql from "@/app/database/connect";
+import prisma from "@/lib/prisma";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
     const ingredient_name = formData.get("ingredient_name")?.toString();
     const ingredient_total = Number(formData.get("ingredient_total"));
     const ingredient_unit = formData.get("ingredient_unit")?.toString();
-    // const ingredient_category = formData.get('ingredient_category')?.toString();
-    // const ingredient_sub_category = formData.get('ingredient_sub_category')?.toString();
+    const ingredient_category = formData.get("ingredient_category")?.toString() || "";
+    const ingredient_sub_category = formData.get("ingredient_sub_category")?.toString() || "";
     const ingredient_total_alert = Number(formData.get("ingredient_total_alert"));
     const ingredient_price = Number(formData.get("ingredient_price"));
     const file = formData.get("ingredient_image") as File | null;
@@ -24,17 +24,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing or invalid required fields" }, { status: 400 });
     }
 
-    const existingIngredient = await sql`
-      SELECT ingredient_name 
-      FROM ingredients 
-      WHERE ingredient_name = ${ingredient_name}
-    `;
+    // Check if ingredient already exists
+    const existingIngredient = await prisma.ingredients.findFirst({
+      where: { ingredient_name: ingredient_name }
+    });
 
-    if (existingIngredient.length > 0) {
+    if (existingIngredient) {
       return NextResponse.json({ error: "Ingredient name already exists" }, { status: 409 });
     }
 
-    let ingredient_image = null;
+    // Upload image if provided
+    let ingredient_image = "";
     if (file) {
       const blob = await put(`Ingredients-image/${randomUUID()}-${file.name}`, file, {
         access: "public",
@@ -42,49 +42,32 @@ export async function POST(request: NextRequest) {
       console.log("Uploaded blob:", blob);
       ingredient_image = blob.url;
     }
-    const ingredientPriceperUnit = (ingredient_price / ingredient_total).toFixed(2);
 
-    const result = await sql`
-      INSERT INTO ingredients (
-        ingredient_name,
-        ingredient_total,
-        ingredient_unit,
-        ingredient_image,
-        ingredient_total_alert,
-        ingredient_price,
-        ingredient_price_per_unit
-      ) VALUES (
-        ${ingredient_name},
-        ${ingredient_total},
-        ${ingredient_unit},
-        ${ingredient_image},
-        ${ingredient_total_alert},
-        ${ingredient_price},
-        ${ingredientPriceperUnit}
-      ) RETURNING *
-    `;
+    const ingredientPricePerUnit = (ingredient_price / ingredient_total).toFixed(2);
 
-    // const result = await sql`
-    //   INSERT INTO ingredients (
-    //     ingredient_name,
-    //     ingredient_total,
-    //     ingredient_unit,
-    //     ingredient_category,
-    //     ingredient_sub_category,
-    //     ingredient_image,
-    //     ingredient_total_alert,
-    //     ingredient_price
-    //   ) VALUES (
-    //     ${ingredient_name},
-    //     ${ingredient_total},
-    //     ${ingredient_unit},
-    //     ${ingredient_category},
-    //     ${ingredient_sub_category},
-    //     ${ingredient_image},
-    //     ${ingredient_total_alert},
-    //     ${ingredient_price}
-    //   ) RETURNING *
-    // `;
+    // Get max ingredient_id for auto-increment
+    const maxIdResult = await prisma.ingredients.findFirst({
+      orderBy: { ingredient_id: "desc" },
+      select: { ingredient_id: true }
+    });
+    const newIngredientId = (maxIdResult?.ingredient_id || 0) + 1;
+
+    // Create new ingredient
+    const result = await prisma.ingredients.create({
+      data: {
+        ingredient_id: newIngredientId,
+        ingredient_name: ingredient_name,
+        ingredient_total: ingredient_total.toString(),
+        ingredient_unit: ingredient_unit,
+        ingredient_category: ingredient_category,
+        ingredient_sub_category: ingredient_sub_category,
+        ingredient_image: ingredient_image,
+        ingredient_total_alert: ingredient_total_alert.toString(),
+        ingredient_price: ingredient_price.toString(),
+        ingredient_price_per_unit: ingredientPricePerUnit,
+        ingredient_lastupdate: new Date().toISOString(),
+      }
+    });
 
     return NextResponse.json(
       {

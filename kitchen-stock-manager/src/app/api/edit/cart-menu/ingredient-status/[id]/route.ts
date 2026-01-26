@@ -30,16 +30,16 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       ingredientName,
       isChecked,
     });
-    return NextResponse.json({ error: "กรุณาระบุ cart_id, menuName, ingredientName และ isChecked" }, { status: 400 });
+    return NextResponse.json({ error: "กรุณาระบุ id, menuName, ingredientName และ isChecked" }, { status: 400 });
   }
 
   try {
-    const cart = await prisma.cart.findFirst({
-      where: { cart_id: id },
+    const cart = await prisma.new_cart.findFirst({
+      where: { id: id },
       select: {
         id: true,
-        cart_id: true,
-        cart_lunchbox: true,
+        id: true,
+        lunchbox: true,
       },
     });
 
@@ -48,19 +48,19 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "ไม่พบตะกร้าที่ระบุ" }, { status: 404 });
     }
 
-    // Parse cart_lunchbox
+    // Parse lunchbox
     let lunchboxes: any[] = [];
-    if (typeof cart.cart_lunchbox === "string") {
+    if (typeof cart.lunchbox === "string") {
       try {
-        lunchboxes = JSON.parse(cart.cart_lunchbox);
+        lunchboxes = JSON.parse(cart.lunchbox);
       } catch (e) {
         console.error("JSON parse error:", (e as Error).message);
         return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
       }
-    } else if (Array.isArray(cart.cart_lunchbox)) {
-      lunchboxes = cart.cart_lunchbox;
+    } else if (Array.isArray(cart.lunchbox)) {
+      lunchboxes = cart.lunchbox;
     } else {
-      console.error("Invalid cart_lunchbox format:", cart.cart_lunchbox);
+      console.error("Invalid lunchbox format:", cart.lunchbox);
       return NextResponse.json({ error: "รูปแบบข้อมูล lunchbox ไม่ถูกต้อง" }, { status: 400 });
     }
 
@@ -110,10 +110,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       )
     );
 
-    const result = await prisma.cart.updateMany({
-      where: { cart_id: id },
+    const result = await prisma.new_cart.updateMany({
+      where: { id: id },
       data: {
-        cart_lunchbox: updatedLunchboxes as any,
+        lunchbox: updatedLunchboxes as any,
       },
     });
 

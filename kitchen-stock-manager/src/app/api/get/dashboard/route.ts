@@ -11,6 +11,12 @@ function convertBigIntToString(obj: any): any {
   if (Array.isArray(obj)) return obj.map(convertBigIntToString);
 
   if (typeof obj === "object") {
+    // Handle MongoDB ObjectId - check if it has $oid property or is ObjectId-like
+    if (obj.$oid) return obj.$oid;
+    if (obj._bsontype === 'ObjectId' || obj._bsontype === 'ObjectID') {
+      return obj.toString();
+    }
+    
     const converted: any = {};
     for (const key in obj) {
       converted[key] = convertBigIntToString(obj[key]);
@@ -54,17 +60,17 @@ export async function GET() {
       return getDayOfWeekThai(date.getDay());
     };
 
-    const result = await (prisma.cart as any).aggregateRaw({
+    const result = await (prisma.new_cart as any).aggregateRaw({
       pipeline: [
         {
           $addFields: {
             comparable_date: {
               $concat: [
-                { $substr: ["$cart_delivery_date", 6, 4] }, // year
+                { $substr: ["$delivery_date", 6, 4] }, // year
                 "/",
-                { $substr: ["$cart_delivery_date", 3, 2] }, // month
+                { $substr: ["$delivery_date", 3, 2] }, // month
                 "/",
-                { $substr: ["$cart_delivery_date", 0, 2] }, // day
+                { $substr: ["$delivery_date", 0, 2] }, // day
               ],
             },
           },
@@ -79,19 +85,20 @@ export async function GET() {
         {
           $sort: {
             comparable_date: 1,
-            cart_export_time: 1,
+            export_time: 1,
           },
         },
         {
           $project: {
-            cart_id: 1,
-            cart_location_send: 1,
-            cart_delivery_date: 1,
-            cart_export_time: 1,
-            cart_receive_time: 1,
-            cart_lunchbox: 1,
-            cart_description: 1,
-            cart_pinned: 1,
+            _id: 1,
+            location_send: 1,
+            delivery_date: 1,
+            export_time: 1,
+            receive_time: 1,
+            lunchbox: 1,
+            description: 1,
+            pinned: 1,
+            packaging_note: 1,
           },
         },
       ],
@@ -107,27 +114,39 @@ export async function GET() {
     
     const convertedResult = convertBigIntToString(result);
     
-    const resultWithDayOfWeek = convertedResult.map((item: any) => ({
-      id: item.cart_id,
-      date: item.cart_delivery_date,
-      dayOfWeek: getDayFromDateString(item.cart_delivery_date),
-      location: item.cart_location_send,
-      sendTime: item.cart_export_time,
-      receiveTime: item.cart_receive_time,
-      items: item.cart_lunchbox.map((lunchbox: any) => ({
-        lunchbox_name: lunchbox.lunchbox_name,
-        set: lunchbox.lunchbox_set_name,
-        quantity: lunchbox.lunchbox_total,
-        lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => ({
-          menu_name: menu.menu_name,
-          menu_quantity: menu.menu_total,
-          menu_ingredients: menu.menu_ingredients || [],
-          menu_description: menu.menu_description || [],
+    const resultWithDayOfWeek = convertedResult.map((item: any) => {
+      // แปลง _id ให้เป็น string อย่างปลอดภัย
+      let cartId = item._id;
+      if (typeof cartId === 'object' && cartId !== null) {
+        if (cartId.$oid) cartId = cartId.$oid;
+        else if (cartId.toString) cartId = cartId.toString();
+        else cartId = String(cartId);
+      }
+      
+      return {
+        id: cartId,
+        date: item.delivery_date,
+        dayOfWeek: getDayFromDateString(item.delivery_date),
+        location: item.location_send,
+        sendTime: item.export_time,
+        receiveTime: item.receive_time,
+        items: item.lunchbox.map((lunchbox: any) => ({
+          lunchbox_name: lunchbox.lunchbox_name,
+          set: lunchbox.lunchbox_set_name,
+          quantity: lunchbox.lunchbox_total,
+          packaging: lunchbox.lunchbox_packaging || null,
+          lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => ({
+            menu_name: menu.menu_name,
+            menu_quantity: menu.menu_total,
+            menu_ingredients: menu.menu_ingredients || [],
+            menu_description: menu.menu_description || [],
+          })),
         })),
-      })),
-      cart_description: item.cart_description || [],
-      cart_pinned: item.cart_pinned || false,
-    }));
+        description: item.description || [],
+        pinned: item.pinned || false,
+        packaging_note: item.packaging_note || "",
+      };
+    });
     
     return NextResponse.json({
       status: "success",
