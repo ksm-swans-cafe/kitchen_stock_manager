@@ -304,11 +304,13 @@ model new_cart {
   lunchbox            NewCartLunchbox[]
   order_name          String
   order_number        String
+  packaging_note      String?
   pay_charge          String
   pay_cost            String
   pay_deposit         String
   pay_isdeposit       Boolean
   pay_type            String
+  pinned              Boolean?
   receive_name        String
   receive_time        String
   shipping_by         String
