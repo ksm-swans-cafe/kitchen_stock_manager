@@ -2452,8 +2452,9 @@ const SummaryList: React.FC = () => {
           ) : (
             paginatedGroupedOrders.map(([date, orders], index) => (
               <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
-                <h3 style={{ fontSize: "28px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
-                  วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
+                <h3 style={{ fontSize: "24px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
+                  วันที่ส่งอาหาร {date} 
+                  {/* ( จำนวน {orders.length} รายการ) */}
                 </h3>
 
                 <div className='space-y-4'>
@@ -2613,12 +2614,18 @@ const SummaryList: React.FC = () => {
                                 <div className='flex items-center gap-2 text-base'>
                                   👤
                                   <span>ส่งถึงคุณ {cart.customer_name}</span>
-                                  <div className="flex items-center gap-2 ml-2 sm:ml-4">
-                                    📞
+                                  
+                                </div>
+                                
+                              </div>
+                              <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
+                              <div className="flex items-center gap-2 text-base">
+                                   📞
                                     <span>เบอร์ {cart.customer_tel} </span>
                                   </div>
-                                </div>
+                                
                               </div>
+                              
                               <div className='flex flex-wrap items-center gap-4 text-base font-normal text-black'>
                                 <div className='flex items-center gap-2'>
                                   📅
@@ -2627,12 +2634,6 @@ const SummaryList: React.FC = () => {
                               </div>
                               {(cart.invoice_tex || cart.customer_name || cart.location_send) && (
                                 <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
-                                  {cart.invoice_tex && (
-                                    <div className='flex items-center gap-2'>
-                                      📄
-                                      <span>เลขกำกับภาษี: {cart.invoice_tex}</span>
-                                    </div>
-                                  )}
                                   {cart.customer_name && (
                                     <div className='flex items-center gap-2'>
                                       👤
@@ -2643,6 +2644,12 @@ const SummaryList: React.FC = () => {
                                     <div className='flex items-center gap-2'>
                                       📍
                                       <span>ที่อยู่: {cart.location_send}</span>
+                                    </div>
+                                  )}
+                                  {cart.invoice_tex && (
+                                    <div className='flex items-center gap-2'>
+                                      📄
+                                      <span>เลขกำกับภาษี: {cart.invoice_tex}</span>
                                     </div>
                                   )}
                                 </div>
