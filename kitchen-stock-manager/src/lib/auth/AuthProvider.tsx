@@ -2,10 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 
 import { EmployeeRole, AuthContextType } from "@/models/common";
-import api from "@/lib/axios";
+import { api } from "@/lib/api";
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
@@ -26,16 +25,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAuth = async (preventRedirect = false): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/auth/check", {
-        credentials: "include",
+      console.log("Checking authentication");
+      const response = await api.get("/api/auth/checktoken", {
+        withCredentials: true,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsAuthenticated(true);
-        setUserRole(data.role);
-        setUserName(data.userName);
-        return true;
+      console.log(response);
+      if (response.status === 200) {
+        const data = response.data;
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+          setUserRole(data.role);
+          setUserName(data.userName);
+          return true;
+        } else {
+          setIsAuthenticated(false);
+          setUserRole(null);
+          setUserName(null);
+          if (!preventRedirect) {
+            router.push("/login");
+          }
+          return false;
+        }
       } else {
         setIsAuthenticated(false);
         setUserRole(null);
@@ -61,7 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      const response = await axios.post("/api/post/logout", {
+      const response = await api.post("/api/auth/logout", {
         withCredentials: true,
       });
 
@@ -70,6 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(null);
         setUserName(null);
         location.href = "/login";
+
         // router.push('/login');
         // router.refresh();
       }

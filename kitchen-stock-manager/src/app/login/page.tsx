@@ -1,14 +1,14 @@
 "use client";
 import React, { useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+// import axios from "axios";
 import { create } from "zustand";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Input } from "@/share/ui/input";
 import { Label } from "@/share/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/share/ui/card";
 import { Alert, AlertDescription } from "@/share/ui/alert";
-
+import { api } from "@/lib/api";
 import { Employee } from "@/models/employee/Employee";
 
 import { cn } from "@/lib/utils";
@@ -50,7 +50,6 @@ const Login: React.FC = () => {
   const dots = useLoadingDots();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
-  const apiUrl = "api/get/user";
 
   const generateToken = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -81,8 +80,9 @@ const Login: React.FC = () => {
       setError("");
 
       try {
-        const response = await fetch(apiUrl);
-        const employees: Employee[] = await response.json();
+        // const response = await fetch(apiUrl);
+        const response = await api.get("/api/auth/user");
+        const employees: Employee[] = await response.data;
 
         let matchedEmployee: Employee | null = null;
         for (const emp of employees) {
@@ -94,8 +94,8 @@ const Login: React.FC = () => {
 
         if (matchedEmployee) {
           const token = generateToken();
-          const loginResponse = await axios.post("/api/post/login", {
-          // const loginResponse = await api.post("/api/post/login", {
+          // const loginResponse = await axios.post("/api/post/login", {
+          const loginResponse = await api.post("/api/auth/login", {
             token,
             username: matchedEmployee.employee_username,
             name: `${matchedEmployee.employee_firstname} ${matchedEmployee.employee_lastname}`,
@@ -105,7 +105,7 @@ const Login: React.FC = () => {
           if (loginResponse.status === 200) {
             await checkAuth(true);
             router.push("/home");
-          } else throw new Error("Failed to set login cookie");
+          } else throw new Error("Failed to login");
         } else {
           setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
           resetPin();
