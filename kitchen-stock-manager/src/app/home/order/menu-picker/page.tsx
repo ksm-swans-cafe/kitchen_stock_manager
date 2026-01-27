@@ -5,7 +5,7 @@ import { Search, Send, Minus, Plus, ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-import { useCartStore } from "@/stores/store";
+import { useCartStore, calculatePackaging } from "@/stores/store";
 
 import { MenuItem } from "@/models/menu_card/MenuCard";
 import TopStepper from "@/components/order/TopStepper";
@@ -211,6 +211,51 @@ export default function Order() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Handle browser back button and keyboard back to navigate between steps instead of pages
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      
+      // Step 3 -> Step 2: ถ้าอยู่ขั้นตอนเลือกเมนู ให้กลับไปเลือก Set
+      if (selectedFoodSet && selectedSetMenu) {
+        setSelectedSetMenu("");
+        setSelectedMenuItems([]);
+        setSelectedMeatType(null);
+        setNote("");
+        setSearchQuery("");
+        setFocusedDish(null);
+        // Push state กลับไปเพื่อไม่ให้ออกจากหน้า
+        window.history.pushState(null, "", window.location.href);
+        return;
+      }
+      
+      // Step 2 -> Step 1: ถ้าอยู่ขั้นตอนเลือก Set ให้กลับไปเลือกชุดอาหาร
+      if (selectedFoodSet && !selectedSetMenu) {
+        setSelectedFoodSet("");
+        setSelectedSetMenu("");
+        setSelectedMenuItems([]);
+        setSelectedMeatType(null);
+        setNote("");
+        setSearchQuery("");
+        setFocusedDish(null);
+        // Push state กลับไปเพื่อไม่ให้ออกจากหน้า
+        window.history.pushState(null, "", window.location.href);
+        return;
+      }
+      
+      // Step 1: ถ้าอยู่ขั้นตอนแรก ให้กลับไปหน้าก่อนหน้าจริงๆ
+      router.back();
+    };
+
+    // Push initial state เพื่อจัดการ back button
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [selectedFoodSet, selectedSetMenu, router]);
 
   useEffect(() => {
     if (selectedFoodSet && lunchboxData.length > 0) {
@@ -896,6 +941,9 @@ export default function Order() {
         if (setPrice !== null) totalCost = setPrice * lunchboxQuantity;
         else totalCost = selectedMenuObjects.reduce((total, menu) => total + (menu.lunchbox_cost ?? 0), 0) * lunchboxQuantity;
 
+        // คำนวณ packaging จาก set name และ quantity
+        const packaging = calculatePackaging(selectedSetMenu, lunchboxQuantity);
+
         const newLunchbox = {
           lunchbox_name: selectedFoodSet,
           lunchbox_set: selectedSetMenu.toUpperCase().startsWith("SET") ? selectedSetMenu : `SET ${selectedSetMenu}`,
@@ -904,6 +952,7 @@ export default function Order() {
           quantity: lunchboxQuantity,
           lunchbox_total_cost: totalCost.toString(),
           note: note,
+          packaging: packaging,
         };
 
         await new Promise((resolve) => setTimeout(resolve, 800));

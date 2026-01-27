@@ -8,179 +8,14 @@ import { fetcher } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { useAuth } from "@/lib/auth/AuthProvider";
-
 import { Loading } from "@/components/loading/loading";
 import DashboardIcon from "@/assets/dashboard.png";
 
-// --- Interfaces ---
-interface DayItem {
-  name: string;
-  qty: number | string;
-  lunchbox_name?: string;
-  menu_ingredients?: MenuIngredient[];
-  menu_description?: MenuItemDescription[];
-}
-
-interface MenuIngredient {
-  ingredient_name: string;
-  ingredient_status?: boolean;
-  useItem: number | string;
-}
-
-interface MenuItemDescription {
-  menu_description_id: string | null;
-  menu_description_title: string;
-  menu_description_value: string;
-}
-
-interface CartDescription {
-  description_id: string | null;
-  description_title: string;
-  description_value: string;
-}
-
-interface DayCard {
-  id: number;
-  cartId: string;
-  dayOfWeek: string;
-  dateTitle: string;
-  rawDate: string; // DD/MM/YYYY format
-  sendPlace: string;
-  sendTime: string;
-  receiveTime: string;
-  items: DayItem[];
-  totalText: string;
-  isPinned?: boolean;
-  minutesToSend?: number;
-  description: CartDescription[];
-}
-
-// Edit Card Modal State Interface
-interface EditCardState {
-  cartId: string;
-  date: string;
-  sendTime: string;
-  receiveTime: string;
-  location: string;
-}
-
-interface ApiResponse {
-  status: string;
-  total: number;
-  result: Array<{
-    id: string;
-    dayOfWeek: string;
-    date: string;
-    location: string;
-    sendTime: string;
-    receiveTime: string;
-    items: Array<{
-      lunchbox_name: string;
-      set: string;
-      quantity: number;
-      lunchbox_menu: Array<{
-        menu_name: string;
-        menu_quantity: number;
-        menu_ingredients: MenuIngredient[];
-        menu_description: MenuItemDescription[];
-      }>;
-    }>;
-    description: CartDescription[];
-    pinned: boolean;
-  }>;
-}
-
-// --- Constants & Helpers ---
-const dayColor: Record<string, string> = {
-  จันทร์: "from-yellow-400 to-yellow-500",
-  อังคาร: "from-pink-400 to-pink-500",
-  พุธ: "from-emerald-400 to-emerald-500",
-  พฤหัสบดี: "from-orange-400 to-orange-500",
-  ศุกร์: "from-sky-400 to-sky-500",
-  เสาร์: "from-indigo-400 to-indigo-500",
-  อาทิตย์: "from-rose-400 to-rose-500",
-};
-
-const dayNoteColor: Record<string, { light: string; dark: string; hover: string }> = {
-  จันทร์: { light: "bg-yellow-50", dark: "bg-yellow-100", hover: "bg-yellow-200" },
-  อังคาร: { light: "bg-pink-50", dark: "bg-pink-100", hover: "bg-pink-200" },
-  พุธ: { light: "bg-emerald-50", dark: "bg-emerald-100", hover: "bg-emerald-200" },
-  พฤหัสบดี: { light: "bg-orange-50", dark: "bg-orange-100", hover: "bg-orange-200" },
-  ศุกร์: { light: "bg-sky-50", dark: "bg-sky-100", hover: "bg-sky-200" },
-  เสาร์: { light: "bg-indigo-50", dark: "bg-indigo-100", hover: "bg-indigo-200" },
-  อาทิตย์: { light: "bg-rose-50", dark: "bg-rose-100", hover: "bg-rose-200" },
-};
-
-const dayNoteTextColor: Record<string, string> = {
-  จันทร์: "text-yellow-700",
-  อังคาร: "text-pink-700",
-  พุธ: "text-emerald-700",
-  พฤหัสบดี: "text-orange-700",
-  ศุกร์: "text-sky-700",
-  เสาร์: "text-indigo-700",
-  อาทิตย์: "text-rose-700",
-};
-
-// Aura/Glow colors for pinned cards
-const dayAuraColor: Record<string, { class: string; style: React.CSSProperties }> = {
-  จันทร์: { class: "ring-2 ring-yellow-400 animate-auraGlow", style: { "--aura-color": "rgba(250,204,21,0.4)" } as React.CSSProperties },
-  อังคาร: { class: "ring-2 ring-pink-400 animate-auraGlow", style: { "--aura-color": "rgba(236,72,153,0.4)" } as React.CSSProperties },
-  พุธ: { class: "ring-2 ring-emerald-400 animate-auraGlow", style: { "--aura-color": "rgba(52,211,153,0.4)" } as React.CSSProperties },
-  พฤหัสบดี: { class: "ring-2 ring-orange-400 animate-auraGlow", style: { "--aura-color": "rgba(251,146,60,0.4)" } as React.CSSProperties },
-  ศุกร์: { class: "ring-2 ring-sky-400 animate-auraGlow", style: { "--aura-color": "rgba(56,189,248,0.4)" } as React.CSSProperties },
-  เสาร์: { class: "ring-2 ring-indigo-400 animate-auraGlow", style: { "--aura-color": "rgba(129,140,248,0.4)" } as React.CSSProperties },
-  อาทิตย์: { class: "ring-2 ring-rose-400 animate-auraGlow", style: { "--aura-color": "rgba(251,113,133,0.4)" } as React.CSSProperties },
-};
-
-const dayColorLegend = [
-  { label: "จันทร์", className: "bg-yellow-400" },
-  { label: "อังคาร", className: "bg-pink-400" },
-  { label: "พุธ", className: "bg-emerald-400" },
-  { label: "พฤหัสบดี", className: "bg-orange-400" },
-  { label: "ศุกร์", className: "bg-sky-400" },
-  { label: "เสาร์", className: "bg-indigo-400" },
-  { label: "อาทิตย์", className: "bg-rose-400" },
-];
-
-const cleanTime = (text: string) => text.replace(/\(.*?\)/g, "").trim();
-
-const monthNamesShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-
-const getMonthNameShort = (monthNum: string | number): string => {
-  const num = typeof monthNum === "string" ? parseInt(monthNum, 10) : monthNum;
-  return monthNamesShort[num - 1] || monthNum.toString();
-};
-
-const getTimeAlertInfo = (minutes?: number) => {
-  if (minutes == null) return null;
-  if (minutes <= 30) {
-    return {
-      label: `ใกล้เวลาส่ง (${minutes} นาที)`,
-      className: "bg-red-50 border border-red-300 text-red-700",
-    };
-  }
-
-  if (minutes <= 60) {
-    return {
-      label: `ควรเตรียมแล้ว (${minutes} นาที)`,
-      className: "bg-amber-50 border border-amber-300 text-amber-800",
-    };
-  }
-
-  if (minutes <= 1440) {
-    const hours = Math.round(minutes / 60);
-    return {
-      label: `เหลือเวลาอีก ${hours} ชั่วโมง`,
-      className: "bg-emerald-50 border border-emerald-300 text-emerald-800",
-    };
-  }
-
-  const days = Math.round(minutes / 1440);
-  return {
-    label: `เหลือเวลาอีก ${days} วัน`,
-    className: "bg-blue-50 border border-blue-300 text-blue-800",
-  };
-};
+// Import from local files
+import { dayColor, dayNoteColor, dayNoteTextColor, dayAuraColor, dayColorLegend } from "./constants";
+import { DayItem, MenuIngredient, MenuItemDescription, CartDescription, DayCard, PackagingNote, PackagingInfo, EditCardState, ApiResponse } from "./types";
+import { cleanTime, getMonthNameShort, getTimeAlertInfo, calculatePackaging, calculateMinutesToSend } from "./helpers";
+import { SaveButton, CancelButton, DeleteButton, AddNoteButton, PackagingNoteForm, PackagingItem } from "./components";
 
 // --- Main Component ---
 export default function Dashboard() {
@@ -211,6 +46,12 @@ export default function Dashboard() {
   const [savingMenuDesc, setSavingMenuDesc] = useState<Record<string, boolean>>({});
   const [editingMenuDesc, setEditingMenuDesc] = useState<Record<string, { cartId: string; lunchboxName: string; menuName: string; title: string; value: string } | null>>({});
   const [expandedMenuItems, setExpandedMenuItems] = useState<Record<string, boolean>>({});
+
+  // State สำหรับ packaging notes (รองรับหลายโน้ต)
+  const [packagingNoteInput, setPackagingNoteInput] = useState<Record<string, string>>({});
+  const [showPackagingNoteInput, setShowPackagingNoteInput] = useState<Record<string, boolean>>({});
+  const [savingPackagingNote, setSavingPackagingNote] = useState<Record<string, boolean>>({});
+  const [editingPackagingNote, setEditingPackagingNote] = useState<Record<string, { cartId: string; noteId: string; value: string } | null>>({});
 
   // Cursor auto-hide after 5 seconds of inactivity
   useEffect(() => {
@@ -571,6 +412,69 @@ export default function Dashboard() {
     setExpandedMenuItems((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
+  // ======= Packaging Notes Functions (Multiple Notes) =======
+  
+  // ฟังก์ชันบันทึก packaging notes ไปยัง database
+  const savePackagingNotesToDatabase = useCallback(async (cartId: string, notes: PackagingNote[]) => {
+    if (!cartId) {
+      console.error("Cart ID is required for saving packaging notes");
+      return;
+    }
+    setSavingPackagingNote((prev) => ({ ...prev, [cartId]: true }));
+    try {
+      const response = await fetch(`/api/edit/packaging-note/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packaging_notes: notes }),
+      });
+      if (!response.ok) {
+        console.error("Failed to save packaging notes");
+      } else {
+        mutate("/api/get/dashboard");
+      }
+    } catch (error) {
+      console.error("Error saving packaging notes:", error);
+    } finally {
+      setSavingPackagingNote((prev) => ({ ...prev, [cartId]: false }));
+    }
+  }, []);
+
+  // ฟังก์ชันเพิ่ม packaging note ใหม่
+  const handleAddPackagingNote = useCallback((cartId: string, currentNotes: PackagingNote[]) => {
+    if (!cartId) return;
+    const noteValue = packagingNoteInput[cartId]?.trim();
+    if (!noteValue) {
+      setShowPackagingNoteInput((prev) => ({ ...prev, [cartId]: false }));
+      return;
+    }
+    const newNote: PackagingNote = {
+      id: Date.now().toString(),
+      value: noteValue,
+    };
+    const updatedNotes = [...currentNotes, newNote];
+    savePackagingNotesToDatabase(cartId, updatedNotes);
+    setShowPackagingNoteInput((prev) => ({ ...prev, [cartId]: false }));
+    setPackagingNoteInput((prev) => ({ ...prev, [cartId]: "" }));
+  }, [packagingNoteInput, savePackagingNotesToDatabase]);
+
+  // ฟังก์ชันลบ packaging note
+  const handleDeletePackagingNote = useCallback((cartId: string, noteId: string, currentNotes: PackagingNote[]) => {
+    if (!cartId) return;
+    const updatedNotes = currentNotes.filter((n) => n.id !== noteId);
+    savePackagingNotesToDatabase(cartId, updatedNotes);
+  }, [savePackagingNotesToDatabase]);
+
+  // ฟังก์ชันอัปเดต packaging note
+  const handleUpdatePackagingNote = useCallback((noteKey: string, currentNotes: PackagingNote[]) => {
+    const editing = editingPackagingNote[noteKey];
+    if (!editing) return;
+    const updatedNotes = currentNotes.map((n) =>
+      n.id === editing.noteId ? { ...n, value: editing.value.trim() } : n
+    );
+    savePackagingNotesToDatabase(editing.cartId, updatedNotes);
+    setEditingPackagingNote((prev) => ({ ...prev, [noteKey]: null }));
+  }, [editingPackagingNote, savePackagingNotesToDatabase]);
+
   // Calculate minutes until send time
   const calculateMinutesToSend = (date: string, sendTime: string): number => {
     const [day, month, year] = date.split("/").map(Number);
@@ -726,6 +630,41 @@ export default function Dashboard() {
         // แปลงปี พ.ศ. เป็น 2 หลักท้าย (เช่น 2569 -> 69)
         const shortYear = String(year).slice(-2);
 
+        // คำนวณ packaging จากแต่ละ lunchbox (ใช้จาก DB ถ้ามี, fallback คำนวณถ้าไม่มี)
+        // แปลง packaging_notes จาก API (อาจเป็น JSON string หรือ string เก่า)
+        let packagingNotes: PackagingNote[] = [];
+        if (item.packaging_note && typeof item.packaging_note === 'string' && item.packaging_note.trim()) {
+          // ลองแปลง JSON string ก่อน
+          try {
+            const parsed = JSON.parse(item.packaging_note);
+            if (Array.isArray(parsed)) {
+              packagingNotes = parsed as PackagingNote[];
+            } else {
+              // ไม่ใช่ array ใช้เป็น legacy string
+              packagingNotes = [{ id: 'legacy', value: item.packaging_note }];
+            }
+          } catch {
+            // ไม่ใช่ JSON ใช้เป็น legacy string
+            packagingNotes = [{ id: 'legacy', value: item.packaging_note }];
+          }
+        }
+        
+        const packaging: PackagingInfo = { fukYai: 0, box2Chan: 0, box3Chan: 0, notes: packagingNotes };
+        item.items.forEach((lunchbox) => {
+          if (lunchbox.packaging) {
+            // ใช้ packaging จาก database
+            packaging.fukYai += lunchbox.packaging.fukYai;
+            packaging.box2Chan += lunchbox.packaging.box2Chan;
+            packaging.box3Chan += lunchbox.packaging.box3Chan;
+          } else {
+            // Fallback: คำนวณ packaging สำหรับข้อมูลเก่าที่ยังไม่มี packaging
+            const packResult = calculatePackaging(lunchbox.set, lunchbox.quantity);
+            packaging.fukYai += packResult.fukYai;
+            packaging.box2Chan += packResult.box2Chan;
+            packaging.box3Chan += packResult.box3Chan;
+          }
+        });
+
         return {
           id: index + 1, // แนะนำให้ใช้ ID จริงจาก API ถ้ามี เพื่อความแม่นยำในการระบุตัวตน
           cartId: item.id, // เก็บ id จริงจาก API เพื่อใช้ในการบันทึก note
@@ -740,6 +679,7 @@ export default function Dashboard() {
           isPinned: item.pinned || false,
           minutesToSend,
           description: item.description || [],
+          packaging,
         };
       })
       .filter((card) => card.minutesToSend >= 0)
@@ -775,6 +715,15 @@ export default function Dashboard() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Listen for fullscreen event from Navigatebar
+  useEffect(() => {
+    const handleDashboardFullscreen = () => {
+      toggleFullscreen();
+    };
+    window.addEventListener('dashboard-fullscreen', handleDashboardFullscreen);
+    return () => window.removeEventListener('dashboard-fullscreen', handleDashboardFullscreen);
+  }, []);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -802,7 +751,7 @@ export default function Dashboard() {
         key={day.id + (asPinnedSlot ? "-pinned-slot" : "-normal")}
         style={isPinned ? auraConfig.style : undefined}
         // Logic ความสูง: h-full เพื่อให้ยืดตาม Container, min-w เพื่อกำหนดความกว้างขั้นต่ำ
-        className={`group/card bg-white rounded-2xl overflow-hidden flex flex-col h-full 
+        className={`group/card bg-white rounded-2xl overflow-hidden flex flex-col h-full
           min-w-[300px] transition-all duration-300
           ${isPinned ? auraConfig.class : "shadow"}
           ${timeAlert && isPinned ? "ring-4 ring-amber-300" : ""}
@@ -895,7 +844,7 @@ export default function Dashboard() {
         </div>
 
         {/* CONTENT (Scrollable Y) */}
-        <div className='flex-1 bg-white overflow-y-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'>
+        <div className='flex-1 bg-white overflow-y-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent min-h-0'>
           <table className='w-full table-fixed'>
             <colgroup>
               <col className='w-[70%]' />
@@ -918,7 +867,7 @@ export default function Dashboard() {
                   <React.Fragment key={index}>
                     {/* Main menu item row */}
                     <tr 
-                      className={`group/menuitem cursor-pointer transition-colors ${index % 2 === 0 ? "bg-white hover:bg-gray-100" : "bg-gray-50 hover:bg-gray-100"}`}
+                      className={`group/menuitem cursor-pointer transition-colors ${index % 2 === 0 ? "bg-white hover:bg-gray-100" : "bg-gray-200 hover:bg-gray-300"}`}
                       onClick={() => toggleExpandMenuItem(menuKey)}
                     >
                       <td className='px-4 py-2 !text-black align-middle'>
@@ -985,7 +934,7 @@ export default function Dashboard() {
                                   }}
                                   onClick={(e) => e.stopPropagation()}
                                   rows={1}
-                                  className='flex-1 min-w-[120px] px-3 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none resize-none overflow-hidden leading-normal bg-white'
+                                  className='flex-1 min-w-[120px] px-3 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none resize-none overflow-hidden leading-normal bg-white text-black'
                                 />
                                 <input
                                   type='text'
@@ -993,7 +942,7 @@ export default function Dashboard() {
                                   value={editingMenuDesc[descId]?.value || ""}
                                   onChange={(e) => handleEditMenuDescChange(descId, "value", e.target.value)}
                                   onClick={(e) => e.stopPropagation()}
-                                  className='w-16 shrink-0 px-2 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none text-center bg-white'
+                                  className='w-16 shrink-0 px-2 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none text-center bg-white text-black'
                                 />
                               </div>
                               <div className='flex gap-2 justify-end mt-2'>
@@ -1097,7 +1046,7 @@ export default function Dashboard() {
                               }}
                               onClick={(e) => e.stopPropagation()}
                               rows={1}
-                              className='flex-1 min-w-[100px] px-3 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none resize-none overflow-hidden leading-normal bg-white'
+                              className='flex-1 min-w-[100px] px-3 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none resize-none overflow-hidden leading-normal bg-white text-black'
                             />
                             <input
                               type='text'
@@ -1105,7 +1054,7 @@ export default function Dashboard() {
                               value={menuDescInputs[menuKey]?.value || ""}
                               onChange={(e) => handleMenuDescInputChange(menuKey, "value", e.target.value)}
                               onClick={(e) => e.stopPropagation()}
-                              className='w-14 shrink-0 px-2 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none text-center bg-white'
+                              className='w-14 shrink-0 px-2 py-1.5 text-sm border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none text-center bg-white text-black'
                             />
                           </div>
                           <div className='flex gap-2 justify-end mt-2'>
@@ -1174,7 +1123,7 @@ export default function Dashboard() {
                             }}
                             onClick={(e) => e.stopPropagation()}
                             rows={1}
-                            className='flex-1 min-w-[150px] px-3 py-1.5 text-base border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none resize-none overflow-hidden leading-normal bg-white'
+                            className='flex-1 min-w-[150px] px-3 py-1.5 text-base border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none resize-none overflow-hidden leading-normal bg-white text-black'
                           />
                           <input
                             type='text'
@@ -1182,7 +1131,7 @@ export default function Dashboard() {
                             value={editingNote[descId]?.value || ""}
                             onChange={(e) => handleEditNoteChange(descId, "value", e.target.value)}
                             onClick={(e) => e.stopPropagation()}
-                            className='w-20 shrink-0 px-2 py-1.5 text-base border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-center bg-white'
+                            className='w-20 shrink-0 px-2 py-1.5 text-base border border-amber-400 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none text-center bg-white text-black'
                           />
                         </div>
                         <div className='flex gap-2 justify-end mt-2'>
@@ -1224,8 +1173,8 @@ export default function Dashboard() {
                   >
                     {hasValue ? (
                       <>
-                        <td className='px-4 py-2 !text-black align-middle break-words whitespace-pre-wrap'>{desc.description_title}</td>
-                        <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center !text-black font-semibold align-middle relative overflow-hidden'>
+                        <td className='px-4 py-2 align-middle break-words whitespace-pre-wrap' style={{ color: '#1f2937', fontWeight: 500 }}>{desc.description_title}</td>
+                        <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center font-bold align-middle relative overflow-hidden' style={{ color: '#dc2626' }}>
                           <span>{desc.description_value}</span>
                           <div
                             className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
@@ -1244,7 +1193,7 @@ export default function Dashboard() {
                         </td>
                       </>
                     ) : (
-                      <td colSpan={2} className='px-4 py-2 !text-black align-middle break-words whitespace-pre-wrap relative overflow-hidden'>
+                      <td colSpan={2} className='px-4 py-2 align-middle break-words whitespace-pre-wrap relative overflow-hidden' style={{ color: '#1f2937', fontWeight: 500 }}>
                         <span>{desc.description_title}</span>
                         <div
                           className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
@@ -1293,7 +1242,7 @@ export default function Dashboard() {
                     }}
                     onClick={(e) => e.stopPropagation()}
                     rows={1}
-                    className='flex-1 min-w-[120px] px-3 py-1.5 text-base border border-emerald-400 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none resize-none overflow-hidden leading-normal bg-white'
+                    className='flex-1 min-w-[120px] px-3 py-1.5 text-base border border-emerald-400 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none resize-none overflow-hidden leading-normal bg-white text-black'
                   />
                   <input
                     type='text'
@@ -1301,7 +1250,7 @@ export default function Dashboard() {
                     value={noteInputs[day.cartId]?.value || ""}
                     onChange={(e) => handleNoteInputChange(day.cartId, "value", e.target.value)}
                     onClick={(e) => e.stopPropagation()}
-                    className='w-16 shrink-0 px-2 py-1.5 text-base border border-emerald-400 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none text-center bg-white'
+                    className='w-16 shrink-0 px-2 py-1.5 text-base border border-emerald-400 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none text-center bg-white text-black'
                   />
                 </div>
                 <div className='flex gap-2 justify-end mt-2'>
@@ -1355,10 +1304,172 @@ export default function Dashboard() {
               )
             )}
           </div>
+
         </div>
 
-        {/* FOOTER (Fixed) */}
-        <div className='flex-none border-t bg-white py-3'>
+        {/* FOOTER - Fixed at bottom of card using flex */}
+        <div className='flex-none border-t bg-white py-2 px-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'>
+          {/* Packaging Info */}
+          {(day.packaging.fukYai > 0 || day.packaging.box2Chan > 0 || day.packaging.box3Chan > 0) && (
+            <div className='mb-2 text-sm group/packaging'>
+              {/* Packaging Notes - รองรับหลายโน้ต */}
+              {/* ปุ่มเพิ่มโน้ต/ฟอร์มเพิ่มโน้ตใหม่ - อยู่บนสุดเสมอ */}
+              {showPackagingNoteInput[day.cartId] ? (
+                <div className='mb-2 p-2 bg-gray-50 rounded border border-gray-200'>
+                  <textarea
+                    value={packagingNoteInput[day.cartId] ?? ""}
+                    onChange={(e) => setPackagingNoteInput((prev) => ({ ...prev, [day.cartId]: e.target.value }))}
+                    placeholder='เพิ่มโน้ต packaging...'
+                    className='w-full text-xs p-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-black'
+                    rows={2}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className='flex justify-end gap-1 mt-1'>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddPackagingNote(day.cartId, day.packaging.notes);
+                      }}
+                      disabled={savingPackagingNote[day.cartId]}
+                      className='px-2 py-1 text-xs rounded disabled:opacity-50 flex items-center gap-1 hover:bg-green-50'
+                      style={{ color: '#16a34a' }}
+                    >
+                      {savingPackagingNote[day.cartId] ? (
+                        <span className='animate-spin'>⏳</span>
+                      ) : (
+                        <Save className='w-3 h-3' />
+                      )}
+                      บันทึก
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPackagingNoteInput((prev) => ({ ...prev, [day.cartId]: false }));
+                        setPackagingNoteInput((prev) => ({ ...prev, [day.cartId]: "" }));
+                      }}
+                      className='px-2 py-1 text-xs rounded hover:bg-gray-100'
+                      style={{ color: '#4b5563' }}
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className='overflow-hidden max-h-0 group-hover/packaging:max-h-10 group-hover/packaging:mb-2 transition-all duration-200'>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPackagingNoteInput((prev) => ({ ...prev, [day.cartId]: "" }));
+                      setShowPackagingNoteInput((prev) => ({ ...prev, [day.cartId]: true }));
+                    }}
+                    className='group/btn w-full px-2 py-1 text-xs text-orange-600 border border-dashed border-orange-300 rounded hover:bg-orange-50 flex items-center justify-center gap-1 transition-all duration-300 ease-in-out active:scale-95'
+                  >
+                    <Plus className='w-3 h-3 transition-transform duration-300 group-hover/btn:rotate-180 group-hover/btn:scale-110' />
+                    เพิ่มโน้ต
+                  </button>
+                </div>
+              )}
+              
+              {/* แสดงโน้ตที่มีอยู่ */}
+              {day.packaging.notes.length > 0 && (
+                <div className='mb-2 space-y-1'>
+                  {day.packaging.notes.map((note) => {
+                    const noteKey = `${day.cartId}-${note.id}`;
+                    const editing = editingPackagingNote[noteKey];
+                    
+                    return editing ? (
+                      <div key={note.id} className='p-2 bg-gray-50 rounded border border-gray-200'>
+                        <textarea
+                          value={editing.value}
+                          onChange={(e) => setEditingPackagingNote((prev) => ({
+                            ...prev,
+                            [noteKey]: { ...prev[noteKey]!, value: e.target.value }
+                          }))}
+                          placeholder='แก้ไขโน้ต...'
+                          className='w-full text-xs p-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-black'
+                          rows={2}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className='flex justify-end gap-1 mt-1'>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePackagingNote(day.cartId, note.id, day.packaging.notes);
+                              setEditingPackagingNote((prev) => ({ ...prev, [noteKey]: null }));
+                            }}
+                            className='px-2 py-1 text-xs rounded flex items-center gap-1 hover:bg-red-50'
+                            style={{ color: '#dc2626' }}
+                          >
+                            <Trash2 className='w-3 h-3' />
+                            ลบ
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdatePackagingNote(noteKey, day.packaging.notes);
+                            }}
+                            disabled={savingPackagingNote[day.cartId]}
+                            className='px-2 py-1 text-xs rounded disabled:opacity-50 flex items-center gap-1 hover:bg-green-50'
+                            style={{ color: '#16a34a' }}
+                          >
+                            {savingPackagingNote[day.cartId] ? (
+                              <span className='animate-spin'>⏳</span>
+                            ) : (
+                              <Save className='w-3 h-3' />
+                            )}
+                            บันทึก
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingPackagingNote((prev) => ({ ...prev, [noteKey]: null }));
+                            }}
+                            className='px-2 py-1 text-xs rounded hover:bg-gray-100'
+                            style={{ color: '#4b5563' }}
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        key={note.id}
+                        className='p-2 bg-orange-50 border border-orange-200 rounded cursor-pointer hover:bg-orange-100 transition-colors'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingPackagingNote((prev) => ({
+                            ...prev,
+                            [noteKey]: { cartId: day.cartId, noteId: note.id, value: note.value }
+                          }));
+                        }}
+                      >
+                        <p className='text-xs whitespace-pre-wrap' style={{ color: '#9a3412', fontWeight: 500 }}>{note.value}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {day.packaging.fukYai > 0 && (
+                <div className='flex justify-between items-center py-1 px-2 bg-purple-200 rounded mb-1'>
+                  <span className='font-semibold text-purple-900'>ฟูกใหญ่</span>
+                  <span className='font-bold text-purple-900'>{day.packaging.fukYai}</span>
+                </div>
+              )}
+              {day.packaging.box2Chan > 0 && (
+                <div className='flex justify-between items-center py-1 px-2 bg-blue-200 rounded mb-1'>
+                  <span className='font-semibold text-blue-900'>กล่อง 2 ช่องดำ</span>
+                  <span className='font-bold text-blue-900'>{day.packaging.box2Chan}</span>
+                </div>
+              )}
+              {day.packaging.box3Chan > 0 && (
+                <div className='flex justify-between items-center py-1 px-2 bg-green-200 rounded mb-1'>
+                  <span className='font-semibold text-green-900'>กล่อง 3 ช่องดำ</span>
+                  <span className='font-bold text-green-900'>{day.packaging.box3Chan}</span>
+                </div>
+              )}
+            </div>
+          )}
           <p className='text-center font-semibold text-red-600'>{day.totalText}</p>
         </div>
       </div>
@@ -1559,55 +1670,45 @@ export default function Dashboard() {
       {/* Main Content */}
       {!isLoading && !error && allCards.length > 0 && (
         <>
-          {/* Header Bar (Legend & Toggle) - Fixed Height */}
-          <div className='flex-none transition-all'>
-            {!fullscreen && (
-              <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
-                <div className='hidden md:flex flex-wrap gap-2 text-[11px] sm:text-xs'>
-                  {dayColorLegend.map((day) => (
-                    <div key={day.label} className='flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100'>
-                      <span className={`w-2.5 h-2.5 rounded-full ${day.className}`} />
-                      <span>{day.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Button className='hidden lg:flex items-center gap-2' size='sm' onClick={toggleFullscreen}>
-                  <Maximize2 className='w-4 h-4' />
-                  FullScreen
-                </Button>
+          {/* Fullscreen Exit Button - Fixed position when in fullscreen mode */}
+          {fullscreen && (
+            <div className='fixed top-4 left-4 z-50 flex items-center gap-2'>
+              {/* Exit Fullscreen Button - Icon only */}
+              <button 
+                onClick={toggleFullscreen} 
+                className='flex items-center justify-center w-8 h-8 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-110'
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                title='ออกจากโหมดเต็มจอ'
+              >
+                <Minimize2 className='w-4 h-4' style={{ color: 'white' }} />
+              </button>
+              {/* Day Color Legend */}
+              <div 
+                className='flex items-center gap-1.5 text-[11px] text-white backdrop-blur-sm px-3 py-1.5 rounded-full'
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+              >
+                {dayColorLegend.map((day) => (
+                  <div key={day.label} className='flex items-center gap-1'>
+                    <span className={`w-2.5 h-2.5 rounded-full ${day.className}`} />
+                    <span>{day.label}</span>
+                  </div>
+                ))}
               </div>
-            )}
-
-            {fullscreen && (
-              <div className='flex justify-end mb-2'>
-                <button onClick={toggleFullscreen} className='flex items-center gap-1 text-[11px] sm:text-xs text-white/80 bg-black/40 px-3 py-1.5 rounded-full mr-2 hover:bg-black/60 transition-colors'>
-                  <Minimize2 className='w-4 h-4' />
-                  ออกจากโหมดเต็มจอ
-                </button>
-                <div className='flex items-center gap-1 text-[10px] text-white/90 bg-black/30 px-2 py-1 rounded-full'>
-                  {dayColorLegend.map((day) => (
-                    <div key={day.label} className='flex items-center gap-1'>
-                      <span className={`w-2 h-2 rounded-full ${day.className}`} />
-                      <span>{day.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* [LAYOUT หลัก] แสดงการ์ดทั้งหมด พร้อม highlight สำหรับการ์ดที่ปักหมุด */}
-          <div className='flex-1 flex gap-4 overflow-hidden'>
+          <div className='flex-1 flex gap-4 overflow-hidden min-h-0'>
             {/* Scrollable Cards Area */}
-            <div className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden pb-2 snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2`}>
+            <div className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden snap-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2`}>
               {allCards.length > 0
                 ? allCards.map((day) => (
                     <div
                       key={day.id}
-                      className={`h-full flex-none transition-all duration-300
+                      className={`flex-none transition-all duration-300
                       w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24%]
-                    `}>
+                    `}
+                      style={{ height: '100%' }}>
                       {renderDayCard(day, false)}
                     </div>
                   ))

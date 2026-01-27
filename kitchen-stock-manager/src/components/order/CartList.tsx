@@ -696,6 +696,7 @@ ${pay_deposit && pay_deposit !== "no"
           lunchbox_limit: lunchbox.lunchbox_limit,
           lunchbox_quantity: lunchbox.quantity,
           lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
+          lunchbox_packaging: lunchbox.packaging || null,
           lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
             menu_name: menu.menu_name,
             menu_subname: menu.menu_subname,
@@ -1337,7 +1338,12 @@ ${pay_deposit && pay_deposit !== "no"
             <textarea
               className='border rounded px-3 py-2 resize-none'
               value={invoice_tex}
-              onChange={(e) => setCustomerInfo({ invoice_tex: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= 13) {
+                  setCustomerInfo({ invoice_tex: value });
+                }
+              }}
               placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
               style={{ fontFamily: 'inherit' }}
               rows={1}

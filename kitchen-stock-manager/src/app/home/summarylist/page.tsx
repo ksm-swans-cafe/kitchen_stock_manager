@@ -10,7 +10,7 @@ import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
 import axios from "axios";
 import * as XLSX from "xlsx";
-import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map, Download, Users, Edit2, Container } from "lucide-react";
+import { Clock, User, Package, FileText, Search, CalendarDays, Filter, Smartphone, Wallet, Map, Download, Users, Edit2, Container, FilterX } from "lucide-react";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -2406,11 +2406,10 @@ const SummaryList: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
-          <div className='flex flex-center justify-self-end text-red-400'>
-            <Button
+          {/* ปุ่มล้างฟิลเตอร์ */}
+          <div>
+            <button
               onClick={() => {
                 setSearchTerm("");
                 setSortOrder("asc");
@@ -2419,17 +2418,11 @@ const SummaryList: React.FC = () => {
                 setFilterStatus("ทั้งหมด");
                 setCarts(allCarts);
               }}
-              className='h-12 w-35 text-sm'>
-              [ X ] ล้างฟิลเตอร์
-            </Button>
-          </div>
-          <div className='flex flex-col sm:flex-row flex-center gap-2'>
-            <Button onClick={() => handleExport("csv")} className='h-12 w-full flex items-center justify-center bg-green-100 hover:bg-green-200 text-green-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> CSV
-            </Button>
-            <Button onClick={() => handleExport("pdf")} className='h-12 w-full flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-800 rounded-lg px-4 py-2 text-sm'>
-              <Download className='w-4 h-4 mr-2' /> PDF
-            </Button>
+              style={{ color: '#ef4444' }}
+              className='h-10 w-full flex items-center justify-center gap-2 bg-white border border-slate-300 rounded-lg px-3 text-sm shadow-sm hover:bg-red-50 transition-all duration-200'>
+              <FilterX className='w-4 h-4' style={{ color: '#ef4444' }} />
+              <span>ล้างฟิลเตอร์</span>
+            </button>
           </div>
         </div>
 
@@ -2452,8 +2445,9 @@ const SummaryList: React.FC = () => {
           ) : (
             paginatedGroupedOrders.map(([date, orders], index) => (
               <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
-                <h3 style={{ fontSize: "28px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
-                  วันที่ส่งอาหาร {date} ( จำนวน {orders.length} รายการ)
+                <h3 style={{ fontSize: "24px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
+                  วันที่ส่งอาหาร {date} 
+                  {/* ( จำนวน {orders.length} รายการ) */}
                 </h3>
 
                 <div className='space-y-4'>
@@ -2613,12 +2607,18 @@ const SummaryList: React.FC = () => {
                                 <div className='flex items-center gap-2 text-base'>
                                   👤
                                   <span>ส่งถึงคุณ {cart.customer_name}</span>
-                                  <div className="flex items-center gap-2 ml-2 sm:ml-4">
-                                    📞
+                                  
+                                </div>
+                                
+                              </div>
+                              <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
+                              <div className="flex items-center gap-2 text-base">
+                                   📞
                                     <span>เบอร์ {cart.customer_tel} </span>
                                   </div>
-                                </div>
+                                
                               </div>
+                              
                               <div className='flex flex-wrap items-center gap-4 text-base font-normal text-black'>
                                 <div className='flex items-center gap-2'>
                                   📅
@@ -2627,12 +2627,6 @@ const SummaryList: React.FC = () => {
                               </div>
                               {(cart.invoice_tex || cart.customer_name || cart.location_send) && (
                                 <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
-                                  {cart.invoice_tex && (
-                                    <div className='flex items-center gap-2'>
-                                      📄
-                                      <span>เลขกำกับภาษี: {cart.invoice_tex}</span>
-                                    </div>
-                                  )}
                                   {cart.customer_name && (
                                     <div className='flex items-center gap-2'>
                                       👤
@@ -2643,6 +2637,12 @@ const SummaryList: React.FC = () => {
                                     <div className='flex items-center gap-2'>
                                       📍
                                       <span>ที่อยู่: {cart.location_send}</span>
+                                    </div>
+                                  )}
+                                  {cart.invoice_tex && (
+                                    <div className='flex items-center gap-2'>
+                                      📄
+                                      <span>เลขกำกับภาษี: {cart.invoice_tex}</span>
                                     </div>
                                   )}
                                 </div>

@@ -119,9 +119,16 @@ type NewCartLunchbox {
   lunchbox_limit      Int
   lunchbox_menu       NewCartLunchboxLunchboxMenu[]
   lunchbox_name       String
+  lunchbox_packaging  NewCartLunchboxPackaging?
   lunchbox_set_name   String
   lunchbox_total      Int
   lunchbox_total_cost BigInt
+}
+
+type NewCartLunchboxPackaging {
+  fukYai    Int
+  box2Chan  Int
+  box3Chan  Int
 }
 
 type NewCartLunchboxLunchboxMenu {
@@ -297,11 +304,13 @@ model new_cart {
   lunchbox            NewCartLunchbox[]
   order_name          String
   order_number        String
+  packaging_note      String?
   pay_charge          String
   pay_cost            String
   pay_deposit         String
   pay_isdeposit       Boolean
   pay_type            String
+  pinned              Boolean?
   receive_name        String
   receive_time        String
   shipping_by         String
