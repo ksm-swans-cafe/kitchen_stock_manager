@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import {api} from "@/lib/api";
 import useSWR from "swr";
 import { create } from "zustand";
 import { Search } from "lucide-react";
@@ -64,7 +64,7 @@ const useMenuLists = create<MenuLists>((set) => ({
   setTotalPages: (totalPages: number) => set({ totalPages }),
 }));
 
-const fetcher = (url: string) => axios.get(url).then((res) => res.data);
+const fetcher = (url: string) => api.get(url).then((res) => res.data);
 
 export default function Page() {
   const [isMinimumLoading, setIsMinimumLoading] = useState(true);
@@ -308,9 +308,9 @@ export default function Page() {
       formData.append("menu_cost", menuCost.toString());
       formData.append("menu_lunchbox", JSON.stringify(menuLunchbox));
 
-      const res = await axios({
+      const res = await api({
         method: editMenuId ? "patch" : "post",
-        url: editMenuId ? `/api/edit/menu/${editMenuId}` : "/api/post/menu",
+        url: editMenuId ? `/api/menu/edit/${editMenuId}` : "/api/menu/create",
         data: formData,
       });
 
@@ -347,7 +347,7 @@ export default function Page() {
     setIsSubmitting(true);
 
     try {
-      const res = await axios.delete(`/api/delete/menu/${menuId}`);
+      const res = await api.delete(`/api/menu/delete/${menuId}`);
 
       if (res.status !== 200) throw new Error("ไม่สามารถลบเมนูได้");
 

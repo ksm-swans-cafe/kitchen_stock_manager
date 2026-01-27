@@ -71,9 +71,7 @@ export default function Page() {
       icon: LayoutGrid,
       color: {
         bg: "bg-sky-500/10 border border-sky-400/40",
-        // bg: "bg-sky-500/10 border border-sky-400/40 shadow-[0_0_20px_rgba(56,189,248,0.45)]",
         hover: "group-hover:bg-sky-500/20",
-        // "group-hover:bg-sky-500/20 group-hover:shadow-[0_0_28px_rgba(56,189,248,0.75)]",
         icon: "text-sky-500",
       },
       onClick: () => router.push("/home/dashboard"),
@@ -126,7 +124,7 @@ export default function Page() {
     data: allIngredient = [],
     error,
     isLoading,
-  } = useSWR("/api/get/ingredients", fetcher, {
+  } = useSWR("/api/ingredient/lists", fetcher, {
     revalidateOnFocus: false,
     refreshInterval: 30000,
     onSuccess: (data) => {
@@ -157,7 +155,7 @@ export default function Page() {
   if (error) return <div className='min-h-screen flex items-center justify-center'>เกิดข้อผิดพลาดในการโหลดข้อมูลวัตถุดิบ, กรุณาลองใหม่อีกครั้ง</div>;
 
   return (
-    <div className='min-h-screen pt-[160px] bg-gradient-to-br from-background via-secondary/10 to-background p-4'>
+    <div className='min-h-screen pt-[160px] bg-linear-to-br from-background via-secondary/10 to-background p-4'>
       {/* Low Stock Alert */}
       {lowStockIngredients.length > 0 && (
         <div className='fixed bottom-6 right-6 z-50'>

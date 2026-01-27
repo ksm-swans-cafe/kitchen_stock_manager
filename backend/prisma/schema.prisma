@@ -108,7 +108,7 @@ type LunchboxLunchboxOrderSelect {
 
 type MenuMenuIngredients {
   ingredient_name String
-  /// Multiple data types found: Int: 96.5%, BigInt: 3.5% out of 346 sampled entries
+  /// Multiple data types found: Int: 90.5%, BigInt: 9.5% out of 346 sampled entries
   useItem         Json
 }
 
@@ -123,12 +123,13 @@ type MenuMenuLunchbox {
 }
 
 type NewCartLunchbox {
-  /// Multiple data types found: Int: 26.3%, BigInt: 73.7% out of 19 sampled entries
+  /// Multiple data types found: Int: 22%, BigInt: 78% out of 41 sampled entries
   lunchbox_limit      Json
   lunchbox_menu       NewCartLunchboxLunchboxMenu[]
   lunchbox_name       String
+  lunchbox_packaging  NewCartLunchboxLunchboxPackaging?
   lunchbox_set_name   String
-  /// Multiple data types found: Int: 26.3%, BigInt: 73.7% out of 19 sampled entries
+  /// Multiple data types found: Int: 22%, BigInt: 78% out of 41 sampled entries
   lunchbox_total      Json
   lunchbox_total_cost BigInt
 }
@@ -140,17 +141,23 @@ type NewCartLunchboxLunchboxMenu {
   menu_description Json?
   menu_ingredients NewCartLunchboxLunchboxMenuMenuIngredients[]
   menu_name        String
-  /// Multiple data types found: Int: 19.8%, BigInt: 80.2% out of 86 sampled entries
+  /// Multiple data types found: Int: 16.9%, BigInt: 83.1% out of 148 sampled entries
   menu_order_id    Json
   menu_subname     String
-  /// Multiple data types found: Int: 19.8%, BigInt: 80.2% out of 86 sampled entries
+  /// Multiple data types found: Int: 16.9%, BigInt: 83.1% out of 148 sampled entries
   menu_total       Json
 }
 
 type NewCartLunchboxLunchboxMenuMenuIngredients {
   ingredient_name String
-  /// Multiple data types found: Int: 23.8%, BigInt: 76.2% out of 282 sampled entries
+  /// Multiple data types found: Int: 16.8%, BigInt: 83.2% out of 505 sampled entries
   useItem         Json
+}
+
+type NewCartLunchboxLunchboxPackaging {
+  box2Chan BigInt
+  box3Chan BigInt
+  fukYai   BigInt
 }
 
 model cart {
@@ -275,7 +282,7 @@ model lunchbox {
 model menu {
   id               String                @id @default(auto()) @map("_id") @db.ObjectId
   menu_category    String
-  /// Multiple data types found: Int: 92.6%, BigInt: 7.4% out of 81 sampled entries
+  /// Multiple data types found: Int: 75%, BigInt: 25% out of 84 sampled entries
   menu_cost        Json?
   /// Multiple data types found: Int: 80.6%, BigInt: 19.4% out of 129 sampled entries
   menu_id          Json                  @unique
@@ -304,11 +311,13 @@ model new_cart {
   lunchbox            NewCartLunchbox[]
   order_name          String
   order_number        String
+  packaging_note      String?
   pay_charge          String
   pay_cost            String
   pay_deposit         String
   pay_isdeposit       Boolean
   pay_type            String
+  pinned              Boolean?
   receive_name        String
   receive_time        String
   shipping_by         String

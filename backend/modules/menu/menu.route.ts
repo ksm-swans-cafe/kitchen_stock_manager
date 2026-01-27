@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia'
-import { MenuList, AddMenuList, ThatMenuItem, EditThatMenuItem, DeleteThatMenuItem, MenuPage} from '@modules/menu/menu.service'
+import { MenuList, AddMenuList, ThatMenuItem, EditThatMenuItem, DeleteThatMenuItem, MenuPage, EditMenuDescription} from '@modules/menu/menu.service'
 
 export const menuRoutes = new Elysia({
     prefix: '/menu'
@@ -44,3 +44,4 @@ export const menuRoutes = new Elysia({
         })
     })
     .get('/page', ({ cookie, request }) => MenuPage({ cookie: cookie as any, request: request as Request }))
+   

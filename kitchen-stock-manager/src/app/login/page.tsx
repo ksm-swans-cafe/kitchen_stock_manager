@@ -1,7 +1,6 @@
 "use client";
 import React, { useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-// import axios from "axios";
 import { create } from "zustand";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Input } from "@/share/ui/input";
@@ -80,7 +79,6 @@ const Login: React.FC = () => {
       setError("");
 
       try {
-        // const response = await fetch(apiUrl);
         const response = await api.get("/api/auth/user");
         const employees: Employee[] = await response.data;
 
@@ -94,7 +92,6 @@ const Login: React.FC = () => {
 
         if (matchedEmployee) {
           const token = generateToken();
-          // const loginResponse = await axios.post("/api/post/login", {
           const loginResponse = await api.post("/api/auth/login", {
             token,
             username: matchedEmployee.employee_username,

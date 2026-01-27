@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import useSWR from "swr";
 import Swal from "sweetalert2";
-import axios from "axios";
+import {api} from "@/lib/api";
 
 import { StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
 
@@ -31,7 +31,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
           for (const ingredient of menu.ingredients) {
             if (!ingredient.ingredient_id) continue;
 
-            const res = await axios.get(`/api/get/ingredients/${ingredient.ingredient_id}`);
+            const res = await api.get(`/api/ingredient/lists/${ingredient.ingredient_id}`);
             if (res.status !== 200) {
               throw new Error(`Failed to get ingredient ${ingredient.ingredient_id}`);
             }
@@ -50,7 +50,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
 
             const formData = new FormData();
             formData.append("ingredient_total", String(remaining));
-            const updateRes = await axios.patch(`/api/edit/ingredients/${ingredient.ingredient_id}`, formData,);
+            const updateRes = await api.patch(`/api/ingredient/${ingredient.ingredient_id}`, formData,);
             if (updateRes.status !== 200) {
               throw new Error(`Failed to update ingredient ${ingredient.ingredient_id}`);
             }
@@ -62,7 +62,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({ cartId, allIngredients,
       formData.append("status", selectedStatus);
       formData.append("last_update", userName ?? "unknown");
 
-      const res = await axios.patch(`/api/edit/status/${cartId}`, formData);
+      const res = await api.patch(`/api/cart/status/${cartId}`, formData);
      
       if (res.status !== 200) {
         const errorData = res.data;

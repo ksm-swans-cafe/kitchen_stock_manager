@@ -38,7 +38,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       where: { id: id },
       select: {
         id: true,
-        id: true,
         lunchbox: true,
       },
     });

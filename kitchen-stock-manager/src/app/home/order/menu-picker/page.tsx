@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Search, Send, Minus, Plus, ArrowLeft } from "lucide-react";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 import { useCartStore, calculatePackaging } from "@/stores/store";
@@ -185,7 +185,7 @@ export default function Order() {
     const fetchLunchboxData = async () => {
       setIsLoadingLunchboxData(true);
       try {
-        const response = await axios.get("/api/get/lunchbox");
+        const response = await api.get("/api/lunchbox/lists");
         const data = response.data;
         console.log("lunchbox data: ", data);
         const items = data as LunchBoxFromAPI[] | undefined;
@@ -282,10 +282,8 @@ export default function Order() {
 
       setIsLoadingMenus(true);
       try {
-        const url = `/api/get/lunchbox/categories?lunchbox_name=${encodeURIComponent(selectedFoodSet)}&lunchbox_set_name=${encodeURIComponent(selectedSetMenu)}`;
-
-        const response = await fetch(url);
-        const data = await response.json();
+        const response = await api.get(`/api/lunchbox/categories?lunchbox_name=${encodeURIComponent(selectedFoodSet)}&lunchbox_set_name=${encodeURIComponent(selectedSetMenu)}`);
+        const data = response.data;
 
         if (data.success && data.data) {
           const menuItems: MenuItemWithAutoRice[] = data.data.map((menu: MenuItemWithAutoRice) => ({

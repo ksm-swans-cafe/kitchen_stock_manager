@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetcher } from "@/lib/utils";
 import useSWR from "swr";
-import axios from "axios";
+import { api } from "@/lib/api";
 
 
 const normalizeThaiVowel = (text: string): string => {
@@ -66,7 +66,7 @@ export default function IngredientManagement() {
     error,
     isLoading,
     mutate,
-  } = useSWR<DetailIngredient[]>("/api/get/ingredients", fetcher, {
+  } = useSWR<DetailIngredient[]>("/api/ingredient/lists", fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
     refreshInterval: 30000,
@@ -123,7 +123,7 @@ export default function IngredientManagement() {
       formDataIngredient.append("ingredient_total_alert", String(alert));
       formDataIngredient.append("ingredient_price", String(ingredient.ingredient_price ?? 0).trim());
       if (imageFile) formDataIngredient.append("ingredient_image", imageFile);
-      const res = await axios.post("/api/post/ingredients", formDataIngredient);
+      const res = await api.post("/api/ingredient/create", formDataIngredient);
 
       const result = res.data;
 
@@ -144,7 +144,12 @@ export default function IngredientManagement() {
       formDataTransaction.append("transaction_units", ingredient.ingredient_unit.trim());
 
       const encodedIngredientName = encodeURIComponent(trimmedName);
-      const resTran = await axios.post(`/api/post/${type}/stock/${encodedIngredientName}`, formDataTransaction);
+      const resTran = await api.post(`/api/ingredient/transaction/${type}/${encodedIngredientName}`, {
+        transaction_from_username: userName ?? "",
+        transaction_total_price: String(ingredient.ingredient_price ?? 0),
+        transaction_quantity: String(total),
+        transaction_units: ingredient.ingredient_unit.trim(),
+      });
 
       if (resTran.status !== 201) {
         const tranError = resTran.data;
@@ -160,13 +165,11 @@ export default function IngredientManagement() {
       mutate(allIngredient ? [...allIngredient, addedIngredient] : [addedIngredient], false);
 
       setingredient({
-        ingredient_name: "",
-        ingredient_total: 0,
-        ingredient_unit: "",
-        ingredient_image: "",
-        ingredient_total_alert: 0,
-        ingredient_status_value: "",
-        ingredient_price: 0,
+        ...addedIngredient,
+        ingredient_lastupdate: new Date().toISOString(),
+        ingredient_category: "",
+        ingredient_sub_category: "",
+        transaction_from_username: userName ?? "",
       });
       setImageFile(null);
       setIsAddDialogOpen(false);

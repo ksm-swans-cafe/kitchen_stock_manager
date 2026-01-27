@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import useSWR from "swr";
 import Swal from "sweetalert2";
-import axios from "axios";
+import {api} from "@/lib/api";
 
 import { StatusOption, StatusDropdownProps } from "@/types/interface_summary_orderhistory";
 
@@ -92,7 +92,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       formData.append("status", statusToUpdate);
       formData.append("last_update", userName ?? "unknown");
 
-      const res = await axios.patch(`/api/edit/cart_status/${cartId}`, formData);
+      const res = await api.patch(`/api/cart/status/${cartId}`, formData);
 
       if (res.status !== 200) {
         const errorData = res.data;

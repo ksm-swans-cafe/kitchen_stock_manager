@@ -9,6 +9,18 @@ type CookieStore = {
     userRole: { value: string | undefined; set: (options?: any) => void; remove: () => void };
 };
 
+interface MenuDescription {
+    menu_description_id: string | null;
+    menu_description_title: string;
+    menu_description_value: string;
+}
+
+interface RequestBody {
+    lunchbox_name: string;
+    menu_name: string;
+    menu_description: MenuDescription[];
+}
+
 export async function MenuList({ cookie }: { cookie: CookieStore }) {
     const authResult = await CheckToken({ cookie: cookie as any });
     if (!authResult.authenticated) throw new HttpError(401, "Unauthorized - Authentication required");

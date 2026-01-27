@@ -10,6 +10,7 @@ import autoTable from "jspdf-autotable";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
+import { api } from "@/lib/api";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -63,9 +64,9 @@ const OrderHistory = () => {
   const [isExcelMonthDialogOpen, setIsExcelMonthDialogOpen] = useState(false);
   const [selectedMonthForExcel, setSelectedMonthForExcel] = useState<string>("");
 
-  const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts/orderhistory", fetcher, { refreshInterval: 30000 });
-  const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher);
-  const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
+  const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/cart/lists?page=orderhistory", fetcher, { refreshInterval: 30000 });
+  const { data: menuData, error: menuError } = useSWR("/api/menu/lists", fetcher);
+  const { data: ingredientData, error: ingredientError } = useSWR("/api/ingredient/lists", fetcher, { refreshInterval: 30000 });
 
   const combinedError = cartsError || menuError || ingredientError;
   const isLoading = !cartsData || !menuData || !ingredientData;
@@ -361,16 +362,10 @@ const OrderHistory = () => {
     const cleanedMenuName = menuName.trim();
     setIsSaving(cartId);
     try {
-      const patchResponse = await fetch(`/api/edit/cart-menu/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ menuName: menuName, menu_total: editTotalBox }),
+      const patchResponse = await api.patch(`/api/cart/menu/${cartId}`, {
+        menu_name: menuName,
+        menu_total: editTotalBox,
       });
-
-      if (!patchResponse.ok) {
-        const errorData = await patchResponse.json();
-        throw new Error(errorData.error || "Failed to update total box");
-      }
 
       setCarts((prevCarts) =>
         prevCarts.map((cart) =>
@@ -445,16 +440,11 @@ const OrderHistory = () => {
         export_time: exportTime,
         receive_time: receiveTime,
       };
-      const response = await fetch(`/api/edit/cart_time/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const response = await api.patch(`/api/cart/time/${cartId}`, {
+        export_time: exportTime,
+        receive_time: receiveTime,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update times");
-      }
       mutateCarts();
       setEditingTimes(null);
       Swal.fire({ icon: "success", title: "อัปเดตเวลาเรียบร้อย!", text: `เวลาส่ง: ${exportTime}, เวลารับ: ${receiveTime}`, showConfirmButton: false, timer: 3000 });

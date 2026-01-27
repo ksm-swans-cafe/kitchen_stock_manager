@@ -1,5 +1,6 @@
 import prisma from "@plugins/prisma";
 import { HttpError } from "elysia-logger";
+import convertBigIntToNumber from "@plugins/convert/BigInt-Number";
 
 const CookieOptions = {
     httpOnly: true,
@@ -21,6 +22,49 @@ export async function GetUser() {
     } catch (error) {
         console.error(error);
         throw new HttpError(500, "Internal Server Error");
+    }
+}
+
+export async function GetUserById({ cookie, params }: { cookie: CookieStore, params: { id: string } }) {
+    try {
+        const authResult = await CheckToken({ cookie: cookie as any });
+        if (!authResult.authenticated) throw new HttpError(401, "Unauthorized - Authentication required");
+
+        const { id: employee_id } = params;
+
+        if (!employee_id) {
+            throw new HttpError(400, "Employee ID is required");
+        }
+
+        const employeeData = await prisma.employee.findFirst({
+            where: { employee_id: employee_id },
+        });
+
+        if (!employeeData) {
+            throw new HttpError(404, "Employee not found");
+        }
+
+        const employee = {
+            employee_id: employeeData.employee_id,
+            employee_username: employeeData.employee_username ?? "",
+            employee_firstname: employeeData.employee_firstname ?? "",
+            employee_lastname: employeeData.employee_lastname ?? "",
+            employee_pin: employeeData.employee_pin !== null && employeeData.employee_pin !== undefined ? Number(employeeData.employee_pin) : 0,
+            employee_role: employeeData.employee_role ?? "",
+        };
+
+        const convertedResult = convertBigIntToNumber(employee);
+
+        return convertedResult;
+    } catch (error) {
+        console.error("Error fetching user by ID:", error);
+        if (error instanceof HttpError) {
+            throw error;
+        }
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error("Error details:", { errorMessage, errorStack });
+        throw new HttpError(500, process.env.NODE_ENV === "development" ? errorMessage : "Failed to fetch user");
     }
 }
 

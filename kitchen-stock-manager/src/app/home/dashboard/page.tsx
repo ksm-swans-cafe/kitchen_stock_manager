@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { MapPin, Clock, Maximize2, Minimize2, Star, Plus, Save, X, Trash2, Edit2, CalendarDays } from "lucide-react";
 import { Button } from "@/share/ui/button";
 import useSWR, { mutate } from "swr";
+import { api } from "@/lib/api";
 import { fetcher } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -125,19 +126,15 @@ export default function Dashboard() {
     
     setSavingCardInfo(true);
     try {
-      const response = await fetch(`/api/edit/cart/${editCardInfo.cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          delivery_date: editCardInfo.date,
-          export_time: editCardInfo.sendTime,
-          receive_time: editCardInfo.receiveTime,
-          location_send: editCardInfo.location,
-        }),
+      const response = await api.patch(`/api/cart/${editCardInfo.cartId}`, {
+        delivery_date: editCardInfo.date,
+        export_time: editCardInfo.sendTime,
+        receive_time: editCardInfo.receiveTime,
+        location_send: editCardInfo.location,
       });
       
-      if (response.ok) {
-        mutate("/api/get/dashboard");
+      if (response.status === 200) {
+        mutate("/api/dashboard/lists");
         setEditCardInfo(null);
         Swal.fire({
           icon: 'success',
@@ -147,8 +144,8 @@ export default function Dashboard() {
           timer: 1500,
         });
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update');
+        const errorData = await response.data;
+        throw new Error(errorData.message || 'Failed to update');
       }
     } catch (error) {
       console.error("Error updating card info:", error);
@@ -162,18 +159,18 @@ export default function Dashboard() {
     }
   }, [editCardInfo]);
 
-  // ฟังก์ชันสำหรับ toggle ปักหมุดและบันทึกลง DB
   const togglePin = async (cartId: string, currentPinned: boolean) => {
+    if (!cartId || cartId === 'undefined' || cartId === 'null') {
+      console.error("Invalid cartId:", cartId);
+      return;
+    }
     setSavingPin((prev) => ({ ...prev, [cartId]: true }));
     try {
-      const response = await fetch(`/api/edit/cart-pinned/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pinned: !currentPinned }),
+      const response = await api.patch(`/api/dashboard/pinned/${cartId}`, {
+        pinned: !currentPinned,
       });
-      if (response.ok) {
-        // Refresh data
-        mutate("/api/get/dashboard");
+      if (response.status === 200) {
+        mutate("/api/dashboard/lists");
       }
     } catch (error) {
       console.error("Error updating pin status:", error);
@@ -186,12 +183,10 @@ export default function Dashboard() {
   const saveNoteToDatabase = useCallback(async (cartId: string, descriptions: CartDescription[]) => {
     setSavingNotes((prev) => ({ ...prev, [cartId]: true }));
     try {
-      const response = await fetch(`/api/edit/cart-description/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: descriptions }),
+      const response = await api.patch(`/api/dashboard/cart-description/${cartId}`, {
+        description: descriptions,
       });
-      if (!response.ok) {
+      if (response.status === 200) {
         console.error("Failed to save note");
       } else {
         // Refresh data after successful save
@@ -292,19 +287,15 @@ export default function Dashboard() {
     const key = `${cartId}-${lunchboxName}-${menuName}`;
     setSavingMenuDesc((prev) => ({ ...prev, [key]: true }));
     try {
-      const response = await fetch(`/api/edit/menu-description/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          lunchbox_name: lunchboxName,
-          menu_name: menuName,
-          menu_description: descriptions 
-        }),
+      const response = await api.patch(`/api/dashboard/menu-description/${cartId}`, {
+        lunchbox_name: lunchboxName,
+        menu_name: menuName,
+        menu_description: descriptions,
       });
-      if (!response.ok) {
+      if (response.status === 200) {
         console.error("Failed to save menu description");
       } else {
-        mutate("/api/get/dashboard");
+        mutate("/api/dashboard/lists");
       }
     } catch (error) {
       console.error("Error saving menu description:", error);
@@ -422,15 +413,13 @@ export default function Dashboard() {
     }
     setSavingPackagingNote((prev) => ({ ...prev, [cartId]: true }));
     try {
-      const response = await fetch(`/api/edit/packaging-note/${cartId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packaging_notes: notes }),
+      const response = await api.patch(`/api/dashboard/packaging-note/${cartId}`, {
+        packaging_notes: notes,
       });
-      if (!response.ok) {
+      if (response.status === 200) {
         console.error("Failed to save packaging notes");
       } else {
-        mutate("/api/get/dashboard");
+        mutate("/api/dashboard/lists");
       }
     } catch (error) {
       console.error("Error saving packaging notes:", error);
@@ -494,7 +483,7 @@ export default function Dashboard() {
     data: apiData,
     error,
     isLoading,
-  } = useSWR<ApiResponse>("/api/get/dashboard", fetcher, {
+  } = useSWR<ApiResponse>("/api/dashboard/lists", fetcher, {
     refreshInterval: 30000,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,

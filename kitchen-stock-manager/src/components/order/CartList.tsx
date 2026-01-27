@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { registerLocale, DatePicker } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import axios from "axios";
+import { api } from "@/lib/api";
 import Swal from "sweetalert2";
 import { create } from "zustand";
 import { toast } from "sonner";
@@ -669,7 +669,7 @@ ${pay_deposit && pay_deposit !== "no"
         }
 `;
 
-      const response = await axios.post("/api/post/cart", {
+      const response = await api.post("/api/cart/create", {
         order_name: order_name,
         username: userName,
         channel_access,
@@ -696,7 +696,6 @@ ${pay_deposit && pay_deposit !== "no"
           lunchbox_limit: lunchbox.lunchbox_limit,
           lunchbox_quantity: lunchbox.quantity,
           lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
-          lunchbox_packaging: lunchbox.packaging || null,
           lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
             menu_name: menu.menu_name,
             menu_subname: menu.menu_subname,
@@ -730,7 +729,10 @@ ${pay_deposit && pay_deposit !== "no"
         ispay: ispay,
       });
 
-      if (response.status !== 201) throw new Error("เกิดข้อผิดพลาดในการสั่งซื้อ");
+      if (response.status !== 200 && response.status !== 201) {
+        const errorMsg = response.data?.error || response.data?.message || "เกิดข้อผิดพลาดในการสั่งซื้อ";
+        throw new Error(errorMsg);
+      }
 
       clearCart();
       sessionStorage.removeItem("editingLunchboxIndex");
@@ -763,12 +765,46 @@ ${pay_deposit && pay_deposit !== "no"
 
       setCopyText(copyTextContent);
       setSuccess(true);
-      navigator.clipboard.writeText(copyTextContent).then(() => {
+      
+      // Try to copy to clipboard, but don't fail if it doesn't work
+      try {
+        await navigator.clipboard.writeText(copyTextContent);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-      });
+      } catch (clipboardError) {
+        // Clipboard API failed, but cart creation was successful
+        // User can still manually copy from the textarea
+        console.warn("Failed to copy to clipboard automatically:", clipboardError);
+        // Try fallback method
+        setTimeout(() => {
+          const textarea = document.getElementById("copy-textarea") as HTMLTextAreaElement;
+          if (textarea) {
+            try {
+              textarea.select();
+              textarea.setSelectionRange(0, 99999);
+              document.execCommand("copy");
+              setIsCopied(true);
+              setTimeout(() => setIsCopied(false), 2000);
+            } catch (e) {
+              console.warn("Fallback copy method also failed:", e);
+            }
+          }
+        }, 100);
+      }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "เกิดข้อผิดพลาดไม่ทราบสาเหตุ";
+      let errorMessage = "เกิดข้อผิดพลาดไม่ทราบสาเหตุ";
+      
+      // Check if it's an axios error (has response property)
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: any; status?: number }; message?: string };
+        errorMessage = axiosError.response?.data?.error || axiosError.response?.data?.message || axiosError.message || errorMessage;
+        console.error("Axios error response:", axiosError.response?.data);
+        console.error("Axios error status:", axiosError.response?.status);
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      console.error("Error creating cart:", err);
 
       Swal.fire({
         icon: "error",
@@ -808,7 +844,7 @@ ${pay_deposit && pay_deposit !== "no"
   useEffect(() => {
     const fetchLunchbox = async () => {
       try {
-        const response = await axios.get("/api/get/lunchbox");
+        const response = await api.get("/api/lunchbox/lists");
         const data = response.data;
         setLunchbox(data);
       } catch (error) {
