@@ -1580,7 +1580,7 @@ export default function Order() {
                                 {setPriceBudget
                                   ? `${(setPriceBudget * lunchboxQuantity).toLocaleString()}`
                                   : (selectionPrice * lunchboxQuantity).toLocaleString()}
-                                {/* <span className='text-[9px] sm:text-xs xl:text-base ml-0.5 sm:ml-1 font-normal opacity-60'>฿</span> */}
+                                <span className='text-[9px] sm:text-xs xl:text-base ml-0.5 sm:ml-1 font-normal opacity-60'>฿</span>
                               </div>
                               <div className='h-[0.5px] sm:h-[1px] bg-gray-900/10 flex-1' />
                             </div>
