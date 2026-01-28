@@ -127,7 +127,7 @@ export default function Navigatebar() {
 
             return (
               <React.Fragment key={href}>
-                <li className='hidden sm:inline font-bold'>{">"}</li>
+                <li className='font-bold text-gray-400 mx-1'>{">"}</li>
                 <li>
                   <span className='font-bold'>
                     {isLast ? (
@@ -157,7 +157,7 @@ export default function Navigatebar() {
                     </div>
                   ))}
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     // Dispatch custom event for dashboard to handle fullscreen
                     window.dispatchEvent(new CustomEvent('dashboard-fullscreen'));
