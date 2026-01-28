@@ -1662,7 +1662,7 @@ export default function Order() {
                 </h1>
                 {/* Step 1: เลือกชุดอาหาร */}
                 {!selectedFoodSet && (
-                  <div className=' pt-3 sm:pt-4'>
+                  <div className=' pt-3 sm:pt-4 pt-3 sm:pt-4'>
                     <div className='flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
                       <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium border border-gray-200'>พบ {filteredFoodSets.length} รายการ</span>
                     </div>
