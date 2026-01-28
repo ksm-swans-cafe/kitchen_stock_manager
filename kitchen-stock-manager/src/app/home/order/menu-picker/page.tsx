@@ -216,7 +216,7 @@ export default function Order() {
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       e.preventDefault();
-      
+
       // Step 3 -> Step 2: ถ้าอยู่ขั้นตอนเลือกเมนู ให้กลับไปเลือก Set
       if (selectedFoodSet && selectedSetMenu) {
         setSelectedSetMenu("");
@@ -229,7 +229,7 @@ export default function Order() {
         window.history.pushState(null, "", window.location.href);
         return;
       }
-      
+
       // Step 2 -> Step 1: ถ้าอยู่ขั้นตอนเลือก Set ให้กลับไปเลือกชุดอาหาร
       if (selectedFoodSet && !selectedSetMenu) {
         setSelectedFoodSet("");
@@ -243,7 +243,7 @@ export default function Order() {
         window.history.pushState(null, "", window.location.href);
         return;
       }
-      
+
       // Step 1: ถ้าอยู่ขั้นตอนแรก ให้กลับไปหน้าก่อนหน้าจริงๆ
       router.back();
     };
@@ -732,10 +732,15 @@ export default function Order() {
 
           let newItems = prev.filter((item) => item !== menuKey);
 
-          // Reset step ที่ตามมาหลังจากยกเลิก step ก่อนหน้า (สำหรับ step-based set)
-          if (isStepBasedSet && orderSelectSteps.length > 0 && !isRiceMenu) {
+          // Reset step ที่ตามมาหลังจากยกเลิก step ก่อนหน้า (สำหรับ step-based set ที่บังคับให้เลือกตามลำดับ)
+          // ตรวจสอบว่า set มี explicit order sequence หรือมี step ที่บังคับ (limit !== null) หรือไม่
+          // ถ้าไม่มีทั้งสองอย่าง แสดงว่า set ไม่ได้บังคับให้เลือกตามลำดับ จึงไม่ควรลบเมนูที่ตามมา
+          const hasRequiredSteps = orderSelectSteps.some((step) => step.limit !== null);
+          const shouldResetFollowingSteps = isStepBasedSet && orderSelectSteps.length > 0 && (hasExplicitOrderSequence || hasRequiredSteps) && !isRiceMenu;
+
+          if (shouldResetFollowingSteps) {
             const unselectedCategory = selectedMenu.lunchbox_menu_category;
-            
+
             // หา step ที่เมนูที่ถูกยกเลิกอยู่
             const unselectedStep = orderSelectSteps.find((step) => {
               if (unselectedCategory === "ข้าว+กับข้าว" || unselectedCategory === "กับข้าวที่ 1") {
@@ -746,14 +751,14 @@ export default function Order() {
 
             if (unselectedStep) {
               const unselectedSequence = unselectedStep.sequence;
-              
+
               // หา step ที่ตามมาทั้งหมด (sequence มากกว่า)
               const followingSteps = orderSelectSteps.filter((step) => step.sequence > unselectedSequence);
-              
+
               // ลบเมนูทั้งหมดที่อยู่ใน step ที่ตามมา
               followingSteps.forEach((step) => {
                 const categoriesToRemove = new Set<string>();
-                
+
                 // จัดการกับ combo case (ข้าว+กับข้าว + เนื้อสัตว์)
                 if (step.category === "เนื้อสัตว์") {
                   categoriesToRemove.add("เนื้อสัตว์");
@@ -773,10 +778,10 @@ export default function Order() {
                   const menu = availableMenus.find((m) => buildMenuKey(m) === key);
                   if (!menu) return true;
                   const menuCategory = menu.lunchbox_menu_category;
-                  
+
                   // ไม่ลบข้าว (ยกเว้นกรณีพิเศษ)
                   if (menuCategory === "ข้าว") return true;
-                  
+
                   // ลบเมนูที่อยู่ในหมวดที่ต้องลบ
                   return !categoriesToRemove.has(menuCategory || "");
                 });
@@ -1017,21 +1022,26 @@ export default function Order() {
           return menu?.lunchbox_menu_category !== "กับข้าวที่ 1" && menu?.lunchbox_menu_category !== "ข้าว+กับข้าว";
         });
 
-        // Reset step ที่ตามมาหลังจากยกเลิก "เนื้อสัตว์" (สำหรับ step-based set)
-        if (isStepBasedSet && orderSelectSteps.length > 0) {
+        // Reset step ที่ตามมาหลังจากยกเลิก "เนื้อสัตว์" (สำหรับ step-based set ที่บังคับให้เลือกตามลำดับ)
+        // ตรวจสอบว่า set มี explicit order sequence หรือมี step ที่บังคับ (limit !== null) หรือไม่
+        // ถ้าไม่มีทั้งสองอย่าง แสดงว่า set ไม่ได้บังคับให้เลือกตามลำดับ จึงไม่ควรลบเมนูที่ตามมา
+        const hasRequiredSteps = orderSelectSteps.some((step) => step.limit !== null);
+        const shouldResetFollowingSteps = isStepBasedSet && orderSelectSteps.length > 0 && (hasExplicitOrderSequence || hasRequiredSteps);
+
+        if (shouldResetFollowingSteps) {
           // หา step "เนื้อสัตว์"
           const meatStep = orderSelectSteps.find((step) => step.category === "เนื้อสัตว์");
-          
+
           if (meatStep) {
             const meatSequence = meatStep.sequence;
-            
+
             // หา step ที่ตามมาทั้งหมด (sequence มากกว่า)
             const followingSteps = orderSelectSteps.filter((step) => step.sequence > meatSequence);
-            
+
             // ลบเมนูทั้งหมดที่อยู่ใน step ที่ตามมา
             followingSteps.forEach((step) => {
               const categoriesToRemove = new Set<string>();
-              
+
               if (step.category === "ข้าว+กับข้าว") {
                 categoriesToRemove.add("ข้าว+กับข้าว");
                 categoriesToRemove.add("กับข้าวที่ 1");
@@ -1044,10 +1054,10 @@ export default function Order() {
                 const menu = availableMenus.find((m) => buildMenuKey(m) === key);
                 if (!menu) return true;
                 const menuCategory = menu.lunchbox_menu_category;
-                
+
                 // ไม่ลบข้าว
                 if (menuCategory === "ข้าว") return true;
-                
+
                 // ลบเมนูที่อยู่ในหมวดที่ต้องลบ
                 return !categoriesToRemove.has(menuCategory || "");
               });
@@ -1833,10 +1843,10 @@ export default function Order() {
                           // ตรวจสอบว่ามีหมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว" หรือไม่
                           const riceWithDishCategory = groupedMenus["กับข้าวที่ 1"] || groupedMenus["ข้าว+กับข้าว"] || [];
                           const hasRiceWithDishCategoryLocal = riceWithDishCategory.length > 0;
-                          
+
                           // สร้าง array ของเมนูทั้งหมดในหมวด "ข้าว+กับข้าว" จาก availableMenus (ไม่ผ่านการกรอง)
                           // ใช้สำหรับค้นหาราคาพื้นฐาน (หมู/ไก่) แม้ว่าจะเลือกเนื้อสัตว์ที่มีราคาเพิ่มเติม (กุ้ง/หมึก)
-                          const allRiceWithDishMenus = availableMenus.filter((m) => 
+                          const allRiceWithDishMenus = availableMenus.filter((m) =>
                             m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว"
                           );
 
@@ -1904,21 +1914,21 @@ export default function Order() {
                                       // แสดงราคาเดิมเสมอ (ไม่ว่าจะเลือกเนื้อสัตว์อะไร) - ไม่บวกราคาเพิ่มเติม
                                       // ใช้ราคาจากเมนูหมูหรือไก่ (ราคาพื้นฐาน) เท่านั้น - ห้ามใช้ราคาจากเมนูที่มีราคาเพิ่มเติม (หมึก/กุ้ง/ทะเล)
                                       let displayPrice = 0;
-                                      
+
                                       // หาเมนูหมูก่อน (ราคาพื้นฐาน) - ต้องมี dishType และ "หมู"
                                       // ใช้ allRiceWithDishMenus (ไม่ผ่านการกรอง) เพื่อให้หาเมนูหมู/ไก่ได้แม้เลือกกุ้ง/หมึก
-                                      const porkMenu = allRiceWithDishMenus.find((m) => 
+                                      const porkMenu = allRiceWithDishMenus.find((m) =>
                                         m.menu_name.includes(dishType) && m.menu_name.includes("หมู")
                                       );
-                                      
+
                                       // ถ้าไม่มีหมู ให้หาไก่ (ราคาพื้นฐาน) - ต้องมี dishType และ "ไก่"
-                                      const chickenMenu = !porkMenu ? allRiceWithDishMenus.find((m) => 
+                                      const chickenMenu = !porkMenu ? allRiceWithDishMenus.find((m) =>
                                         m.menu_name.includes(dishType) && m.menu_name.includes("ไก่")
                                       ) : null;
-                                      
+
                                       // ใช้ราคาจากเมนูหมูหรือไก่เท่านั้น (ไม่ใช้ราคาจากเมนูที่มีราคาเพิ่มเติม เช่น หมึก/กุ้ง/ทะเล)
                                       const priceSourceMenu = porkMenu || chickenMenu;
-                                      
+
                                       if (priceSourceMenu) {
                                         // ใช้ราคาจากเมนูหมูหรือไก่เท่านั้น (ราคาพื้นฐาน)
                                         displayPrice = getPrice(priceSourceMenu);
@@ -1929,7 +1939,7 @@ export default function Order() {
                                           const hasExpensiveMeat = m.menu_name.includes("หมึก") || m.menu_name.includes("กุ้ง") || m.menu_name.includes("ทะเล");
                                           return hasDishType && !hasExpensiveMeat;
                                         });
-                                        
+
                                         if (fallbackMenu) {
                                           displayPrice = getPrice(fallbackMenu);
                                         }
