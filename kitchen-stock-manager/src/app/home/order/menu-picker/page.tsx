@@ -1606,7 +1606,7 @@ export default function Order() {
               })()}
 
               {/* ส่วนค้นหา */}
-              <div className='bg-white/70 backdrop-blur-md p-3 sm:p-4 lg:p-6 transition-all duration-300 rounded-b-2xl shadow-lg border border-white/20 mb-4 mx-3 sm:mx-4 lg:mx-6'>
+              <div className='bg-white/95 backdrop-blur-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 rounded-2xl sm:rounded-3xl shadow-lg border-2 border-gray-100/50 ring-1 ring-black/[0.02] mb-2 mx-4 sm:mx-6 lg:mx-8 mt-2 lg:mt-4 relative z-30'>
                 <div className='flex flex-col gap-3 sm:gap-4'>
                   <div className='flex-1 relative w-full'>
                     <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
@@ -1638,7 +1638,7 @@ export default function Order() {
               <div className='mb-6 lg:mb-8 xl:mb-12'>
                 {/* Step 1: เลือกชุดอาหาร */}
                 {!selectedFoodSet && (
-                  <div className='px-4 sm:px-6 lg:px-8'>
+                  <div className='px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4'>
                     <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 flex flex-col gap-2'>
                       <span className='bg-linear-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>1. เลือกชุดอาหาร</span>
                       <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{filteredFoodSets.length} รายการ</span>
@@ -1688,7 +1688,7 @@ export default function Order() {
 
                 {/* Step 2: เลือก Set อาหาร */}
                 {selectedFoodSet && !selectedSetMenu && (
-                  <div className='px-4 sm:px-6 lg:px-8'>
+                  <div className='px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4'>
                     <div className='flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
                       <button
                         onClick={() => {
@@ -1759,7 +1759,7 @@ export default function Order() {
 
                 {/* Step 3: เลือกเมนูอาหาร */}
                 {selectedFoodSet && selectedSetMenu && (
-                  <div className='px-4 sm:px-6 lg:px-8'>
+                  <div className='px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4'>
                     <div className='flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
                       <button
                         onClick={() => {
