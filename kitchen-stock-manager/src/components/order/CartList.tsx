@@ -1338,12 +1338,7 @@ ${pay_deposit && pay_deposit !== "no"
             <textarea
               className='border rounded px-3 py-2 resize-none'
               value={invoice_tex}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.length <= 13) {
-                  setCustomerInfo({ invoice_tex: value });
-                }
-              }}
+              onChange={(e) => setCustomerInfo({ invoice_tex: e.target.value })}
               placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
               style={{ fontFamily: 'inherit' }}
               rows={1}
