@@ -106,13 +106,13 @@ type MenuMenuIngredients {
 }
 
 type MenuMenuLunchbox {
-  lunchbox_AutoRice      Boolean
+  lunchbox_AutoRice      Boolean?
   lunchbox_cost          BigInt?
   lunchbox_menu_category String?
   lunchbox_menuid        String?
   lunchbox_name          String
   lunchbox_set_name      String
-  lunchbox_showPrice     Boolean
+  lunchbox_showPrice     Boolean?
 }
 
 type NewCartLunchbox {
