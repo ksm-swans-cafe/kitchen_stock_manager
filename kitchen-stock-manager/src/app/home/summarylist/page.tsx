@@ -2275,7 +2275,7 @@ const SummaryList: React.FC = () => {
       )}
 
     <div className='min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50'>
-      <div className='p-6'>
+      <div className='p-3'>
         <h2 className='text-2xl font-bold mb-2'>สรุปรายการ</h2>
         <p className='text-slate-600 mb-4'>จัดการและติดตามประวัติการสั่งซื้อทั้งหมด</p>
 
