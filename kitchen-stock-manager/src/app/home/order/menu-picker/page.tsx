@@ -45,11 +45,19 @@ export default function Order() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   const router = useRouter();
-  const { addLunchbox } = useCartStore();
+  const { addLunchbox, setOrderStepData } = useCartStore();
 
   // สถานะสำหรับการเลือกเมนู
   const [selectedFoodSet, setSelectedFoodSet] = useState<string>("");
   const [selectedSetMenu, setSelectedSetMenu] = useState<string>("");
+
+  // ส่งข้อมูลขั้นตอนไปที่ Store เพื่อให้ Navigatebar จัดการหัวข้อ
+  useEffect(() => {
+    setOrderStepData({ selectedFoodSet, selectedSetMenu });
+
+    return () => setOrderStepData({ selectedFoodSet: "", selectedSetMenu: "" });
+  }, [selectedFoodSet, selectedSetMenu, setOrderStepData]);
+
   const [selectedMenuItems, setSelectedMenuItems] = useState<string[]>([]);
   const [lunchboxQuantity, setLunchboxQuantity] = useState<number>(1);
   const [lunchboxData, setLunchboxData] = useState<LunchBoxFromAPI[]>([]);
@@ -1499,6 +1507,8 @@ export default function Order() {
               step3Count={selectionCount.total}
               showEdit={isEditMode}
               editingIndex={editingIndex}
+              selectedFoodSet={selectedFoodSet}
+              selectedSetMenu={selectedSetMenu}
               timeLabel={
                 currentTime
                   ? `${currentTime.toLocaleDateString("th-TH", {
@@ -1570,7 +1580,7 @@ export default function Order() {
                                 {setPriceBudget
                                   ? `${(setPriceBudget * lunchboxQuantity).toLocaleString()}`
                                   : (selectionPrice * lunchboxQuantity).toLocaleString()}
-                                <span className='text-[9px] sm:text-xs xl:text-base ml-0.5 sm:ml-1 font-normal opacity-60'>฿</span>
+                                {/* <span className='text-[9px] sm:text-xs xl:text-base ml-0.5 sm:ml-1 font-normal opacity-60'>฿</span> */}
                               </div>
                               <div className='h-[0.5px] sm:h-[1px] bg-gray-900/10 flex-1' />
                             </div>
@@ -1645,14 +1655,17 @@ export default function Order() {
               </div>
 
               {/* พื้นที่เลือกเมนู */}
-              <div className='mb-6 lg:mb-8 xl:mb-12'>
+              <div className='mt-5 sm:mt-5 mb-6 lg:mb-8 xl:mb-12 px-4 sm:px-6 lg:px-8'>
+                <h1 className='text-lg sm:text-2xl font-bold text-gray-800 flex items-center gap-2 mb-1'>
+                  <span className='w-1.5 h-6 bg-orange-500 rounded-full'></span>
+                  {!selectedFoodSet ? "1. เลือกชุดอาหาร" : !selectedSetMenu ? "2. เลือก Set อาหาร" : "3. เลือกเมนูอาหาร"}
+                </h1>
                 {/* Step 1: เลือกชุดอาหาร */}
                 {!selectedFoodSet && (
-                  <div className='px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4'>
-                    <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 flex flex-col gap-2'>
-                      <span className='bg-linear-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>1. เลือกชุดอาหาร</span>
-                      <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{filteredFoodSets.length} รายการ</span>
-                    </h2>
+                  <div className=''>
+                    <div className='flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
+                      <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium border border-gray-200'>พบ {filteredFoodSets.length} รายการ</span>
+                    </div>
 
                     <div className='responsive-grid'>
                       {filteredFoodSets.map((foodSet, index) => {
@@ -1698,28 +1711,9 @@ export default function Order() {
 
                 {/* Step 2: เลือก Set อาหาร */}
                 {selectedFoodSet && !selectedSetMenu && (
-                  <div className='px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4'>
-                    <div className='flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
-                      <button
-                        onClick={() => {
-                          setSelectedFoodSet("");
-                          setSelectedSetMenu("");
-                          setSelectedMenuItems([]);
-                          setSelectedMeatType(null);
-                          setNote("");
-                          setSearchQuery("");
-                          setFocusedDish(null);
-                        }}
-                        className='flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md group'
-                        title='ย้อนกลับไปเลือกชุดอาหาร'>
-                        <ArrowLeft className='w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-orange-600 transition-colors' />
-                      </button>
-                      <div className='flex-1'>
-                        <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 flex flex-col gap-2'>
-                          <span className='bg-linear-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>2. เลือก Set อาหาร</span>
-                          <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{filteredSetMenus.length} รายการ</span>
-                        </h2>
-                      </div>
+                  <div className=''>
+                    <div className='flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
+                      <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium border border-gray-200'>พบ {filteredSetMenus.length} รายการ</span>
                     </div>
 
                     <div className='responsive-grid'>
@@ -1769,45 +1763,27 @@ export default function Order() {
 
                 {/* Step 3: เลือกเมนูอาหาร */}
                 {selectedFoodSet && selectedSetMenu && (
-                  <div className='px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4'>
-                    <div className='flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
-                      <button
-                        onClick={() => {
-                          setSelectedSetMenu("");
-                          setSelectedMenuItems([]);
-                          setSelectedMeatType(null);
-                          setNote("");
-                          setSearchQuery("");
-                          setFocusedDish(null);
-                        }}
-                        className='flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md group'
-                        title='ย้อนกลับไปเลือก Set อาหาร'>
-                        <ArrowLeft className='w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-orange-600 transition-colors' />
-                      </button>
-                      <div className='flex-1'>
-                        <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 flex flex-col flex-wrap gap-2'>
-                          <span className='bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>3. เลือกเมนูอาหาร</span>
-                          {(() => {
-                            const { selected, limit } = effectiveSelectionDisplay;
-                            const isUnlimited = limit === 0;
+                  <div className=''>
+                    <div className='flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
+                      {(() => {
+                        const { selected, limit } = effectiveSelectionDisplay;
+                        const isUnlimited = limit === 0;
 
-                            return (
-                              <div className='flex gap-2 flex-wrap'>
-                                {isUnlimited ? (
-                                  <span className='text-xs sm:text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-full w-fit'>เลือกแล้ว {selected} เมนู</span>
-                                ) : (
-                                  <>
-                                    <span className='text-xs sm:text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-full w-fit'>
-                                      เลือกแล้ว {selected}/{limit}
-                                    </span>
-                                    {selected >= limit && <span className='text-xs sm:text-sm bg-green-100 text-green-600 px-2 py-1 rounded-full w-fit'>ครบแล้ว!</span>}
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </h2>
-                      </div>
+                        return (
+                          <div className='flex gap-2 flex-wrap'>
+                            {isUnlimited ? (
+                              <span className='text-xs sm:text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold border border-blue-100 shadow-sm'>เลือกแล้ว {selected} เมนู</span>
+                            ) : (
+                              <>
+                                <span className={`text-xs sm:text-sm px-3 py-1 rounded-full font-bold border shadow-sm ${selected >= limit ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                  เลือกแล้ว {selected}/{limit}
+                                </span>
+                                {selected >= limit && <span className='text-xs sm:text-sm bg-emerald-500 text-white px-3 py-1 rounded-full font-bold shadow-md animate-bounce'>ครบแล้ว!</span>}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* ส่วนบันทึกเพิ่มเติม (Mobile) */}
