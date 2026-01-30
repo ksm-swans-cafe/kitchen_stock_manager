@@ -207,6 +207,15 @@ const SummaryList: React.FC = () => {
               customer_name: cart.customer_name,
               location_send: cart.location_send,
               shipping_cost: cart.shipping_cost,
+              order_name: (cart as any).order_name,
+              channel_access: (cart as any).channel_access,
+              receive_name: (cart as any).receive_name,
+              shipping_by: (cart as any).shipping_by,
+              pay_deposit: (cart as any).pay_deposit,
+              pay_cost: (cart as any).pay_cost,
+              pay_charge: (cart as any).pay_charge,
+              total_cost: (cart as any).total_cost,
+              ispay: (cart as any).ispay,
             };
           }
 
@@ -320,6 +329,15 @@ const SummaryList: React.FC = () => {
             shipping_cost: cart.shipping_cost,
             invoice_tex: cart.invoice_tex,
             lunchbox: cartLunchbox,
+            order_name: (cart as any).order_name,
+            channel_access: (cart as any).channel_access,
+            receive_name: (cart as any).receive_name,
+            shipping_by: (cart as any).shipping_by,
+            pay_deposit: (cart as any).pay_deposit,
+            pay_cost: (cart as any).pay_cost,
+            pay_charge: (cart as any).pay_charge,
+            total_cost: (cart as any).total_cost,
+            ispay: (cart as any).ispay,
           };
         });
 
@@ -1042,7 +1060,11 @@ const SummaryList: React.FC = () => {
     const shippingBy = (cart as any).shipping_by || "ไม่ระบุ";
     const receiveName = (cart as any).receive_name || customerName;
     const customerTel = cart.customer_tel || "ไม่ระบุ";
-    const invoiceTex = cart.invoice_tex || "ไม่ระบุ";
+    const invoiceTex = (cart.invoice_tex ?? "").toString().trim();
+    const payDeposit = (cart as any).pay_deposit;
+    const payCost = (cart as any).pay_cost;
+    const payCharge = (cart as any).pay_charge || "0";
+    const cartTotalCost = (cart as any).total_cost;
 
     // คำนวณราคาอาหารจาก lunchbox
     let totalFoodCost = 0;
@@ -1050,23 +1072,26 @@ const SummaryList: React.FC = () => {
     let totalBoxes = 0;
 
     if (cart.lunchbox && cart.lunchbox.length > 0) {
+      const parts: string[] = [];
       cart.lunchbox.forEach((lunchbox, idx) => {
         const lunchboxTotalCost = Number(lunchbox.lunchbox_total_cost) || 0;
         const lunchboxTotal = Number(lunchbox.lunchbox_total) || 0;
         totalBoxes += lunchboxTotal;
         totalFoodCost += lunchboxTotalCost;
+        const costPerBox = lunchboxTotal > 0 ? lunchboxTotalCost / lunchboxTotal : lunchboxTotalCost;
+        const menuList =
+          lunchbox.lunchbox_menu && lunchbox.lunchbox_menu.length > 0
+            ? lunchbox.lunchbox_menu.map((menu) => `+ ${menu.menu_name}`).join("\n      ")
+            : "";
 
-        lunchboxList += `${idx + 1}.${lunchbox.lunchbox_name} - ${lunchbox.lunchbox_set_name}\n`;
-        if (lunchbox.lunchbox_menu && lunchbox.lunchbox_menu.length > 0) {
-          lunchbox.lunchbox_menu.forEach((menu) => {
-            const menuCost = Number(menu.menu_cost) || 0;
-            lunchboxList += `      + ${menu.menu_name}\n`;
-            lunchboxList += `      เซ็ตละ ${menuCost.toLocaleString("th-TH")} บาท\n`;
-          });
-        }
-        lunchboxList += `      จำนวน ${lunchboxTotal} กล่อง\n`;
-        lunchboxList += `      รวม ${lunchboxTotalCost.toLocaleString("th-TH")} บาท\n`;
+        const block = `${idx + 1}.${lunchbox.lunchbox_name} - ${lunchbox.lunchbox_set_name}
+      ${menuList}
+      เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท 
+      จำนวน ${lunchboxTotal} กล่อง 
+      รวม ${lunchboxTotalCost.toLocaleString("th-TH")} x ${lunchboxTotal} = ${lunchboxTotalCost.toLocaleString("th-TH")} บาท`;
+        parts.push(block);
       });
+      lunchboxList = parts.join("\n\n      ");
     } else {
       // ถ้าไม่มี lunchbox ให้ใช้ราคาจาก price
       totalFoodCost = cart.price || 0;
@@ -1074,30 +1099,53 @@ const SummaryList: React.FC = () => {
     }
 
     const shippingCostNum = Number(shippingCost.replace(/[^\d]/g, "")) || 0;
-    const totalCost = totalFoodCost + shippingCostNum;
+    const chargeNum = Number(String(payCharge).replace(/[^\d.]/g, "")) || 0;
+    const totalCost =
+      cartTotalCost != null && cartTotalCost !== ""
+        ? Number(String(cartTotalCost).replace(/[^\d.]/g, "")) || 0
+        : totalFoodCost + shippingCostNum + chargeNum;
+
+    let depositBlock = "";
+    if (payDeposit && payDeposit !== "no") {
+      let depositText = "-";
+      let depositAmount = 0;
+      if (payDeposit === "percent") {
+        const payCostNum = Number(String(payCost).replace(/[^\d]/g, "")) || 0;
+        depositAmount = (totalCost * payCostNum) / 100;
+        depositText = `${payCost}%`;
+      } else if (payDeposit === "full") {
+        depositAmount = (Number(String(payCost).replace(/[^\d]/g, "")) || 0) / 100;
+        depositText = "เต็มจำนวน";
+      }
+      depositBlock = `มัดจำ ${depositText}\n✅ชำระ ${Number(depositAmount.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
+    }
 
     return `📌รับออเดอร์ คุณ ${orderName} 
 ช่องทางที่สั่ง : ${channelAccess}
-ผู้รับออเดอร์ : แอดมิน${userName || "ไม่ระบุ"}
+ผู้รับออเดอร์ : แอดมิน ${userName || "ไม่ระบุ"}
 
 ✅ รายละเอียดสำหรับจัดส่ง
 1.วันที่รับสินค้า : ${deliveryDate}
-2.เวลาส่งสินค้า : ${exportTime}
-3.เวลารับสินค้า : ${receiveTime}
+2.เวลาส่งสินค้า : ${exportTime} น.
+3.เวลารับสินค้า : ${receiveTime} น.
 4.สถานที่จัดส่ง : ${locationSend}
-5.ค่าจัดส่ง ${shippingCostNum.toLocaleString("th-TH")} บาท ส่งโดย ${shippingBy}
+5.ค่าจัดส่ง: ${shippingCost} บาท ส่งโดย ${shippingBy}
 6.ชื่อผู้รับสินค้า : ${receiveName}
 7.เบอร์โทร : ${customerTel}
 8.ออกบิลในนาม : ${customerName}
 9.ที่อยู่ : ${locationSend}
-10.เลขประจำตัวผู้เสียภาษี : ${invoiceTex}
+${invoiceTex !== "" ? `10.เลขประจำตัวผู้เสียภาษี : ${invoiceTex}` : ""}
 
 ✅รายการอาหาร ${totalBoxes} กล่อง 
       ${lunchboxList}
-รวมค่าอาหาร ${totalFoodCost.toLocaleString("th-TH")} บาท
 
-✅รวมทั้งหมด ${totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
-`;
+✅สรุปค่าใช้จ่าย
+ค่าอาหาร ${totalFoodCost.toLocaleString("th-TH")} บาท
+ค่าจัดส่ง ${shippingCostNum.toLocaleString("th-TH")} บาท
+${chargeNum > 0 ? `ค่าธรรมเนียม ${chargeNum.toLocaleString("th-TH")} บาท` : ""}
+รวมทั้งหมด ${totalCost.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
+${payDeposit && payDeposit !== "no" ? depositBlock : ""}
+`.trimEnd();
   };
 
   const handlePaymentCompleted = (cart: Cart) => {
