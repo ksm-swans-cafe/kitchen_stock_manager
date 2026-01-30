@@ -594,6 +594,7 @@ export default function CartList() {
       let depositValueForMessage = "";
       let depositAmountForMessage = 0;
       let paymentStatusText = "";
+      const tex = invoice_tex || "ไม่ระบุ";
 
       if (pay_deposit === "percent") {
         const payCostNum = Number(pay_cost.replace(/[^\d]/g, "") || 0);
@@ -631,7 +632,7 @@ export default function CartList() {
 7.เบอร์โทร : ${customer_tel}
 8.ออกบิลในนาม : ${customer_name}
 9.ที่อยู่ : ${location_send}
-${invoice_tex.trim() !== "" ? `10.เลขประจำตัวผู้เสียภาษี : ${invoice_tex}` : ""}
+10.เลขประจำตัวผู้เสียภาษี : ${tex}
 
 ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
       ${lunchboxListForMessage}
