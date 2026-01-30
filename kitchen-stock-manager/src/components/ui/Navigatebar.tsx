@@ -104,7 +104,7 @@ export default function Navigatebar() {
 
   return (
     <nav className='w-full bg-gray-200 py-3 px-4 sticky top-0 z-40 shadow-sm'>
-      <div className='mx-auto max-w-[1200px] relative'>
+      <div className='relative'>
         <ul className='flex gap-2 items-center text-gray-700 flex-wrap pr-12 sm:pr-0'>
           {!isHomePage && (
             <li>
@@ -133,7 +133,7 @@ export default function Navigatebar() {
               <React.Fragment key={href}>
                 <li className="font-bold text-gray-400 mx-1 hidden sm:block">{">"}</li>
                 <li className={isLast ? "block" : "hidden sm:block"}>
-                  <span className='font-bold'>
+                  <span className='font-bold truncate max-w-[120px] sm:max-w-none block'>
                     {isLast ? (
                       formatName(segment)
                     ) : (
