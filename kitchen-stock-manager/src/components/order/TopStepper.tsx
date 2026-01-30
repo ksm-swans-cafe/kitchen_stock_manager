@@ -29,13 +29,13 @@ export const TopStepper = memo(function TopStepper({
 
   const step1Active = !!step1;
   const step2Active = !!step2;
-  const step2Pending = !!step1 && !step2;
   const step3Active = step3Count > 0;
-  const step3Pending = !!step2 && step3Count === 0;
 
-  const getStepStyle = (active: boolean, pending: boolean) => {
+  const currentStep = !step1 ? 1 : !step2 ? 2 : 3;
+
+  const getStepStyle = (active: boolean, isCurrent: boolean) => {
     if (active) return "text-emerald-700 font-bold";
-    if (pending) return "text-blue-600 font-bold animate-pulse";
+    if (isCurrent) return "text-blue-600 font-bold animate-pulse";
     return "text-gray-400 font-medium";
   };
 
@@ -60,31 +60,46 @@ export const TopStepper = memo(function TopStepper({
         <div className='flex items-center gap-2 sm:gap-4 text-[11px] sm:text-[13px]'>
 
           {/* Step 1: ชุด */}
-          <div className={`flex items-center gap-1 ${getStepStyle(step1Active, !step1Active)}`}>
-            <span className="opacity-60">ชุด:</span>
-            <span className='truncate max-w-[80px] sm:max-w-none'>
-              {step1 ? step1 : "ยังไม่เลือก"}
-            </span>
+          <div className={`flex items-center gap-1 ${getStepStyle(step1Active, currentStep === 1)}`}>
+            {/* แสดงเต็มเมื่ออยู่ขั้นตอนนี้ หรือจอใหญ่กว่า 375px */}
+            <div className={`flex items-center gap-1 ${currentStep === 1 ? 'flex' : 'hidden min-[375px]:flex'}`}>
+              <span className="opacity-60">ชุด:</span>
+              <span className='truncate max-w-[80px] sm:max-w-none'>
+                {step1 ? step1 : "ยังไม่เลือก"}
+              </span>
+            </div>
+            {/* แสดงตัวเลขเมื่ออยู่ขั้นตอนอื่น และจอเล็กกว่า 375px */}
+            <span className={`w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold ${currentStep === 1 ? 'hidden' : 'flex min-[375px]:hidden'}`}>1</span>
           </div>
 
           <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
 
           {/* Step 2: Set */}
-          <div className={`flex items-center gap-1 ${getStepStyle(step2Active, step2Pending)}`}>
-            <span className="opacity-60">Set:</span>
-            <span className='truncate max-w-[80px] sm:max-w-none'>
-              {step2 ? step2 : "ยังไม่เลือก"}
-            </span>
+          <div className={`flex items-center gap-1 ${getStepStyle(step2Active, currentStep === 2)}`}>
+            {/* แสดงเต็มเมื่ออยู่ขั้นตอนนี้ หรือจอใหญ่กว่า 375px */}
+            <div className={`flex items-center gap-1 ${currentStep === 2 ? 'flex' : 'hidden min-[375px]:flex'}`}>
+              <span className="opacity-60">Set:</span>
+              <span className='truncate max-w-[80px] sm:max-w-none'>
+                {step2 ? step2 : "ยังไม่เลือก"}
+              </span>
+            </div>
+            {/* แสดงตัวเลขเมื่ออยู่ขั้นตอนอื่น และจอเล็กกว่า 375px */}
+            <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${step2Active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'} ${currentStep === 2 ? 'hidden' : 'flex min-[375px]:hidden'}`}>2</span>
           </div>
 
           <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
 
           {/* Step 3: เมนู */}
-          <div className={`flex items-center gap-1 ${getStepStyle(step3Active, step3Pending)}`}>
-            <span className="opacity-60">เมนู:</span>
-            <span className='truncate max-w-[80px] sm:max-w-none'>
-              {step3Active ? `${step3Count} รายการ` : "ยังไม่เลือก"}
-            </span>
+          <div className={`flex items-center gap-1 ${getStepStyle(step3Active, currentStep === 3)}`}>
+            {/* แสดงเต็มเมื่ออยู่ขั้นตอนนี้ หรือจอใหญ่กว่า 375px */}
+            <div className={`flex items-center gap-1 ${currentStep === 3 ? 'flex' : 'hidden min-[375px]:flex'}`}>
+              <span className="opacity-60">เมนู:</span>
+              <span className='truncate max-w-[80px] sm:max-w-none'>
+                {step3Active ? `${step3Count} รายการ` : "ยังไม่เลือก"}
+              </span>
+            </div>
+            {/* แสดงตัวเลขเมื่ออยู่ขั้นตอนอื่น และจอเล็กกว่า 375px */}
+            <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${step3Active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'} ${currentStep === 3 ? 'hidden' : 'flex min-[375px]:hidden'}`}>3</span>
           </div>
 
         </div>
