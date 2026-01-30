@@ -2274,1314 +2274,1315 @@ const SummaryList: React.FC = () => {
         </div>
       )}
 
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50'>
-      <div className='p-3'>
-        <h2 className='text-2xl font-bold mb-2'>สรุปรายการ</h2>
-        <p className='text-slate-600 mb-4'>จัดการและติดตามประวัติการสั่งซื้อทั้งหมด</p>
+      <div className='min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50'>
+        <div className='p-3'>
+          <h2 className='text-2xl font-bold mb-2'>สรุปรายการ</h2>
+          <p className='text-slate-600 mb-4'>จัดการและติดตามประวัติการสั่งซื้อทั้งหมด</p>
 
-        {/* แสดง Filter Banner เมื่อมี cartId filter จาก dashboard */}
-        {filterCartId && (
-          <div className='bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <Filter className='w-4 h-4 text-blue-600' />
-              <span className='text-blue-800 text-sm'>กำลังแสดงผลเฉพาะออเดอร์ที่เลือกจากหน้าแดชบอร์ด</span>
+          {/* แสดง Filter Banner เมื่อมี cartId filter จาก dashboard */}
+          {filterCartId && (
+            <div className='bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <Filter className='w-4 h-4 text-blue-600' />
+                <span className='text-blue-800 text-sm'>กำลังแสดงผลเฉพาะออเดอร์ที่เลือกจากหน้าแดชบอร์ด</span>
+              </div>
+              <Button
+                onClick={handleClearCartIdFilter}
+                variant='outline'
+                size='sm'
+                className='text-blue-600 border-blue-300 hover:bg-blue-100'
+              >
+                แสดงทั้งหมด
+              </Button>
             </div>
-            <Button 
-              onClick={handleClearCartIdFilter}
-              variant='outline' 
-              size='sm'
-              className='text-blue-600 border-blue-300 hover:bg-blue-100'
-            >
-              แสดงทั้งหมด
-            </Button>
-          </div>
-        )}
+          )}
 
-        {error && <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4'>{error.message}</div>}
+          {error && <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4'>{error.message}</div>}
 
-        <div className='grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6'>
-          <div className='col-span-full xl:col-span-2'>
-            <div className='relative'>
-              <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
-              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm' />
+          <div className='grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6'>
+            <div className='col-span-full md:col-span-1'>
+              <div className='relative'>
+                <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
+                <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-300 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-lg shadow-sm text-sm' />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
-              {selectedDate
-                ? `วันที่ ${formatDate(selectedDate, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  locale: "th",
-                  timeZone: "Asia/Bangkok",
-                })}`
-                : "เลือกวันที่ที่ต้องการ"}
-            </Button>
+            <div>
+              <Button onClick={() => handleDatePicker("open")} className='w-full h-10 bg-white rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600 hover:bg-slate-50 gap-2'>
+                <CalendarDays className='w-4 h-4 text-slate-500' />
+                {selectedDate
+                  ? `วันที่ ${formatDate(selectedDate, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    locale: "th",
+                    timeZone: "Asia/Bangkok",
+                  })}`
+                  : "เลือกวันที่ที่ต้องการ"}
+              </Button>
 
-            <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-              <DialogContent className='max-w-4xl'>
-                <DialogTitle className='sr-only'>เลือกวันที่จัดส่ง</DialogTitle>
-                <FullCalendar
-                  plugins={[dayGridPlugin, interactionPlugin]}
-                  initialView='dayGridMonth'
-                  timeZone='Asia/Bangkok'
-                  events={calendarEvents}
-                  dateClick={handleDateClick}
-                  height='auto'
-                  contentHeight='auto'
-                  locale='th'
-                  buttonText={{
-                    today: "วันนี้",
-                    month: "เดือน",
-                    week: "สัปดาห์",
-                    day: "วัน",
-                  }}
-                  headerToolbar={{
-                    left: "prev,next today",
-                    center: "title",
-                    right: "dayGridMonth,dayGridWeek,dayGridDay",
-                  }}
-                  footerToolbar={{
-                    start: "",
-                    center: "",
-                    end: "custom1",
-                  }}
-                  customButtons={{
-                    custom1: {
-                      text: "ล้างวันที่",
-                      click: function () {
-                        setSelectedDate(null);
-                        setCarts(allCarts);
-                        handleDatePicker("close");
+              <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                <DialogContent className='max-w-4xl'>
+                  <DialogTitle className='sr-only'>เลือกวันที่จัดส่ง</DialogTitle>
+                  <FullCalendar
+                    plugins={[dayGridPlugin, interactionPlugin]}
+                    initialView='dayGridMonth'
+                    timeZone='Asia/Bangkok'
+                    events={calendarEvents}
+                    dateClick={handleDateClick}
+                    height='auto'
+                    contentHeight='auto'
+                    locale='th'
+                    buttonText={{
+                      today: "วันนี้",
+                      month: "เดือน",
+                      week: "สัปดาห์",
+                      day: "วัน",
+                    }}
+                    headerToolbar={{
+                      left: "prev,next today",
+                      center: "title",
+                      right: "dayGridMonth,dayGridWeek,dayGridDay",
+                    }}
+                    footerToolbar={{
+                      start: "",
+                      center: "",
+                      end: "custom1",
+                    }}
+                    customButtons={{
+                      custom1: {
+                        text: "ล้างวันที่",
+                        click: function () {
+                          setSelectedDate(null);
+                          setCarts(allCarts);
+                          handleDatePicker("close");
+                        },
                       },
-                    },
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div>
+              <Select value={sortOrder} onValueChange={(val: "asc" | "desc") => setSortOrder(val)}>
+                <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm  '>
+                  <Filter className='w-4 h-4 mr-2 text-slate-500' />
+                  <SelectValue placeholder='Order' className='' />
+                </SelectTrigger>
+                <SelectContent side='bottom' align='start' avoidCollisions={false}>
+                  <SelectItem value='asc'>เรียงจากใหม่ไปเก่า</SelectItem>
+                  <SelectItem value='desc'>เรียงจากเก่าไปใหม่</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
+                  <Wallet className='w-4 h-4 mr-2 text-slate-500' />
+                  <SelectValue placeholder='All statuses' />
+                </SelectTrigger>
+                <SelectContent side='bottom' align='start' avoidCollisions={false}>
+                  <SelectItem value='ทั้งหมด'>ทั้งหมด</SelectItem>
+                  <SelectItem value='รอมัดจำ'>รอมัดจำ</SelectItem>
+                  <SelectItem value='ชำระเงินเเล้ว'>ชำระเงินเเล้ว</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Select value={filterCreator} onValueChange={setFilterCreator}>
+                <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
+                  <Users className='w-4 h-4 mr-2 text-slate-500' />
+                  <SelectValue placeholder='All creators' />
+                </SelectTrigger>
+                <SelectContent side='bottom' align='start' avoidCollisions={false}>
+                  <SelectItem value='ทั้งหมด'>ทั้งหมด</SelectItem>
+                  {uniqueCreators.map((creator) => (
+                    <SelectItem key={creator} value={creator}>
+                      {creator}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* ปุ่มล้างฟิลเตอร์ */}
+            <div>
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSortOrder("asc");
+                  setSelectedDate(null);
+                  setFilterCreator("ทั้งหมด");
+                  setFilterStatus("ทั้งหมด");
+                  setCarts(allCarts);
+                }}
+                style={{ color: '#ef4444' }}
+                className='h-10 w-full flex items-center justify-center gap-2 bg-white border border-slate-300 rounded-lg px-3 text-sm shadow-sm hover:bg-red-50 transition-all duration-200'>
+                <FilterX className='w-4 h-4' style={{ color: '#ef4444' }} />
+                <span>ล้างฟิลเตอร์</span>
+              </button>
+            </div>
           </div>
 
-          <div>
-            <Select value={sortOrder} onValueChange={(val: "asc" | "desc") => setSortOrder(val)}>
-              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm  '>
-                <Filter className='w-4 h-4 mr-2 text-slate-500' />
-                <SelectValue placeholder='Order' className='' />
-              </SelectTrigger>
-              <SelectContent side='bottom' align='start' avoidCollisions={false}>
-                <SelectItem value='asc'>เรียงจากใหม่ไปเก่า</SelectItem>
-                <SelectItem value='desc'>เรียงจากเก่าไปใหม่</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <div className='space-y-6'>
+            {isLoading ? (
+              <Loading context='หน้าสรุปรายการ' icon={SummaryIcon.src} />
+            ) : error ? (
+              <Card>
+                <CardContent className='text-center py-12'>
+                  <span className='text-red-500'>เกิดข้อผิดพลาด: {error.message}</span>
+                </CardContent>
+              </Card>
+            ) : paginatedGroupedOrders.length === 0 ? (
+              <Card>
+                <CardContent className='text-center py-12'>
+                  <Package className='w-12 h-12 text-slate-400 mx-auto mb-2' />
+                  <span className='text-slate-500'>No orders found</span>
+                </CardContent>
+              </Card>
+            ) : (
+              paginatedGroupedOrders.map(([date, orders], index) => (
+                <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
+                  <h3 style={{ fontSize: "24px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
+                    วันที่ส่งอาหาร {date}
+                    {/* ( จำนวน {orders.length} รายการ) */}
+                  </h3>
 
-          <div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
-                <Filter className='w-4 h-4 mr-2 text-slate-500' />
-                <SelectValue placeholder='All statuses' />
-              </SelectTrigger>
-              <SelectContent side='bottom' align='start' avoidCollisions={false}>
-                <SelectItem value='ทั้งหมด'>ทั้งหมด</SelectItem>
-                <SelectItem value='รอมัดจำ'>รอมัดจำ</SelectItem>
-                <SelectItem value='ชำระเงินเเล้ว'>ชำระเงินเเล้ว</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Select value={filterCreator} onValueChange={setFilterCreator}>
-              <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
-                <Users className='w-4 h-4 mr-2 text-slate-500' />
-                <SelectValue placeholder='All creators' />
-              </SelectTrigger>
-              <SelectContent side='bottom' align='start' avoidCollisions={false}>
-                <SelectItem value='ทั้งหมด'>ทั้งหมด</SelectItem>
-                {uniqueCreators.map((creator) => (
-                  <SelectItem key={creator} value={creator}>
-                    {creator}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* ปุ่มล้างฟิลเตอร์ */}
-          <div>
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                setSortOrder("asc");
-                setSelectedDate(null);
-                setFilterCreator("ทั้งหมด");
-                setFilterStatus("ทั้งหมด");
-                setCarts(allCarts);
-              }}
-              style={{ color: '#ef4444' }}
-              className='h-10 w-full flex items-center justify-center gap-2 bg-white border border-slate-300 rounded-lg px-3 text-sm shadow-sm hover:bg-red-50 transition-all duration-200'>
-              <FilterX className='w-4 h-4' style={{ color: '#ef4444' }} />
-              <span>ล้างฟิลเตอร์</span>
-            </button>
-          </div>
-        </div>
-
-        <div className='space-y-6'>
-          {isLoading ? (
-            <Loading context='หน้าสรุปรายการ' icon={SummaryIcon.src} />
-          ) : error ? (
-            <Card>
-              <CardContent className='text-center py-12'>
-                <span className='text-red-500'>เกิดข้อผิดพลาด: {error.message}</span>
-              </CardContent>
-            </Card>
-          ) : paginatedGroupedOrders.length === 0 ? (
-            <Card>
-              <CardContent className='text-center py-12'>
-                <Package className='w-12 h-12 text-slate-400 mx-auto mb-2' />
-                <span className='text-slate-500'>No orders found</span>
-              </CardContent>
-            </Card>
-          ) : (
-            paginatedGroupedOrders.map(([date, orders], index) => (
-              <div key={`date-${index}`} className='space-y-4 bg-blue-50 rounded-xl shadow-sm'>
-                <h3 style={{ fontSize: "24px" }} className='text-6xl font-bold text-blue-700 text-center px-4 py-3'>
-                  วันที่ส่งอาหาร {date} 
-                  {/* ( จำนวน {orders.length} รายการ) */}
-                </h3>
-
-                <div className='space-y-4'>
-                  {orders.map((cart) => (
-                    <Accordion key={cart.id} type='multiple' defaultValue={[]} className='border-none m-4'>
-                      <AccordionItem value={cart.id} className='border-none'>
-                        <Card className={`bg-gradient-to-r ${getStatus("color", cart.status)} p-4 rounded-xl shadow-sm`}>
-                          <div className='flex w-full items-center'>
-                            <div className='ml-auto flex items-center gap-2'>
-                              {editingTimes?.cartId === cart.id ? (
-                                <div className='flex flex-col gap-2'>
-                                  <div className='flex items-center gap-2'>
-                                    <BsCashStack className='w-6 h-6' />
-                                    <span>เวลาส่งอาหาร</span>
-                                    <select
-                                      value={editingTimes.exportHour}
-                                      onChange={(e) =>
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                              ...prev,
-                                              exportHour: e.target.value,
-                                            }
-                                            : prev
-                                        )
-                                      }
-                                      className='border rounded px-1'>
-                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
-                                        <option key={h} value={h}>
-                                          {h}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    :
-                                    <select
-                                      value={editingTimes.exportMinute}
-                                      onChange={(e) =>
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                              ...prev,
-                                              exportMinute: e.target.value,
-                                            }
-                                            : prev
-                                        )
-                                      }
-                                      className='border rounded px-1'>
-                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
-                                        <option key={m} value={m}>
-                                          {m}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div className='flex items-center gap-2'>
-                                    <FaWallet className='w-4 h-4' />
-                                    <span>เวลารับอาหาร</span>
-                                    <select
-                                      value={editingTimes.receiveHour}
-                                      onChange={(e) =>
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                              ...prev,
-                                              receiveHour: e.target.value,
-                                            }
-                                            : prev
-                                        )
-                                      }
-                                      className='border rounded px-1'>
-                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
-                                        <option key={h} value={h}>
-                                          {h}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    :
-                                    <select
-                                      value={editingTimes.receiveMinute}
-                                      onChange={(e) =>
-                                        setEditingTimes((prev) =>
-                                          prev
-                                            ? {
-                                              ...prev,
-                                              receiveMinute: e.target.value,
-                                            }
-                                            : prev
-                                        )
-                                      }
-                                      className='border rounded px-1'>
-                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
-                                        <option key={m} value={m}>
-                                          {m}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div className='flex w-full items-center'>
-                                    <div className='ml-auto flex items-center gap-2'>
-                                      <Button variant='ghost' size='sm' onClick={() => handleSaveTimes(cart.id)} className='h-8 px-2' disabled={isSaving === cart.id}>
-                                        {isSaving === cart.id ? "Saving..." : "Save"}
-                                      </Button>
-                                      <Button variant='ghost' size='sm' onClick={() => setEditingTimes(null)} className='h-8 px-2 text-gray-600 hover:bg-gray-50' disabled={isSaving === cart.id}>
-                                        Cancel
-                                      </Button>
+                  <div className='space-y-4'>
+                    {orders.map((cart) => (
+                      <Accordion key={cart.id} type='multiple' defaultValue={[]} className='border-none m-4'>
+                        <AccordionItem value={cart.id} className='border-none'>
+                          <Card className={`bg-gradient-to-r ${getStatus("color", cart.status)} p-4 rounded-xl shadow-sm`}>
+                            <div className='flex w-full items-center'>
+                              <div className='ml-auto flex items-center gap-2'>
+                                {editingTimes?.cartId === cart.id ? (
+                                  <div className='flex flex-col gap-2'>
+                                    <div className='flex items-center gap-2'>
+                                      <BsCashStack className='w-6 h-6' />
+                                      <span>เวลาส่งอาหาร</span>
+                                      <select
+                                        value={editingTimes.exportHour}
+                                        onChange={(e) =>
+                                          setEditingTimes((prev) =>
+                                            prev
+                                              ? {
+                                                ...prev,
+                                                exportHour: e.target.value,
+                                              }
+                                              : prev
+                                          )
+                                        }
+                                        className='border rounded px-1'>
+                                        {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                          <option key={h} value={h}>
+                                            {h}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      :
+                                      <select
+                                        value={editingTimes.exportMinute}
+                                        onChange={(e) =>
+                                          setEditingTimes((prev) =>
+                                            prev
+                                              ? {
+                                                ...prev,
+                                                exportMinute: e.target.value,
+                                              }
+                                              : prev
+                                          )
+                                        }
+                                        className='border rounded px-1'>
+                                        {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                          <option key={m} value={m}>
+                                            {m}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className='flex items-center gap-2'>
+                                      <FaWallet className='w-4 h-4' />
+                                      <span>เวลารับอาหาร</span>
+                                      <select
+                                        value={editingTimes.receiveHour}
+                                        onChange={(e) =>
+                                          setEditingTimes((prev) =>
+                                            prev
+                                              ? {
+                                                ...prev,
+                                                receiveHour: e.target.value,
+                                              }
+                                              : prev
+                                          )
+                                        }
+                                        className='border rounded px-1'>
+                                        {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                          <option key={h} value={h}>
+                                            {h}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      :
+                                      <select
+                                        value={editingTimes.receiveMinute}
+                                        onChange={(e) =>
+                                          setEditingTimes((prev) =>
+                                            prev
+                                              ? {
+                                                ...prev,
+                                                receiveMinute: e.target.value,
+                                              }
+                                              : prev
+                                          )
+                                        }
+                                        className='border rounded px-1'>
+                                        {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                          <option key={m} value={m}>
+                                            {m}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className='flex w-full items-center'>
+                                      <div className='ml-auto flex items-center gap-2'>
+                                        <Button variant='ghost' size='sm' onClick={() => handleSaveTimes(cart.id)} className='h-8 px-2' disabled={isSaving === cart.id}>
+                                          {isSaving === cart.id ? "Saving..." : "Save"}
+                                        </Button>
+                                        <Button variant='ghost' size='sm' onClick={() => setEditingTimes(null)} className='h-8 px-2 text-gray-600 hover:bg-gray-50' disabled={isSaving === cart.id}>
+                                          Cancel
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ) : (
-                                <div className='flex items-center gap-2'>
-                                  🕒
-                                  <span>เวลาส่งอาหาร {cart.export_time || "ไม่ระบุ"} น.</span>
-                                  🕒
-                                  <span>เวลารับอาหาร {cart.receive_time || "ไม่ระบุ"} น.</span>
-                                  <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.export_time || "", cart.receive_time || "")}>
-                                    {/* <Edit2 className='w-4 h-4' /> */}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <AccordionTrigger className='w-full hover:no-underline px-0'>
-                            <div className='flex flex-col gap-3 w-full text-slate-700 text-base font-bold'>
-                              <div>รายการคำสั่งซื้อหมายเลข {String(cart.order_number).padStart(3, "0")}</div>
-                              <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
-                                <div className='flex flex-col sm:flex-row sm:items-center gap-2 text-base'>
+                                ) : (
                                   <div className='flex items-center gap-2'>
-                                    📦 
-                                    <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
-                                  </div>
-                                  <div className='flex items-center gap-2'>
-                                    💵
-                                    <span>
-                                      ราคาอาหาร{" "}
-                                      {(() => {
-                                        const foodPrice = cart.lunchbox && cart.lunchbox.length > 0
-                                          ? cart.lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
-                                          : cart.price || 0;
-                                        return foodPrice.toLocaleString("th-TH");
-                                      })()}{" "}
-                                      บาท
+                                    🕒
+                                    <span>เวลาส่งอาหาร {cart.export_time || "ไม่ระบุ"} น.</span>
+                                    🕒
+                                    <span>เวลารับอาหาร {cart.receive_time || "ไม่ระบุ"} น.</span>
+                                    <span className='cursor-pointer ml-2' onClick={() => handleEditTimes(cart.id, cart.export_time || "", cart.receive_time || "")}>
+                                      {/* <Edit2 className='w-4 h-4' /> */}
                                     </span>
                                   </div>
-                                  <div className='flex items-center gap-2'>
-                                    🚚
-                                    <span>ค่าจัดส่ง {Number(cart.shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
+                                )}
+                              </div>
+                            </div>
+                            <AccordionTrigger className='w-full hover:no-underline px-0'>
+                              <div className='flex flex-col gap-3 w-full text-slate-700 text-base font-bold'>
+                                <div>รายการคำสั่งซื้อหมายเลข {String(cart.order_number).padStart(3, "0")}</div>
+                                <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
+                                  <div className='flex flex-col sm:flex-row sm:items-center gap-2 text-base'>
+                                    <div className='flex items-center gap-2'>
+                                      📦
+                                      <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
+                                    </div>
+                                    <div className='flex items-center gap-2'>
+                                      💵
+                                      <span>
+                                        ราคาอาหาร{" "}
+                                        {(() => {
+                                          const foodPrice = cart.lunchbox && cart.lunchbox.length > 0
+                                            ? cart.lunchbox.reduce((sum, lunchbox) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
+                                            : cart.price || 0;
+                                          return foodPrice.toLocaleString("th-TH");
+                                        })()}{" "}
+                                        บาท
+                                      </span>
+                                    </div>
+                                    <div className='flex items-center gap-2'>
+                                      🚚
+                                      <span>ค่าจัดส่ง {Number(cart.shipping_cost || 0).toLocaleString("th-TH")} บาท</span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
-                                <div className='flex items-center gap-2 text-base'>
-                                  📍
-                                  <span>สถานที่จัดส่ง {cart.location_send} </span>
+                                <div className='flex flex-col sm:flex-row sm:justify-between font-normal sm:items-center gap-1 sm:gap-4 text-black'>
+                                  <div className='flex items-center gap-2 text-base'>
+                                    📍
+                                    <span>สถานที่จัดส่ง {cart.location_send} </span>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
-                                <div className='flex items-center gap-2 text-base'>
-                                  👤
-                                  <span>ส่งถึงคุณ {cart.customer_name}</span>
-                                  
+                                <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
+                                  <div className='flex items-center gap-2 text-base'>
+                                    👤
+                                    <span>ส่งถึงคุณ {cart.customer_name}</span>
+
+                                  </div>
+
                                 </div>
-                                
-                              </div>
-                              <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
-                              <div className="flex items-center gap-2 text-base">
-                                   📞
+                                <div className='font-normal flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 text-black'>
+                                  <div className="flex items-center gap-2 text-base">
+                                    📞
                                     <span>เบอร์ {cart.customer_tel} </span>
                                   </div>
-                                
-                              </div>
-                              
-                              <div className='flex flex-wrap items-center gap-4 text-base font-normal text-black'>
-                                <div className='flex items-center gap-2'>
-                                  📅
-                                  <span>วันที่สั่งอาหาร {cart.date}</span>
-                                </div>
-                              </div>
-                              {(cart.invoice_tex || cart.customer_name || cart.location_send) && (
-                                <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
-                                  {cart.customer_name && (
-                                    <div className='flex items-center gap-2'>
-                                      👤
-                                      <span>ออกบิลในนาม: {cart.customer_name}</span>
-                                    </div>
-                                  )}
-                                  {cart.location_send && (
-                                    <div className='flex items-center gap-2'>
-                                      📍
-                                      <span>ที่อยู่: {cart.location_send}</span>
-                                    </div>
-                                  )}
-                                  {cart.invoice_tex && (
-                                    <div className='flex items-center gap-2'>
-                                      📄
-                                      <span>เลขกำกับภาษี: {cart.invoice_tex}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
-                                <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
-                              </div>
 
-                            </div>
-                          </AccordionTrigger>
+                                </div>
 
-                          <div className='flex justify-center mt-2 gap-2 flex-wrap'>
-                            <StatusDropdown
-                              cartId={cart.id}
-                              allIngredients={cart.allIngredients}
-                              defaultStatus={cart.status}
-                              receive_time={Time.formatToHHMM(cart.receive_time)}
-                              export_time={Time.formatToHHMM(cart.export_time)}
-                              cart={cart}
-                              onUpdated={() => handleUpdateWithCheck(cart)}
-                              onOrderSummaryClick={() => handleSummary("order", cart)}
-                              onPaymentCompleted={handlePaymentCompleted}
-                            />
-                            <Button
-                              onClick={() => handlePaymentCompleted(cart)}
-                              className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 text-xs font-bold rounded-full shadow'
-                              style={{ boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)" }}>
-                              📋
-                            </Button>
-                          </div>
-                          <AccordionContent className='mt-4'>
-                            <div className='grid md:grid-cols-2 gap-6'>
-                              <div>
-                                <div className='flex justify-between items-center mb-2'>
-                                  <div>
-                                    <h4 className='text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2'>
-                                      <User className='w-4 h-4' /> เมนูที่สั่ง
-                                    </h4>
+                                <div className='flex flex-wrap items-center gap-4 text-base font-normal text-black'>
+                                  <div className='flex items-center gap-2'>
+                                    📅
+                                    <span>วันที่สั่งอาหาร {cart.date}</span>
                                   </div>
-                                  <div>
-                                    <Button
-                                      onClick={async () => {
-                                        setShouldFetchMenu(true);
-                                        const currentCart = carts.find((c) => c.id === cart.id);
-                                        if (!currentCart) {
-                                          Swal.fire({
-                                            icon: "error",
-                                            title: "เกิดข้อผิดพลาด",
-                                            text: "ไม่พบข้อมูลออเดอร์",
-                                            showConfirmButton: false,
-                                            timer: 3000,
-                                          });
-                                          return;
-                                        }
+                                </div>
+                                {(cart.invoice_tex || cart.customer_name || cart.location_send) && (
+                                  <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
+                                    {cart.customer_name && (
+                                      <div className='flex items-center gap-2'>
+                                        👤
+                                        <span>ออกบิลในนาม: {cart.customer_name}</span>
+                                      </div>
+                                    )}
+                                    {cart.location_send && (
+                                      <div className='flex items-center gap-2'>
+                                        📍
+                                        <span>ที่อยู่: {cart.location_send}</span>
+                                      </div>
+                                    )}
+                                    {cart.invoice_tex && (
+                                      <div className='flex items-center gap-2'>
+                                        📄
+                                        <span>เลขกำกับภาษี: {cart.invoice_tex}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                <div className='hidden items-center gap-1 overflow-hidden whitespace-nowrap text-[10px] sm:text-xs text-gray-500'>
+                                  <ResponsiveOrderId id={cart.id} maxFontSize={10} minFontSize={10} />
+                                </div>
 
-                                        // Extract menuItems from lunchbox
-                                        const menuItemsFromLunchbox: any[] = [];
-                                        (cart.lunchbox || []).forEach((lunchbox: any) => {
-                                          (lunchbox.lunchbox_menu || []).forEach((menu: any) => {
-                                            menuItemsFromLunchbox.push({
-                                              menu_name: menu.menu_name || "เมนูไม่ระบุ",
-                                              menu_category: menu.menu_category || "",
-                                              menu_subname: menu.menu_subname || "",
-                                              menu_total: menu.menu_total || 0,
-                                              menu_order_id: menu.menu_order_id || 0,
-                                              menu_description: menu.menu_description || "",
-                                              menu_ingredients: Array.isArray(menu.menu_ingredients)
-                                                ? menu.menu_ingredients.map((ing: any) => ({
-                                                  useItem: ing.useItem ?? 0,
-                                                  ingredient_name: ing.ingredient_name ?? "ไม่ระบุวัตถุดิบ",
-                                                  ingredient_status: ing.ingredient_status ?? false,
-                                                }))
-                                                : [],
+                              </div>
+                            </AccordionTrigger>
+
+                            <div className='flex justify-center mt-2 gap-2 flex-wrap'>
+                              <StatusDropdown
+                                cartId={cart.id}
+                                allIngredients={cart.allIngredients}
+                                defaultStatus={cart.status}
+                                receive_time={Time.formatToHHMM(cart.receive_time)}
+                                export_time={Time.formatToHHMM(cart.export_time)}
+                                cart={cart}
+                                onUpdated={() => handleUpdateWithCheck(cart)}
+                                onOrderSummaryClick={() => handleSummary("order", cart)}
+                                onPaymentCompleted={handlePaymentCompleted}
+                              />
+                              <Button
+                                onClick={() => handlePaymentCompleted(cart)}
+                                className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 text-xs font-bold rounded-full shadow'
+                                style={{ boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)" }}>
+                                📋
+                              </Button>
+                            </div>
+                            <AccordionContent className='mt-4'>
+                              <div className='grid md:grid-cols-2 gap-6'>
+                                <div>
+                                  <div className='flex justify-between items-center mb-2'>
+                                    <div>
+                                      <h4 className='text-sm font-bold mb-2 text-emerald-700 flex items-center gap-2'>
+                                        <User className='w-4 h-4' /> เมนูที่สั่ง
+                                      </h4>
+                                    </div>
+                                    <div>
+                                      <Button
+                                        onClick={async () => {
+                                          setShouldFetchMenu(true);
+                                          const currentCart = carts.find((c) => c.id === cart.id);
+                                          if (!currentCart) {
+                                            Swal.fire({
+                                              icon: "error",
+                                              title: "เกิดข้อผิดพลาด",
+                                              text: "ไม่พบข้อมูลออเดอร์",
+                                              showConfirmButton: false,
+                                              timer: 3000,
+                                            });
+                                            return;
+                                          }
+
+                                          // Extract menuItems from lunchbox
+                                          const menuItemsFromLunchbox: any[] = [];
+                                          (cart.lunchbox || []).forEach((lunchbox: any) => {
+                                            (lunchbox.lunchbox_menu || []).forEach((menu: any) => {
+                                              menuItemsFromLunchbox.push({
+                                                menu_name: menu.menu_name || "เมนูไม่ระบุ",
+                                                menu_category: menu.menu_category || "",
+                                                menu_subname: menu.menu_subname || "",
+                                                menu_total: menu.menu_total || 0,
+                                                menu_order_id: menu.menu_order_id || 0,
+                                                menu_description: menu.menu_description || "",
+                                                menu_ingredients: Array.isArray(menu.menu_ingredients)
+                                                  ? menu.menu_ingredients.map((ing: any) => ({
+                                                    useItem: ing.useItem ?? 0,
+                                                    ingredient_name: ing.ingredient_name ?? "ไม่ระบุวัตถุดิบ",
+                                                    ingredient_status: ing.ingredient_status ?? false,
+                                                  }))
+                                                  : [],
+                                              });
                                             });
                                           });
-                                        });
 
-                                        setEditMenuDialog({
-                                          id: cart.id,
-                                          order_number: cart.order_number || "",
-                                          delivery_date: cart.delivery_date || "",
-                                          receive_time: cart.receive_time || "",
-                                          export_time: cart.export_time || "",
-                                          customer_tel: cart.customer_tel || "",
-                                          customer_name: cart.customer_name || "",
-                                          location_send: cart.location_send || "",
-                                          shipping_cost: Number(cart.shipping_cost) || 0,
-                                          lunchbox: (cart.lunchbox || []) as any,
-                                          menuItems: menuItemsFromLunchbox,
-                                          newMenu: {
-                                            menu_name: "",
-                                            menu_total: 1,
-                                            menu_description: "",
-                                          },
-                                        });
+                                          setEditMenuDialog({
+                                            id: cart.id,
+                                            order_number: cart.order_number || "",
+                                            delivery_date: cart.delivery_date || "",
+                                            receive_time: cart.receive_time || "",
+                                            export_time: cart.export_time || "",
+                                            customer_tel: cart.customer_tel || "",
+                                            customer_name: cart.customer_name || "",
+                                            location_send: cart.location_send || "",
+                                            shipping_cost: Number(cart.shipping_cost) || 0,
+                                            lunchbox: (cart.lunchbox || []) as any,
+                                            menuItems: menuItemsFromLunchbox,
+                                            newMenu: {
+                                              menu_name: "",
+                                              menu_total: 1,
+                                              menu_description: "",
+                                            },
+                                          });
 
-                                        // Initialize time editing state
-                                        const parseTime = (time: string) => {
-                                          if (!time) return { hour: "00", minute: "00" };
-                                          const [hour, minute] = time.split(":").map((h) => h.padStart(2, "0"));
-                                          return { hour: hour || "00", minute: minute || "00" };
-                                        };
+                                          // Initialize time editing state
+                                          const parseTime = (time: string) => {
+                                            if (!time) return { hour: "00", minute: "00" };
+                                            const [hour, minute] = time.split(":").map((h) => h.padStart(2, "0"));
+                                            return { hour: hour || "00", minute: minute || "00" };
+                                          };
 
-                                        const exportParsed = parseTime(cart.export_time || "");
-                                        const receiveParsed = parseTime(cart.receive_time || "");
+                                          const exportParsed = parseTime(cart.export_time || "");
+                                          const receiveParsed = parseTime(cart.receive_time || "");
 
-                                        setEditMenuDialogTimes({
-                                          exportHour: exportParsed.hour,
-                                          exportMinute: exportParsed.minute,
-                                          receiveHour: receiveParsed.hour,
-                                          receiveMinute: receiveParsed.minute,
-                                        });
+                                          setEditMenuDialogTimes({
+                                            exportHour: exportParsed.hour,
+                                            exportMinute: exportParsed.minute,
+                                            receiveHour: receiveParsed.hour,
+                                            receiveMinute: receiveParsed.minute,
+                                          });
 
-                                        // Fetch lunchboxes and menus
-                                        await fetchLunchboxesAndMenus();
-                                      }}
-                                      className='flex items-center gap-2'>
-                                      แก้ไขเมนูที่สั่ง
-                                      <Edit2 className='w-4 h-4' />
-                                    </Button>
+                                          // Fetch lunchboxes and menus
+                                          await fetchLunchboxesAndMenus();
+                                        }}
+                                        className='flex items-center gap-2'>
+                                        แก้ไขเมนูที่สั่ง
+                                        <Edit2 className='w-4 h-4' />
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                                <Dialog
-                                  open={editMenuDialog !== null}
-                                  onOpenChange={(open) => {
-                                    // Only reset when explicitly closing (not when SweetAlert shows or deleting)
-                                    if (!open && editMenuDialog !== null && !isDeleting) {
-                                      setEditMenuDialog(null);
-                                      setEditMenuDialogTimes(null);
-                                      setShouldFetchMenu(false);
-                                      setSelectedLunchboxName("");
-                                      setSelectedLunchboxSet("");
-                                      setPreviewLunchbox(null);
-                                      setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
-                                    } else {
-                                    }
-                                  }}>
-                                  <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
-                                    <DialogTitle>
-                                      {editMenuDialog && (
-                                        <div className='space-y-6'>
-                                          <div style={{ color: "#000000" }} className='text-xl font-bold mb-4'>
-                                            แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.order_number || editMenuDialog?.id}
-                                          </div>
-                                          <div style={{ color: "#000000" }} className='bg-gray-100 p-4 rounded-lg'>
-                                            <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
-                                            <div className='grid grid-cols-2 gap-4 text-sm'>
-                                              <div>
-                                                <span className='font-medium'>ชื่อ:</span> {editMenuDialog.customer_name}
-                                              </div>
-                                              <div>
-                                                <span className='font-medium'>เบอร์โทร:</span> {editMenuDialog.customer_tel}
-                                              </div>
-                                              <div>
-                                                <span className='font-medium'>สถานที่ส่ง:</span> {editMenuDialog.location_send}
-                                              </div>
-                                              <div>
-                                                <span className='font-medium'>ค่าจัดส่ง:</span> {editMenuDialog.shipping_cost} บาท
-                                              </div>
-                                              <div>
-                                                <span className='font-medium'>วันที่ส่ง:</span> {editMenuDialog.delivery_date}
-                                              </div>
-                                              <div className='col-span-2'>
-                                                {/* <span className='font-medium'>เวลาส่ง/รับ:</span> */}
-                                                <div className='flex items-center gap-4 mt-2'>
-                                                  <div className='flex items-center gap-2'>
-                                                    <span className='text-sm'>เวลาส่ง:</span>
-                                                    <select
-                                                      value={editMenuDialogTimes?.exportHour || "00"}
-                                                      onChange={(e) =>
-                                                        setEditMenuDialogTimes((prev) =>
-                                                          prev
-                                                            ? { ...prev, exportHour: e.target.value }
-                                                            : { exportHour: e.target.value, exportMinute: "00", receiveHour: "00", receiveMinute: "00" }
-                                                        )
-                                                      }
-                                                      className='border rounded px-2 py-1 text-sm'>
-                                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
-                                                        <option key={h} value={h}>
-                                                          {h}
-                                                        </option>
-                                                      ))}
-                                                    </select>
-                                                    :
-                                                    <select
-                                                      value={editMenuDialogTimes?.exportMinute || "00"}
-                                                      onChange={(e) =>
-                                                        setEditMenuDialogTimes((prev) =>
-                                                          prev
-                                                            ? { ...prev, exportMinute: e.target.value }
-                                                            : { exportHour: "00", exportMinute: e.target.value, receiveHour: "00", receiveMinute: "00" }
-                                                        )
-                                                      }
-                                                      className='border rounded px-2 py-1 text-sm'>
-                                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
-                                                        <option key={m} value={m}>
-                                                          {m}
-                                                        </option>
-                                                      ))}
-                                                    </select>
-                                                  </div>
-                                                  <div className='flex items-center gap-2'>
-                                                    <span className='text-sm'>เวลารับ:</span>
-                                                    <select
-                                                      value={editMenuDialogTimes?.receiveHour || "00"}
-                                                      onChange={(e) =>
-                                                        setEditMenuDialogTimes((prev) =>
-                                                          prev
-                                                            ? { ...prev, receiveHour: e.target.value }
-                                                            : { exportHour: "00", exportMinute: "00", receiveHour: e.target.value, receiveMinute: "00" }
-                                                        )
-                                                      }
-                                                      className='border rounded px-2 py-1 text-sm'>
-                                                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
-                                                        <option key={h} value={h}>
-                                                          {h}
-                                                        </option>
-                                                      ))}
-                                                    </select>
-                                                    :
-                                                    <select
-                                                      value={editMenuDialogTimes?.receiveMinute || "00"}
-                                                      onChange={(e) =>
-                                                        setEditMenuDialogTimes((prev) =>
-                                                          prev
-                                                            ? { ...prev, receiveMinute: e.target.value }
-                                                            : { exportHour: "00", exportMinute: "00", receiveHour: "00", receiveMinute: e.target.value }
-                                                        )
-                                                      }
-                                                      className='border rounded px-2 py-1 text-sm'>
-                                                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
-                                                        <option key={m} value={m}>
-                                                          {m}
-                                                        </option>
-                                                      ))}
-                                                    </select>
+                                  <Dialog
+                                    open={editMenuDialog !== null}
+                                    onOpenChange={(open) => {
+                                      // Only reset when explicitly closing (not when SweetAlert shows or deleting)
+                                      if (!open && editMenuDialog !== null && !isDeleting) {
+                                        setEditMenuDialog(null);
+                                        setEditMenuDialogTimes(null);
+                                        setShouldFetchMenu(false);
+                                        setSelectedLunchboxName("");
+                                        setSelectedLunchboxSet("");
+                                        setPreviewLunchbox(null);
+                                        setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
+                                      } else {
+                                      }
+                                    }}>
+                                    <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
+                                      <DialogTitle>
+                                        {editMenuDialog && (
+                                          <div className='space-y-6'>
+                                            <div style={{ color: "#000000" }} className='text-xl font-bold mb-4'>
+                                              แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.order_number || editMenuDialog?.id}
+                                            </div>
+                                            <div style={{ color: "#000000" }} className='bg-gray-100 p-4 rounded-lg'>
+                                              <h3 className='font-semibold text-gray-800 mb-2'>ข้อมูลลูกค้า</h3>
+                                              <div className='grid grid-cols-2 gap-4 text-sm'>
+                                                <div>
+                                                  <span className='font-medium'>ชื่อ:</span> {editMenuDialog.customer_name}
+                                                </div>
+                                                <div>
+                                                  <span className='font-medium'>เบอร์โทร:</span> {editMenuDialog.customer_tel}
+                                                </div>
+                                                <div>
+                                                  <span className='font-medium'>สถานที่ส่ง:</span> {editMenuDialog.location_send}
+                                                </div>
+                                                <div>
+                                                  <span className='font-medium'>ค่าจัดส่ง:</span> {editMenuDialog.shipping_cost} บาท
+                                                </div>
+                                                <div>
+                                                  <span className='font-medium'>วันที่ส่ง:</span> {editMenuDialog.delivery_date}
+                                                </div>
+                                                <div className='col-span-2'>
+                                                  {/* <span className='font-medium'>เวลาส่ง/รับ:</span> */}
+                                                  <div className='flex items-center gap-4 mt-2'>
+                                                    <div className='flex items-center gap-2'>
+                                                      <span className='text-sm'>เวลาส่ง:</span>
+                                                      <select
+                                                        value={editMenuDialogTimes?.exportHour || "00"}
+                                                        onChange={(e) =>
+                                                          setEditMenuDialogTimes((prev) =>
+                                                            prev
+                                                              ? { ...prev, exportHour: e.target.value }
+                                                              : { exportHour: e.target.value, exportMinute: "00", receiveHour: "00", receiveMinute: "00" }
+                                                          )
+                                                        }
+                                                        className='border rounded px-2 py-1 text-sm'>
+                                                        {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                                          <option key={h} value={h}>
+                                                            {h}
+                                                          </option>
+                                                        ))}
+                                                      </select>
+                                                      :
+                                                      <select
+                                                        value={editMenuDialogTimes?.exportMinute || "00"}
+                                                        onChange={(e) =>
+                                                          setEditMenuDialogTimes((prev) =>
+                                                            prev
+                                                              ? { ...prev, exportMinute: e.target.value }
+                                                              : { exportHour: "00", exportMinute: e.target.value, receiveHour: "00", receiveMinute: "00" }
+                                                          )
+                                                        }
+                                                        className='border rounded px-2 py-1 text-sm'>
+                                                        {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                                          <option key={m} value={m}>
+                                                            {m}
+                                                          </option>
+                                                        ))}
+                                                      </select>
+                                                    </div>
+                                                    <div className='flex items-center gap-2'>
+                                                      <span className='text-sm'>เวลารับ:</span>
+                                                      <select
+                                                        value={editMenuDialogTimes?.receiveHour || "00"}
+                                                        onChange={(e) =>
+                                                          setEditMenuDialogTimes((prev) =>
+                                                            prev
+                                                              ? { ...prev, receiveHour: e.target.value }
+                                                              : { exportHour: "00", exportMinute: "00", receiveHour: e.target.value, receiveMinute: "00" }
+                                                          )
+                                                        }
+                                                        className='border rounded px-2 py-1 text-sm'>
+                                                        {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0")).map((h) => (
+                                                          <option key={h} value={h}>
+                                                            {h}
+                                                          </option>
+                                                        ))}
+                                                      </select>
+                                                      :
+                                                      <select
+                                                        value={editMenuDialogTimes?.receiveMinute || "00"}
+                                                        onChange={(e) =>
+                                                          setEditMenuDialogTimes((prev) =>
+                                                            prev
+                                                              ? { ...prev, receiveMinute: e.target.value }
+                                                              : { exportHour: "00", exportMinute: "00", receiveHour: "00", receiveMinute: e.target.value }
+                                                          )
+                                                        }
+                                                        className='border rounded px-2 py-1 text-sm'>
+                                                        {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
+                                                          <option key={m} value={m}>
+                                                            {m}
+                                                          </option>
+                                                        ))}
+                                                      </select>
+                                                    </div>
                                                   </div>
                                                 </div>
                                               </div>
                                             </div>
-                                          </div>
 
-                                          {/* แสดงข้อมูล lunchbox */}
-                                          <div className='space-y-4'>
-                                            <div className='bg-gray-50 p-4 rounded-lg border border-gray-200'>
-                                              <h3 className='font-semibold text-gray-800 mb-3' style={{ color: "#000000" }}>🍱 เพิ่มกล่องอาหาร</h3>
+                                            {/* แสดงข้อมูล lunchbox */}
+                                            <div className='space-y-4'>
+                                              <div className='bg-gray-50 p-4 rounded-lg border border-gray-200'>
+                                                <h3 className='font-semibold text-gray-800 mb-3' style={{ color: "#000000" }}>🍱 เพิ่มกล่องอาหาร</h3>
 
-                                              <div className='grid grid-cols-2 gap-3 mb-3'>
-                                                <div className='flex flex-col gap-1'>
-                                                  <label className='text-sm font-medium text-gray-700'>ชื่อโปรโมชั่นอาหาร</label>
-                                                  <select
-                                                    value={selectedLunchboxName}
-                                                    onChange={(e) => {
-                                                      setSelectedLunchboxName(e.target.value);
-                                                      setSelectedLunchboxSet(""); // Reset set when name changes
-                                                    }}
-                                                    className='px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'>
-                                                    <option value=''>เลือกโปรโมชั่นอาหาร</option>
-                                                    {[...new Set(availableLunchboxes.map((item) => item.lunchbox_name))].map((name, idx) => (
-                                                      <option key={idx} value={name}>
-                                                        {name}
-                                                      </option>
-                                                    ))}
-                                                  </select>
+                                                <div className='grid grid-cols-2 gap-3 mb-3'>
+                                                  <div className='flex flex-col gap-1'>
+                                                    <label className='text-sm font-medium text-gray-700'>ชื่อโปรโมชั่นอาหาร</label>
+                                                    <select
+                                                      value={selectedLunchboxName}
+                                                      onChange={(e) => {
+                                                        setSelectedLunchboxName(e.target.value);
+                                                        setSelectedLunchboxSet(""); // Reset set when name changes
+                                                      }}
+                                                      className='px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'>
+                                                      <option value=''>เลือกโปรโมชั่นอาหาร</option>
+                                                      {[...new Set(availableLunchboxes.map((item) => item.lunchbox_name))].map((name, idx) => (
+                                                        <option key={idx} value={name}>
+                                                          {name}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
+
+                                                  <div className='flex flex-col gap-1'>
+                                                    <label className='text-sm font-medium text-gray-700'>ชื่อเซทอาหาร</label>
+                                                    <select
+                                                      value={selectedLunchboxSet}
+                                                      onChange={(e) => setSelectedLunchboxSet(e.target.value)}
+                                                      disabled={!selectedLunchboxName || availableLunchboxSets.length === 0}
+                                                      className='px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'>
+                                                      <option value=''>{selectedLunchboxName ? "เลือกเซทอาหาร" : "กรุณาเลือกโปรโมชั่นก่อน"}</option>
+                                                      {availableLunchboxSets.map((set, idx) => (
+                                                        <option key={idx} value={set}>
+                                                          {set}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
                                                 </div>
 
-                                                <div className='flex flex-col gap-1'>
-                                                  <label className='text-sm font-medium text-gray-700'>ชื่อเซทอาหาร</label>
-                                                  <select
-                                                    value={selectedLunchboxSet}
-                                                    onChange={(e) => setSelectedLunchboxSet(e.target.value)}
-                                                    disabled={!selectedLunchboxName || availableLunchboxSets.length === 0}
-                                                    className='px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'>
-                                                    <option value=''>{selectedLunchboxName ? "เลือกเซทอาหาร" : "กรุณาเลือกโปรโมชั่นก่อน"}</option>
-                                                    {availableLunchboxSets.map((set, idx) => (
-                                                      <option key={idx} value={set}>
-                                                        {set}
-                                                      </option>
-                                                    ))}
-                                                  </select>
-                                                </div>
+                                                {/* Preview Lunchbox */}
+                                                {previewLunchbox && (
+                                                  <div className='mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                                                    <h4 className='text-sm font-semibold text-blue-800 mb-2'>
+                                                      {previewLunchbox.lunchbox_name} - {previewLunchbox.lunchbox_set_name}
+                                                    </h4>
+                                                    <p className='text-xs text-blue-600'>เลือกได้ {previewLunchbox.lunchbox_limit} อย่าง</p>
+                                                  </div>
+                                                )}
+
+                                                <Button type='button' size='sm' className='w-full bg-green-600 hover:bg-green-700 text-white' style={{ color: "#000000" }} onClick={handleAddLunchbox} disabled={!selectedLunchboxName || !selectedLunchboxSet}>
+                                                  <Container className='w-4 h-4 mr-1' />➕ เพิ่มกล่องอาหาร
+                                                </Button>
                                               </div>
 
-                                              {/* Preview Lunchbox */}
-                                              {previewLunchbox && (
-                                                <div className='mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-                                                  <h4 className='text-sm font-semibold text-blue-800 mb-2'>
-                                                    {previewLunchbox.lunchbox_name} - {previewLunchbox.lunchbox_set_name}
-                                                  </h4>
-                                                  <p className='text-xs text-blue-600'>เลือกได้ {previewLunchbox.lunchbox_limit} อย่าง</p>
-                                                </div>
-                                              )}
-
-                                              <Button type='button' size='sm' className='w-full bg-green-600 hover:bg-green-700 text-white' style={{ color: "#000000" }} onClick={handleAddLunchbox} disabled={!selectedLunchboxName || !selectedLunchboxSet}>
-                                                <Container className='w-4 h-4 mr-1' />➕ เพิ่มกล่องอาหาร
-                                              </Button>
-                                            </div>
-
-                                            {editMenuDialog.lunchbox && editMenuDialog.lunchbox.length > 0 && (
-                                              <>
-                                                <h3 className='font-semibold text-gray-800'>ข้อมูลกล่องอาหารที่เลือก</h3>
-                                                <br />
-                                                {editMenuDialog.lunchbox.map((lunchbox, lunchboxIdx) => (
-                                                  <div key={`${lunchbox.lunchbox_name}-${lunchbox.lunchbox_set_name}-${lunchboxIdx}`} className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
-                                                    <div className='flex justify-between items-start mb-3'>
-                                                      <div className='flex-1'>
-                                                        <div className='flex justify-between items-center mb-3'>
-                                                          <h4 className='font-semibold text-blue-800'>
-                                                            {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
-                                                          </h4>
-                                                          <Button
-                                                            type='button'
-                                                            size='sm'
-                                                            style={{ color: "#000000" }}
-                                                            variant='destructive'
-                                                            onClick={() => {
-                                                              handleRemoveLunchbox(lunchboxIdx);
-                                                            }}>
-                                                            ลบกล่อง
-                                                          </Button>
-                                                        </div>
-                                                        <div className='grid grid-cols-3 gap-4'>
-                                                          {/* จำนวนกล่อง */}
-                                                          <div>
-                                                            <label className='block text-xs font-medium text-blue-700 mb-1'>จำนวน (กล่อง)</label>
-                                                            <input
-                                                              type='number'
-                                                              min={0}
-                                                              className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                                              value={lunchbox.lunchbox_total}
-                                                              onChange={(e) => {
-                                                                const newTotal = Number(e.target.value) || 0;
-                                                                setEditMenuDialog((prev) => {
-                                                                  if (!prev) return prev;
-
-                                                                  // คำนวณราคาจากผลรวมเมนู × จำนวนกล่อง
-                                                                  const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
-                                                                  const menusForThisBox = availableMenusForLunchbox[key] || [];
-                                                                  const newTotalCost = calculateLunchboxCost(lunchbox.lunchbox_menu || [], newTotal, menusForThisBox);
-
-                                                                  // อัปเดต lunchbox และ menu_total ของเมนูทั้งหมดใน lunchbox นี้
-                                                                  const updatedCartLunchbox = prev.lunchbox.map((lb, idx) => {
-                                                                    if (idx === lunchboxIdx) {
-                                                                      return {
-                                                                        ...lb,
-                                                                        lunchbox_total: newTotal,
-                                                                        lunchbox_total_cost: newTotalCost,
-                                                                        lunchbox_menu: (lb.lunchbox_menu || []).map((menu) => ({
-                                                                          ...menu,
-                                                                          menu_total: newTotal, // อัปเดต menu_total ของทุกเมนูให้เท่ากับ lunchbox_total
-                                                                        })),
-                                                                      };
-                                                                    }
-                                                                    return lb;
-                                                                  });
-
-                                                                  // อัปเดต menuItems ที่เกี่ยวข้องด้วย
-                                                                  const updatedMenuItems = prev.menuItems.map((menuItem) => {
-                                                                    // ตรวจสอบว่าเมนูนี้อยู่ใน lunchbox ที่กำลังแก้ไขหรือไม่
-                                                                    const isInThisLunchbox = lunchbox.lunchbox_menu?.some((lbMenu) => lbMenu.menu_name === menuItem.menu_name);
-
-                                                                    if (isInThisLunchbox) {
-                                                                      return {
-                                                                        ...menuItem,
-                                                                        menu_total: newTotal,
-                                                                      };
-                                                                    }
-                                                                    return menuItem;
-                                                                  });
-
-                                                                  return {
-                                                                    ...prev,
-                                                                    lunchbox: updatedCartLunchbox,
-                                                                    menuItems: updatedMenuItems,
-                                                                  };
-                                                                });
-                                                              }}
-                                                            />
+                                              {editMenuDialog.lunchbox && editMenuDialog.lunchbox.length > 0 && (
+                                                <>
+                                                  <h3 className='font-semibold text-gray-800'>ข้อมูลกล่องอาหารที่เลือก</h3>
+                                                  <br />
+                                                  {editMenuDialog.lunchbox.map((lunchbox, lunchboxIdx) => (
+                                                    <div key={`${lunchbox.lunchbox_name}-${lunchbox.lunchbox_set_name}-${lunchboxIdx}`} className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
+                                                      <div className='flex justify-between items-start mb-3'>
+                                                        <div className='flex-1'>
+                                                          <div className='flex justify-between items-center mb-3'>
+                                                            <h4 className='font-semibold text-blue-800'>
+                                                              {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                                            </h4>
+                                                            <Button
+                                                              type='button'
+                                                              size='sm'
+                                                              style={{ color: "#000000" }}
+                                                              variant='destructive'
+                                                              onClick={() => {
+                                                                handleRemoveLunchbox(lunchboxIdx);
+                                                              }}>
+                                                              ลบกล่อง
+                                                            </Button>
                                                           </div>
+                                                          <div className='grid grid-cols-3 gap-4'>
+                                                            {/* จำนวนกล่อง */}
+                                                            <div>
+                                                              <label className='block text-xs font-medium text-blue-700 mb-1'>จำนวน (กล่อง)</label>
+                                                              <input
+                                                                type='number'
+                                                                min={0}
+                                                                className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                                                value={lunchbox.lunchbox_total}
+                                                                onChange={(e) => {
+                                                                  const newTotal = Number(e.target.value) || 0;
+                                                                  setEditMenuDialog((prev) => {
+                                                                    if (!prev) return prev;
 
-                                                          {/* ราคา (readonly) */}
-                                                          <div>
-                                                            <label className='block text-xs font-medium text-blue-700 mb-1'>ราคา (บาท)</label>
-                                                            <input type='number' min={0} className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed' value={lunchbox.lunchbox_total_cost} readOnly />
-                                                          </div>
+                                                                    // คำนวณราคาจากผลรวมเมนู × จำนวนกล่อง
+                                                                    const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
+                                                                    const menusForThisBox = availableMenusForLunchbox[key] || [];
+                                                                    const newTotalCost = calculateLunchboxCost(lunchbox.lunchbox_menu || [], newTotal, menusForThisBox);
 
-                                                          {/* จำกัด (readonly) */}
-                                                          <div>
-                                                            <label className='block text-xs font-medium text-blue-700 mb-1'>จำกัด (กล่อง)</label>
-                                                            <input type='number' min={0} className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed' value={lunchbox.lunchbox_limit} readOnly />
+                                                                    // อัปเดต lunchbox และ menu_total ของเมนูทั้งหมดใน lunchbox นี้
+                                                                    const updatedCartLunchbox = prev.lunchbox.map((lb, idx) => {
+                                                                      if (idx === lunchboxIdx) {
+                                                                        return {
+                                                                          ...lb,
+                                                                          lunchbox_total: newTotal,
+                                                                          lunchbox_total_cost: newTotalCost,
+                                                                          lunchbox_menu: (lb.lunchbox_menu || []).map((menu) => ({
+                                                                            ...menu,
+                                                                            menu_total: newTotal, // อัปเดต menu_total ของทุกเมนูให้เท่ากับ lunchbox_total
+                                                                          })),
+                                                                        };
+                                                                      }
+                                                                      return lb;
+                                                                    });
+
+                                                                    // อัปเดต menuItems ที่เกี่ยวข้องด้วย
+                                                                    const updatedMenuItems = prev.menuItems.map((menuItem) => {
+                                                                      // ตรวจสอบว่าเมนูนี้อยู่ใน lunchbox ที่กำลังแก้ไขหรือไม่
+                                                                      const isInThisLunchbox = lunchbox.lunchbox_menu?.some((lbMenu) => lbMenu.menu_name === menuItem.menu_name);
+
+                                                                      if (isInThisLunchbox) {
+                                                                        return {
+                                                                          ...menuItem,
+                                                                          menu_total: newTotal,
+                                                                        };
+                                                                      }
+                                                                      return menuItem;
+                                                                    });
+
+                                                                    return {
+                                                                      ...prev,
+                                                                      lunchbox: updatedCartLunchbox,
+                                                                      menuItems: updatedMenuItems,
+                                                                    };
+                                                                  });
+                                                                }}
+                                                              />
+                                                            </div>
+
+                                                            {/* ราคา (readonly) */}
+                                                            <div>
+                                                              <label className='block text-xs font-medium text-blue-700 mb-1'>ราคา (บาท)</label>
+                                                              <input type='number' min={0} className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed' value={lunchbox.lunchbox_total_cost} readOnly />
+                                                            </div>
+
+                                                            {/* จำกัด (readonly) */}
+                                                            <div>
+                                                              <label className='block text-xs font-medium text-blue-700 mb-1'>จำกัด (กล่อง)</label>
+                                                              <input type='number' min={0} className='w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-gray-100 cursor-not-allowed' value={lunchbox.lunchbox_limit} readOnly />
+                                                            </div>
                                                           </div>
                                                         </div>
                                                       </div>
-                                                    </div>
 
-                                                    <div className='mt-3'>
-                                                      <div className='flex justify-between items-center mb-2'>
-                                                        <div>
-                                                          <h5 className='font-medium text-blue-800'>เมนูในกล่อง:</h5>
-                                                          <p className='text-xs text-gray-600 mt-1'>
-                                                            เลือกแล้ว {lunchbox.lunchbox_limit && lunchbox.lunchbox_limit > 0 ? `${lunchbox.lunchbox_menu?.length || 0}/${lunchbox.lunchbox_limit} เมนู` : `${lunchbox.lunchbox_menu?.length || 0} เมนู (ไม่จำกัด)`}
-                                                          </p>
-                                                        </div>
+                                                      <div className='mt-3'>
+                                                        <div className='flex justify-between items-center mb-2'>
+                                                          <div>
+                                                            <h5 className='font-medium text-blue-800'>เมนูในกล่อง:</h5>
+                                                            <p className='text-xs text-gray-600 mt-1'>
+                                                              เลือกแล้ว {lunchbox.lunchbox_limit && lunchbox.lunchbox_limit > 0 ? `${lunchbox.lunchbox_menu?.length || 0}/${lunchbox.lunchbox_limit} เมนู` : `${lunchbox.lunchbox_menu?.length || 0} เมนู (ไม่จำกัด)`}
+                                                            </p>
+                                                          </div>
 
-                                                        {/* ปุ่มเพิ่มเมนู */}
-                                                        <div className='flex items-center gap-2'>
-                                                          <select
-                                                            className='px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
-                                                            value={selectedMenuForLunchbox[lunchboxIdx] || ""}
-                                                            disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
-                                                            onFocus={async () => {
-                                                              // ดึงเมนูสำหรับกล่องนี้เมื่อเปิด dropdown
-                                                              await fetchMenusForLunchbox(lunchbox.lunchbox_name, lunchbox.lunchbox_set_name, lunchboxIdx);
-                                                            }}
-                                                            onChange={(e) => {
-                                                              setSelectedMenuForLunchbox((prev) => ({
-                                                                ...prev,
-                                                                [lunchboxIdx]: e.target.value,
-                                                              }));
-                                                            }}>
-                                                            {(() => {
-                                                              const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
-                                                              const menusForThisBox = availableMenusForLunchbox[key] || [];
+                                                          {/* ปุ่มเพิ่มเมนู */}
+                                                          <div className='flex items-center gap-2'>
+                                                            <select
+                                                              className='px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                                                              value={selectedMenuForLunchbox[lunchboxIdx] || ""}
+                                                              disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
+                                                              onFocus={async () => {
+                                                                // ดึงเมนูสำหรับกล่องนี้เมื่อเปิด dropdown
+                                                                await fetchMenusForLunchbox(lunchbox.lunchbox_name, lunchbox.lunchbox_set_name, lunchboxIdx);
+                                                              }}
+                                                              onChange={(e) => {
+                                                                setSelectedMenuForLunchbox((prev) => ({
+                                                                  ...prev,
+                                                                  [lunchboxIdx]: e.target.value,
+                                                                }));
+                                                              }}>
+                                                              {(() => {
+                                                                const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
+                                                                const menusForThisBox = availableMenusForLunchbox[key] || [];
 
-                                                              // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs limit
-                                                              const currentMenuCount = lunchbox.lunchbox_menu?.length || 0;
-                                                              const lunchboxLimit = lunchbox.lunchbox_limit ?? 0;
-                                                              const isUnlimited = lunchboxLimit <= 0;
-                                                              const isFull = !isUnlimited && currentMenuCount >= lunchboxLimit;
+                                                                // ตรวจสอบจำนวนเมนูที่เลือกแล้ว vs limit
+                                                                const currentMenuCount = lunchbox.lunchbox_menu?.length || 0;
+                                                                const lunchboxLimit = lunchbox.lunchbox_limit ?? 0;
+                                                                const isUnlimited = lunchboxLimit <= 0;
+                                                                const isFull = !isUnlimited && currentMenuCount >= lunchboxLimit;
 
-                                                              if (isFull) {
-                                                                return (
-                                                                  <option value='' disabled>
-                                                                    เลือกครบแล้ว ({currentMenuCount}/{lunchboxLimit} เมนู)
-                                                                  </option>
-                                                                );
-                                                              }
-
-                                                              // สร้าง Map ของ categories ที่เลือกไปแล้ว
-                                                              // แต่ถ้าเป็น Custom unlimited ให้ไม่กรอง category ซ้ำ
-                                                              const selectedCategories = new Set<string>();
-                                                              if (!isUnlimited) {
-                                                                lunchbox.lunchbox_menu?.forEach((selectedMenu: any) => {
-                                                                  // หาข้อมูลเมนูจาก availableMenusForLunchbox เพื่อดึง category
-                                                                  const menuData = menusForThisBox.find((m: any) => m.menu_name === selectedMenu.menu_name);
-                                                                  if (menuData?.lunchbox_menu_category) {
-                                                                    selectedCategories.add(menuData.lunchbox_menu_category);
-                                                                  }
-                                                                });
-                                                              }
-
-                                                              const filteredMenus = menusForThisBox.filter((menu: any) => {
-                                                                // ถ้าเป็น Custom unlimited ให้ไม่กรอง category ซ้ำ
-                                                                if (isUnlimited) {
-                                                                  return true;
+                                                                if (isFull) {
+                                                                  return (
+                                                                    <option value='' disabled>
+                                                                      เลือกครบแล้ว ({currentMenuCount}/{lunchboxLimit} เมนู)
+                                                                    </option>
+                                                                  );
                                                                 }
-                                                                // ตรวจสอบว่า category นี้ถูกเลือกไปแล้วหรือไม่
-                                                                const menuCategory = menu.lunchbox_menu_category;
-                                                                const isCategorySelected = menuCategory && selectedCategories.has(menuCategory);
-                                                                return !isCategorySelected;
-                                                              });
 
-                                                              if (filteredMenus.length === 0) {
-                                                                return (
-                                                                  <option value='' disabled>
-                                                                    ไม่มีเมนูให้เลือก
-                                                                  </option>
-                                                                );
-                                                              }
+                                                                // สร้าง Map ของ categories ที่เลือกไปแล้ว
+                                                                // แต่ถ้าเป็น Custom unlimited ให้ไม่กรอง category ซ้ำ
+                                                                const selectedCategories = new Set<string>();
+                                                                if (!isUnlimited) {
+                                                                  lunchbox.lunchbox_menu?.forEach((selectedMenu: any) => {
+                                                                    // หาข้อมูลเมนูจาก availableMenusForLunchbox เพื่อดึง category
+                                                                    const menuData = menusForThisBox.find((m: any) => m.menu_name === selectedMenu.menu_name);
+                                                                    if (menuData?.lunchbox_menu_category) {
+                                                                      selectedCategories.add(menuData.lunchbox_menu_category);
+                                                                    }
+                                                                  });
+                                                                }
 
-                                                              return (
-                                                                <>
-                                                                  <option value='' disabled>
-                                                                    เลือกเมนู
-                                                                  </option>
-                                                                  {filteredMenus.map((menu: any, idx: number) => {
-                                                                    // หา original index จาก menusForThisBox
-                                                                    const originalIdx = menusForThisBox.findIndex((m: any) => m.menu_name === menu.menu_name && m.menu_subname === menu.menu_subname);
-                                                                    return (
-                                                                      <option key={idx} value={originalIdx}>
-                                                                        {menu.menu_name} {menu.menu_subname ? `(${menu.menu_subname})` : ""}
-                                                                      </option>
-                                                                    );
-                                                                  })}
-                                                                </>
-                                                              );
-                                                            })()}
-                                                          </select>
-                                                          <Button
-                                                            type='button'
-                                                            size='sm'
-                                                            style={{ color: "#000000" }}
-                                                            className='bg-green-600 hover:bg-green-700 text-white text-xs'
-                                                            disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
-                                                            onClick={() => {
-                                                              const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
-                                                              const menusForThisBox = availableMenusForLunchbox[key] || [];
-
-                                                              if (menusForThisBox.length === 0) {
-                                                                Swal.fire({
-                                                                  icon: "warning",
-                                                                  title: "ไม่พบเมนูที่สามารถเพิ่มได้",
-                                                                  text: "กรุณาคลิกที่ช่องเลือกเมนูเพื่อโหลดรายการเมนู",
-                                                                  showConfirmButton: false,
-                                                                  timer: 2000,
+                                                                const filteredMenus = menusForThisBox.filter((menu: any) => {
+                                                                  // ถ้าเป็น Custom unlimited ให้ไม่กรอง category ซ้ำ
+                                                                  if (isUnlimited) {
+                                                                    return true;
+                                                                  }
+                                                                  // ตรวจสอบว่า category นี้ถูกเลือกไปแล้วหรือไม่
+                                                                  const menuCategory = menu.lunchbox_menu_category;
+                                                                  const isCategorySelected = menuCategory && selectedCategories.has(menuCategory);
+                                                                  return !isCategorySelected;
                                                                 });
-                                                                return;
-                                                              }
 
-                                                              const selectedValue = selectedMenuForLunchbox[lunchboxIdx];
-                                                              if (selectedValue && selectedValue !== "") {
-                                                                const selectedIdx = parseInt(selectedValue);
-                                                                if (!isNaN(selectedIdx) && selectedIdx >= 0 && selectedIdx < menusForThisBox.length) {
-                                                                  handleAddMenuToLunchbox(lunchboxIdx, menusForThisBox[selectedIdx]);
-                                                                  // Clear selection after adding
-                                                                  setSelectedMenuForLunchbox((prev) => ({
-                                                                    ...prev,
-                                                                    [lunchboxIdx]: "",
-                                                                  }));
-                                                                } else {
+                                                                if (filteredMenus.length === 0) {
+                                                                  return (
+                                                                    <option value='' disabled>
+                                                                      ไม่มีเมนูให้เลือก
+                                                                    </option>
+                                                                  );
+                                                                }
+
+                                                                return (
+                                                                  <>
+                                                                    <option value='' disabled>
+                                                                      เลือกเมนู
+                                                                    </option>
+                                                                    {filteredMenus.map((menu: any, idx: number) => {
+                                                                      // หา original index จาก menusForThisBox
+                                                                      const originalIdx = menusForThisBox.findIndex((m: any) => m.menu_name === menu.menu_name && m.menu_subname === menu.menu_subname);
+                                                                      return (
+                                                                        <option key={idx} value={originalIdx}>
+                                                                          {menu.menu_name} {menu.menu_subname ? `(${menu.menu_subname})` : ""}
+                                                                        </option>
+                                                                      );
+                                                                    })}
+                                                                  </>
+                                                                );
+                                                              })()}
+                                                            </select>
+                                                            <Button
+                                                              type='button'
+                                                              size='sm'
+                                                              style={{ color: "#000000" }}
+                                                              className='bg-green-600 hover:bg-green-700 text-white text-xs'
+                                                              disabled={lunchbox.lunchbox_limit > 0 && (lunchbox.lunchbox_menu?.length || 0) >= lunchbox.lunchbox_limit}
+                                                              onClick={() => {
+                                                                const key = `${lunchbox.lunchbox_name}_${lunchbox.lunchbox_set_name}_${lunchboxIdx}`;
+                                                                const menusForThisBox = availableMenusForLunchbox[key] || [];
+
+                                                                if (menusForThisBox.length === 0) {
                                                                   Swal.fire({
-                                                                    icon: "error",
-                                                                    title: "เกิดข้อผิดพลาด",
-                                                                    text: "ไม่สามารถเพิ่มเมนูได้",
+                                                                    icon: "warning",
+                                                                    title: "ไม่พบเมนูที่สามารถเพิ่มได้",
+                                                                    text: "กรุณาคลิกที่ช่องเลือกเมนูเพื่อโหลดรายการเมนู",
                                                                     showConfirmButton: false,
                                                                     timer: 2000,
                                                                   });
+                                                                  return;
                                                                 }
-                                                              } else {
-                                                                Swal.fire({
-                                                                  icon: "warning",
-                                                                  title: "กรุณาเลือกเมนู",
-                                                                  showConfirmButton: false,
-                                                                  
-                                                                  timer: 2000,
-                                                                });
-                                                              }
-                                                            }}>
-                                                            + เพิ่มเมนู
-                                                          </Button>
+
+                                                                const selectedValue = selectedMenuForLunchbox[lunchboxIdx];
+                                                                if (selectedValue && selectedValue !== "") {
+                                                                  const selectedIdx = parseInt(selectedValue);
+                                                                  if (!isNaN(selectedIdx) && selectedIdx >= 0 && selectedIdx < menusForThisBox.length) {
+                                                                    handleAddMenuToLunchbox(lunchboxIdx, menusForThisBox[selectedIdx]);
+                                                                    // Clear selection after adding
+                                                                    setSelectedMenuForLunchbox((prev) => ({
+                                                                      ...prev,
+                                                                      [lunchboxIdx]: "",
+                                                                    }));
+                                                                  } else {
+                                                                    Swal.fire({
+                                                                      icon: "error",
+                                                                      title: "เกิดข้อผิดพลาด",
+                                                                      text: "ไม่สามารถเพิ่มเมนูได้",
+                                                                      showConfirmButton: false,
+                                                                      timer: 2000,
+                                                                    });
+                                                                  }
+                                                                } else {
+                                                                  Swal.fire({
+                                                                    icon: "warning",
+                                                                    title: "กรุณาเลือกเมนู",
+                                                                    showConfirmButton: false,
+
+                                                                    timer: 2000,
+                                                                  });
+                                                                }
+                                                              }}>
+                                                              + เพิ่มเมนู
+                                                            </Button>
+                                                          </div>
                                                         </div>
-                                                      </div>
-                                                      <div className='space-y-2'>
-                                                        {lunchbox.lunchbox_menu.map((menu, menuIdx) => (
-                                                          <div key={`${menu.menu_name}-${menu.menu_order_id}-${lunchboxIdx}-${menuIdx}`} className='bg-white p-3 rounded border'>
-                                                            <div className='flex justify-between items-start mb-2'>
-                                                              <div className='flex-1'>
-                                                                <div className='font-medium text-gray-800'>
-                                                                  {menu.menu_name} ({menu.menu_subname})
+                                                        <div className='space-y-2'>
+                                                          {lunchbox.lunchbox_menu.map((menu, menuIdx) => (
+                                                            <div key={`${menu.menu_name}-${menu.menu_order_id}-${lunchboxIdx}-${menuIdx}`} className='bg-white p-3 rounded border'>
+                                                              <div className='flex justify-between items-start mb-2'>
+                                                                <div className='flex-1'>
+                                                                  <div className='font-medium text-gray-800'>
+                                                                    {menu.menu_name} ({menu.menu_subname})
+                                                                  </div>
+                                                                  <div className='text-sm text-gray-600'>หมวดหมู่: {menu.menu_category}</div>
                                                                 </div>
-                                                                <div className='text-sm text-gray-600'>หมวดหมู่: {menu.menu_category}</div>
+                                                                <Button
+                                                                  type='button'
+                                                                  size='sm'
+                                                                  variant='ghost'
+                                                                  className='text-red-600 hover:text-red-800 hover:bg-red-50'
+                                                                  onClick={() => {
+                                                                    handleRemoveMenuFromLunchbox(lunchboxIdx, menuIdx, menu.menu_name);
+                                                                  }}>
+                                                                  ลบ
+                                                                </Button>
                                                               </div>
-                                                              <Button
-                                                                type='button'
-                                                                size='sm'
-                                                                variant='ghost'
-                                                                className='text-red-600 hover:text-red-800 hover:bg-red-50'
-                                                                onClick={() => {
-                                                                  handleRemoveMenuFromLunchbox(lunchboxIdx, menuIdx, menu.menu_name);
-                                                                }}>
-                                                                ลบ
-                                                              </Button>
-                                                            </div>
-                                                            <div className='text-sm text-gray-500 mt-2'>
-                                                              <label className='block text-sm text-gray-600 mb-1 ' style={{ color: "#000000" }}>คำอธิบายเมนู</label>
-                                                              {(() => {
-                                                                const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
-                                                                const valueDesc = editableItem?.menu_description ?? menu.menu_description ?? "";
-                                                                return (
-                                                                  <input
-                                                                    type='text'
-                                                                    className='w-full h-8 px-2 border rounded'
-                                                                    placeholder='ระบุคำอธิบายเมนู'
-                                                                    value={valueDesc}
-                                                                    onChange={(e) => {
-                                                                      const newDesc = e.target.value;
-                                                                      setEditMenuDialog((prev) => {
-                                                                        if (!prev) return prev;
-                                                                        return {
-                                                                          ...prev,
-                                                                          menuItems: prev.menuItems.map((mi) => (mi.menu_name === menu.menu_name ? { ...mi, menu_description: newDesc } : mi)),
-                                                                        };
-                                                                      });
-                                                                    }}
-                                                                  />
-                                                                );
-                                                              })()}
-                                                            </div>
-
-                                                            {/* แก้ไขจำนวนกล่องของเมนู */}
-                                                            <div className='mt-2 flex items-center gap-2'>
-                                                              <span className='text-sm text-gray-700' style={{ color: "#000000" }}>จำนวนกล่อง:</span>
-                                                              {(() => {
-                                                                const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
-                                                                const valueTotal = editableItem?.menu_total ?? menu.menu_total ?? 0;
-                                                                return (
-                                                                  <input
-                                                                    type='number'
-                                                                    min={0}
-                                                                    className='w-24 h-8 px-2 border rounded'
-                                                                    value={valueTotal}
-                                                                    onChange={(e) => {
-                                                                      const newVal = Number(e.target.value) || 0;
-                                                                      setEditMenuDialog((prev) => {
-                                                                        if (!prev) return prev;
-                                                                        return {
-                                                                          ...prev,
-                                                                          menuItems: prev.menuItems.map((mi) => (mi.menu_name === menu.menu_name ? { ...mi, menu_total: newVal } : mi)),
-                                                                        };
-                                                                      });
-                                                                    }}
-                                                                  />
-                                                                );
-                                                              })()}
-                                                            </div>
-
-                                                            {/* แก้ไขจำนวนวัตถุดิบ */}
-                                                            <div className='mt-3'>
-                                                              <h6 className='text-sm font-medium text-gray-700 mb-1' style={{ color: "#000000" }}>วัตถุดิบ:</h6>
-                                                              <div className='space-y-1'>
+                                                              <div className='text-sm text-gray-500 mt-2'>
+                                                                <label className='block text-sm text-gray-600 mb-1 ' style={{ color: "#000000" }}>คำอธิบายเมนู</label>
                                                                 {(() => {
                                                                   const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
-                                                                  const ingredients = editableItem?.menu_ingredients ?? menu.menu_ingredients;
-                                                                  return ingredients.map((ingredient, ingIdx) => (
-                                                                    <div key={`${ingredient.ingredient_name}-${lunchboxIdx}-${menuIdx}-${ingIdx}`} className='flex items-center justify-between text-xs text-gray-600'>
-                                                                      <span>• {ingredient.ingredient_name}</span>
-                                                                      <div className='flex items-center gap-2'>
-                                                                        <input
-                                                                          type='number'
-                                                                          min={0}
-                                                                          className='w-20 h-7 px-2 border rounded'
-                                                                          value={ingredient.useItem ?? 0}
-                                                                          onChange={(e) => {
-                                                                            const newUse = Number(e.target.value) || 0;
-                                                                            setEditMenuDialog((prev) => {
-                                                                              if (!prev) return prev;
-                                                                              return {
-                                                                                ...prev,
-                                                                                menuItems: prev.menuItems.map((mi) =>
-                                                                                  mi.menu_name === menu.menu_name
-                                                                                    ? {
-                                                                                      ...mi,
-                                                                                      menu_ingredients: mi.menu_ingredients.map((ing) => (ing.ingredient_name === ingredient.ingredient_name ? { ...ing, useItem: newUse } : ing)),
-                                                                                    }
-                                                                                    : mi
-                                                                                ),
-                                                                              };
-                                                                            });
-                                                                          }}
-                                                                        />
-                                                                        <span>หน่วย</span>
-                                                                      </div>
-                                                                    </div>
-                                                                  ));
+                                                                  const valueDesc = editableItem?.menu_description ?? menu.menu_description ?? "";
+                                                                  return (
+                                                                    <input
+                                                                      type='text'
+                                                                      className='w-full h-8 px-2 border rounded'
+                                                                      placeholder='ระบุคำอธิบายเมนู'
+                                                                      value={valueDesc}
+                                                                      onChange={(e) => {
+                                                                        const newDesc = e.target.value;
+                                                                        setEditMenuDialog((prev) => {
+                                                                          if (!prev) return prev;
+                                                                          return {
+                                                                            ...prev,
+                                                                            menuItems: prev.menuItems.map((mi) => (mi.menu_name === menu.menu_name ? { ...mi, menu_description: newDesc } : mi)),
+                                                                          };
+                                                                        });
+                                                                      }}
+                                                                    />
+                                                                  );
                                                                 })()}
                                                               </div>
+
+                                                              {/* แก้ไขจำนวนกล่องของเมนู */}
+                                                              <div className='mt-2 flex items-center gap-2'>
+                                                                <span className='text-sm text-gray-700' style={{ color: "#000000" }}>จำนวนกล่อง:</span>
+                                                                {(() => {
+                                                                  const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
+                                                                  const valueTotal = editableItem?.menu_total ?? menu.menu_total ?? 0;
+                                                                  return (
+                                                                    <input
+                                                                      type='number'
+                                                                      min={0}
+                                                                      className='w-24 h-8 px-2 border rounded'
+                                                                      value={valueTotal}
+                                                                      onChange={(e) => {
+                                                                        const newVal = Number(e.target.value) || 0;
+                                                                        setEditMenuDialog((prev) => {
+                                                                          if (!prev) return prev;
+                                                                          return {
+                                                                            ...prev,
+                                                                            menuItems: prev.menuItems.map((mi) => (mi.menu_name === menu.menu_name ? { ...mi, menu_total: newVal } : mi)),
+                                                                          };
+                                                                        });
+                                                                      }}
+                                                                    />
+                                                                  );
+                                                                })()}
+                                                              </div>
+
+                                                              {/* แก้ไขจำนวนวัตถุดิบ */}
+                                                              <div className='mt-3'>
+                                                                <h6 className='text-sm font-medium text-gray-700 mb-1' style={{ color: "#000000" }}>วัตถุดิบ:</h6>
+                                                                <div className='space-y-1'>
+                                                                  {(() => {
+                                                                    const editableItem = editMenuDialog.menuItems.find((m) => m.menu_name === menu.menu_name);
+                                                                    const ingredients = editableItem?.menu_ingredients ?? menu.menu_ingredients;
+                                                                    return ingredients.map((ingredient, ingIdx) => (
+                                                                      <div key={`${ingredient.ingredient_name}-${lunchboxIdx}-${menuIdx}-${ingIdx}`} className='flex items-center justify-between text-xs text-gray-600'>
+                                                                        <span>• {ingredient.ingredient_name}</span>
+                                                                        <div className='flex items-center gap-2'>
+                                                                          <input
+                                                                            type='number'
+                                                                            min={0}
+                                                                            className='w-20 h-7 px-2 border rounded'
+                                                                            value={ingredient.useItem ?? 0}
+                                                                            onChange={(e) => {
+                                                                              const newUse = Number(e.target.value) || 0;
+                                                                              setEditMenuDialog((prev) => {
+                                                                                if (!prev) return prev;
+                                                                                return {
+                                                                                  ...prev,
+                                                                                  menuItems: prev.menuItems.map((mi) =>
+                                                                                    mi.menu_name === menu.menu_name
+                                                                                      ? {
+                                                                                        ...mi,
+                                                                                        menu_ingredients: mi.menu_ingredients.map((ing) => (ing.ingredient_name === ingredient.ingredient_name ? { ...ing, useItem: newUse } : ing)),
+                                                                                      }
+                                                                                      : mi
+                                                                                  ),
+                                                                                };
+                                                                              });
+                                                                            }}
+                                                                          />
+                                                                          <span>หน่วย</span>
+                                                                        </div>
+                                                                      </div>
+                                                                    ));
+                                                                  })()}
+                                                                </div>
+                                                              </div>
                                                             </div>
-                                                          </div>
-                                                        ))}
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                ))}
-                                              </>
-                                            )}
-                                          </div>
-
-                                          {/* ปุ่มควบคุม */}
-                                          <div className='flex justify-end gap-2 pt-4 border-t'>
-                                            <Button
-                                              style={{ color: "#000000" }}  
-                                              variant='outline'
-                                              onClick={() => {
-                                                setEditMenuDialog(null);
-                                                setEditMenuDialogTimes(null);
-                                                setShouldFetchMenu(false);
-                                                setSelectedLunchboxName("");
-                                                setSelectedLunchboxSet("");
-                                                setPreviewLunchbox(null);
-                                                setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
-                                                setIsDeleting(false); // Reset flag when closing dialog
-                                              }}>
-                                              ยกเลิก
-                                            </Button>
-                                            <Button
-                                              style={{ color: "#000000" }}  
-                                              onClick={async () => {
-                                                // เรียกใช้ฟังก์ชัน handleEdit.Menu
-                                                if (editMenuDialog) {
-                                                  console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
-                                                  console.log("📦 id:", editMenuDialog.id);
-                                                  console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
-                                                  console.log("🍱 lunchbox:", JSON.stringify(editMenuDialog.lunchbox, null, 2));
-
-                                                  // Save times if they were changed
-                                                  if (editMenuDialogTimes) {
-                                                    const exportTime = `${editMenuDialogTimes.exportHour}:${editMenuDialogTimes.exportMinute}`;
-                                                    const receiveTime = `${editMenuDialogTimes.receiveHour}:${editMenuDialogTimes.receiveMinute}`;
-                                                    
-                                                    // Check if times changed
-                                                    const timesChanged = 
-                                                      exportTime !== editMenuDialog.export_time || 
-                                                      receiveTime !== editMenuDialog.receive_time;
-
-                                                    if (timesChanged) {
-                                                      try {
-                                                        const payload = {
-                                                          export_time: exportTime,
-                                                          receive_time: receiveTime,
-                                                        };
-                                                        const response = await axios.patch(`/api/edit/cart_time/${editMenuDialog.id}`, payload);
-
-                                                        if (response.status !== 200) {
-                                                          const errorData = response.data;
-                                                          throw new Error(errorData.error || "Failed to update times");
-                                                        }
-                                                      } catch (err) {
-                                                        console.error("Error updating times:", err);
-                                                        Swal.fire({
-                                                          icon: "error",
-                                                          title: "เกิดข้อผิดพลาด",
-                                                          text: err instanceof Error ? err.message : "ไม่สามารถอัปเดตเวลาได้",
-                                                          showConfirmButton: false,
-                                                          timer: 3000,
-                                                        });
-                                                        return;
-                                                      }
-                                                    }
-                                                  }
-
-                                                  handleEdit.Menu(editMenuDialog.id, editMenuDialog.menuItems, editMenuDialog.lunchbox);
-                                                }
-                                              }}
-                                              disabled={isSaving !== null}>
-                                              {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </DialogTitle>
-                                  </DialogContent>
-                                </Dialog>
-                                <Accordion type='multiple' className='space-y-3'>
-                                  {cart.lunchbox && cart.lunchbox.length > 0
-                                    ? cart.lunchbox.map((lunchbox, lunchboxIdx) => (
-                                      <AccordionItem key={lunchboxIdx} value={`lunchbox-${lunchboxIdx}`} className='rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50'>
-                                        <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                          <div className='flex flex-col items-start'>
-                                            <span className='truncate text-sm text-blue-800 font-bold'>
-                                              📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
-                                            </span>
-                                            <span className='truncate text-xs text-blue-600 mt-1'>
-                                              จำนวน: {lunchbox.lunchbox_total} กล่อง | ราคา: {lunchbox.lunchbox_total_cost} บาท
-                                            </span>
-                                          </div>
-                                        </AccordionTrigger>
-
-                                        <AccordionContent className='pt-3 space-y-3'>
-                                          {lunchbox.lunchbox_menu.map((menu, menuIdx) => {
-                                            const allIngredientsChecked = menu.menu_ingredients?.every((ing) => ing.ingredient_status) ?? false;
-
-                                            return (
-                                              <AccordionItem key={menuIdx} value={`menu-${lunchboxIdx}-${menuIdx}`} className={`rounded-lg border border-slate-200 shadow-sm px-3 py-2 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-                                                <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                                  <div className='flex flex-col items-start'>
-                                                    <span className='truncate text-sm text-gray-700 font-medium'>
-                                                      {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
-                                                    </span>
-                                                    <span className='truncate text-xs text-gray-500 mt-1'>
-                                                      หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
-                                                    </span>
-                                                    {menu.menu_description && <span className='truncate text-xs text-gray-400 mt-1'>{menu.menu_description}</span>}
-                                                  </div>
-                                                </AccordionTrigger>
-
-                                                <AccordionContent className='pt-3 space-y-2'>
-                                                  {menu.menu_ingredients?.map((ing, idx) => (
-                                                    <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.ingredient_status ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                                      <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-
-                                                      <div className='flex items-center gap-4'>
-                                                        <span className='text-gray-600'>
-                                                          ใช้ {ing.useItem} {ing.ingredient_unit || "หน่วย"} × {menu.menu_total} กล่อง ={" "}
-                                                          <strong className='text-black-600' style={{ color: "#000000" }}>
-                                                            {ing.useItem * menu.menu_total}
-                                                          </strong>{" "}
-                                                          {ing.ingredient_unit || "หน่วย"}
-                                                        </span>
-
-                                                        <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
-                                                          <input type='checkbox' checked={ing.ingredient_status || false} onChange={() => handleToggleIngredientCheck(cart.id, menu.menu_name, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
-                                                          <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.ingredient_status ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
-                                                            <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.ingredient_status ? "translate-x-5" : "translate-x-0.5"}`} />
-                                                          </span>
-                                                        </label>
+                                                          ))}
+                                                        </div>
                                                       </div>
                                                     </div>
                                                   ))}
-                                                </AccordionContent>
-                                              </AccordionItem>
-                                            );
-                                          })}
-                                        </AccordionContent>
-                                      </AccordionItem>
-                                    ))
-                                    : // Fallback to old structure if lunchbox is not available
-                                    cart.allIngredients.map((menuGroup, groupIdx) => {
-                                      const totalBox = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName)?.menu_total || 0;
-                                      const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
+                                                </>
+                                              )}
+                                            </div>
 
-                                      return (
-                                        <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                            {/* ปุ่มควบคุม */}
+                                            <div className='flex justify-end gap-2 pt-4 border-t'>
+                                              <Button
+                                                style={{ color: "#000000" }}
+                                                variant='outline'
+                                                onClick={() => {
+                                                  setEditMenuDialog(null);
+                                                  setEditMenuDialogTimes(null);
+                                                  setShouldFetchMenu(false);
+                                                  setSelectedLunchboxName("");
+                                                  setSelectedLunchboxSet("");
+                                                  setPreviewLunchbox(null);
+                                                  setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
+                                                  setIsDeleting(false); // Reset flag when closing dialog
+                                                }}>
+                                                ยกเลิก
+                                              </Button>
+                                              <Button
+                                                style={{ color: "#000000" }}
+                                                onClick={async () => {
+                                                  // เรียกใช้ฟังก์ชัน handleEdit.Menu
+                                                  if (editMenuDialog) {
+                                                    console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
+                                                    console.log("📦 id:", editMenuDialog.id);
+                                                    console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
+                                                    console.log("🍱 lunchbox:", JSON.stringify(editMenuDialog.lunchbox, null, 2));
+
+                                                    // Save times if they were changed
+                                                    if (editMenuDialogTimes) {
+                                                      const exportTime = `${editMenuDialogTimes.exportHour}:${editMenuDialogTimes.exportMinute}`;
+                                                      const receiveTime = `${editMenuDialogTimes.receiveHour}:${editMenuDialogTimes.receiveMinute}`;
+
+                                                      // Check if times changed
+                                                      const timesChanged =
+                                                        exportTime !== editMenuDialog.export_time ||
+                                                        receiveTime !== editMenuDialog.receive_time;
+
+                                                      if (timesChanged) {
+                                                        try {
+                                                          const payload = {
+                                                            export_time: exportTime,
+                                                            receive_time: receiveTime,
+                                                          };
+                                                          const response = await axios.patch(`/api/edit/cart_time/${editMenuDialog.id}`, payload);
+
+                                                          if (response.status !== 200) {
+                                                            const errorData = response.data;
+                                                            throw new Error(errorData.error || "Failed to update times");
+                                                          }
+                                                        } catch (err) {
+                                                          console.error("Error updating times:", err);
+                                                          Swal.fire({
+                                                            icon: "error",
+                                                            title: "เกิดข้อผิดพลาด",
+                                                            text: err instanceof Error ? err.message : "ไม่สามารถอัปเดตเวลาได้",
+                                                            showConfirmButton: false,
+                                                            timer: 3000,
+                                                          });
+                                                          return;
+                                                        }
+                                                      }
+                                                    }
+
+                                                    handleEdit.Menu(editMenuDialog.id, editMenuDialog.menuItems, editMenuDialog.lunchbox);
+                                                  }
+                                                }}
+                                                disabled={isSaving !== null}>
+                                                {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </DialogTitle>
+                                    </DialogContent>
+                                  </Dialog>
+                                  <Accordion type='multiple' className='space-y-3'>
+                                    {cart.lunchbox && cart.lunchbox.length > 0
+                                      ? cart.lunchbox.map((lunchbox, lunchboxIdx) => (
+                                        <AccordionItem key={lunchboxIdx} value={`lunchbox-${lunchboxIdx}`} className='rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50'>
                                           <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
                                             <div className='flex flex-col items-start'>
-                                              <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
-                                              {(() => {
-                                                const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                                return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
-                                              })()}
+                                              <span className='truncate text-sm text-blue-800 font-bold'>
+                                                📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                              </span>
+                                              <span className='truncate text-xs text-blue-600 mt-1'>
+                                                จำนวน: {lunchbox.lunchbox_total} กล่อง | ราคา: {lunchbox.lunchbox_total_cost} บาท
+                                              </span>
                                             </div>
                                           </AccordionTrigger>
 
-                                          <AccordionContent className='pt-3 space-y-2'>
-                                            {menuGroup.ingredients.map((ing, idx) => (
-                                              <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                                <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+                                          <AccordionContent className='pt-3 space-y-3'>
+                                            {lunchbox.lunchbox_menu.map((menu, menuIdx) => {
+                                              const allIngredientsChecked = menu.menu_ingredients?.every((ing) => ing.ingredient_status) ?? false;
 
-                                                <div className='flex items-center gap-4'>
-                                                  <span className='text-gray-600'>
-                                                    ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
-                                                    <strong className='text-black-600' style={{ color: "#000000" }}>
-                                                      {ing.calculatedTotal}
-                                                    </strong>{" "}
-                                                    {ing.ingredient_unit}
-                                                  </span>
+                                              return (
+                                                <AccordionItem key={menuIdx} value={`menu-${lunchboxIdx}-${menuIdx}`} className={`rounded-lg border border-slate-200 shadow-sm px-3 py-2 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                                  <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                                    <div className='flex flex-col items-start'>
+                                                      <span className='truncate text-sm text-gray-700 font-medium'>
+                                                        {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
+                                                      </span>
+                                                      <span className='truncate text-xs text-gray-500 mt-1'>
+                                                        หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
+                                                      </span>
+                                                      {menu.menu_description && <span className='truncate text-xs text-gray-400 mt-1'>{menu.menu_description}</span>}
+                                                    </div>
+                                                  </AccordionTrigger>
 
-                                                  <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
-                                                    <input type='checkbox' checked={ing.isChecked || false} onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
-                                                    <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
-                                                      <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked ? "translate-x-5" : "translate-x-0.5"}`} />
-                                                    </span>
-                                                  </label>
-                                                </div>
-                                              </div>
-                                            ))}
+                                                  <AccordionContent className='pt-3 space-y-2'>
+                                                    {menu.menu_ingredients?.map((ing, idx) => (
+                                                      <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.ingredient_status ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
+                                                        <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+
+                                                        <div className='flex items-center gap-4'>
+                                                          <span className='text-gray-600'>
+                                                            ใช้ {ing.useItem} {ing.ingredient_unit || "หน่วย"} × {menu.menu_total} กล่อง ={" "}
+                                                            <strong className='text-black-600' style={{ color: "#000000" }}>
+                                                              {ing.useItem * menu.menu_total}
+                                                            </strong>{" "}
+                                                            {ing.ingredient_unit || "หน่วย"}
+                                                          </span>
+
+                                                          <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
+                                                            <input type='checkbox' checked={ing.ingredient_status || false} onChange={() => handleToggleIngredientCheck(cart.id, menu.menu_name, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
+                                                            <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.ingredient_status ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
+                                                              <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.ingredient_status ? "translate-x-5" : "translate-x-0.5"}`} />
+                                                            </span>
+                                                          </label>
+                                                        </div>
+                                                      </div>
+                                                    ))}
+                                                  </AccordionContent>
+                                                </AccordionItem>
+                                              );
+                                            })}
                                           </AccordionContent>
                                         </AccordionItem>
-                                      );
-                                    })}
-                                </Accordion>
+                                      ))
+                                      : // Fallback to old structure if lunchbox is not available
+                                      cart.allIngredients.map((menuGroup, groupIdx) => {
+                                        const totalBox = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName)?.menu_total || 0;
+                                        const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
+
+                                        return (
+                                          <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                            <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                              <div className='flex flex-col items-start'>
+                                                <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                                {(() => {
+                                                  const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                                  return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
+                                                })()}
+                                              </div>
+                                            </AccordionTrigger>
+
+                                            <AccordionContent className='pt-3 space-y-2'>
+                                              {menuGroup.ingredients.map((ing, idx) => (
+                                                <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
+                                                  <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+
+                                                  <div className='flex items-center gap-4'>
+                                                    <span className='text-gray-600'>
+                                                      ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
+                                                      <strong className='text-black-600' style={{ color: "#000000" }}>
+                                                        {ing.calculatedTotal}
+                                                      </strong>{" "}
+                                                      {ing.ingredient_unit}
+                                                    </span>
+
+                                                    <label className={`${cart.status === "completed" ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
+                                                      <input type='checkbox' checked={ing.isChecked || false} onChange={() => handleToggleIngredientCheck(cart.id, menuGroup.menuName, ing.ingredient_name)} className='hidden' disabled={cart.status !== "completed"} />
+                                                      <span className={`relative inline-block w-10 h-5 rounded-full transition-colors duration-200 ease-in-out ${ing.isChecked ? "bg-green-500" : "bg-red-500"} ${cart.status !== "completed" ? "opacity-50" : ""}`}>
+                                                        <span className={`absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${ing.isChecked ? "translate-x-5" : "translate-x-0.5"}`} />
+                                                      </span>
+                                                    </label>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </AccordionContent>
+                                          </AccordionItem>
+                                        );
+                                      })}
+                                  </Accordion>
+                                </div>
                               </div>
-                            </div>
-                          </AccordionContent>
-                        </Card>
-                      </AccordionItem>
-                    </Accordion>
-                  ))}
-                  <div className='flex justify-center m-4'>
-                    {/* <Button
+                            </AccordionContent>
+                          </Card>
+                        </AccordionItem>
+                      </Accordion>
+                    ))}
+                    <div className='flex justify-center m-4'>
+                      {/* <Button
                       size='sm'
                       onClick={() => handleSummary("date", Time.convertThaiDateToISO(orders[0].delivery_date)!)}
                       className='h-9 px-4 rounded-xl border border-emerald-500 text-emerald-700 font-semibold transition-all duration-200 shadow-sm hover:shadow-md mb-4'
                       style={{ color: "#000000", background: "#fcf22d" }}>
                       📦 สรุปวัตถุดิบทั้งหมด
                     </Button> */}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
+
+          <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
+            <DialogContent className='max-w-md max-h-[70vh] overflow-y-auto'>
+              <DialogTitle>
+                <div className='space-y-4'>
+                  {summaryDialogType === "order" &&
+                    selectedCartForSummary &&
+                    (() => {
+                      const { summary, allIngredientsChecked } = summarize.OrderIngredients(selectedCartForSummary);
+                      return (
+                        <>
+                          <div className='space-y-2'>
+                            <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบของออเดอร์: {selectedCartForSummary.orderNumber}</h5>
+                            (วันที่ส่ง: {selectedCartForSummary.delivery_date})
+                            {summary.map((ing, idx) => (
+                              <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
+                                <span className='text-gray-700'>{ing.name}</span>
+                                <span className='text-gray-600'>
+                                  {ing.checked}/{ing.total} {ing.unit}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ color: "#000000", background: "#5cfa6c" }}>
+                            <Button
+                              onClick={() => handleCheck.AllIngredients(selectedCartForSummary.id)}
+                              className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg'
+                              disabled={isSaving === selectedCartForSummary.id || allIngredientsChecked || selectedCartForSummary.status !== "completed"}>
+                              {selectedCartForSummary.status !== "completed" ? "ต้องชำระเงินก่อนเลือกวัตถุดิบ" : isSaving === selectedCartForSummary.id ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
+                            </Button>
+                          </div>
+                        </>
+                      );
+                    })()}
+
+                  {summaryDialogType === "date" &&
+                    selectedDateForSummary &&
+                    (() => {
+                      const { summary, allIngredientsChecked } = summarize.Ingredients(selectedDateForSummary);
+                      return (
+                        <>
+                          <div className='space-y-2'>
+                            <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบรวม</h5>
+                            {summary.map((ing, idx) => (
+                              <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
+                                <span className='text-gray-700'>{ing.name}</span>
+                                <span className='text-gray-600'>
+                                  {ing.checked}/{ing.total} กรัม
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ color: "#000000", background: "#5cfa6c" }}>
+                            <Button onClick={() => handleCheck.AllIngredientsForDate(selectedDateForSummary)} className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg' disabled={isSaving === "all" || allIngredientsChecked}>
+                              {isSaving === "all" ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
+                            </Button>
+                          </div>
+                        </>
+                      );
+                    })()}
+                </div>
+              </DialogTitle>
+            </DialogContent>
+          </Dialog>
+
+          {totalPages > 1 && <PaginationComponent totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />}
         </div>
-
-        <Dialog open={isSummaryDialogOpen} onOpenChange={setIsSummaryDialogOpen}>
-          <DialogContent className='max-w-md max-h-[70vh] overflow-y-auto'>
-            <DialogTitle>
-              <div className='space-y-4'>
-                {summaryDialogType === "order" &&
-                  selectedCartForSummary &&
-                  (() => {
-                    const { summary, allIngredientsChecked } = summarize.OrderIngredients(selectedCartForSummary);
-                    return (
-                      <>
-                        <div className='space-y-2'>
-                          <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบของออเดอร์: {selectedCartForSummary.orderNumber}</h5>
-                          (วันที่ส่ง: {selectedCartForSummary.delivery_date})
-                          {summary.map((ing, idx) => (
-                            <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
-                              <span className='text-gray-700'>{ing.name}</span>
-                              <span className='text-gray-600'>
-                                {ing.checked}/{ing.total} {ing.unit}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ color: "#000000", background: "#5cfa6c" }}>
-                          <Button
-                            onClick={() => handleCheck.AllIngredients(selectedCartForSummary.id)}
-                            className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg'
-                            disabled={isSaving === selectedCartForSummary.id || allIngredientsChecked || selectedCartForSummary.status !== "completed"}>
-                            {selectedCartForSummary.status !== "completed" ? "ต้องชำระเงินก่อนเลือกวัตถุดิบ" : isSaving === selectedCartForSummary.id ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
-                          </Button>
-                        </div>
-                      </>
-                    );
-                  })()}
-
-                {summaryDialogType === "date" &&
-                  selectedDateForSummary &&
-                  (() => {
-                    const { summary, allIngredientsChecked } = summarize.Ingredients(selectedDateForSummary);
-                    return (
-                      <>
-                        <div className='space-y-2'>
-                          <h5 className='text-sm font-semibold text-gray-700'>สรุปวัตถุดิบรวม</h5>
-                          {summary.map((ing, idx) => (
-                            <div key={idx} className='flex justify-between items-center text-sm border-b border-gray-200 py-2'>
-                              <span className='text-gray-700'>{ing.name}</span>
-                              <span className='text-gray-600'>
-                                {ing.checked}/{ing.total} กรัม
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ color: "#000000", background: "#5cfa6c" }}>
-                          <Button onClick={() => handleCheck.AllIngredientsForDate(selectedDateForSummary)} className='w-full bg-green-100 hover:bg-green-200 text-green-800 rounded-lg' disabled={isSaving === "all" || allIngredientsChecked}>
-                            {isSaving === "all" ? "กำลังบันทึก..." : "เลือกวัตถุดิบทั้งหมด"}
-                          </Button>
-                        </div>
-                      </>
-                    );
-                  })()}
-              </div>
-            </DialogTitle>
-          </DialogContent>
-        </Dialog>
-
-        {totalPages > 1 && <PaginationComponent totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />}
       </div>
-    </div>
     </>
   );
 };

@@ -19,7 +19,7 @@ export default function Menubar() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const scrollThreshold = 100;
-      
+
       if (currentScrollY > scrollThreshold && currentScrollY > lastScrollY) {
         // Scrolling down and past threshold - hide
         setIsHidden(true);
@@ -27,7 +27,7 @@ export default function Menubar() {
         // Scrolling up - show
         setIsHidden(false);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -115,7 +115,7 @@ export default function Menubar() {
 
   return (
     <div className='w-full bg-card/90 backdrop-blur-sm border-b border-border shadow-sm'>
-      <div className='mx-auto max-w-[1200px] px-4 flex justify-between items-center py-3'>
+      <div className='px-4 flex justify-between items-center py-3'>
         <div className='flex items-center space-x-2'>
           <div className='flex items-center space-x-2'>
             <img
@@ -126,15 +126,15 @@ export default function Menubar() {
             />
 
             {/* สำหรับหน้าจอขนาดกลางขึ้นไป */}
-            <div className='hidden md:flex flex-col items-start'>
-              <span className='text-base font-medium text-foreground'>{userName || "Guest"}</span>
-              <span className='text-base text-muted-foreground'>{getRoleName(userRole)}</span>
+            <div className='hidden md:flex flex-col items-start min-w-0'>
+              <span className='text-base font-medium text-foreground truncate max-w-[150px]'>{userName || "Guest"}</span>
+              <span className='text-sm text-muted-foreground truncate max-w-[150px]'>{getRoleName(userRole)}</span>
             </div>
 
             {/* สำหรับหน้าจอขนาดเล็ก (มือถือ) */}
-            <div className='md:hidden flex flex-col items-start'>
-              <span className='text-sm font-medium text-foreground'>{userName ? userName.split(" ")[0] : "Guest"}</span>
-              <span className='text-xs text-muted-foreground'>{getRoleName(userRole)}</span>
+            <div className='md:hidden flex flex-col items-start min-w-0'>
+              <span className='text-sm font-medium text-foreground truncate max-w-[100px]'>{userName ? userName.split(" ")[0] : "Guest"}</span>
+              <span className='text-xs text-muted-foreground truncate max-w-[100px]'>{getRoleName(userRole)}</span>
             </div>
           </div>
 
