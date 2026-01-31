@@ -618,16 +618,26 @@ export default function CartList() {
         depositValueForMessage = "";
       }
 
+      const deliveryDateShort =
+        delivery_date && delivery_date.includes("/")
+          ? delivery_date
+              .split("/")
+              .map((part, i) =>
+                i === 2 && part.length >= 2 ? part.slice(-2) : part
+              )
+              .join("/")
+          : delivery_date;
+
       const copyTextContent = `📌รับออเดอร์ คุณ ${order_name} 
 ช่องทางที่สั่ง : ${channel_access}
 ผู้รับออเดอร์ : แอดมิน ${userName}
 
 ✅ รายละเอียดสำหรับจัดส่ง
-1.วันที่รับสินค้า : ${delivery_date}
+1.วันที่รับสินค้า : ${deliveryDateShort}
 2.เวลาส่งสินค้า : ${export_time} น.
 3.เวลารับสินค้า : ${receive_time} น.
 4.สถานที่จัดส่ง : ${location_send}
-5.ค่าจัดส่ง: ${shipping_cost} บาท ส่งโดย ${shipping_by}
+5.ค่าจัดส่ง: ${shipping_cost} บาท ส่งโดย: ${shipping_by}
 6.ชื่อผู้รับสินค้า : ${receive_name}
 7.เบอร์โทร : ${customer_tel}
 8.ออกบิลในนาม : ${customer_name}
