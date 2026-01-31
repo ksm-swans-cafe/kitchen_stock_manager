@@ -31,10 +31,12 @@ import { Loading } from "@/components/loading/loading";
 import HistoryIcon from "@/assets/history.png";
 
 import { fetcher } from "@/lib/utils";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PERMISSIONS } from "@/lib/permissions";
 
 import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
 
-const OrderHistory = () => {
+function OrderHistoryContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
@@ -1941,6 +1943,13 @@ const OrderHistory = () => {
       </div>
     </div>
   );
-};
+}
 
-export default OrderHistory;
+// Wrap with ProtectedRoute
+export default function OrderHistory() {
+  return (
+    <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_ORDERS}>
+      <OrderHistoryContent />
+    </ProtectedRoute>
+  );
+}

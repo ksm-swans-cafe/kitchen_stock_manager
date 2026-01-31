@@ -12,6 +12,8 @@ import TopStepper from "@/components/order/TopStepper";
 import MenuCard from "@/components/order/MenuCard";
 import MobileActionBar from "@/components/order/MobileActionBar";
 import { Loading } from "@/components/loading/loading";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PERMISSIONS } from "@/lib/permissions";
 
 import useLoadingDots from "@/lib/hook/Dots";
 
@@ -32,12 +34,13 @@ interface LunchBoxFromAPI {
   lunchbox_limit: number;
   lunchbox_name_image?: string;
   lunchbox_set_name_image?: string;
+  lunchbox_image_path?: string | null;
   lunchbox_cost?: number;
   lunchbox_order_select?: LunchboxOrderSelectItem[];
   lunchbox_check_all?: boolean;
 }
 
-export default function Order() {
+function OrderContent() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const [selectedMeatType, setSelectedMeatType] = useState<string | null>(null);
@@ -78,9 +81,13 @@ export default function Order() {
 
   // ตรวจสอบจำนวนเมนูที่เลือกได้
   const getSetLimit = (foodSet: string, setMenu: string) => getSetData(foodSet, setMenu)?.lunchbox_limit ?? 0;
-  const buildBlobImageUrl = (imageName?: string | null) => (imageName ? `${process.env.NEXT_PUBLIC_BLOB_STORE_BASE_URL}/${process.env.NEXT_PUBLIC_LUNCHBOX_IMAGE_PATH}/${imageName}` : null);
-  const LunchboxImage = ({ imageName, alt, fallbackIcon }: { imageName?: string | null; alt: string; fallbackIcon: React.ReactNode }) => {
-    const imageUrl = buildBlobImageUrl(imageName);
+  const buildBlobImageUrl = (imageName?: string | null, customPath?: string | null) => {
+    if (!imageName) return null;
+    const path = customPath || process.env.NEXT_PUBLIC_LUNCHBOX_IMAGE_PATH || "img/lunchbox-set-img";
+    return `${process.env.NEXT_PUBLIC_BLOB_STORE_BASE_URL}/${path}/${imageName}`;
+  };
+  const LunchboxImage = ({ imageName, alt, fallbackIcon, customPath }: { imageName?: string | null; alt: string; fallbackIcon: React.ReactNode; customPath?: string | null }) => {
+    const imageUrl = buildBlobImageUrl(imageName, customPath);
 
     if (!imageUrl || failedImages.has(imageUrl)) {
       return <>{fallbackIcon}</>;
@@ -1535,7 +1542,7 @@ export default function Order() {
 
                 const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
                 const setMenuImageName = setData?.lunchbox_set_name_image;
-                const apiImage = buildBlobImageUrl(setMenuImageName);
+                const apiImage = buildBlobImageUrl(setMenuImageName, setData?.lunchbox_image_path);
 
                 const displayImage = apiImage;
 
@@ -1697,7 +1704,7 @@ export default function Order() {
                               setSearchQuery("");
                             }}>
                             <div className='aspect-square bg-[linear-gradient(to_bottom_right,var(--color-orange-100),var(--color-orange-200),var(--color-orange-300))] flex items-center justify-center group-hover:scale-105 transition-transform duration-300 overflow-hidden'>
-                              <LunchboxImage imageName={foodSetImageName} alt={`ชุด ${foodSet}`} fallbackIcon={FoodSetFallbackIcon} />
+                              <LunchboxImage imageName={foodSetImageName} alt={`ชุด ${foodSet}`} fallbackIcon={FoodSetFallbackIcon} customPath={foodSetData?.lunchbox_image_path} />
                             </div>
                             <div className='text-center p-2 sm:p-3 lg:p-4'>
                               <h3 className='font-semibold text-gray-800 text-xs sm:text-sm lg:text-base leading-tight group-hover:text-orange-600 transition-colors duration-200 line-clamp-2'>ชุด {foodSet}</h3>
@@ -1721,7 +1728,7 @@ export default function Order() {
                         const setData = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === setMenu);
                         const limit = setData?.lunchbox_limit || 0;
                         const setMenuImageName = setData?.lunchbox_set_name_image;
-                        const setMenuImage = setMenuImageName ? `${process.env.NEXT_PUBLIC_BLOB_STORE_BASE_URL}/${process.env.NEXT_PUBLIC_LUNCHBOX_IMAGE_PATH}/${setMenuImageName}` : null;
+                        const setMenuImage = buildBlobImageUrl(setMenuImageName, setData?.lunchbox_image_path);
 
                         return (
                           <div
@@ -2253,5 +2260,14 @@ export default function Order() {
         </div >
       </div >
     </div >
+  );
+}
+
+// Wrap with ProtectedRoute
+export default function Order() {
+  return (
+    <ProtectedRoute requiredPermission={PERMISSIONS.CREATE_ORDER}>
+      <OrderContent />
+    </ProtectedRoute>
   );
 }
