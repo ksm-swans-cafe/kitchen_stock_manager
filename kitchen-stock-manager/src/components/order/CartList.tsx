@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { registerLocale, DatePicker } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
@@ -145,6 +145,8 @@ export default function CartList() {
   const { userName, userRole } = useAuth();
   const router = useRouter();
   const locationTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const handle = {
     LunchboxTotalCostChange: (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
       const numericValue = e.target.value.replace(/[^\d]/g, "");
@@ -536,28 +538,6 @@ export default function CartList() {
     },
   };
 
-  const formatDateToThai = (dateStr: string): string => {
-    if (!dateStr || !dateStr.trim()) return dateStr;
-
-    const parts = dateStr.split("/");
-    if (parts.length !== 3) return dateStr;
-
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10);
-    const year = parts[2];
-
-    const thaiMonthNames = [
-      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
-    ];
-
-    if (month >= 1 && month <= 12) {
-      return `${day} ${thaiMonthNames[month - 1]} ${year}`;
-    }
-
-    return dateStr;
-  };
-
   const confirmOrder = async () => {
     if (loading) return;
     if (!validate.Inputs()) return;
@@ -614,6 +594,7 @@ export default function CartList() {
       let depositValueForMessage = "";
       let depositAmountForMessage = 0;
       let paymentStatusText = "";
+      const tex = invoice_tex || "ไม่ระบุ";
 
       if (pay_deposit === "percent") {
         const payCostNum = Number(pay_cost.replace(/[^\d]/g, "") || 0);
@@ -637,21 +618,31 @@ export default function CartList() {
         depositValueForMessage = "";
       }
 
+      const deliveryDateShort =
+        delivery_date && delivery_date.includes("/")
+          ? delivery_date
+              .split("/")
+              .map((part, i) =>
+                i === 2 && part.length >= 2 ? part.slice(-2) : part
+              )
+              .join("/")
+          : delivery_date;
+
       const copyTextContent = `📌รับออเดอร์ คุณ ${order_name} 
 ช่องทางที่สั่ง : ${channel_access}
 ผู้รับออเดอร์ : แอดมิน ${userName}
 
 ✅ รายละเอียดสำหรับจัดส่ง
-1.วันที่รับสินค้า : ${formatDateToThai(delivery_date)}
+1.วันที่รับสินค้า : ${deliveryDateShort}
 2.เวลาส่งสินค้า : ${export_time} น.
 3.เวลารับสินค้า : ${receive_time} น.
 4.สถานที่จัดส่ง : ${location_send}
-5.ค่าจัดส่ง: ${shipping_cost} บาท ส่งโดย ${shipping_by}
+5.ค่าจัดส่ง: ${shipping_cost} บาท ส่งโดย: ${shipping_by}
 6.ชื่อผู้รับสินค้า : ${receive_name}
 7.เบอร์โทร : ${customer_tel}
 8.ออกบิลในนาม : ${customer_name}
 9.ที่อยู่ : ${location_send}
-${invoice_tex.trim() !== "" ? `10.เลขประจำตัวผู้เสียภาษี : ${invoice_tex}` : ""}
+10.เลขประจำตัวผู้เสียภาษี : ${tex}
 
 ✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
       ${lunchboxListForMessage}
@@ -668,6 +659,10 @@ ${pay_deposit && pay_deposit !== "no"
           : ""
         }
 `;
+
+      const copyTextNormalized = copyTextContent
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n");
 
       const response = await axios.post("/api/post/cart", {
         order_name: order_name,
@@ -726,7 +721,7 @@ ${pay_deposit && pay_deposit !== "no"
         pay_cost: pay_cost,
         pay_charge: pay_charge,
         total_remain: total_remain,
-        message: copyTextContent,
+        message: copyTextNormalized,
         ispay: ispay,
       });
 
@@ -761,9 +756,9 @@ ${pay_deposit && pay_deposit !== "no"
 
       const remainNum = Number(total_remain.replace(/[^\d.]/g, "")) || 0;
 
-      setCopyText(copyTextContent);
+      setCopyText(copyTextNormalized);
       setSuccess(true);
-      navigator.clipboard.writeText(copyTextContent).then(() => {
+      navigator.clipboard.writeText(copyTextNormalized).then(() => {
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
       });
@@ -938,6 +933,22 @@ ${pay_deposit && pay_deposit !== "no"
       locationTextareaRef.current.style.height = Math.max(40, locationTextareaRef.current.scrollHeight) + "px";
     }
   }, [location_send]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   return (
     <main className='min-h-screen text-black'>
@@ -1296,9 +1307,33 @@ ${pay_deposit && pay_deposit !== "no"
             <label className='font-bold'>ค่าจัดส่ง</label>
             <textarea rows={1} value={shipping_cost} onChange={handle.ShippingCostChange} placeholder='ระบุค่าจัดส่ง' className='border rounded px-3 py-2 resize-none leading-relaxed' style={{ fontFamily: 'inherit' }} />
           </div>
-          <div className='flex flex-col gap-1'>
+          <div ref={dropdownRef} className='flex flex-col gap-1 relative'>
             <label className='font-bold'>ส่งโดย</label>
-            <Select value={shipping_by || ""} onValueChange={(value) => setCustomerInfo({ shipping_by: value })}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className='w-auto h-auto border! border-[#e5e5e5]! text-[#808080]! rounded px-3 py-2 text-base leading-relaxed min-h-10.5 hover:bg-gray-50!'
+              style={{ fontFamily: 'inherit' }}
+            >
+              {shipping_by || 'เลือกวิธีจัดส่ง'}
+            </button>
+            {dropdownOpen && (
+              <div className='absolute top-full left-0 w-full bg-white border border-gray-300 rounded p-2 z-10 shadow-lg mt-1'>
+                {shippingByOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setCustomerInfo({ shipping_by: opt.value });
+                      setDropdownOpen(false);
+                    }}
+                    className='w-full text-[#808080]! text-left px-3 py-1 hover:bg-gray-100! rounded transition-colors!'
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* <Select value={shipping_by || ""} onValueChange={(value) => setCustomerInfo({ shipping_by: value })}>
               <SelectTrigger className='w-auto h-auto border rounded px-3 py-2 text-base leading-relaxed min-h-10.5' style={{ fontFamily: 'inherit' }}>
                 <SelectValue placeholder='เลือกวิธีจัดส่ง' />
               </SelectTrigger>
@@ -1309,7 +1344,7 @@ ${pay_deposit && pay_deposit !== "no"
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
           </div>
 
           <div className='col-span-2 flex flex-col gap-1'>
@@ -1338,12 +1373,7 @@ ${pay_deposit && pay_deposit !== "no"
             <textarea
               className='border rounded px-3 py-2 resize-none'
               value={invoice_tex}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.length <= 13) {
-                  setCustomerInfo({ invoice_tex: value });
-                }
-              }}
+              onChange={(e) => setCustomerInfo({ invoice_tex: e.target.value })}
               placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
               style={{ fontFamily: 'inherit' }}
               rows={1}

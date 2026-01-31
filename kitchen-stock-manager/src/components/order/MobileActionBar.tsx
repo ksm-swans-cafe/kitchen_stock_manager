@@ -1,10 +1,13 @@
 "use client";
 
 import React, { memo, useMemo } from "react";
-import { Send, RotateCcw } from "lucide-react";
+import { Send, RotateCcw, Minus, Plus } from "lucide-react";
 
 type Props = {
-  // Show bar only when user can perform submit (e.g., has selected items)
+  // Controls if the entire bar is rendered
+  isVisible?: boolean;
+
+  // Controls if the submit button is enabled
   canSubmit: boolean;
 
   // Submit current selection
@@ -30,6 +33,11 @@ type Props = {
 
   // Additional className for the wrapper
   className?: string;
+
+  // Quantity control props
+  quantity?: number;
+  onQuantityChange?: (newQuantity: number) => void;
+  showQuantityControl?: boolean;
 };
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -55,6 +63,7 @@ function cn(...classes: Array<string | false | null | undefined>) {
  * />
  */
 export const MobileActionBar = memo(function MobileActionBar({
+  isVisible = true,
   canSubmit,
   onSubmit,
   onReset,
@@ -64,6 +73,9 @@ export const MobileActionBar = memo(function MobileActionBar({
   noteWarning = null,
   submitLabel,
   className,
+  quantity = 1,
+  onQuantityChange,
+  showQuantityControl = false,
 }: Props) {
   // Resolve submit button text
   const resolvedSubmitLabel = useMemo(() => {
@@ -71,79 +83,107 @@ export const MobileActionBar = memo(function MobileActionBar({
     return editMode ? "บันทึก" : "เพิ่มลงตะกร้า";
   }, [submitLabel, editMode]);
 
-  if (!canSubmit) return null;
+  if (!isVisible) return null;
 
   return (
     <div
-      role="region"
-      aria-label="แถบเครื่องมือการทำรายการบนมือถือ"
+      role='region'
+      aria-label='แถบเครื่องมือการทำรายการบนมือถือ'
       className={cn(
-        "lg:hidden sticky bottom-0 inset-x-0 z-40",
-        "bg-white/95 backdrop-blur border-t border-gray-200",
-        "px-3 py-3",
-        className,
-      )}
-      data-testid="mobile-action-bar"
-    >
-      {/* Summary row */}
-      {(totalCost !== null || noteWarning) && (
-        <div className="mb-2 flex items-center justify-between text-sm">
-          {totalCost !== null ? (
-            <div
-              aria-live="polite"
-              className="font-semibold text-gray-800"
-              title="ราคารวม"
-            >
-              รวม{" "}
-              <span className="text-gray-900">
-                ฿
-                {typeof totalCost === "number"
-                  ? totalCost.toLocaleString("th-TH")
-                  : totalCost}
-              </span>
-            </div>
-          ) : (
-            <div />
-          )}
-          {noteWarning ? (
-            <div className="text-xs text-amber-600">{noteWarning}</div>
-          ) : null}
+        "lg:hidden fixed bottom-0 inset-x-0 z-50 flex flex-col",
+        "animate-in fade-in slide-in-from-bottom-full duration-300",
+        className
+      )}>
+
+      {/* Quantity Control Row (Compact Style) */}
+      {showQuantityControl && onQuantityChange && (
+        <div className='bg-[#FFF9F0]/98 backdrop-blur-md border-t border-orange-100/50 px-4 py-2 flex items-center justify-between shadow-sm'>
+          <div className="flex flex-col">
+            <span className='text-[8px] font-black text-orange-400 uppercase tracking-widest leading-none mb-1'>Quantity</span>
+            <span className='text-xs font-bold text-gray-800 leading-none'>จำนวนชุด</span>
+          </div>
+          <div className='flex items-center gap-1 bg-white rounded-full p-1 shadow-sm ring-1 ring-orange-100/40'>
+            <button
+              onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+              className='w-7 h-7 rounded-full flex items-center justify-center text-gray-400 active:bg-orange-50 transition-all'>
+              <Minus className='w-3.5 h-3.5' />
+            </button>
+            <span className='w-8 text-center text-sm font-bold text-gray-800 tabular-nums'>{quantity}</span>
+            <button
+              onClick={() => onQuantityChange(quantity + 1)}
+              className='w-7 h-7 rounded-full flex items-center justify-center text-gray-400 active:bg-orange-50 transition-all'>
+              <Plus className='w-3.5 h-3.5' />
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={saving}
-          aria-busy={saving || undefined}
-          className={cn(
-            "flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-white text-sm font-medium transition-all duration-200",
-            saving
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(249,115,22,0.4)]",
-          )}
-        >
-          {saving ? (
-            <span className="inline-block w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-          <span>{saving ? "กำลังบันทึก..." : resolvedSubmitLabel}</span>
-        </button>
+      {/* Action Bar Row (Compact White Pill Style) */}
+      <div className={cn(
+        "bg-white/98 backdrop-blur-2xl border-t border-gray-100 px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))]",
+        "shadow-[0_-5px_30px_rgba(0,0,0,0.05)] rounded-t-2xl"
+      )} data-testid='mobile-action-bar'>
 
-        <button
-          type="button"
-          onClick={onReset}
-          className={cn(
-            "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-white text-sm font-medium transition-colors",
-            "bg-red-500 hover:bg-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(239,68,68,0.35)]",
-          )}
-          aria-label="รีเซ็ตการเลือก"
-        >
-          <RotateCcw className="w-4 h-4" />
-          <span>รีเซ็ต</span>
-        </button>
+        <div className='flex items-center gap-3 max-w-lg mx-auto h-12'>
+          {/* TOTAL AMOUNT - Locked Layout */}
+          <div aria-live='polite' className='flex-[1.2] min-w-0 flex flex-col justify-center' title='ราคารวม'>
+            {totalCost !== null ? (
+              <>
+                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 truncate">Total Amount</span>
+                <span className='text-xl font-black text-gray-900 leading-none truncate tracking-tight'>
+                  ฿{typeof totalCost === "number" ? totalCost.toLocaleString("th-TH") : totalCost}
+                </span>
+              </>
+            ) : (
+              <div aria-hidden="true" className="opacity-0">
+                <span className="text-[8px] font-bold uppercase leading-none mb-1">Total Amount</span>
+                <span className='text-xl font-black leading-none'>฿0</span>
+              </div>
+            )}
+          </div>
+
+          {/* ADD TO CART - Fixed Proportion Column */}
+          <div className="flex-[2.5] flex items-center">
+            <button
+              type='button'
+              onClick={onSubmit}
+              disabled={saving || !canSubmit}
+              className={cn(
+                "w-full inline-flex items-center justify-center gap-2 rounded-full px-3 py-3 transition-all duration-300 active:scale-95 border border-gray-100",
+                saving || !canSubmit
+                  ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                  : "bg-white text-gray-700 shadow-sm hover:shadow-md"
+              )}>
+              {saving ? (
+                <span className='inline-block w-4 h-4 rounded-full border-2 border-white/30 border-t-orange-500 animate-spin' />
+              ) : (
+                <Send className='w-4 h-4 text-gray-400' />
+              )}
+              <span className="text-[11px] font-black tracking-tight truncate">
+                {saving ? "Saving..." : resolvedSubmitLabel}
+              </span>
+            </button>
+          </div>
+
+          {/* RESET - Fixed Proportion Column */}
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <button
+              type='button'
+              onClick={onReset}
+              className='inline-flex flex-col items-center justify-center gap-0.5 text-gray-400 active:scale-90 w-full'
+              aria-label='รีเซ็ตการเลือก'>
+              <RotateCcw className='w-5 h-5' />
+              <span className="text-[8px] font-bold">รีเซ็ต</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Note Warning */}
+        {noteWarning && (
+          <div className='mt-2 text-[8px] font-bold text-center text-amber-600 bg-amber-50/50 py-1 rounded-md border border-amber-100/30 line-clamp-1'>
+            {noteWarning}
+          </div>
+        )}
       </div>
     </div>
   );

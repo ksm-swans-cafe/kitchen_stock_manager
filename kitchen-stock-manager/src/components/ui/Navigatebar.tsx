@@ -44,6 +44,7 @@ export default function Navigatebar() {
 
   const items = useCartStore((state: { items: { menu_total: number }[] }) => state.items);
   const selected_lunchboxes = useCartStore((state: { selected_lunchboxes: { quantity: number }[] }) => state.selected_lunchboxes);
+  const { selectedFoodSet, selectedSetMenu } = useCartStore((state: { orderStepData: { selectedFoodSet: string, selectedSetMenu: string } }) => state.orderStepData);
 
   const isDashboardPage = pathname === "/home/dashboard";
 
@@ -74,6 +75,9 @@ export default function Navigatebar() {
   const isHomePage = pathname === "/home";
 
   const formatName = (segment: string) => {
+    if (segment === "menu-picker") {
+      return "สั่งอาหาร";
+    }
     if (pathNameMap[segment]) {
       return pathNameMap[segment];
     }
@@ -100,8 +104,8 @@ export default function Navigatebar() {
 
   return (
     <nav className='w-full bg-gray-200 py-3 px-4 sticky top-0 z-40 shadow-sm'>
-      <div className='mx-auto max-w-[1200px] relative'>
-        <ul className='flex gap-2 items-center text-gray-700 flex-wrap'>
+      <div className='relative'>
+        <ul className='flex gap-2 items-center text-gray-700 flex-wrap pr-12 sm:pr-0'>
           {!isHomePage && (
             <li>
               <button onClick={goBack} className='mr-2 bg-gray-300 hover:bg-gray-400 rounded-full p-1 transition-colors' aria-label='ย้อนกลับ'>
@@ -112,8 +116,8 @@ export default function Navigatebar() {
             </li>
           )}
 
-          <li>
-            <Link href='/home' className={pathname === "/home" ? "font-bold" : "font-bold"}>
+          <li className={isHomePage ? "block" : "hidden sm:block"}>
+            <Link href='/home' className="font-bold">
               หน้าหลัก
             </Link>
           </li>
@@ -127,9 +131,9 @@ export default function Navigatebar() {
 
             return (
               <React.Fragment key={href}>
-                <li className='hidden sm:inline font-bold'>{">"}</li>
-                <li>
-                  <span className='font-bold'>
+                <li className="font-bold text-gray-400 mx-1 hidden sm:block">{">"}</li>
+                <li className={isLast ? "block" : "hidden sm:block"}>
+                  <span className='font-bold truncate max-w-[120px] sm:max-w-none block'>
                     {isLast ? (
                       formatName(segment)
                     ) : (
@@ -157,7 +161,7 @@ export default function Navigatebar() {
                     </div>
                   ))}
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     // Dispatch custom event for dashboard to handle fullscreen
                     window.dispatchEvent(new CustomEvent('dashboard-fullscreen'));

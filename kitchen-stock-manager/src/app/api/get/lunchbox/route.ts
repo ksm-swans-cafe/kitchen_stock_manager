@@ -34,6 +34,7 @@ export async function GET() {
         lunchbox_limit: lb.lunchbox_limit,
         lunchbox_name_image: lb.lunchbox_name_image || null,
         lunchbox_set_name_image: lb.lunchbox_set_name_image || null,
+        lunchbox_image_path: lb.lunchbox_image_path || null,
         lunchbox_cost: lunchboxCostMap.get(key) || 0,
         lunchbox_order_select: lb.lunchbox_order_select || [],
         lunchbox_check_all: lb.lunchbox_check_all || false,

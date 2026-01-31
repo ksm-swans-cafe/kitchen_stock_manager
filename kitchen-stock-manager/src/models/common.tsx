@@ -14,13 +14,15 @@ export interface MenuHome {
   badgeText: string;
 }
 
-export type EmployeeRole = "admin" | "employee" | "customer";
+export type EmployeeRole = "admin" | "employee" | "customer" | "developer" | string;
 
 export type AuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
-  userRole: EmployeeRole | null;
+  userRole: EmployeeRole | EmployeeRole[] | null;
+  userRoles: string[];
   userName: string | null;
+  userPermissions: string[];
   checkAuth: (preventRedirect?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
 };

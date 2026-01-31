@@ -94,12 +94,15 @@ const Login: React.FC = () => {
 
         if (matchedEmployee) {
           const token = generateToken();
+          // Support both old (employee_role) and new (employee_roles) format
+          const roles = matchedEmployee.employee_roles || (matchedEmployee.employee_role ? [matchedEmployee.employee_role] : []);
           const loginResponse = await axios.post("/api/post/login", {
           // const loginResponse = await api.post("/api/post/login", {
             token,
             username: matchedEmployee.employee_username,
             name: `${matchedEmployee.employee_firstname} ${matchedEmployee.employee_lastname}`,
-            role: matchedEmployee.employee_role,
+            role: matchedEmployee.employee_role || roles[0],
+            roles: roles,
           });
 
           if (loginResponse.status === 200) {

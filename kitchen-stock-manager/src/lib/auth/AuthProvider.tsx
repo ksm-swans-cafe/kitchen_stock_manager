@@ -11,7 +11,9 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   userRole: null,
+  userRoles: [],
   userName: null,
+  userPermissions: [],
   checkAuth: async () => false,
   logout: async () => {},
 });
@@ -19,8 +21,10 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<EmployeeRole | null>(null);
+  const [userRole, setUserRole] = useState<EmployeeRole | EmployeeRole[] | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const router = useRouter();
 
   const checkAuth = async (preventRedirect = false): Promise<boolean> => {
@@ -33,13 +37,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (response.ok) {
         const data = await response.json();
         setIsAuthenticated(true);
-        setUserRole(data.role);
+        // Support both old (role) and new (roles) format
+        const roles = data.roles || (data.role ? [data.role] : []);
+        setUserRole(data.role || roles);
+        setUserRoles(roles);
         setUserName(data.userName);
+        setUserPermissions(data.permissions || []);
         return true;
       } else {
         setIsAuthenticated(false);
         setUserRole(null);
+        setUserRoles([]);
         setUserName(null);
+        setUserPermissions([]);
         if (!preventRedirect) {
           router.push("/login");
         }
@@ -49,7 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Authentication check failed:", error);
       setIsAuthenticated(false);
       setUserRole(null);
+      setUserRoles([]);
       setUserName(null);
+      setUserPermissions([]);
       if (!preventRedirect) {
         router.push("/login");
       }
@@ -68,10 +80,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (response.status === 200) {
         setIsAuthenticated(false);
         setUserRole(null);
+        setUserRoles([]);
         setUserName(null);
+        setUserPermissions([]);
         location.href = "/login";
-        // router.push('/login');
-        // router.refresh();
       }
     } catch (error) {
       console.error("Logout failed:", error);
@@ -88,7 +100,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated,
         isLoading,
         userRole,
+        userRoles,
         userName,
+        userPermissions,
         checkAuth,
         logout,
       }}>

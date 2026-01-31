@@ -31,10 +31,12 @@ import { Loading } from "@/components/loading/loading";
 import HistoryIcon from "@/assets/history.png";
 
 import { fetcher } from "@/lib/utils";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PERMISSIONS } from "@/lib/permissions";
 
 import { Ingredient, MenuItem, Cart, CartItem, RawCart } from "@/types/interface_summary_orderhistory";
 
-const OrderHistory = () => {
+function OrderHistoryContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState("ทั้งหมด");
@@ -208,7 +210,7 @@ const OrderHistory = () => {
           const totalBoxesFromLunchbox = cartLunchbox.reduce((sum: number, lunchbox: any) => {
             return sum + (Number(lunchbox.lunchbox_total) || 0);
           }, 0);
-          
+
           // ใช้ totalBoxesFromLunchbox ถ้ามีข้อมูลจาก lunchbox มิฉะนั้นใช้ totalSets (fallback)
           const finalSets = totalBoxesFromLunchbox > 0 ? totalBoxesFromLunchbox : totalSets;
 
@@ -376,11 +378,11 @@ const OrderHistory = () => {
         prevCarts.map((cart) =>
           cart.id === cartId
             ? {
-                ...cart,
-                menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
-                allIngredients: cart.allIngredients.map((group) => (group.menuName === cleanedMenuName ? { ...group, ingredients: group.ingredients.map((ing) => ({ ...ing, calculatedTotal: ing.useItem * editTotalBox })) } : group)),
-                sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
-              }
+              ...cart,
+              menuItems: cart.menuItems.map((item) => (item.menu_name === cleanedMenuName ? { ...item, menu_total: editTotalBox } : item)),
+              allIngredients: cart.allIngredients.map((group) => (group.menuName === cleanedMenuName ? { ...group, ingredients: group.ingredients.map((ing) => ({ ...ing, calculatedTotal: ing.useItem * editTotalBox })) } : group)),
+              sets: cart.menuItems.reduce((sum, item) => sum + (item.menu_name === cleanedMenuName ? editTotalBox : item.menu_total), 0),
+            }
             : cart
         )
       );
@@ -476,34 +478,34 @@ const OrderHistory = () => {
       prevCarts.map((cart) =>
         targetCarts.some((target) => target.id === cart.id)
           ? {
-              ...cart,
-              // อัปเดต lunchbox ถ้ามี
-              lunchbox:
-                cart.lunchbox && cart.lunchbox.length > 0
-                  ? cart.lunchbox.map((lunchbox: any) => ({
-                      ...lunchbox,
-                      lunchbox_menu:
-                        lunchbox.lunchbox_menu?.map((menu: any) => ({
-                          ...menu,
-                          menu_ingredients:
-                            menu.menu_ingredients?.map((ing: any) => ({
-                              ...ing,
-                              ingredient_status: true,
-                            })) || [],
+            ...cart,
+            // อัปเดต lunchbox ถ้ามี
+            lunchbox:
+              cart.lunchbox && cart.lunchbox.length > 0
+                ? cart.lunchbox.map((lunchbox: any) => ({
+                  ...lunchbox,
+                  lunchbox_menu:
+                    lunchbox.lunchbox_menu?.map((menu: any) => ({
+                      ...menu,
+                      menu_ingredients:
+                        menu.menu_ingredients?.map((ing: any) => ({
+                          ...ing,
+                          ingredient_status: true,
                         })) || [],
-                    }))
-                  : cart.lunchbox,
-              // อัปเดต allIngredients สำหรับ fallback
-              allIngredients: cart.allIngredients.map((group) => ({
-                ...group,
-                ingredients: group.ingredients.map((ing) => ({
-                  ...ing,
-                  isChecked: true,
-                  ingredient_status: true,
-                })),
+                    })) || [],
+                }))
+                : cart.lunchbox,
+            // อัปเดต allIngredients สำหรับ fallback
+            allIngredients: cart.allIngredients.map((group) => ({
+              ...group,
+              ingredients: group.ingredients.map((ing) => ({
+                ...ing,
+                isChecked: true,
                 ingredient_status: true,
               })),
-            }
+              ingredient_status: true,
+            })),
+          }
           : cart
       )
     );
@@ -925,7 +927,7 @@ const OrderHistory = () => {
         cart.lunchbox && cart.lunchbox.length > 0
           ? cart.lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
-      
+
       const formattedDeliveryDate = formatDeliveryDateForExcel(cart.delivery_date);
       const orderNumber = orderIndex + 1; // ลำดับ order (1, 2, 3, ...)
 
@@ -941,12 +943,12 @@ const OrderHistory = () => {
             const totalSetsInLunchbox = lunchbox.lunchbox_menu.reduce((sum: number, menu: any) => {
               return sum + (Number(menu.menu_total) || 0);
             }, 0);
-            
+
             lunchbox.lunchbox_menu.forEach((menu: any, menuIdx: number) => {
               if (menu.menu_name) {
                 // ใช้ menu_cost จาก lunchbox_menu โดยตรง
                 const menuCost = Number(menu.menu_cost) || 0;
-                
+
                 menuRows.push({
                   "ลำดับ": "",
                   "ชื่อ": "",
@@ -994,7 +996,7 @@ const OrderHistory = () => {
 
       // แปลง Map กลับเป็น array
       const groupedMenuRows = Array.from(menuGroupMap.values());
-      
+
       // แสดงลำดับ, ชื่อ และค่าส่งแค่ใน row แรกของแต่ละ order
       if (groupedMenuRows.length > 0) {
         groupedMenuRows[0]["ลำดับ"] = orderNumber;
@@ -1185,7 +1187,7 @@ const OrderHistory = () => {
         cart.lunchbox && cart.lunchbox.length > 0
           ? cart.lunchbox.reduce((sum: number, lunchbox: any) => sum + (Number(lunchbox.lunchbox_total_cost) || 0), 0)
           : cart.price || 0;
-      
+
       const formattedDeliveryDate = formatDeliveryDateForExcel(cart.delivery_date);
       const orderNumber = orderIndex + 1; // ลำดับ order (1, 2, 3, ...)
 
@@ -1201,12 +1203,12 @@ const OrderHistory = () => {
             const totalSetsInLunchbox = lunchbox.lunchbox_menu.reduce((sum: number, menu: any) => {
               return sum + (Number(menu.menu_total) || 0);
             }, 0);
-            
+
             lunchbox.lunchbox_menu.forEach((menu: any, menuIdx: number) => {
               if (menu.menu_name) {
                 // ใช้ menu_cost จาก lunchbox_menu โดยตรง
                 const menuCost = Number(menu.menu_cost) || 0;
-                
+
                 menuRows.push({
                   "ลำดับ": "",
                   "ชื่อ": "",
@@ -1423,23 +1425,24 @@ const OrderHistory = () => {
         {error && <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4'>{error}</div>}
 
         <div className='grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-6'>
-          <div className='col-span-full xl:col-span-2'>
+          <div className='col-span-full md:col-span-1'>
             <div className='relative'>
               <Search className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none' />
-              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-200/60 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-xl shadow-sm:text-sm' />
+              <Input placeholder='ค้นหาชื่อ, รหัสคำสั่ง, สถานที่ส่ง...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pr-10 h-10 bg-white border-slate-300 focus:border-blue-400 focus:ring-blue-400/20 focus:ring-4 rounded-lg shadow-sm text-sm' />
             </div>
           </div>
 
           <div>
-            <Button onClick={() => handleDatePicker("open")} className='w-full h-10 rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600'>
+            <Button onClick={() => handleDatePicker("open")} className='w-full h-10 bg-white rounded-lg border border-slate-300 shadow-sm flex items-center justify-center px-3 text-sm text-slate-600 hover:bg-slate-50 gap-2'>
+              <CalendarDays className='w-4 h-4 text-slate-500' />
               {selectedDate
                 ? `วันที่ ${formatDate(selectedDate, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    locale: "th",
-                    timeZone: "Asia/Bangkok",
-                  })}`
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  locale: "th",
+                  timeZone: "Asia/Bangkok",
+                })}`
                 : "เลือกวันที่ที่ต้องการ"}
             </Button>
 
@@ -1502,7 +1505,7 @@ const OrderHistory = () => {
           <div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className='w-full h-10 rounded-lg border-slate-300 shadow-sm'>
-                <Filter className='w-4 h-4 mr-2 text-slate-500' />
+                <Wallet className='w-4 h-4 mr-2 text-slate-500' />
                 <SelectValue placeholder='All statuses' />
               </SelectTrigger>
               <SelectContent side='bottom' align='start' avoidCollisions={false}>
@@ -1531,7 +1534,7 @@ const OrderHistory = () => {
           </div>
         </div>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 sm:w-full lg:grid-cols-4 gap-3 lg:w-1/2 lg:justify-self-end -mt-9 mb-5'>
+        <div className='flex justify-end items-center gap-2 -mt-9 mb-5'>
           <div className='flex flex-center justify-self-end text-red-400'>
             <Button
               onClick={() => {
@@ -1555,7 +1558,7 @@ const OrderHistory = () => {
 
         <div className='space-y-6'>
           {isLoading ? (
-            <Loading context='หน้าประวัติการสั่งซื้อ' icon={HistoryIcon.src} color='green' />
+            <Loading context='หน้าประวัติการสั่งซื้อ' icon={HistoryIcon.src} />
           ) : combinedError ? (
             <Card>
               <CardContent className='text-center py-12'>
@@ -1647,7 +1650,7 @@ const OrderHistory = () => {
                               </div> */}
                               <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-4 font-normal text-black'>
                                 <div className='flex items-center gap-1 text-base'>
-                                📦 
+                                  📦
                                   <span>จำนวนทั้งหมด {cart.sets} กล่อง</span>
                                   💵
                                   <span className='text-base font-normal'>ราคาทั้งหมด {cart.price.toLocaleString()} บาท</span>
@@ -1674,7 +1677,7 @@ const OrderHistory = () => {
                                   📅
                                   <span>วันที่สั่งอาหาร {cart.date}</span>
                                 </div>
-                                
+
                               </div>
                               {(cart.invoice_tex || cart.customer_name || cart.location_send) && (
                                 <div className='flex flex-col gap-2 text-base font-normal text-black border-t pt-2 mt-2'>
@@ -1715,99 +1718,99 @@ const OrderHistory = () => {
                                 <Accordion type='multiple' className='space-y-3'>
                                   {cart.lunchbox && cart.lunchbox.length > 0
                                     ? cart.lunchbox.map((lunchbox: any, lunchboxIdx: number) => (
-                                        <AccordionItem key={lunchboxIdx} value={`lunchbox-${lunchboxIdx}`} className='rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50'>
-                                          <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                            <div className='flex flex-col items-start flex-1'>
-                                              <span className='truncate text-sm text-blue-800 font-bold'>
-                                                📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
-                                              </span>
-                                              <div className='flex gap-4 mt-2'>
-                                                <div className='text-xs text-blue-700'>
-                                                  <span className='font-medium'>จำนวน:</span> {lunchbox.lunchbox_total} กล่อง
-                                                </div>
-                                                <div className='text-xs text-blue-700'>
-                                                  <span className='font-medium'>ราคา:</span> {lunchbox.lunchbox_total_cost} บาท
-                                                </div>
+                                      <AccordionItem key={lunchboxIdx} value={`lunchbox-${lunchboxIdx}`} className='rounded-xl border border-blue-200 shadow-sm px-4 py-3 bg-blue-50'>
+                                        <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                          <div className='flex flex-col items-start flex-1'>
+                                            <span className='truncate text-sm text-blue-800 font-bold'>
+                                              📦 {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set_name}
+                                            </span>
+                                            <div className='flex gap-4 mt-2'>
+                                              <div className='text-xs text-blue-700'>
+                                                <span className='font-medium'>จำนวน:</span> {lunchbox.lunchbox_total} กล่อง
+                                              </div>
+                                              <div className='text-xs text-blue-700'>
+                                                <span className='font-medium'>ราคา:</span> {lunchbox.lunchbox_total_cost} บาท
                                               </div>
                                             </div>
-                                          </AccordionTrigger>
+                                          </div>
+                                        </AccordionTrigger>
 
-                                          <AccordionContent className='pt-3 space-y-2'>
-                                            <h5 className='font-medium text-blue-800 mb-2 text-xs'>เมนูในกล่อง:</h5>
-                                            {lunchbox.lunchbox_menu.map((menu: any, menuIdx: number) => {
-                                              const allIngredientsChecked = menu.menu_ingredients?.every((ing: any) => ing.ingredient_status) ?? false;
+                                        <AccordionContent className='pt-3 space-y-2'>
+                                          <h5 className='font-medium text-blue-800 mb-2 text-xs'>เมนูในกล่อง:</h5>
+                                          {lunchbox.lunchbox_menu.map((menu: any, menuIdx: number) => {
+                                            const allIngredientsChecked = menu.menu_ingredients?.every((ing: any) => ing.ingredient_status) ?? false;
 
-                                              return (
-                                                <div key={menuIdx} className={`rounded-lg border p-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-                                                  <div className='mb-2'>
-                                                    <div className='font-medium text-gray-800 text-sm'>
-                                                      {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
-                                                    </div>
-                                                    <div className='text-xs text-gray-600 mt-1'>
-                                                      หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
-                                                    </div>
-                                                    {menu.menu_description && <div className='text-xs text-gray-500 mt-1'>{menu.menu_description}</div>}
+                                            return (
+                                              <div key={menuIdx} className={`rounded-lg border p-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                                <div className='mb-2'>
+                                                  <div className='font-medium text-gray-800 text-sm'>
+                                                    {menu.menu_name} {menu.menu_subname && `(${menu.menu_subname})`}
                                                   </div>
-
-                                                  <div className='space-y-1 mt-2'>
-                                                    <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
-                                                    {menu.menu_ingredients?.map((ing: any, idx: number) => (
-                                                      <div key={idx} className='flex items-center justify-between text-xs text-gray-600 py-1'>
-                                                        <span>• {ing.ingredient_name}</span>
-                                                        <div style={{ color: "#000000" }} className='flex items-center gap-2'>
-                                                          <span>
-                                                            {ing.useItem} หน่วย × {menu.menu_total} กล่อง = <strong style={{ color: "#000000" }}>{ing.useItem * menu.menu_total}</strong> หน่วย
-                                                          </span>
-                                                        </div>
-                                                      </div>
-                                                    ))}
+                                                  <div className='text-xs text-gray-600 mt-1'>
+                                                    หมวดหมู่: {menu.menu_category} | จำนวน: {menu.menu_total} กล่อง
                                                   </div>
+                                                  {menu.menu_description && <div className='text-xs text-gray-500 mt-1'>{menu.menu_description}</div>}
                                                 </div>
-                                              );
-                                            })}
+
+                                                <div className='space-y-1 mt-2'>
+                                                  <h6 className='text-xs font-medium text-gray-700 mb-1'>วัตถุดิบ:</h6>
+                                                  {menu.menu_ingredients?.map((ing: any, idx: number) => (
+                                                    <div key={idx} className='flex items-center justify-between text-xs text-gray-600 py-1'>
+                                                      <span>• {ing.ingredient_name}</span>
+                                                      <div style={{ color: "#000000" }} className='flex items-center gap-2'>
+                                                        <span>
+                                                          {ing.useItem} หน่วย × {menu.menu_total} กล่อง = <strong style={{ color: "#000000" }}>{ing.useItem * menu.menu_total}</strong> หน่วย
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </AccordionContent>
+                                      </AccordionItem>
+                                    ))
+                                    : // Fallback to old structure if lunchbox is not available
+                                    cart.allIngredients.map((menuGroup, groupIdx) => {
+                                      const totalBox = cart.menuItems.find((item) => item.menu_name === menuGroup.menuName)?.menu_total || 0;
+                                      const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
+
+                                      return (
+                                        <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+                                          <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
+                                            <div className='flex flex-col items-start'>
+                                              <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
+                                              {(() => {
+                                                const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
+                                                return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
+                                              })()}
+                                            </div>
+                                            <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
+                                          </AccordionTrigger>
+                                          <AccordionContent className='pt-3 space-y-2'>
+                                            {menuGroup.ingredients.map((ing, idx) => (
+                                              <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
+                                                <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
+                                                <div className='flex items-center gap-4'>
+                                                  <span className='text-gray-600'>
+                                                    ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
+                                                    <strong
+                                                      className='text-black-600'
+                                                      style={{
+                                                        color: "#000000",
+                                                      }}>
+                                                      {ing.calculatedTotal}
+                                                    </strong>{" "}
+                                                    {ing.ingredient_unit}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            ))}
                                           </AccordionContent>
                                         </AccordionItem>
-                                      ))
-                                    : // Fallback to old structure if lunchbox is not available
-                                      cart.allIngredients.map((menuGroup, groupIdx) => {
-                                        const totalBox = cart.menuItems.find((item) => item.menu_name === menuGroup.menuName)?.menu_total || 0;
-                                        const allIngredientsChecked = menuGroup.ingredients.every((ing) => ing.isChecked);
-
-                                        return (
-                                          <AccordionItem key={groupIdx} value={`menu-${groupIdx}`} className={`rounded-xl border border-slate-200 shadow-sm px-4 py-3 ${allIngredientsChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-                                            <AccordionTrigger className='w-full flex items-center justify-between px-2 py-1 hover:no-underline'>
-                                              <div className='flex flex-col items-start'>
-                                                <span className='truncate text-sm text-gray-700 font-medium'>{menuGroup.menuName}</span>
-                                                {(() => {
-                                                  const menuItem = cart.menuItems.find((me) => me.menu_name === menuGroup.menuName);
-                                                  return menuItem?.menu_description ? <span className='truncate text-xs text-gray-500 mt-1'>{menuItem.menu_description}</span> : null;
-                                                })()}
-                                              </div>
-                                              <span className='text-sm font-mono text-blue-600'>(จำนวน {totalBox} กล่อง)</span>
-                                            </AccordionTrigger>
-                                            <AccordionContent className='pt-3 space-y-2'>
-                                              {menuGroup.ingredients.map((ing, idx) => (
-                                                <div key={idx} className={`flex items-center justify-between rounded-lg px-3 py-2 border ${ing.isChecked ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"} text-sm`}>
-                                                  <span className='text-gray-700'>{ing.ingredient_name || `Unknown ingredient`}</span>
-                                                  <div className='flex items-center gap-4'>
-                                                    <span className='text-gray-600'>
-                                                      ใช้ {ing.useItem} {ing.ingredient_unit} × {totalBox} กล่อง ={" "}
-                                                      <strong
-                                                        className='text-black-600'
-                                                        style={{
-                                                          color: "#000000",
-                                                        }}>
-                                                        {ing.calculatedTotal}
-                                                      </strong>{" "}
-                                                      {ing.ingredient_unit}
-                                                    </span>
-                                                  </div>
-                                                </div>
-                                              ))}
-                                            </AccordionContent>
-                                          </AccordionItem>
-                                        );
-                                      })}
+                                      );
+                                    })}
                                 </Accordion>
                               </div>
                             </div>
@@ -1940,6 +1943,13 @@ const OrderHistory = () => {
       </div>
     </div>
   );
-};
+}
 
-export default OrderHistory;
+// Wrap with ProtectedRoute
+export default function OrderHistory() {
+  return (
+    <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_ORDERS}>
+      <OrderHistoryContent />
+    </ProtectedRoute>
+  );
+}

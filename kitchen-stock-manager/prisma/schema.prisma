@@ -225,12 +225,12 @@ model cart_log {
 }
 
 model employee {
-  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
   employee_firstname String
   employee_id        String
   employee_lastname  String
   employee_pin       String
-  employee_role      String
+  employee_roles     String[]
   employee_username  String
 }
 
@@ -269,6 +269,7 @@ model lunchbox {
   lunchbox_name_image     String
   lunchbox_set_name       String
   lunchbox_set_name_image String
+  lunchbox_image_path     String?
   lunchbox_check_all      Boolean         @default(false)
   lunchbox_order_select   LunchboxOrder[]
 }
@@ -320,4 +321,15 @@ model new_cart {
   total_cost_lunchbox String
   total_remain        String
   username            String
+}
+
+model role {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  role_name       String   @unique
+  role_display    String
+  role_color      String?
+  permissions     String[]
+  is_default      Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 }

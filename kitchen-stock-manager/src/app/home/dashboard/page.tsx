@@ -10,6 +10,9 @@ import Swal from "sweetalert2";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Loading } from "@/components/loading/loading";
 import DashboardIcon from "@/assets/dashboard.png";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { usePermission } from "@/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/lib/permissions";
 
 // Import from local files
 import { dayColor, dayNoteColor, dayNoteTextColor, dayAuraColor, dayColorLegend } from "./constants";
@@ -18,10 +21,12 @@ import { cleanTime, getMonthNameShort, getTimeAlertInfo, calculatePackaging, cal
 import { SaveButton, CancelButton, DeleteButton, AddNoteButton, PackagingNoteForm, PackagingItem } from "./components";
 
 // --- Main Component ---
-export default function Dashboard() {
+function DashboardContent() {
   const router = useRouter();
-  const { userRole } = useAuth(); // ดึง userRole จาก AuthProvider
-  const isAdmin = userRole === "admin"; // ตรวจสอบว่าเป็น admin หรือไม่
+  const { userRole } = useAuth();
+  const { hasPermission, canEdit, isAdmin: isAdminRole, isDeveloper } = usePermission();
+  const isAdmin = hasPermission(PERMISSIONS.EDIT_ORDER); // ใช้ permission แทน role
+  const canEditPackaging = isAdminRole || isDeveloper; // เฉพาะ admin หรือสูงกว่าเท่านั้นที่แก้ไข packaging ได้
   
   const [fullscreen, setFullscreen] = useState(false);
   // State สำหรับ note input
@@ -52,6 +57,13 @@ export default function Dashboard() {
   const [showPackagingNoteInput, setShowPackagingNoteInput] = useState<Record<string, boolean>>({});
   const [savingPackagingNote, setSavingPackagingNote] = useState<Record<string, boolean>>({});
   const [editingPackagingNote, setEditingPackagingNote] = useState<Record<string, { cartId: string; noteId: string; value: string } | null>>({});
+
+  // State สำหรับแก้ไขจำนวน packaging
+  const [editingPackagingCount, setEditingPackagingCount] = useState<Record<string, { fukYai: number; box2Chan: number; box3Chan: number } | null>>({});
+  const [savingPackagingCount, setSavingPackagingCount] = useState<Record<string, boolean>>({});
+  // State สำหรับเพิ่ม packaging ใหม่ (เมื่อไม่มี packaging)
+  const [showAddPackaging, setShowAddPackaging] = useState<Record<string, boolean>>({});
+  const [newPackaging, setNewPackaging] = useState<Record<string, { fukYai: number; box2Chan: number; box3Chan: number }>>({});
 
   // Cursor auto-hide after 5 seconds of inactivity
   useEffect(() => {
@@ -475,6 +487,48 @@ export default function Dashboard() {
     setEditingPackagingNote((prev) => ({ ...prev, [noteKey]: null }));
   }, [editingPackagingNote, savePackagingNotesToDatabase]);
 
+  // ฟังก์ชันบันทึกจำนวน packaging ไปยัง database
+  const savePackagingCountToDatabase = useCallback(async (cartId: string, packaging: { fukYai: number; box2Chan: number; box3Chan: number }) => {
+    if (!cartId) return;
+    setSavingPackagingCount((prev) => ({ ...prev, [cartId]: true }));
+    try {
+      const response = await fetch(`/api/edit/packaging-count/${cartId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(packaging),
+      });
+      if (!response.ok) {
+        console.error("Failed to save packaging count");
+      } else {
+        mutate("/api/get/dashboard");
+      }
+    } catch (error) {
+      console.error("Error saving packaging count:", error);
+    } finally {
+      setSavingPackagingCount((prev) => ({ ...prev, [cartId]: false }));
+      setEditingPackagingCount((prev) => ({ ...prev, [cartId]: null }));
+      setShowAddPackaging((prev) => ({ ...prev, [cartId]: false }));
+    }
+  }, []);
+
+  // ฟังก์ชันเพิ่ม packaging ใหม่
+  const handleAddNewPackaging = useCallback((cartId: string) => {
+    const pkg = newPackaging[cartId];
+    if (!pkg || (pkg.fukYai === 0 && pkg.box2Chan === 0 && pkg.box3Chan === 0)) {
+      setShowAddPackaging((prev) => ({ ...prev, [cartId]: false }));
+      return;
+    }
+    savePackagingCountToDatabase(cartId, pkg);
+    setNewPackaging((prev) => ({ ...prev, [cartId]: { fukYai: 0, box2Chan: 0, box3Chan: 0 } }));
+  }, [newPackaging, savePackagingCountToDatabase]);
+
+  // ฟังก์ชันบันทึกการแก้ไขจำนวน packaging
+  const handleSavePackagingCount = useCallback((cartId: string) => {
+    const pkg = editingPackagingCount[cartId];
+    if (!pkg) return;
+    savePackagingCountToDatabase(cartId, pkg);
+  }, [editingPackagingCount, savePackagingCountToDatabase]);
+
   // Calculate minutes until send time
   const calculateMinutesToSend = (date: string, sendTime: string): number => {
     const [day, month, year] = date.split("/").map(Number);
@@ -887,19 +941,21 @@ export default function Dashboard() {
                       </td>
                       <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center text-gray-900 font-semibold align-middle relative'>
                         <span>{item.qty}</span>
-                        {/* Add menu description button - show on hover */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedMenuItems((prev) => ({ ...prev, [menuKey]: true }));
-                            setShowMenuDescInput((prev) => ({ ...prev, [menuKey]: true }));
-                            setMenuDescInputs((prev) => ({ ...prev, [menuKey]: { title: "", value: "" } }));
-                          }}
-                          className='absolute right-1 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover/menuitem:opacity-100 transition-opacity text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded'
-                          title='เพิ่มหมายเหตุเมนู'
-                        >
-                          <Plus className='w-3 h-3' />
-                        </button>
+                        {/* Add menu description button - show on hover (เฉพาะ admin หรือสูงกว่า) */}
+                        {canEditPackaging && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedMenuItems((prev) => ({ ...prev, [menuKey]: true }));
+                              setShowMenuDescInput((prev) => ({ ...prev, [menuKey]: true }));
+                              setMenuDescInputs((prev) => ({ ...prev, [menuKey]: { title: "", value: "" } }));
+                            }}
+                            className='absolute right-1 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover/menuitem:opacity-100 transition-opacity text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded'
+                            title='เพิ่มหมายเหตุเมนู'
+                          >
+                            <Plus className='w-3 h-3' />
+                          </button>
+                        )}
                       </td>
                     </tr>
                     
@@ -977,10 +1033,12 @@ export default function Dashboard() {
                       return (
                         <tr 
                           key={`menu-desc-${index}-${descIdx}`} 
-                          className='group/desc bg-blue-50/50 border-l-4 border-blue-400 cursor-pointer hover:bg-blue-100/50 transition-colors'
+                          className={`group/desc bg-blue-50/50 border-l-4 border-blue-400 ${canEditPackaging ? 'cursor-pointer' : ''} hover:bg-blue-100/50 transition-colors`}
                           onClick={(e) => {
-                            e.stopPropagation();
-                            handleStartEditMenuDesc(descId, day.cartId, item.lunchbox_name || '', item.name, desc.menu_description_title, desc.menu_description_value);
+                            if (canEditPackaging) {
+                              e.stopPropagation();
+                              handleStartEditMenuDesc(descId, day.cartId, item.lunchbox_name || '', item.name, desc.menu_description_title, desc.menu_description_value);
+                            }
                           }}
                         >
                           {hasValue ? (
@@ -990,7 +1048,30 @@ export default function Dashboard() {
                               </td>
                               <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-1.5 !text-center !text-blue-700 text-base font-medium align-middle relative overflow-hidden'>
                                 <span>{desc.menu_description_value}</span>
-                                {/* Delete button */}
+                                {/* Delete button - เฉพาะ admin หรือสูงกว่า */}
+                                {canEditPackaging && (
+                                  <div
+                                    className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
+                                      opacity-0 translate-x-full group-hover/desc:opacity-100 group-hover/desc:translate-x-0 
+                                      transition-all duration-300 ease-out pointer-events-none group-hover/desc:pointer-events-auto'>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteMenuDesc(day.cartId, item.lunchbox_name || '', item.name, desc.menu_description_id || '', item.menu_description || []);
+                                      }}
+                                      className='px-1.5 py-1 hover:bg-red-600 rounded-l-lg transition-colors h-full flex items-center'
+                                      title='ลบหมายเหตุเมนู'>
+                                      <Trash2 className='w-3 h-3 text-white' />
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </>
+                          ) : (
+                            <td colSpan={2} className='px-4 py-1.5 pl-8 !text-blue-700 text-base align-middle relative overflow-hidden'>
+                              <span>↳ {desc.menu_description_title}</span>
+                              {/* Delete button - เฉพาะ admin หรือสูงกว่า */}
+                              {canEditPackaging && (
                                 <div
                                   className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
                                     opacity-0 translate-x-full group-hover/desc:opacity-100 group-hover/desc:translate-x-0 
@@ -1005,26 +1086,7 @@ export default function Dashboard() {
                                     <Trash2 className='w-3 h-3 text-white' />
                                   </button>
                                 </div>
-                              </td>
-                            </>
-                          ) : (
-                            <td colSpan={2} className='px-4 py-1.5 pl-8 !text-blue-700 text-base align-middle relative overflow-hidden'>
-                              <span>↳ {desc.menu_description_title}</span>
-                              {/* Delete button */}
-                              <div
-                                className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
-                                  opacity-0 translate-x-full group-hover/desc:opacity-100 group-hover/desc:translate-x-0 
-                                  transition-all duration-300 ease-out pointer-events-none group-hover/desc:pointer-events-auto'>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteMenuDesc(day.cartId, item.lunchbox_name || '', item.name, desc.menu_description_id || '', item.menu_description || []);
-                                  }}
-                                  className='px-1.5 py-1 hover:bg-red-600 rounded-l-lg transition-colors h-full flex items-center'
-                                  title='ลบหมายเหตุเมนู'>
-                                  <Trash2 className='w-3 h-3 text-white' />
-                                </button>
-                              </div>
+                              )}
                             </td>
                           )}
                         </tr>
@@ -1168,14 +1230,36 @@ export default function Dashboard() {
                 return (
                   <tr 
                     key={`note-${descId}`} 
-                    className={`group cursor-pointer hover:${noteColors.hover} transition-colors ${rowIndex % 2 === 0 ? noteColors.light : noteColors.dark}`}
-                    onClick={() => handleStartEditNote(descId, day.cartId, desc.description_title, desc.description_value)}
+                    className={`group ${canEditPackaging ? 'cursor-pointer' : ''} hover:${noteColors.hover} transition-colors ${rowIndex % 2 === 0 ? noteColors.light : noteColors.dark}`}
+                    onClick={() => canEditPackaging && handleStartEditNote(descId, day.cartId, desc.description_title, desc.description_value)}
                   >
                     {hasValue ? (
                       <>
                         <td className='px-4 py-2 align-middle break-words whitespace-pre-wrap' style={{ color: '#1f2937', fontWeight: 500 }}>{desc.description_title}</td>
                         <td className='lg:mr-0 px-0 pr-4 lg:pr-0 lg:px-4 py-2 !text-center font-bold align-middle relative overflow-hidden' style={{ color: '#dc2626' }}>
                           <span>{desc.description_value}</span>
+                          {canEditPackaging && (
+                            <div
+                              className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
+                                opacity-0 translate-x-full group-hover:opacity-100 group-hover:translate-x-0 
+                                transition-all duration-300 ease-out pointer-events-none group-hover:pointer-events-auto'>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNote(day.cartId, desc.description_id || "", day.description);
+                                }}
+                                className='p-2 hover:bg-red-600 rounded-l-lg transition-colors h-full'
+                                title='ลบหมายเหตุ'>
+                                <Trash2 className='w-4 h-4 text-white' />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </>
+                    ) : (
+                      <td colSpan={2} className='px-4 py-2 align-middle break-words whitespace-pre-wrap relative overflow-hidden' style={{ color: '#1f2937', fontWeight: 500 }}>
+                        <span>{desc.description_title}</span>
+                        {canEditPackaging && (
                           <div
                             className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
                               opacity-0 translate-x-full group-hover:opacity-100 group-hover:translate-x-0 
@@ -1190,25 +1274,7 @@ export default function Dashboard() {
                               <Trash2 className='w-4 h-4 text-white' />
                             </button>
                           </div>
-                        </td>
-                      </>
-                    ) : (
-                      <td colSpan={2} className='px-4 py-2 align-middle break-words whitespace-pre-wrap relative overflow-hidden' style={{ color: '#1f2937', fontWeight: 500 }}>
-                        <span>{desc.description_title}</span>
-                        <div
-                          className='absolute right-0 top-0 bottom-0 flex items-center bg-red-500
-                            opacity-0 translate-x-full group-hover:opacity-100 group-hover:translate-x-0 
-                            transition-all duration-300 ease-out pointer-events-none group-hover:pointer-events-auto'>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteNote(day.cartId, desc.description_id || "", day.description);
-                            }}
-                            className='p-2 hover:bg-red-600 rounded-l-lg transition-colors h-full'
-                            title='ลบหมายเหตุ'>
-                            <Trash2 className='w-4 h-4 text-white' />
-                          </button>
-                        </div>
+                        )}
                       </td>
                     )}
                   </tr>
@@ -1284,8 +1350,8 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              // Hide when any note is being edited
-              !day.description?.some((desc, idx) => {
+              // Hide when any note is being edited - เฉพาะ admin หรือสูงกว่าเท่านั้น
+              canEditPackaging && !day.description?.some((desc, idx) => {
                 const descId = desc.description_id || idx.toString();
                 return editingNote[descId] !== null && editingNote[descId] !== undefined;
               }) && (
@@ -1310,11 +1376,11 @@ export default function Dashboard() {
         {/* FOOTER - Fixed at bottom of card using flex */}
         <div className='flex-none border-t bg-white py-2 px-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'>
           {/* Packaging Info */}
-          {(day.packaging.fukYai > 0 || day.packaging.box2Chan > 0 || day.packaging.box3Chan > 0) && (
+          {(day.packaging.fukYai > 0 || day.packaging.box2Chan > 0 || day.packaging.box3Chan > 0) ? (
             <div className='mb-2 text-sm group/packaging'>
               {/* Packaging Notes - รองรับหลายโน้ต */}
-              {/* ปุ่มเพิ่มโน้ต/ฟอร์มเพิ่มโน้ตใหม่ - อยู่บนสุดเสมอ */}
-              {showPackagingNoteInput[day.cartId] ? (
+              {/* ปุ่มเพิ่มโน้ต/ฟอร์มเพิ่มโน้ตใหม่ - อยู่บนสุดเสมอ (เฉพาะ admin) */}
+              {canEditPackaging && showPackagingNoteInput[day.cartId] ? (
                 <div className='mb-2 p-2 bg-gray-50 rounded border border-gray-200'>
                   <textarea
                     value={packagingNoteInput[day.cartId] ?? ""}
@@ -1354,7 +1420,7 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-              ) : (
+              ) : canEditPackaging ? (
                 <div className='overflow-hidden max-h-0 group-hover/packaging:max-h-10 group-hover/packaging:mb-2 transition-all duration-200'>
                   <button
                     onClick={(e) => {
@@ -1368,7 +1434,7 @@ export default function Dashboard() {
                     เพิ่มโน้ต
                   </button>
                 </div>
-              )}
+              ) : null}
               
               {/* แสดงโน้ตที่มีอยู่ */}
               {day.packaging.notes.length > 0 && (
@@ -1450,26 +1516,237 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {day.packaging.fukYai > 0 && (
-                <div className='flex justify-between items-center py-1 px-2 bg-purple-200 rounded mb-1'>
-                  <span className='font-semibold text-purple-900'>ฟูกใหญ่</span>
-                  <span className='font-bold text-purple-900'>{day.packaging.fukYai}</span>
+              {/* แสดงโหมดแก้ไข packaging หรือโหมดแสดงผล */}
+              {editingPackagingCount[day.cartId] ? (
+                <div className='p-2 bg-gray-50 rounded border border-gray-200 mb-1'>
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-purple-700'>ฟูกใหญ่</span>
+                      <input
+                        type='number'
+                        min='0'
+                        value={editingPackagingCount[day.cartId]?.fukYai ?? 0}
+                        onChange={(e) => setEditingPackagingCount((prev) => ({
+                          ...prev,
+                          [day.cartId]: { ...prev[day.cartId]!, fukYai: parseInt(e.target.value) || 0 }
+                        }))}
+                        className='w-16 text-xs p-1 border border-gray-300 rounded text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-blue-700'>กล่อง 2 ช่องดำ</span>
+                      <input
+                        type='number'
+                        min='0'
+                        value={editingPackagingCount[day.cartId]?.box2Chan ?? 0}
+                        onChange={(e) => setEditingPackagingCount((prev) => ({
+                          ...prev,
+                          [day.cartId]: { ...prev[day.cartId]!, box2Chan: parseInt(e.target.value) || 0 }
+                        }))}
+                        className='w-16 text-xs p-1 border border-gray-300 rounded text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-green-700'>กล่อง 3 ช่องดำ</span>
+                      <input
+                        type='number'
+                        min='0'
+                        value={editingPackagingCount[day.cartId]?.box3Chan ?? 0}
+                        onChange={(e) => setEditingPackagingCount((prev) => ({
+                          ...prev,
+                          [day.cartId]: { ...prev[day.cartId]!, box3Chan: parseInt(e.target.value) || 0 }
+                        }))}
+                        className='w-16 text-xs p-1 border border-gray-300 rounded text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  </div>
+                  <div className='flex justify-end gap-1 mt-2'>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSavePackagingCount(day.cartId);
+                      }}
+                      disabled={savingPackagingCount[day.cartId]}
+                      className='px-2 py-1 text-xs rounded disabled:opacity-50 flex items-center gap-1 hover:bg-green-50'
+                      style={{ color: '#16a34a' }}
+                    >
+                      {savingPackagingCount[day.cartId] ? <span className='animate-spin'>⏳</span> : <Save className='w-3 h-3' />}
+                      บันทึก
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingPackagingCount((prev) => ({ ...prev, [day.cartId]: null }));
+                      }}
+                      className='px-2 py-1 text-xs rounded hover:bg-gray-100'
+                      style={{ color: '#4b5563' }}
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
                 </div>
-              )}
-              {day.packaging.box2Chan > 0 && (
-                <div className='flex justify-between items-center py-1 px-2 bg-blue-200 rounded mb-1'>
-                  <span className='font-semibold text-blue-900'>กล่อง 2 ช่องดำ</span>
-                  <span className='font-bold text-blue-900'>{day.packaging.box2Chan}</span>
-                </div>
-              )}
-              {day.packaging.box3Chan > 0 && (
-                <div className='flex justify-between items-center py-1 px-2 bg-green-200 rounded mb-1'>
-                  <span className='font-semibold text-green-900'>กล่อง 3 ช่องดำ</span>
-                  <span className='font-bold text-green-900'>{day.packaging.box3Chan}</span>
-                </div>
+              ) : (
+                <>
+                  {day.packaging.fukYai > 0 && (
+                    <div 
+                      className={`flex justify-between items-center py-1 px-2 bg-purple-200 rounded mb-1 ${canEditPackaging ? 'cursor-pointer hover:bg-purple-300 transition-colors' : ''}`}
+                      onClick={(e) => {
+                        if (canEditPackaging) {
+                          e.stopPropagation();
+                          setEditingPackagingCount((prev) => ({
+                            ...prev,
+                            [day.cartId]: {
+                              fukYai: day.packaging.fukYai,
+                              box2Chan: day.packaging.box2Chan,
+                              box3Chan: day.packaging.box3Chan,
+                            }
+                          }));
+                        }
+                      }}
+                    >
+                      <span className='font-semibold text-purple-900'>ฟูกใหญ่</span>
+                      <span className='font-bold text-purple-900'>{day.packaging.fukYai}</span>
+                    </div>
+                  )}
+                  {day.packaging.box2Chan > 0 && (
+                    <div 
+                      className={`flex justify-between items-center py-1 px-2 bg-blue-200 rounded mb-1 ${canEditPackaging ? 'cursor-pointer hover:bg-blue-300 transition-colors' : ''}`}
+                      onClick={(e) => {
+                        if (canEditPackaging) {
+                          e.stopPropagation();
+                          setEditingPackagingCount((prev) => ({
+                            ...prev,
+                            [day.cartId]: {
+                              fukYai: day.packaging.fukYai,
+                              box2Chan: day.packaging.box2Chan,
+                              box3Chan: day.packaging.box3Chan,
+                            }
+                          }));
+                        }
+                      }}
+                    >
+                      <span className='font-semibold text-blue-900'>กล่อง 2 ช่องดำ</span>
+                      <span className='font-bold text-blue-900'>{day.packaging.box2Chan}</span>
+                    </div>
+                  )}
+                  {day.packaging.box3Chan > 0 && (
+                    <div 
+                      className={`flex justify-between items-center py-1 px-2 bg-green-200 rounded mb-1 ${canEditPackaging ? 'cursor-pointer hover:bg-green-300 transition-colors' : ''}`}
+                      onClick={(e) => {
+                        if (canEditPackaging) {
+                          e.stopPropagation();
+                          setEditingPackagingCount((prev) => ({
+                            ...prev,
+                            [day.cartId]: {
+                              fukYai: day.packaging.fukYai,
+                              box2Chan: day.packaging.box2Chan,
+                              box3Chan: day.packaging.box3Chan,
+                            }
+                          }));
+                        }
+                      }}
+                    >
+                      <span className='font-semibold text-green-900'>กล่อง 3 ช่องดำ</span>
+                      <span className='font-bold text-green-900'>{day.packaging.box3Chan}</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
-          )}
+          ) : canEditPackaging ? (
+            /* ส่วนเพิ่ม packaging ใหม่เมื่อไม่มี packaging */
+            <div className='mb-2 text-sm'>
+              {showAddPackaging[day.cartId] ? (
+                <div className='p-3 bg-gray-50 rounded border border-gray-200'>
+                  <p className='text-xs font-medium text-gray-700 mb-2'>เพิ่ม Packaging</p>
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-purple-700'>ฟูกใหญ่</span>
+                      <input
+                        type='number'
+                        min='0'
+                        value={newPackaging[day.cartId]?.fukYai ?? 0}
+                        onChange={(e) => setNewPackaging((prev) => ({
+                          ...prev,
+                          [day.cartId]: { ...prev[day.cartId] || { fukYai: 0, box2Chan: 0, box3Chan: 0 }, fukYai: parseInt(e.target.value) || 0 }
+                        }))}
+                        className='w-16 text-xs p-1 border border-gray-300 rounded text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-blue-700'>กล่อง 2 ช่องดำ</span>
+                      <input
+                        type='number'
+                        min='0'
+                        value={newPackaging[day.cartId]?.box2Chan ?? 0}
+                        onChange={(e) => setNewPackaging((prev) => ({
+                          ...prev,
+                          [day.cartId]: { ...prev[day.cartId] || { fukYai: 0, box2Chan: 0, box3Chan: 0 }, box2Chan: parseInt(e.target.value) || 0 }
+                        }))}
+                        className='w-16 text-xs p-1 border border-gray-300 rounded text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-xs text-green-700'>กล่อง 3 ช่องดำ</span>
+                      <input
+                        type='number'
+                        min='0'
+                        value={newPackaging[day.cartId]?.box3Chan ?? 0}
+                        onChange={(e) => setNewPackaging((prev) => ({
+                          ...prev,
+                          [day.cartId]: { ...prev[day.cartId] || { fukYai: 0, box2Chan: 0, box3Chan: 0 }, box3Chan: parseInt(e.target.value) || 0 }
+                        }))}
+                        className='w-16 text-xs p-1 border border-gray-300 rounded text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  </div>
+                  <div className='flex justify-end gap-1 mt-2'>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddNewPackaging(day.cartId);
+                      }}
+                      disabled={savingPackagingCount[day.cartId]}
+                      className='px-2 py-1 text-xs rounded disabled:opacity-50 flex items-center gap-1 hover:bg-green-50'
+                      style={{ color: '#16a34a' }}
+                    >
+                      {savingPackagingCount[day.cartId] ? <span className='animate-spin'>⏳</span> : <Save className='w-3 h-3' />}
+                      บันทึก
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAddPackaging((prev) => ({ ...prev, [day.cartId]: false }));
+                        setNewPackaging((prev) => ({ ...prev, [day.cartId]: { fukYai: 0, box2Chan: 0, box3Chan: 0 } }));
+                      }}
+                      className='px-2 py-1 text-xs rounded hover:bg-gray-100'
+                      style={{ color: '#4b5563' }}
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setNewPackaging((prev) => ({ ...prev, [day.cartId]: { fukYai: 0, box2Chan: 0, box3Chan: 0 } }));
+                    setShowAddPackaging((prev) => ({ ...prev, [day.cartId]: true }));
+                  }}
+                  className='group/btn w-full px-2 py-1 text-xs text-purple-600 border border-dashed border-purple-300 rounded hover:bg-purple-50 flex items-center justify-center gap-1 transition-all duration-300 ease-in-out active:scale-95'
+                >
+                  <Plus className='w-3 h-3 transition-transform duration-300 group-hover/btn:rotate-180 group-hover/btn:scale-110' />
+                  เพิ่ม Packaging
+                </button>
+              )}
+            </div>
+          ) : null}
           <p className='text-center font-semibold text-red-600'>{day.totalText}</p>
         </div>
       </div>
@@ -1722,5 +1999,14 @@ export default function Dashboard() {
         </>
       )}
     </div>
+  );
+}
+
+// Wrap with ProtectedRoute
+export default function Dashboard() {
+  return (
+    <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_DASHBOARD}>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }
