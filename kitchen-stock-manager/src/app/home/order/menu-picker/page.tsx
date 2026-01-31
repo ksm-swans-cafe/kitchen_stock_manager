@@ -45,11 +45,19 @@ export default function Order() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   const router = useRouter();
-  const { addLunchbox } = useCartStore();
+  const { addLunchbox, setOrderStepData } = useCartStore();
 
   // สถานะสำหรับการเลือกเมนู
   const [selectedFoodSet, setSelectedFoodSet] = useState<string>("");
   const [selectedSetMenu, setSelectedSetMenu] = useState<string>("");
+
+  // ส่งข้อมูลขั้นตอนไปที่ Store เพื่อให้ Navigatebar จัดการหัวข้อ
+  useEffect(() => {
+    setOrderStepData({ selectedFoodSet, selectedSetMenu });
+
+    return () => setOrderStepData({ selectedFoodSet: "", selectedSetMenu: "" });
+  }, [selectedFoodSet, selectedSetMenu, setOrderStepData]);
+
   const [selectedMenuItems, setSelectedMenuItems] = useState<string[]>([]);
   const [lunchboxQuantity, setLunchboxQuantity] = useState<number>(1);
   const [lunchboxData, setLunchboxData] = useState<LunchBoxFromAPI[]>([]);
@@ -1499,6 +1507,8 @@ export default function Order() {
               step3Count={selectionCount.total}
               showEdit={isEditMode}
               editingIndex={editingIndex}
+              selectedFoodSet={selectedFoodSet}
+              selectedSetMenu={selectedSetMenu}
               timeLabel={
                 currentTime
                   ? `${currentTime.toLocaleDateString("th-TH", {
@@ -1532,11 +1542,11 @@ export default function Order() {
                 if (!displayImage || failedImages.has(displayImage)) return null;
 
                 return (
-                  <div className='relative w-full overflow-hidden transition-all duration-700 ease-in-out bg-gray-100/50 h-64 sm:h-[450px] lg:h-[550px] opacity-100'>
+                  <div className='relative w-full aspect-video overflow-hidden transition-all duration-700 ease-in-out bg-gray-100/50 opacity-100'>
                     <img
                       src={displayImage}
                       alt={`Set ${selectedSetMenu}`}
-                      className='w-full h-full transition-all duration-700 object-contain bg-white'
+                      className='w-full h-full transition-all duration-700 object-cover bg-white'
                       onError={() => {
                         setFailedImages((prev) => new Set(prev).add(displayImage));
                       }}
@@ -1554,24 +1564,29 @@ export default function Order() {
                       </div>
 
                       {/* กล่องแสดงราคา */}
-                      <div className='hidden sm:block lg:w-72 xl:w-80 animate-fade-in-up pointer-events-auto sticky top-4 z-30'>
-                        <div className='bg-[#F7F3ED]/95 backdrop-blur-sm rounded-2xl p-4 xl:p-5 border border-[#E8E2D9] shadow-2xl flex flex-col justify-center relative overflow-hidden min-h-[140px]'>
+                      <div className='w-[160px] sm:w-auto sm:min-w-[280px] md:w-72 lg:w-72 xl:w-80 animate-fade-in-up pointer-events-auto z-30'>
+                        <div className='bg-[#F7F3ED]/95 backdrop-blur-sm rounded-lg sm:rounded-xl xl:rounded-2xl px-2 py-1.5 sm:p-3 xl:p-5 border border-[#E8E2D9] shadow-lg sm:shadow-2xl flex flex-col justify-center relative overflow-hidden min-h-[70px] sm:min-h-[120px] xl:min-h-[140px]'>
                           {/* Decorative Accent */}
-                          <div className='absolute top-0 left-0 w-full h-1 bg-orange-500' />
+                          <div className='absolute top-0 left-0 w-full h-px sm:h-0.5 xl:h-1 bg-orange-500' />
 
-                          <div className='relative z-10 flex flex-col justify-between h-full'>
+                          <div className='relative z-10 flex flex-col justify-between h-full gap-0.5 sm:gap-0'>
                             <div>
-                              <div className='text-[10px] xl:text-xs font-black text-gray-900 uppercase tracking-[2px] mb-0.5 opacity-80'>{selectedFoodSet}</div>
+                              <div className='text-[7px] sm:text-[9px] xl:text-xs font-black text-gray-900 uppercase tracking-[0.5px] sm:tracking-[2px] mb-0 sm:mb-0.5 opacity-80'>{selectedFoodSet}</div>
                             </div>
 
-                            <div className='my-2 xl:my-3 flex items-center gap-3'>
-                              <div className='h-[1px] bg-gray-900/10 flex-1' />
-                              <div className='text-xl xl:text-3xl font-black text-gray-900 tracking-tighter tabular-nums'>{setPriceBudget ? `${(setPriceBudget - 20) * lunchboxQuantity}-${(setPriceBudget + 20) * lunchboxQuantity}` : (selectionPrice * lunchboxQuantity).toLocaleString()}</div>
-                              <div className='h-[1px] bg-gray-900/10 flex-1' />
+                            <div className='my-0.5 sm:my-1.5 xl:my-3 flex items-center gap-1 sm:gap-2 xl:gap-3'>
+                              <div className='h-[0.5px] sm:h-[1px] bg-gray-900/10 flex-1' />
+                              <div className='text-sm sm:text-lg xl:text-3xl font-black text-gray-900 tracking-tighter tabular-nums'>
+                                {setPriceBudget
+                                  ? `${(setPriceBudget * lunchboxQuantity).toLocaleString()}`
+                                  : (selectionPrice * lunchboxQuantity).toLocaleString()}
+                                {/* <span className='text-[9px] sm:text-xs xl:text-base ml-0.5 sm:ml-1 font-normal opacity-60'>฿</span> */}
+                              </div>
+                              <div className='h-[0.5px] sm:h-[1px] bg-gray-900/10 flex-1' />
                             </div>
 
-                            <div className='flex items-center justify-between pb-1'>
-                              <div className={`flex items-center gap-1 rounded-lg p-0.5 shadow-sm ${selectionCount.total > 0 ? "bg-white ring-1 ring-gray-900/5" : "bg-gray-100 ring-1 ring-gray-200"}`}>
+                            <div className='flex items-center justify-start sm:justify-between pb-0 sm:pb-1'>
+                              <div className={`hidden sm:flex items-center gap-0.5 sm:gap-1 rounded-md sm:rounded-lg p-0.5 shadow-sm ${selectionCount.total > 0 ? "bg-white ring-1 ring-gray-900/5" : "bg-gray-100 ring-1 ring-gray-200"}`}>
                                 <button
                                   type='button'
                                   disabled={selectionCount.total === 0}
@@ -1579,11 +1594,11 @@ export default function Order() {
                                     e.stopPropagation();
                                     if (selectionCount.total > 0) setLunchboxQuantity((prev) => Math.max(1, prev - 1));
                                   }}
-                                  className={`p-1 rounded transition-colors ${selectionCount.total > 0 ? "hover:bg-orange-50 text-gray-500 hover:text-orange-600" : "cursor-not-allowed text-gray-300"}`}
+                                  className={`hidden sm:flex p-0.5 sm:p-1 rounded transition-colors ${selectionCount.total > 0 ? "hover:bg-orange-50 text-gray-500 hover:text-orange-600" : "cursor-not-allowed text-gray-300"}`}
                                   title={selectionCount.total === 0 ? "กรุณาเลือกเมนูก่อน" : "ลดจำนวน"}>
-                                  <Minus className='w-3 h-3' />
+                                  <Minus className='w-2 h-2 sm:w-2.5 sm:h-2.5 xl:w-3 xl:h-3' />
                                 </button>
-                                <span className={`w-6 text-center text-xs font-black tabular-nums ${selectionCount.total > 0 ? "text-gray-900" : "text-gray-400"}`}>{lunchboxQuantity}</span>
+                                <span className={`w-3 sm:w-5 xl:w-6 text-center text-[8px] sm:text-[10px] xl:text-xs font-black tabular-nums ${selectionCount.total > 0 ? "text-gray-900" : "text-gray-400"}`}>{lunchboxQuantity}</span>
                                 <button
                                   type='button'
                                   disabled={selectionCount.total === 0}
@@ -1591,15 +1606,15 @@ export default function Order() {
                                     e.stopPropagation();
                                     if (selectionCount.total > 0) setLunchboxQuantity((prev) => prev + 1);
                                   }}
-                                  className={`p-1 rounded transition-colors ${selectionCount.total > 0 ? "hover:bg-orange-50 text-gray-500 hover:text-orange-600" : "cursor-not-allowed text-gray-300"}`}
+                                  className={`hidden sm:flex p-0.5 sm:p-1 rounded transition-colors ${selectionCount.total > 0 ? "hover:bg-orange-50 text-gray-500 hover:text-orange-600" : "cursor-not-allowed text-gray-300"}`}
                                   title={selectionCount.total === 0 ? "กรุณาเลือกเมนูก่อน" : "เพิ่มจำนวน"}>
-                                  <Plus className='w-3 h-3' />
+                                  <Plus className='w-2 h-2 sm:w-2.5 sm:h-2.5 xl:w-3 xl:h-3' />
                                 </button>
                               </div>
 
-                              <div className='text-right'>
-                                <p className='text-[9px] xl:text-[10px] uppercase font-bold text-gray-500 tracking-wider'>Selection</p>
-                                <p className='text-xs text-center xl:text-sm font-black text-gray-900 italic'>{selectedSetMenu}</p>
+                              <div className='ml-auto flex flex-col items-center sm:items-end text-center sm:text-right'>
+                                <p className='text-[6px] sm:text-[8px] xl:text-[10px] uppercase font-bold text-gray-500 tracking-tight sm:tracking-wider'>Selection</p>
+                                <p className='text-[8px] sm:text-[10px] xl:text-sm font-black text-center text-gray-900 italic leading-tight'>{selectedSetMenu}</p>
                               </div>
                             </div>
                           </div>
@@ -1611,7 +1626,7 @@ export default function Order() {
               })()}
 
               {/* ส่วนค้นหา */}
-              <div className='bg-white/70 backdrop-blur-md p-3 sm:p-4 lg:p-6 transition-all duration-300 rounded-b-2xl shadow-lg border border-white/20 mb-4 mx-3 sm:mx-4 lg:mx-6'>
+              <div className='bg-white/95 backdrop-blur-xl p-4 sm:p-5 lg:p-6 transition-all duration-300 rounded-2xl sm:rounded-3xl shadow-lg border-2 border-gray-100/50 ring-1 ring-black/[0.02] mb-2 mx-4 sm:mx-6 lg:mx-8 mt-2 lg:mt-4 relative z-30'>
                 <div className='flex flex-col gap-3 sm:gap-4'>
                   <div className='flex-1 relative w-full'>
                     <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
@@ -1640,14 +1655,17 @@ export default function Order() {
               </div>
 
               {/* พื้นที่เลือกเมนู */}
-              <div className='mb-6 lg:mb-8 xl:mb-12'>
+              <div className='mt-5 sm:mt-5 mb-6 lg:mb-8 xl:mb-12 px-4 sm:px-6 lg:px-8'>
+                <h1 className='text-lg sm:text-2xl font-bold text-gray-800 flex items-center gap-2 mb-1'>
+                  <span className='w-1.5 h-6 bg-orange-500 rounded-full'></span>
+                  {!selectedFoodSet ? "1. เลือกชุดอาหาร" : !selectedSetMenu ? "2. เลือก Set อาหาร" : "3. เลือกเมนูอาหาร"}
+                </h1>
                 {/* Step 1: เลือกชุดอาหาร */}
                 {!selectedFoodSet && (
-                  <div className='px-4 sm:px-6 lg:px-8'>
-                    <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 lg:mb-6 xl:mb-8 flex flex-col gap-2'>
-                      <span className='bg-linear-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>1. เลือกชุดอาหาร</span>
-                      <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{filteredFoodSets.length} รายการ</span>
-                    </h2>
+                  <div className=' pt-3 sm:pt-4 pt-3 sm:pt-4'>
+                    <div className='flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
+                      <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium border border-gray-200'>พบ {filteredFoodSets.length} รายการ</span>
+                    </div>
 
                     <div className='responsive-grid'>
                       {filteredFoodSets.map((foodSet, index) => {
@@ -1693,28 +1711,9 @@ export default function Order() {
 
                 {/* Step 2: เลือก Set อาหาร */}
                 {selectedFoodSet && !selectedSetMenu && (
-                  <div className='px-4 sm:px-6 lg:px-8'>
-                    <div className='flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
-                      <button
-                        onClick={() => {
-                          setSelectedFoodSet("");
-                          setSelectedSetMenu("");
-                          setSelectedMenuItems([]);
-                          setSelectedMeatType(null);
-                          setNote("");
-                          setSearchQuery("");
-                          setFocusedDish(null);
-                        }}
-                        className='flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md group'
-                        title='ย้อนกลับไปเลือกชุดอาหาร'>
-                        <ArrowLeft className='w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-orange-600 transition-colors' />
-                      </button>
-                      <div className='flex-1'>
-                        <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 flex flex-col gap-2'>
-                          <span className='bg-linear-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>2. เลือก Set อาหาร</span>
-                          <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-2 py-1 rounded-full w-fit'>{filteredSetMenus.length} รายการ</span>
-                        </h2>
-                      </div>
+                  <div className=''>
+                    <div className='flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
+                      <span className='text-xs sm:text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium border border-gray-200'>พบ {filteredSetMenus.length} รายการ</span>
                     </div>
 
                     <div className='responsive-grid'>
@@ -1764,45 +1763,27 @@ export default function Order() {
 
                 {/* Step 3: เลือกเมนูอาหาร */}
                 {selectedFoodSet && selectedSetMenu && (
-                  <div className='px-4 sm:px-6 lg:px-8'>
-                    <div className='flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
-                      <button
-                        onClick={() => {
-                          setSelectedSetMenu("");
-                          setSelectedMenuItems([]);
-                          setSelectedMeatType(null);
-                          setNote("");
-                          setSearchQuery("");
-                          setFocusedDish(null);
-                        }}
-                        className='flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow-md group'
-                        title='ย้อนกลับไปเลือก Set อาหาร'>
-                        <ArrowLeft className='w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-orange-600 transition-colors' />
-                      </button>
-                      <div className='flex-1'>
-                        <h2 className='text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-gray-800 flex flex-col flex-wrap gap-2'>
-                          <span className='bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent'>3. เลือกเมนูอาหาร</span>
-                          {(() => {
-                            const { selected, limit } = effectiveSelectionDisplay;
-                            const isUnlimited = limit === 0;
+                  <div className=''>
+                    <div className='flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 xl:mb-8'>
+                      {(() => {
+                        const { selected, limit } = effectiveSelectionDisplay;
+                        const isUnlimited = limit === 0;
 
-                            return (
-                              <div className='flex gap-2 flex-wrap'>
-                                {isUnlimited ? (
-                                  <span className='text-xs sm:text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-full w-fit'>เลือกแล้ว {selected} เมนู</span>
-                                ) : (
-                                  <>
-                                    <span className='text-xs sm:text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-full w-fit'>
-                                      เลือกแล้ว {selected}/{limit}
-                                    </span>
-                                    {selected >= limit && <span className='text-xs sm:text-sm bg-green-100 text-green-600 px-2 py-1 rounded-full w-fit'>ครบแล้ว!</span>}
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </h2>
-                      </div>
+                        return (
+                          <div className='flex gap-2 flex-wrap'>
+                            {isUnlimited ? (
+                              <span className='text-xs sm:text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold border border-blue-100 shadow-sm'>เลือกแล้ว {selected} เมนู</span>
+                            ) : (
+                              <>
+                                <span className={`text-xs sm:text-sm px-3 py-1 rounded-full font-bold border shadow-sm ${selected >= limit ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                  เลือกแล้ว {selected}/{limit}
+                                </span>
+                                {selected >= limit && <span className='text-xs sm:text-sm bg-emerald-500 text-white px-3 py-1 rounded-full font-bold shadow-md animate-bounce'>ครบแล้ว!</span>}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* ส่วนบันทึกเพิ่มเติม (Mobile) */}
@@ -2244,44 +2225,31 @@ export default function Order() {
               </div>
             </div>
 
-            {/* แถบเมนูด้านล่าง (Mobile) */}
-            <div className='lg:hidden fixed bottom-0 inset-x-0 z-40 flex flex-col'>
-              {/* จำนวนชุดอาหาร (Mobile) - แสดงเฉพาะเมื่อเลือกเมนูแล้ว */}
-              {selectedSetMenu && selectionCount.total > 0 && (
-                <div className='bg-orange-50/90 backdrop-blur-sm border-t border-orange-100 px-4 py-2 flex items-center justify-between shadow-xs'>
-                  <span className='text-xs font-bold text-orange-800 uppercase tracking-wider'>จำนวนชุด (Set Quantity)</span>
-                  <div className='flex items-center gap-3 bg-white rounded-full p-1 shadow-sm ring-1 ring-orange-200'>
-                    <button onClick={() => setLunchboxQuantity((prev) => Math.max(1, prev - 1))} className='w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-600 active:bg-orange-100 transition-colors'>
-                      <Minus className='w-4 h-4' />
-                    </button>
-                    <span className='w-8 text-center text-base font-black text-gray-900 tabular-nums'>{lunchboxQuantity}</span>
-                    <button onClick={() => setLunchboxQuantity((prev) => prev + 1)} className='w-8 h-8 rounded-full flex items-center justify-center bg-gray-50 text-gray-600 active:bg-orange-100 transition-colors'>
-                      <Plus className='w-4 h-4' />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <MobileActionBar
-                canSubmit={canSubmitSelection}
-                saving={isSaving}
-                editMode={isEditMode}
-                totalCost={(() => {
-                  if (selectionCount.total === 0) return null;
-                  return selectionPrice * lunchboxQuantity;
-                })()}
-                onSubmit={handle.Submit}
-                onReset={() => {
-                  setSelectedFoodSet("");
-                  setSelectedSetMenu("");
-                  setSelectedMenuItems([]);
-                  setLunchboxQuantity(1);
-                  setSelectedMeatType(null);
-                  setNote("");
-                }}
-              />
-            </div>
           </div>
+
+          {/* แถบเมนูด้านล่าง (Mobile Footer) */}
+          <MobileActionBar
+            isVisible={!!selectedSetMenu}
+            canSubmit={canSubmitSelection}
+            saving={isSaving}
+            editMode={isEditMode}
+            totalCost={(() => {
+              if (selectionCount.total === 0) return null;
+              return selectionPrice * lunchboxQuantity;
+            })()}
+            onSubmit={handle.Submit}
+            onReset={() => {
+              setSelectedFoodSet("");
+              setSelectedSetMenu("");
+              setSelectedMenuItems([]);
+              setLunchboxQuantity(1);
+              setSelectedMeatType(null);
+              setNote("");
+            }}
+            quantity={lunchboxQuantity}
+            onQuantityChange={(val) => setLunchboxQuantity(val)}
+            showQuantityControl={!!selectedSetMenu && selectionCount.total > 0}
+          />
         </div >
       </div >
     </div >

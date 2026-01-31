@@ -31,24 +31,24 @@ export interface PackagingInfo {
 // คำนวณ packaging จาก set name และ quantity
 export const calculatePackaging = (setName: string, quantity: number): PackagingInfo => {
   const normalizedSet = setName.toUpperCase().replace(/^SET\s*/i, '').trim();
-  
+
   let fukYai = 0;
   let box2Chan = 0;
   let box3Chan = 0;
-  
+
   if (normalizedSet === 'A' || normalizedSet.startsWith('A ')) {
     box2Chan = quantity;
   } else if (normalizedSet === 'B' || normalizedSet.startsWith('B ')) {
     box3Chan = quantity;
   } else if (normalizedSet === 'C' || normalizedSet.startsWith('C ') ||
-             normalizedSet === 'D' || normalizedSet.startsWith('D ') ||
-             normalizedSet === 'E' || normalizedSet.startsWith('E ') ||
-             normalizedSet === 'F' || normalizedSet.startsWith('F ') ||
-             normalizedSet === 'G' || normalizedSet.startsWith('G ')) {
+    normalizedSet === 'D' || normalizedSet.startsWith('D ') ||
+    normalizedSet === 'E' || normalizedSet.startsWith('E ') ||
+    normalizedSet === 'F' || normalizedSet.startsWith('F ') ||
+    normalizedSet === 'G' || normalizedSet.startsWith('G ')) {
     box2Chan = quantity;
     fukYai = quantity;
   }
-  
+
   return { fukYai, box2Chan, box3Chan };
 };
 
@@ -129,9 +129,11 @@ interface CartState {
   total_cost_lunchbox: string;
   total_remain: string;
   total_cost: string;
-  description: CartCartDescription[];
   ispay: string;
   order_name: string;
+  description: CartCartDescription[];
+  orderStepData: { selectedFoodSet: string; selectedSetMenu: string };
+  setOrderStepData: (data: { selectedFoodSet: string; selectedSetMenu: string }) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -164,6 +166,8 @@ export const useCartStore = create<CartState>()(
       description: [],
       ispay: "",
       order_name: "",
+      orderStepData: { selectedFoodSet: "", selectedSetMenu: "" },
+      setOrderStepData: (data) => set({ orderStepData: data }),
       addItem: (item, description = "") => {
         const { items } = get();
         const finalDescription = description || item.menu_description || "";
@@ -244,6 +248,7 @@ export const useCartStore = create<CartState>()(
           description: [],
           ispay: "",
           order_name: "",
+          orderStepData: { selectedFoodSet: "", selectedSetMenu: "" },
         });
       },
 
