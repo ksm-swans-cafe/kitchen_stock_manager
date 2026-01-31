@@ -46,19 +46,17 @@ export async function POST(request: NextRequest) {
     const cartCreateDate = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
     const cartCreateDateString = cartCreateDate.toISOString();
 
-    const todayStart = new Date(cartCreateDate);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayStartString = todayStart.toISOString();
+    const monthStart = new Date(cartCreateDate.getFullYear(), cartCreateDate.getMonth(), 1, 0, 0, 0, 0);
+    const monthStartString = monthStart.toISOString();
 
-    const todayEnd = new Date(cartCreateDate);
-    todayEnd.setHours(23, 59, 59, 999);
-    const todayEndString = todayEnd.toISOString();
+    const monthEnd = new Date(cartCreateDate.getFullYear(), cartCreateDate.getMonth() + 1, 0, 23, 59, 59, 999);
+    const monthEndString = monthEnd.toISOString();
 
     const orderCount = await prisma.new_cart.count({
       where: {
         create_date: {
-          gte: todayStartString,
-          lte: todayEndString,
+          gte: monthStartString,
+          lte: monthEndString,
         },
       },
     });

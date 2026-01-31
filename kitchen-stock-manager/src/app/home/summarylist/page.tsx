@@ -1048,11 +1048,30 @@ const SummaryList: React.FC = () => {
     mutateCarts();
   };
 
+  const formatDeliveryDateDDMMYY = (raw: string | undefined): string => {
+    if (!raw || raw === "ไม่ระบุ") return "ไม่ระบุ";
+    const s = raw.trim();
+    if (s.includes("/")) {
+      const parts = s.split("/");
+      const day = parts[0]?.padStart(2, "0") ?? "";
+      const month = parts[1]?.padStart(2, "0") ?? "";
+      const yearFull = parts[2] ?? "";
+      const yy = yearFull.length >= 2 ? yearFull.slice(-2) : yearFull;
+      return `${day}/${month}/${yy}`;
+    }
+    if (s.includes("-")) {
+      const [y, m, d] = s.split("-");
+      const yy = (y ?? "").length >= 2 ? (y ?? "").slice(-2) : y ?? "";
+      return `${d ?? ""}/${m ?? ""}/${yy}`;
+    }
+    return raw;
+  };
+
   const generatePaymentCopyText = (cart: Cart): string => {
     const customerName = cart.customer_name || "ไม่ระบุ";
     const channelAccess = (cart as any).channel_access || "ไม่ระบุ";
     const orderName = (cart as any).order_name || customerName;
-    const deliveryDate = cart.delivery_date || "ไม่ระบุ";
+    const deliveryDate = formatDeliveryDateDDMMYY(cart.delivery_date);
     const exportTime = cart.export_time || "ไม่ระบุ";
     const receiveTime = cart.receive_time || "ไม่ระบุ";
     const locationSend = cart.location_send || "ไม่ระบุ";
@@ -1129,7 +1148,7 @@ const SummaryList: React.FC = () => {
 2.เวลาส่งสินค้า : ${exportTime} น.
 3.เวลารับสินค้า : ${receiveTime} น.
 4.สถานที่จัดส่ง : ${locationSend}
-5.ค่าจัดส่ง: ${shippingCost} บาท ส่งโดย ${shippingBy}
+5.ค่าจัดส่ง : ${shippingCost} บาท ส่งโดย ${shippingBy}
 6.ชื่อผู้รับสินค้า : ${receiveName}
 7.เบอร์โทร : ${customerTel}
 8.ออกบิลในนาม : ${customerName}
@@ -2986,7 +3005,7 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
                                                 )}
 
                                                 <Button type='button' size='sm' className='w-full bg-green-600 hover:bg-green-700 text-white' style={{ color: "#000000" }} onClick={handleAddLunchbox} disabled={!selectedLunchboxName || !selectedLunchboxSet}>
-                                                  <Container className='w-4 h-4 mr-1' />➕ เพิ่มกล่องอาหาร
+                                                  ➕ เพิ่มกล่องอาหาร
                                                 </Button>
                                               </div>
 
@@ -3361,21 +3380,7 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
 
                                             {/* ปุ่มควบคุม */}
                                             <div className='flex justify-end gap-2 pt-4 border-t'>
-                                              <Button
-                                                style={{ color: "#000000" }}
-                                                variant='outline'
-                                                onClick={() => {
-                                                  setEditMenuDialog(null);
-                                                  setEditMenuDialogTimes(null);
-                                                  setShouldFetchMenu(false);
-                                                  setSelectedLunchboxName("");
-                                                  setSelectedLunchboxSet("");
-                                                  setPreviewLunchbox(null);
-                                                  setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
-                                                  setIsDeleting(false); // Reset flag when closing dialog
-                                                }}>
-                                                ยกเลิก
-                                              </Button>
+                                              
                                               <Button
                                                 style={{ color: "#000000" }}
                                                 onClick={async () => {
@@ -3427,6 +3432,21 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
                                                 }}
                                                 disabled={isSaving !== null}>
                                                 {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+                                              </Button>
+                                              <Button
+                                                style={{ color: "#000000" }}
+                                                variant='outline'
+                                                onClick={() => {
+                                                  setEditMenuDialog(null);
+                                                  setEditMenuDialogTimes(null);
+                                                  setShouldFetchMenu(false);
+                                                  setSelectedLunchboxName("");
+                                                  setSelectedLunchboxSet("");
+                                                  setPreviewLunchbox(null);
+                                                  setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
+                                                  setIsDeleting(false); // Reset flag when closing dialog
+                                                }}>
+                                                ยกเลิก
                                               </Button>
                                             </div>
                                           </div>
