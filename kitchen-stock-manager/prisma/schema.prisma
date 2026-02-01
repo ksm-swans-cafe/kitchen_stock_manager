@@ -101,8 +101,8 @@ type CartLunchboxLunchboxMenuMenuIngredients {
 }
 
 type MenuMenuIngredients {
-  ingredient_name String
-  useItem         Int
+  ingredient_name String?
+  useItem         Int?
 }
 
 type MenuMenuLunchbox {
@@ -276,15 +276,16 @@ model lunchbox {
 
 model menu {
   id               String                @id @default(auto()) @map("_id") @db.ObjectId
-  menu_category    String
+  menu_category    String?
   menu_cost        Int?
   /// Multiple data types found: Int: 80.6%, BigInt: 19.4% out of 129 sampled entries
   menu_id          Json                  @unique
-  menu_image       String
+  menu_image       String?
   menu_ingredients MenuMenuIngredients[]
-  menu_lunchbox    MenuMenuLunchbox[]
-  menu_name        String
-  menu_subname     String
+  /// Multiple data types found: Array, Binary - using Json for flexibility
+  menu_lunchbox    Json?
+  menu_name        String?
+  menu_subname     String?
 }
 
 model new_cart {
