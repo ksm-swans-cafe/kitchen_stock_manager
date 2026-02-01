@@ -34,6 +34,8 @@ import SummaryIcon from "@/assets/summarylist.png";
 
 import { fetcher } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PERMISSIONS } from "@/lib/permissions";
 
 import { Ingredient, MenuItem, Cart, CartItem, RawCart, Lunchbox } from "@/types/interface_summary_orderhistory";
 
@@ -3654,9 +3656,11 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
 // Wrapper component ที่ใช้ Suspense boundary สำหรับ useSearchParams
 const SummaryListPage: React.FC = () => {
   return (
-    <Suspense fallback={<Loading context='หน้าสรุปรายการ' icon={SummaryIcon.src} />}>
-      <SummaryList />
-    </Suspense>
+    <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_SUMMARY}>
+      <Suspense fallback={<Loading context='หน้าสรุปรายการ' icon={SummaryIcon.src} />}>
+        <SummaryList />
+      </Suspense>
+    </ProtectedRoute>
   );
 };
 

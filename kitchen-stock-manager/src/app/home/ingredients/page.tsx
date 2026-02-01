@@ -23,6 +23,8 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetcher } from "@/lib/utils";
 import useSWR from "swr";
 import axios from "axios";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PERMISSIONS } from "@/lib/permissions";
 
 
 const normalizeThaiVowel = (text: string): string => {
@@ -30,7 +32,7 @@ const normalizeThaiVowel = (text: string): string => {
   return text.replace(/เเ/g, "แ").normalize("NFC");
 };
 
-export default function IngredientManagement() {
+function IngredientManagementContent() {
   const chunkSize = 1000;
   // const [allEmployee, setEmployee] = useState<Employee[]>([]);
   const [visibleCount, setVisibleCount] = useState(chunkSize);
@@ -508,5 +510,14 @@ export default function IngredientManagement() {
         )}
       </div>
     </div>
+  );
+}
+
+// Wrap with ProtectedRoute
+export default function IngredientManagement() {
+  return (
+    <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_INGREDIENTS}>
+      <IngredientManagementContent />
+    </ProtectedRoute>
   );
 }

@@ -7,13 +7,44 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { Button } from "@/share/ui/button";
 import { LogOut } from "lucide-react";
 
+// Role priority order (higher index = higher priority)
+const ROLE_PRIORITY: Record<string, number> = {
+  customer: 1,
+  employee: 2,
+  admin: 3,
+  developer: 4,
+  dev: 4,
+};
+
 export default function Menubar() {
   const pathname = usePathname();
-  const { userRole, userName, logout, isLoading, checkAuth } = useAuth();
+  const { userRole, userRoles, userName, logout, isLoading, checkAuth } = useAuth();
   const isLoginPage = pathname === "/login";
   const router = useRouter();
   const [isHidden, setIsHidden] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Get highest priority role from userRoles
+  const getHighestRole = (): string | null => {
+    if (!userRoles || userRoles.length === 0) {
+      return typeof userRole === 'string' ? userRole : null;
+    }
+    
+    let highestRole = userRoles[0];
+    let highestPriority = ROLE_PRIORITY[highestRole.toLowerCase()] || 0;
+    
+    for (const role of userRoles) {
+      const priority = ROLE_PRIORITY[role.toLowerCase()] || 0;
+      if (priority > highestPriority) {
+        highestPriority = priority;
+        highestRole = role;
+      }
+    }
+    
+    return highestRole;
+  };
+
+  const highestRole = getHighestRole();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,15 +67,20 @@ export default function Menubar() {
   }, [lastScrollY]);
 
   const getRoleName = (role: string | null) => {
-    switch (role) {
+    if (!role) return "Guest";
+    const lowerRole = role.toLowerCase();
+    switch (lowerRole) {
       case "admin":
         return "Administrator";
+      case "developer":
+      case "dev":
+        return "Developer";
       case "employee":
         return "Employee";
       case "customer":
         return "Customer";
       default:
-        return "Guest";
+        return role; // Return original role name if not matched
     }
   };
 
@@ -128,13 +164,13 @@ export default function Menubar() {
             {/* สำหรับหน้าจอขนาดกลางขึ้นไป */}
             <div className='hidden md:flex flex-col items-start min-w-0'>
               <span className='text-base font-medium text-foreground truncate max-w-[150px]'>{userName || "Guest"}</span>
-              <span className='text-sm text-muted-foreground truncate max-w-[150px]'>{getRoleName(userRole)}</span>
+              <span className='text-sm text-muted-foreground truncate max-w-[150px]'>{getRoleName(highestRole)}</span>
             </div>
 
             {/* สำหรับหน้าจอขนาดเล็ก (มือถือ) */}
             <div className='md:hidden flex flex-col items-start min-w-0'>
               <span className='text-sm font-medium text-foreground truncate max-w-[100px]'>{userName ? userName.split(" ")[0] : "Guest"}</span>
-              <span className='text-xs text-muted-foreground truncate max-w-[100px]'>{getRoleName(userRole)}</span>
+              <span className='text-xs text-muted-foreground truncate max-w-[100px]'>{getRoleName(highestRole)}</span>
             </div>
           </div>
 

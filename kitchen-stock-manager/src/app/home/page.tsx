@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { create } from "zustand";
 import { toast } from "sonner";
-import { Plus, ShoppingCart, History, AlertTriangle, FileText, DollarSign, LayoutGrid } from "lucide-react";
+import { Plus, ShoppingCart, History, AlertTriangle, FileText, DollarSign, LayoutGrid, ImageIcon, Shield } from "lucide-react";
 
 import { Button } from "@/share/ui/button";
 import { Card, CardContent } from "@/share/ui/card";
@@ -15,6 +15,8 @@ import { DetailIngredient } from "@/models/menu_card/MenuCard";
 import { MenuHome } from "@/models/common";
 import { fetcher } from "@/lib/utils";
 import useLoadingDots from "@/lib/hook/Dots";
+import { usePermission } from "@/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface UseShowProps {
   showAll: boolean;
@@ -30,14 +32,20 @@ const useShow = create<UseShowProps>((set) => ({
   setShowFullList: (value) => set({ showFullList: value }),
 }));
 
+// Extended MenuHome with permission
+interface MenuHomeWithPermission extends MenuHome {
+  requiredPermission?: string;
+}
+
 export default function Page() {
   const router = useRouter();
   const { showAll, showFullList, setShowAll, setShowFullList } = useShow();
   const popupRef = useRef<HTMLDivElement>(null);
   const dots = useLoadingDots();
+  const { hasPermission, canView } = usePermission();
 
   // ⭐ เมนูพร้อม Dashboard ใต้ Summary List
-  const menuItems: MenuHome[] = [
+  const menuItems: MenuHomeWithPermission[] = [
     {
       id: "order",
       title: "สั่งอาหาร",
@@ -50,6 +58,7 @@ export default function Page() {
       onClick: () => router.push("/home/order"),
       hasBadge: false,
       badgeText: "",
+      requiredPermission: PERMISSIONS.VIEW_ORDERS,
     },
     {
       id: "summary-list",
@@ -63,6 +72,7 @@ export default function Page() {
       onClick: () => router.push("/home/summarylist"),
       hasBadge: false,
       badgeText: "",
+      requiredPermission: PERMISSIONS.VIEW_SUMMARY,
     },
 
     {
@@ -71,14 +81,13 @@ export default function Page() {
       icon: LayoutGrid,
       color: {
         bg: "bg-sky-500/10 border border-sky-400/40",
-        // bg: "bg-sky-500/10 border border-sky-400/40 shadow-[0_0_20px_rgba(56,189,248,0.45)]",
         hover: "group-hover:bg-sky-500/20",
-        // "group-hover:bg-sky-500/20 group-hover:shadow-[0_0_28px_rgba(56,189,248,0.75)]",
         icon: "text-sky-500",
       },
       onClick: () => router.push("/home/dashboard"),
       hasBadge: false,
       badgeText: "",
+      requiredPermission: PERMISSIONS.VIEW_DASHBOARD,
     },
 
     {
@@ -93,6 +102,7 @@ export default function Page() {
       onClick: () => router.push("/home/orderhistory"),
       hasBadge: false,
       badgeText: "",
+      requiredPermission: PERMISSIONS.VIEW_ORDERS,
     },
      {
       id: "add-ingredients",
@@ -106,6 +116,35 @@ export default function Page() {
       onClick: () => router.push("/home/ingredients"),
       hasBadge: false,
       badgeText: "",
+      requiredPermission: PERMISSIONS.VIEW_INGREDIENTS,
+    },
+    {
+      id: "image-setting",
+      title: "จัดการรูปภาพชุดอาหาร",
+      icon: ImageIcon,
+      color: {
+        bg: "bg-pink-500/10",
+        hover: "group-hover:bg-pink-500/20",
+        icon: "text-pink-600",
+      },
+      onClick: () => router.push("/home/image-setting"),
+      hasBadge: false,
+      badgeText: "",
+      requiredPermission: PERMISSIONS.DEV_IMAGES,
+    },
+    {
+      id: "role-management",
+      title: "จัดการ Role & สิทธิ์",
+      icon: Shield,
+      color: {
+        bg: "bg-purple-500/10",
+        hover: "group-hover:bg-purple-500/20",
+        icon: "text-purple-600",
+      },
+      onClick: () => router.push("/home/role-management"),
+      hasBadge: false,
+      badgeText: "",
+      requiredPermission: PERMISSIONS.DEV_ROLES,
     },
     // {
     //   id: "finance",
@@ -196,7 +235,9 @@ export default function Page() {
       {/* Main Menu */}
       <div className='flex-1 flex items-center justify-center min-h-[calc(100vh-140px)]'>
         <div className='w-full max-w-xl flex flex-col gap-6 my-8'>
-          {menuItems.map((item) => (
+          {menuItems
+            .filter((item) => !item.requiredPermission || hasPermission(item.requiredPermission))
+            .map((item) => (
             <Card key={item.id} className='group hover:shadow-xl transition-all duration-300'>
               <CardContent className='relative p-0'>
                 {item.hasBadge && <div className='absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md z-10'>{item.badgeText}</div>}
