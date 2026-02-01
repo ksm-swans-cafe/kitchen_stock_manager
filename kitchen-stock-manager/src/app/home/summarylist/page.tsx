@@ -2848,10 +2848,11 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
                                       } else {
                                       }
                                     }}>
-                                    <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
-                                      <DialogTitle>
-                                        {editMenuDialog && (
-                                          <div className='space-y-6'>
+                                    <DialogContent className='max-w-4xl max-h-[80vh] flex flex-col overflow-hidden'>
+                                      <div className='flex-1 overflow-y-auto min-h-0'>
+                                        <DialogTitle>
+                                          {editMenuDialog && (
+                                            <div className='space-y-6'>
                                             <div style={{ color: "#000000" }} className='text-xl font-bold mb-4'>
                                               แก้ไขเมนูสำหรับออเดอร์ {editMenuDialog?.order_number || editMenuDialog?.id}
                                             </div>
@@ -3377,81 +3378,76 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
                                                 </>
                                               )}
                                             </div>
-
-                                            {/* ปุ่มควบคุม */}
-                                            <div className='flex justify-end gap-2 pt-4 border-t'>
-                                              
-                                              <Button
-                                                style={{ color: "#000000" }}
-                                                onClick={async () => {
-                                                  // เรียกใช้ฟังก์ชัน handleEdit.Menu
-                                                  if (editMenuDialog) {
-                                                    console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
-                                                    console.log("📦 id:", editMenuDialog.id);
-                                                    console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
-                                                    console.log("🍱 lunchbox:", JSON.stringify(editMenuDialog.lunchbox, null, 2));
-
-                                                    // Save times if they were changed
-                                                    if (editMenuDialogTimes) {
-                                                      const exportTime = `${editMenuDialogTimes.exportHour}:${editMenuDialogTimes.exportMinute}`;
-                                                      const receiveTime = `${editMenuDialogTimes.receiveHour}:${editMenuDialogTimes.receiveMinute}`;
-
-                                                      // Check if times changed
-                                                      const timesChanged =
-                                                        exportTime !== editMenuDialog.export_time ||
-                                                        receiveTime !== editMenuDialog.receive_time;
-
-                                                      if (timesChanged) {
-                                                        try {
-                                                          const payload = {
-                                                            export_time: exportTime,
-                                                            receive_time: receiveTime,
-                                                          };
-                                                          const response = await axios.patch(`/api/edit/cart_time/${editMenuDialog.id}`, payload);
-
-                                                          if (response.status !== 200) {
-                                                            const errorData = response.data;
-                                                            throw new Error(errorData.error || "Failed to update times");
-                                                          }
-                                                        } catch (err) {
-                                                          console.error("Error updating times:", err);
-                                                          Swal.fire({
-                                                            icon: "error",
-                                                            title: "เกิดข้อผิดพลาด",
-                                                            text: err instanceof Error ? err.message : "ไม่สามารถอัปเดตเวลาได้",
-                                                            showConfirmButton: false,
-                                                            timer: 3000,
-                                                          });
-                                                          return;
-                                                        }
-                                                      }
-                                                    }
-
-                                                    handleEdit.Menu(editMenuDialog.id, editMenuDialog.menuItems, editMenuDialog.lunchbox);
-                                                  }
-                                                }}
-                                                disabled={isSaving !== null}>
-                                                {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
-                                              </Button>
-                                              <Button
-                                                style={{ color: "#000000" }}
-                                                variant='outline'
-                                                onClick={() => {
-                                                  setEditMenuDialog(null);
-                                                  setEditMenuDialogTimes(null);
-                                                  setShouldFetchMenu(false);
-                                                  setSelectedLunchboxName("");
-                                                  setSelectedLunchboxSet("");
-                                                  setPreviewLunchbox(null);
-                                                  setAvailableMenusForLunchbox({}); // Clear เมนูที่โหลดไว้
-                                                  setIsDeleting(false); // Reset flag when closing dialog
-                                                }}>
-                                                ยกเลิก
-                                              </Button>
-                                            </div>
                                           </div>
                                         )}
-                                      </DialogTitle>
+                                        </DialogTitle>
+                                      </div>
+                                      {editMenuDialog && (
+                                        <div className='flex justify-end gap-2 pt-4 border-t shrink-0 bg-background'>
+                                          <Button
+                                            style={{ color: "#000000" }}
+                                            onClick={async () => {
+                                              if (editMenuDialog) {
+                                                console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");
+                                                console.log("📦 id:", editMenuDialog.id);
+                                                console.log("📋 menuItems:", JSON.stringify(editMenuDialog.menuItems, null, 2));
+                                                console.log("🍱 lunchbox:", JSON.stringify(editMenuDialog.lunchbox, null, 2));
+
+                                                if (editMenuDialogTimes) {
+                                                  const exportTime = `${editMenuDialogTimes.exportHour}:${editMenuDialogTimes.exportMinute}`;
+                                                  const receiveTime = `${editMenuDialogTimes.receiveHour}:${editMenuDialogTimes.receiveMinute}`;
+                                                  const timesChanged =
+                                                    exportTime !== editMenuDialog.export_time ||
+                                                    receiveTime !== editMenuDialog.receive_time;
+
+                                                  if (timesChanged) {
+                                                    try {
+                                                      const payload = {
+                                                        export_time: exportTime,
+                                                        receive_time: receiveTime,
+                                                      };
+                                                      const response = await axios.patch(`/api/edit/cart_time/${editMenuDialog.id}`, payload);
+                                                      if (response.status !== 200) {
+                                                        const errorData = response.data;
+                                                        throw new Error(errorData.error || "Failed to update times");
+                                                      }
+                                                    } catch (err) {
+                                                      console.error("Error updating times:", err);
+                                                      Swal.fire({
+                                                        icon: "error",
+                                                        title: "เกิดข้อผิดพลาด",
+                                                        text: err instanceof Error ? err.message : "ไม่สามารถอัปเดตเวลาได้",
+                                                        showConfirmButton: false,
+                                                        timer: 3000,
+                                                      });
+                                                      return;
+                                                    }
+                                                  }
+                                                }
+
+                                                handleEdit.Menu(editMenuDialog.id, editMenuDialog.menuItems, editMenuDialog.lunchbox);
+                                              }
+                                            }}
+                                            disabled={isSaving !== null}>
+                                            {isSaving ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
+                                          </Button>
+                                          <Button
+                                            style={{ color: "#000000" }}
+                                            variant='outline'
+                                            onClick={() => {
+                                              setEditMenuDialog(null);
+                                              setEditMenuDialogTimes(null);
+                                              setShouldFetchMenu(false);
+                                              setSelectedLunchboxName("");
+                                              setSelectedLunchboxSet("");
+                                              setPreviewLunchbox(null);
+                                              setAvailableMenusForLunchbox({});
+                                              setIsDeleting(false);
+                                            }}>
+                                            ยกเลิก
+                                          </Button>
+                                        </div>
+                                      )}
                                     </DialogContent>
                                   </Dialog>
                                   <Accordion type='multiple' className='space-y-3'>
