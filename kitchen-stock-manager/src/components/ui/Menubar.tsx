@@ -163,7 +163,7 @@ export default function Menubar() {
 
             {/* สำหรับหน้าจอขนาดกลางขึ้นไป */}
             <div className='hidden md:flex flex-col items-start min-w-0'>
-              <span className='text-base font-medium text-foreground truncate max-w-[150px]'>{userName || "Guest"}</span>
+              <span className='text-base font-medium text-foreground max-w-full'>{userName || "Guest"}</span>
               <span className='text-sm text-muted-foreground truncate max-w-[150px]'>{getRoleName(highestRole)}</span>
             </div>
 
