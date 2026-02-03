@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (page === "summarylist") status = ["pending", "completed"];
   else if (page === "orderhistory") status = ["success", "cancelled"];
   else return NextResponse.json({ message: "Invalid page type" }, { status: 400 });
-  
+
 
   try {
     // Fetch carts without lunchbox and total_cost_lunchbox to avoid type mismatch errors
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     if (cartsBasic.length === 0) {
-      return NextResponse.json({ message: "No carts found" }, { status: 404 });
+      return NextResponse.json([], { status: 200 });
     }
 
     const cartIds = cartsBasic.map((c) => c.id);
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                     lunchbox = JSON.parse(item.lunchbox);
                     if (!Array.isArray(lunchbox)) {
                       lunchbox = [];
-        }
+                    }
                   } catch (e) {
                     console.warn(`Failed to parse lunchbox for cart ${cartId}:`, e);
                     lunchbox = [];

@@ -65,7 +65,9 @@ function OrderHistoryContent() {
   const [isExcelMonthDialogOpen, setIsExcelMonthDialogOpen] = useState(false);
   const [selectedMonthForExcel, setSelectedMonthForExcel] = useState<string>("");
 
-  const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts/orderhistory", fetcher);
+  const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts/orderhistory", fetcher, {
+    refreshInterval: 30000,
+  });
   const { data: menuData, error: menuError } = useSWR("/api/get/menu/list", fetcher);
   const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher);
 
