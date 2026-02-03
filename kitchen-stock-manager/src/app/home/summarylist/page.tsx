@@ -130,9 +130,9 @@ const SummaryList: React.FC = () => {
     receiveHour: string;
     receiveMinute: string;
   } | null>(null);
-  const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts/summarylist", fetcher, { refreshInterval: 30000 });
+  const { data: cartsData, error: cartsError, mutate: mutateCarts } = useSWR("/api/get/carts/summarylist", fetcher);
 
-  const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher, { refreshInterval: 30000 });
+  const { data: ingredientData, error: ingredientError } = useSWR("/api/get/ingredients", fetcher);
   const error = cartsError || ingredientError;
   const isLoading = !cartsData || !ingredientData;
   const [allCarts, setAllCarts] = useState<Cart[]>([]);
