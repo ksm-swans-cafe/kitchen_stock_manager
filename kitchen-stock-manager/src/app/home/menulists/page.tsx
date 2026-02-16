@@ -301,6 +301,7 @@ export default function Page() {
 
     try {
       const formData = new FormData();
+      formData.append("menu_id", editMenuId || "");
       formData.append("menu_name", menuName);
       formData.append("menu_ingredients", JSON.stringify(ingredients));
       formData.append("menu_subname", menuSubName);
@@ -383,6 +384,7 @@ export default function Page() {
     setMenuLunchbox([
       ...menuLunchbox,
       {
+        lunchbox_menuid: crypto.randomUUID(),
         lunchbox_name: "",
         lunchbox_set_name: "",
         lunchbox_cost: 0,

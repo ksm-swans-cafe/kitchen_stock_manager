@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
+import { randomUUID } from "crypto";
 
 function convertBigIntToNumber(obj: any, visited = new WeakSet()): any {
   if (obj === null || obj === undefined) return obj;
@@ -105,6 +106,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   try {
     if (menuLunchboxRaw) {
       menuLunchbox = JSON.parse(menuLunchboxRaw);
+      menuLunchbox = menuLunchbox.map((lb: any) => ({
+        ...lb,
+        lunchbox_menuid: lb.lunchbox_menuid || randomUUID(),
+      }));
     }
   } catch {
     return NextResponse.json({ error: "รูปแบบข้อมูลกล่องอาหารไม่ถูกต้อง" }, { status: 400 });
