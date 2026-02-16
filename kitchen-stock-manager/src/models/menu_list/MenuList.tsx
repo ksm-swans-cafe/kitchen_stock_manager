@@ -10,6 +10,7 @@ export interface IngredientOption {
 }
 
 export interface MenuLunchbox {
+  lunchbox_menuid: string;
   lunchbox_name: string;
   lunchbox_set_name: string;
   lunchbox_cost: number;
