@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useMemo } from "react";
+import React, { ChangeEvent, memo, useEffect, useMemo, useState } from "react";
 import { Send, RotateCcw, Minus, Plus } from "lucide-react";
 
 type Props = {
@@ -77,6 +77,12 @@ export const MobileActionBar = memo(function MobileActionBar({
   onQuantityChange,
   showQuantityControl = false,
 }: Props) {
+  const [draftQuantity, setDraftQuantity] = useState<string>(String(Math.max(1, quantity)));
+
+  useEffect(() => {
+    setDraftQuantity(String(Math.max(1, quantity)));
+  }, [quantity]);
+
   // Resolve submit button text
   const resolvedSubmitLabel = useMemo(() => {
     if (submitLabel) return submitLabel;
@@ -84,6 +90,19 @@ export const MobileActionBar = memo(function MobileActionBar({
   }, [submitLabel, editMode]);
 
   if (!isVisible) return null;
+
+  const handleQuantityInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setDraftQuantity(value);
+    if (value === "") return;
+    onQuantityChange?.(Math.max(1, Number(value)));
+  };
+
+  const handleQuantityInputBlur = () => {
+    const normalized = Math.max(1, Number(draftQuantity || "1"));
+    setDraftQuantity(String(normalized));
+    onQuantityChange?.(normalized);
+  };
 
   return (
     <div
@@ -108,7 +127,16 @@ export const MobileActionBar = memo(function MobileActionBar({
               className='w-7 h-7 rounded-full flex items-center justify-center text-gray-400 active:bg-orange-50 transition-all'>
               <Minus className='w-3.5 h-3.5' />
             </button>
-            <span className='w-8 text-center text-sm font-bold text-gray-800 tabular-nums'>{quantity}</span>
+            <input
+              type='text'
+              inputMode='numeric'
+              pattern='[0-9]*'
+              value={draftQuantity}
+              onChange={handleQuantityInputChange}
+              onBlur={handleQuantityInputBlur}
+              aria-label='จำนวนชุด'
+              className='w-12 h-7 text-center text-sm font-bold text-gray-800 tabular-nums rounded-md border border-orange-100 focus:outline-none focus:ring-1 focus:ring-orange-300'
+            />
             <button
               onClick={() => onQuantityChange(quantity + 1)}
               className='w-7 h-7 rounded-full flex items-center justify-center text-gray-400 active:bg-orange-50 transition-all'>
