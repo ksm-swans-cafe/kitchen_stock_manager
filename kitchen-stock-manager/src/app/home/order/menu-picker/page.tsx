@@ -1468,8 +1468,8 @@ function OrderContent() {
                       (() => {
                         return !canSubmitSelection;
                       })()
-                      ? "!bg-gray-200 !cursor-not-allowed"
-                      : "!bg-gradient-to-r !from-orange-500 !to-pink-500 !hover:from-orange-600 !hover:to-pink-600 transform !hover:scale-105 !hover:shadow-xl !text-white !font-bold"
+                      ? "bg-gray-200! cursor-not-allowed!"
+                      : "bg-gradient-to-r! from-orange-500! to-pink-500! hover:from-orange-600! hover:to-pink-600 transition-all! hover:scale-105! hover:shadow-xl! text-white! font-bold"
                       }`}>
                     {isSaving ? (
                       <>
@@ -1496,7 +1496,8 @@ function OrderContent() {
                     setSelectedMeatType(null);
                     setNote("");
                   }}
-                  className='w-full mt-3 xl:mt-4 px-4 py-3 md:px-5 md:py-4 xl:px-6 xl:py-5 bg-red-500 hover:text-white! text-sm md:text-base xl:text-lg font-medium rounded-xl hover:bg-red-600! transition-colors! duration-300 min-h-[45px] md:min-h-[50px] xl:min-h-[60px]'>
+
+                  className='w-full mt-3 xl:mt-4 px-4 py-3 md:px-5 md:py-4 xl:px-6 xl:py-5 bg-red-400! text-white! text-sm md:text-base xl:text-lg font-medium rounded-xl hover:bg-red-600! transition-colors! duration-300 min-h-[45px] md:min-h-[50px] xl:min-h-[60px]'>
                   รีเซ็ตการเลือก
                 </button>
               )}
@@ -1605,7 +1606,31 @@ function OrderContent() {
                                   title={selectionCount.total === 0 ? "กรุณาเลือกเมนูก่อน" : "ลดจำนวน"}>
                                   <Minus className='w-2 h-2 sm:w-2.5 sm:h-2.5 xl:w-3 xl:h-3' />
                                 </button>
-                                <span className={`w-3 sm:w-5 xl:w-6 text-center text-[8px] sm:text-[10px] xl:text-xs font-black tabular-nums ${selectionCount.total > 0 ? "text-gray-900" : "text-gray-400"}`}>{lunchboxQuantity}</span>
+                                <input
+                                  type='text'
+                                  inputMode='numeric'
+                                  pattern='[0-9]*'
+                                  value={String(lunchboxQuantity)}
+                                  disabled={selectionCount.total === 0}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    const value = e.target.value.replace(/\D/g, "");
+                                    if (value === "") return;
+                                    setLunchboxQuantity(Math.max(1, Number(value)));
+                                  }}
+                                  onBlur={(e) => {
+                                    e.stopPropagation();
+                                    const value = e.target.value.replace(/\D/g, "");
+                                    setLunchboxQuantity(Math.max(1, Number(value || "1")));
+                                  }}
+                                  aria-label='จำนวนชุด'
+                                  className={`w-7 sm:w-10 xl:w-12 h-5 sm:h-6 text-center text-[8px] sm:text-[10px] xl:text-xs font-black tabular-nums rounded border ${
+                                    selectionCount.total > 0
+                                      ? "text-gray-900 border-orange-100 focus:outline-none focus:ring-1 focus:ring-orange-300"
+                                      : "text-gray-400 border-gray-200 cursor-not-allowed bg-gray-50"
+                                  }`}
+                                />
                                 <button
                                   type='button'
                                   disabled={selectionCount.total === 0}
