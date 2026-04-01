@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 import { create } from "zustand";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Bike, Car, CarFront, Check, Truck } from "lucide-react";
 
 import { useCartStore } from "@/stores/store";
 
@@ -311,6 +312,44 @@ export default function CartList() {
     { value: "รถกระบะตูทึบ", label: "รถกระบะตูทึบ" },
   ];
 
+  const shippingByUi: Record<
+    string,
+    {
+      Icon: typeof Bike;
+      itemIdle: string;
+      itemSelected: string;
+      triggerSelected: string;
+    }
+  > = {
+    มอเตอร์ไซด์: {
+      Icon: Bike,
+      itemIdle: "text-amber-600",
+      itemSelected: "bg-amber-50 text-amber-900 border-amber-300 ring-1 ring-amber-200/80",
+      triggerSelected: "border-amber-400! bg-amber-50! text-amber-900! ring-1 ring-amber-200",
+    },
+    "รถยนต์(เก๋ง)": {
+      Icon: Car,
+      itemIdle: "text-sky-600",
+      itemSelected: "bg-sky-50 text-sky-900 border-sky-300 ring-1 ring-sky-200/80",
+      triggerSelected: "border-sky-400! bg-sky-50! text-sky-900! ring-1 ring-sky-200",
+    },
+    "รถ SUV": {
+      Icon: CarFront,
+      itemIdle: "text-emerald-600",
+      itemSelected: "bg-emerald-50 text-emerald-900 border-emerald-300 ring-1 ring-emerald-200/80",
+      triggerSelected: "border-emerald-400! bg-emerald-50! text-emerald-900! ring-1 ring-emerald-200",
+    },
+    "รถกระบะตูทึบ": {
+      Icon: Truck,
+      itemIdle: "text-slate-600",
+      itemSelected: "bg-slate-100 text-slate-900 border-slate-400 ring-1 ring-slate-200/80",
+      triggerSelected: "border-slate-500! bg-slate-100! text-slate-900! ring-1 ring-slate-200",
+    },
+  };
+
+  const selectedShippingUi = shipping_by ? shippingByUi[shipping_by] : null;
+  const ShippingTriggerIcon = selectedShippingUi?.Icon;
+
   const payTypeOptions: Array<{ value: string; label: string }> = [
     { value: "cash", label: "ชำระด้วยเงินสด" },
     { value: "transfer", label: "ชำระด้วยโอนเงิน" },
@@ -572,15 +611,17 @@ export default function CartList() {
         .map((lb, index) => {
           const lunchboxCost = Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0;
           const costPerBox = lunchboxCost / lb.quantity;
-          const menuList = lb.selected_menus.map((menu, menuIndex) => `+ ${menu.menu_name}`).join("\n      ");
+          const menuList = lb.selected_menus.map((menu) => `- ${menu.menu_name}`);
 
-          return `${index + 1}.${lb.lunchbox_name} - ${lb.lunchbox_set}
-      ${menuList}
-      เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท 
-      จำนวน ${lb.quantity} กล่อง 
-      รวม ${lunchboxCost.toLocaleString("th-TH")} x ${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`;
+          return [
+            `${index + 1}.${lb.lunchbox_name} - ${lb.lunchbox_set}`,
+            ...menuList,
+            `เซ็ตละ ${costPerBox.toLocaleString("th-TH")} บาท`,
+            `จำนวน ${lb.quantity} กล่อง`,
+            `รวม ${lunchboxCost.toLocaleString("th-TH")} x ${lb.quantity} = ${lunchboxCost.toLocaleString("th-TH")} บาท`,
+          ].join("\n");
         })
-        .join("\n\n      ");
+        .join("\n\n");
 
       const totalLunchboxCostForMessage = selected_lunchboxes.reduce((sum, lb) => {
         return sum + (Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0);
@@ -628,41 +669,51 @@ export default function CartList() {
               .join("/")
           : delivery_date;
 
-      const copyTextContent = `📌รับออเดอร์ คุณ ${order_name} 
-ช่องทางที่สั่ง : ${channel_access}
-ผู้รับออเดอร์ : แอดมิน ${userName}
+      const copyTextLines = [
+        `📌รับออเดอร์ คุณ ${order_name}`,
+        `ช่องทางที่สั่ง : ${channel_access}`,
+        `ผู้รับออเดอร์ : แอดมิน ${userName}`,
+        "",
+        "✅ รายละเอียดสำหรับจัดส่ง",
+        `1.วันที่รับสินค้า : ${deliveryDateShort}`,
+        `2.เวลาส่งสินค้า : ${export_time} น.`,
+        `3.เวลารับสินค้า : ${receive_time} น.`,
+        `4.สถานที่จัดส่ง : ${location_send}`,
+        `5.ค่าจัดส่ง: ${shipping_cost} บาท ส่งโดย: ${shipping_by}`,
+        `6.ชื่อผู้รับสินค้า : ${receive_name}`,
+        `7.เบอร์โทร : ${customer_tel}`,
+        `8.ออกบิลในนาม : ${customer_name}`,
+        `9.ที่อยู่ : ${location_send}`,
+        `10.เลขประจำตัวผู้เสียภาษี : ${tex}`,
+        "",
+        `✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง`,
+        lunchboxListForMessage,
+        "",
+        "✅สรุปค่าใช้จ่าย",
+        `ค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท`,
+        `ค่าจัดส่ง ${shippingCostNumForMessage.toLocaleString("th-TH")} บาท`,
+      ];
 
-✅ รายละเอียดสำหรับจัดส่ง
-1.วันที่รับสินค้า : ${deliveryDateShort}
-2.เวลาส่งสินค้า : ${export_time} น.
-3.เวลารับสินค้า : ${receive_time} น.
-4.สถานที่จัดส่ง : ${location_send}
-5.ค่าจัดส่ง: ${shipping_cost} บาท ส่งโดย: ${shipping_by}
-6.ชื่อผู้รับสินค้า : ${receive_name}
-7.เบอร์โทร : ${customer_tel}
-8.ออกบิลในนาม : ${customer_name}
-9.ที่อยู่ : ${location_send}
-10.เลขประจำตัวผู้เสียภาษี : ${tex}
+      if (chargeNumForMessage > 0) {
+        copyTextLines.push(`ค่าธรรมเนียม ${chargeNumForMessage.toLocaleString("th-TH")} บาท`);
+      }
 
-✅รายการอาหาร ${selected_lunchboxes.reduce((sum, lb) => sum + lb.quantity, 0)} กล่อง 
-      ${lunchboxListForMessage}
+      copyTextLines.push(
+        `รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+      );
 
-✅สรุปค่าใช้จ่าย
-ค่าอาหาร ${totalLunchboxCostForMessage.toLocaleString("th-TH")} บาท
-ค่าจัดส่ง ${shippingCostNumForMessage.toLocaleString("th-TH")} บาท
-${chargeNumForMessage > 0 ? `ค่าธรรมเนียม ${chargeNumForMessage.toLocaleString("th-TH")} บาท` : ""}
-รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท
-${pay_deposit && pay_deposit !== "no"
-          ? pay_deposit === "full"
-            ? `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
-            : `มัดจำ ${depositTextForMessage}\n✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
-          : ""
-        }
-`;
+      if (pay_deposit && pay_deposit !== "no") {
+        copyTextLines.push(
+          `มัดจำ ${depositTextForMessage}`,
+          `✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+        );
+      }
 
-      const copyTextNormalized = copyTextContent
+      const copyTextNormalized = copyTextLines
+        .join("\n")
         .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n");
+        .replace(/\r/g, "\n")
+        .replace(/[ \t]+\n/g, "\n");
 
       const response = await axios.post("/api/post/cart", {
         order_name: order_name,
@@ -1310,26 +1361,52 @@ ${pay_deposit && pay_deposit !== "no"
           <div ref={dropdownRef} className='flex flex-col gap-1 relative'>
             <label className='font-bold'>ส่งโดย</label>
             <button
+              type='button'
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className='w-auto h-auto border! border-[#e5e5e5]! text-[#808080]! rounded px-3 py-2 text-base leading-relaxed min-h-10.5 hover:bg-gray-50!'
-              style={{ fontFamily: 'inherit' }}
+              className={
+                selectedShippingUi
+                  ? `w-auto h-auto flex items-center gap-2 rounded px-3 py-2 text-base leading-relaxed min-h-10.5 border! transition-colors ${selectedShippingUi.triggerSelected}`
+                  : "w-auto h-auto flex items-center gap-2 border! border-[#e5e5e5]! text-[#000000]! rounded px-3 py-2 text-base leading-relaxed min-h-10.5 hover:bg-gray-50!"
+              }
+              style={{ fontFamily: "inherit" }}
             >
-              {shipping_by || 'เลือกวิธีจัดส่ง'}
+              {selectedShippingUi && ShippingTriggerIcon ? (
+                <>
+                  <ShippingTriggerIcon className='shrink-0' size={20} strokeWidth={2} aria-hidden />
+                  <span className='font-medium'>{shipping_by}</span>
+                </>
+              ) : shipping_by ? (
+                <span className='text-gray-800'>{shipping_by}</span>
+              ) : (
+                <span className='text-gray-600'>เลือกวิธีจัดส่ง</span>
+              )}
             </button>
             {dropdownOpen && (
               <div className='absolute top-full left-0 w-full bg-white border border-gray-300 rounded p-2 z-10 shadow-lg mt-1'>
-                {shippingByOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => {
-                      setCustomerInfo({ shipping_by: opt.value });
-                      setDropdownOpen(false);
-                    }}
-                    className='w-full text-[#808080]! text-left px-3 py-1 hover:bg-gray-100! rounded transition-colors!'
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                {shippingByOptions.map((opt) => {
+                  const ui = shippingByUi[opt.value];
+                  const Icon = ui.Icon;
+                  const isSelected = shipping_by === opt.value;
+                  return (
+                    <button
+                      type='button'
+                      key={opt.value}
+                      onClick={() => {
+                        setCustomerInfo({ shipping_by: opt.value });
+                        setDropdownOpen(false);
+                      }}
+                      className={
+                        isSelected
+                          ? `w-full flex items-center gap-2 text-left px-3 py-2 rounded-md transition-colors border ${ui.itemSelected}`
+                          : "w-full flex items-center gap-2 text-left px-3 py-2 rounded-md transition-colors text-gray-700 hover:bg-gray-100 border border-transparent"
+                      }
+                    >
+                      <Icon className={`shrink-0 ${isSelected ? ui.itemIdle : "text-gray-400"}`} size={18} strokeWidth={2} aria-hidden />
+                      <span className='flex-1 min-w-0'>{opt.label}</span>
+                      {isSelected && <Check className='shrink-0 text-emerald-600' size={18} strokeWidth={2.5} aria-hidden />}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -1373,8 +1450,9 @@ ${pay_deposit && pay_deposit !== "no"
             <textarea
               className='border rounded px-3 py-2 resize-none'
               value={invoice_tex}
-              onChange={(e) => setCustomerInfo({ invoice_tex: e.target.value })}
+              onChange={(e) => setCustomerInfo({ invoice_tex: e.target.value.replace(/\D/g, "").slice(0, 13) })}
               placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
+              inputMode='numeric'
               style={{ fontFamily: 'inherit' }}
               rows={1}
             />
