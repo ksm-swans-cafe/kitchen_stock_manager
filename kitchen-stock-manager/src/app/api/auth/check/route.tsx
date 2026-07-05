@@ -21,7 +21,7 @@ export async function GET() {
     }
   } else if (userRole) {
     roles = [userRole];
-  }
+  } 
 
   // Fetch permissions from roles in database
   let permissions: string[] = [];
