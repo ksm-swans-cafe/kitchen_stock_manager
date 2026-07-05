@@ -13,6 +13,11 @@ export async function PATCH(
 
   try {
     const { id } = await context.params;
+    
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "ไม่พบ ID ที่ต้องการแก้ไข", id: id }, { status: 400 });
+    }
+    
     const formData = await request.formData();
 
     const imageType = formData.get("image_type")?.toString()?.trim(); // "lunchbox_name_image" or "lunchbox_set_name_image"
@@ -143,6 +148,11 @@ export async function DELETE(
 
   try {
     const { id } = await context.params;
+    
+    if (!id || id === "undefined") {
+      return NextResponse.json({ error: "ไม่พบ ID ที่ต้องการแก้ไข" }, { status: 400 });
+    }
+    
     const { searchParams } = new URL(request.url);
     const imageType = searchParams.get("image_type");
 

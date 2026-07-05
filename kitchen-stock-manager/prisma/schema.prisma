@@ -289,12 +289,12 @@ model lunchbox {
   /// Multiple data types found: Int: 68.8%, BigInt: 31.3% out of 32 sampled entries
   lunchbox_limit          Json
   lunchbox_name           String
-  lunchbox_name_image     String
+  lunchbox_name_image     String?
   lunchbox_set_name       String
-  lunchbox_set_name_image String
+  lunchbox_set_name_image String?
   lunchbox_image_path     String?
   lunchbox_check_all      Boolean         @default(false)
-  lunchbox_order_select   LunchboxOrder[]
+  lunchbox_order_select   Json?
 }
 
 model menu {
