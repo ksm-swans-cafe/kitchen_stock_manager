@@ -2746,7 +2746,7 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
                               </Button>
                             </div>
                             <AccordionContent className='mt-4'>
-                              <div className='grid md:grid-cols-2 gap-6'>
+                              <div className='w-full'>
                                 <div>
                                   <div className='flex justify-between items-center mb-2'>
                                     <div>
@@ -2831,7 +2831,7 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
                                           // Fetch lunchboxes and menus
                                           await fetchLunchboxesAndMenus();
                                         }}
-                                        className='flex items-center gap-2'>
+                                        className='flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white'>
                                         แก้ไขเมนูที่สั่ง
                                         <Edit2 className='w-4 h-4' />
                                       </Button>
@@ -3389,7 +3389,7 @@ ${payDeposit && payDeposit !== "no" ? depositBlock : ""}
                                       {editMenuDialog && (
                                         <div className='flex justify-end gap-2 pt-4 border-t shrink-0 bg-background'>
                                           <Button
-                                            style={{ color: "#000000" }}
+                                            className='bg-emerald-600 hover:bg-emerald-700 text-white'
                                             onClick={async () => {
                                               if (editMenuDialog) {
                                                 console.log("🚀 [BEFORE SAVE] ข้อมูลที่จะส่งไปยัง handleEdit.Menu:");

@@ -18,7 +18,8 @@ export async function GET() {
 
     const lunchboxCostMap = new Map<string, number>();
     menus.forEach((menu) => {
-      menu.menu_lunchbox.forEach((lb: any) => {
+      const menuLunchboxes = Array.isArray(menu.menu_lunchbox) ? menu.menu_lunchbox : [];
+      menuLunchboxes.forEach((lb: any) => {
         const key = `${lb.lunchbox_name}_${lb.lunchbox_set_name}`;
         if (lb.lunchbox_cost && !lunchboxCostMap.has(key)) {
           lunchboxCostMap.set(key, Number(lb.lunchbox_cost));

@@ -36,12 +36,17 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
+    const updateData: Record<string, string> = {};
+    if (parsedExportTime !== null) updateData.export_time = parsedExportTime;
+    if (parsedReceiveTime !== null) updateData.receive_time = parsedReceiveTime;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "กรุณาระบุ export_time หรือ receive_time อย่างน้อยหนึ่งค่า" }, { status: 400 });
+    }
+
     const result = await prisma.new_cart.updateMany({
       where: { id: id },
-      data: {
-        export_time: parsedExportTime || null,
-        receive_time: parsedReceiveTime || null,
-      },
+      data: updateData,
     });
 
     if (result.count === 0) return NextResponse.json({ error: "ไม่พบออเดอร์ที่มี ID นี้" }, { status: 404 });

@@ -144,8 +144,31 @@ type NewCartLunchboxLunchboxMenu {
 }
 
 type NewCartLunchboxLunchboxMenuMenuIngredients {
-  ingredient_name String
-  useItem         Int
+  ingredient_name   String
+  useItem           Int
+  ingredient_status Boolean?
+}
+
+type NewCartMenuItems {
+  menu_name        String
+  menu_subname     String?
+  menu_category    String?
+  menu_total       Int
+  menu_description Json?
+  menu_order_id    Int?
+  menu_notes       NewCartMenuItemsMenuNotes[]
+  menu_ingredients NewCartMenuItemsMenuIngredients[]
+}
+
+type NewCartMenuItemsMenuIngredients {
+  ingredient_name   String
+  useItem           Int
+  ingredient_status Boolean?
+}
+
+type NewCartMenuItemsMenuNotes {
+  note String
+  qty  Int
 }
 
 type LunchboxOrder {
@@ -304,6 +327,7 @@ model new_cart {
   last_update         String
   location_send       String
   lunchbox            NewCartLunchbox[]
+  menu_items          NewCartMenuItems[]
   order_name          String
   order_number        String
   packaging_note      String?
@@ -333,4 +357,31 @@ model role {
   is_default      Boolean  @default(false)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+}
+
+model meat_surcharge {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  lunchbox_name     String
+  lunchbox_set_name String
+  meat_name         String
+  surcharge         Int      @default(0)
+  updated_at        DateTime @updatedAt
+
+  @@unique([lunchbox_name, lunchbox_set_name, meat_name])
+}
+
+
+model meat_type {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  meat_name String @unique
+}
+
+model dish_type {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  dish_name String @unique
+}
+
+model onlyfood {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  onlyfood_name String
 }

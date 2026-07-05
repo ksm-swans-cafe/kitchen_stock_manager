@@ -472,7 +472,7 @@ function IngredientManagementContent() {
         </div>
 
         {allIngredient && (
-          <div className='justify-center columns grid is-multiline'>
+          <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6'>
             {visibleIngredients.map((ingredient) => (
               <MenuCard mode='ingredient' key={ingredient.ingredient_id} item={ingredient} onImageClick={() => ingredient.ingredient_image && handleImageClick(ingredient.ingredient_image)} />
             ))}

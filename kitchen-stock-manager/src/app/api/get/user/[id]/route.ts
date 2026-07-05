@@ -1,8 +1,12 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { Employee } from "@/models/employee/Employee";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const { id: employee_id } = await context.params;
 
@@ -22,7 +26,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       employee_firstname: employees[0].employee_firstname ?? "",
       employee_lastname: employees[0].employee_lastname ?? "",
       employee_pin: employees[0].employee_pin !== null && employees[0].employee_pin !== undefined ? Number(employees[0].employee_pin) : 0,
-      employee_role: employees[0].employee_role ?? "",
+      employee_role: employees[0].employee_roles?.[0] ?? "",
     };
 
     return NextResponse.json(employee);

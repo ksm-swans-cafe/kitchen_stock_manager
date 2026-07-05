@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function PATCH(request: NextRequest) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
 
   // optional body (reserved for future filters)
   await request.json().catch(() => ({}));

@@ -4,12 +4,12 @@ import { put, del } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }): Promise<NextResponse> {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const formData = await request.formData();
 
     const ingredient_name = formData.get("ingredient_name")?.toString()?.trim();
@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     const existingIngredient = await prisma.ingredients.findMany({
       where: { ingredient_id: Number(id) },
-      select: { ingredient_id: true, ingredient_image: true },
+      select: { id: true, ingredient_id: true, ingredient_image: true },
     });
 
     if (existingIngredient.length === 0) {
@@ -118,18 +118,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     //   WHERE ingredient_id = ${id}
     //   RETURNING *
     // `;
+    const updateData: Record<string, unknown> = {
+      ingredient_lastupdate: new Date().toISOString(),
+    };
+    if (ingredient_name) updateData.ingredient_name = ingredient_name;
+    if (ingredient_total !== null) updateData.ingredient_total = Number(ingredient_total).toString();
+    if (ingredient_unit) updateData.ingredient_unit = ingredient_unit;
+    if (ingredient_total_alert !== null) updateData.ingredient_total_alert = Number(ingredient_total_alert).toString();
+    if (ingredient_price !== null) updateData.ingredient_price = Number(ingredient_price).toString();
+    if (ingredient_image_url) updateData.ingredient_image = ingredient_image_url;
+    if (ingredientPriceperUnit !== null) updateData.ingredient_price_per_unit = ingredientPriceperUnit;
+
     const result = await prisma.ingredients.update({
-      where: { ingredient_id: Number(id) },
-      data: {
-        ingredient_name: ingredient_name,
-        ingredient_total: ingredient_total ? Number(ingredient_total) : null,
-        ingredient_unit: ingredient_unit,
-        ingredient_total_alert: ingredient_total_alert ? Number(ingredient_total_alert) : null,
-        ingredient_price: ingredient_price ? Number(ingredient_price) : null,
-        ingredient_image: ingredient_image_url,
-        ingredient_price_per_unit: ingredientPriceperUnit,
-        ingredient_lastupdate: new Date(),
-      },
+      where: { id: existingIngredient[0].id },
+      data: updateData,
     });
 
     // const result = await sql`

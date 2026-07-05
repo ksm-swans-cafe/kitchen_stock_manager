@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 function convertBigIntToNumber(obj: any): any {
   return JSON.parse(JSON.stringify(obj, (key, value) => (typeof value === "bigint" ? Number(value) : value)));
@@ -17,6 +18,9 @@ interface MenuItem {
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const params = await context.params;
   const { id } = params;
 
@@ -40,7 +44,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const cart = await prisma.new_cart.findFirst({
       where: { id: id },
       select: {
-        id: true,
         id: true,
         lunchbox: true,
         // Exclude total_cost_lunchbox to avoid null error
@@ -129,10 +132,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         if (updatedMenu) {
           // Find existing menu to preserve ingredient_status
           const existingMenu = existingMenuItems.find((m) => m.menu_name === menu.menu_name);
-          const menuIngredients = updatedMenu.menu_ingredients.map((ing) => ({
+          const menuIngredients = updatedMenu.menu_ingredients.map((ing: MenuItem["menu_ingredients"][number]) => ({
             ingredient_name: ing.ingredient_name,
             useItem: ing.useItem,
-            // ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
+            ingredient_status: existingMenu?.menu_ingredients.find((ei) => ei.ingredient_name === ing.ingredient_name)?.ingredient_status ?? ing.ingredient_status ?? false,
           }));
 
           // Handle menu_description - must be array of objects, not string

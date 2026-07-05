@@ -3,11 +3,11 @@ import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
 // import sql from "@app/database/connect";
 
-export async function POST(req: NextRequest, { params }: { params: { ingredient_name: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ ingredient_name: string }> }) {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
 
-  const ingredientName = params.ingredient_name;
+  const { ingredient_name: ingredientName } = await params;
 
   try {
     const formData = await req.formData();
@@ -42,8 +42,16 @@ export async function POST(req: NextRequest, { params }: { params: { ingredient_
     //   )
     //   RETURNING *;
     // `;
+    const lastTransaction = await prisma.ingredient_transaction.findFirst({
+      orderBy: { transaction_id: "desc" },
+      select: { transaction_id: true },
+    });
+    const nextTransactionId = (lastTransaction?.transaction_id ?? 0) + 1;
+
     const result = await prisma.ingredient_transaction.create({
       data: {
+        transaction_id: nextTransactionId,
+        transaction_date: new Date().toISOString(),
         transaction_from_username: username,
         transaction_type: add_decrease,
         ingredient_name: ingredientName,
