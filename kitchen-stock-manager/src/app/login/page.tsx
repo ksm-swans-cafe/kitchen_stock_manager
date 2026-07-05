@@ -9,8 +9,6 @@ import { Label } from "@/share/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/share/ui/card";
 import { Alert, AlertDescription } from "@/share/ui/alert";
 
-import { Employee } from "@/models/employee/Employee";
-
 import { cn } from "@/lib/utils";
 import useLoadingDots from "@/lib/hook/Dots";
 import "./style.css";
@@ -50,11 +48,6 @@ const Login: React.FC = () => {
   const dots = useLoadingDots();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
-  const apiUrl = "api/get/user";
-
-  const generateToken = () => {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
-  };
 
   const setInputRef = (index: number) => (el: HTMLInputElement | null) => {
     inputRefs.current[index] = el;
@@ -76,39 +69,19 @@ const Login: React.FC = () => {
     },
     Login: useCallback(async () => {
       const pinCode = pin.join("");
-      const pinInt = parseInt(pinCode, 10);
       setLoading(true);
       setError("");
 
       try {
-        const response = await fetch(apiUrl);
-        const employees: Employee[] = await response.json();
+        const loginResponse = await axios.post(
+          "/api/post/login",
+          { username, pin: pinCode },
+          { validateStatus: () => true }
+        );
 
-        let matchedEmployee: Employee | null = null;
-        for (const emp of employees) {
-          if (emp.employee_username?.toLowerCase() == username.toLowerCase() && emp.employee_pin == pinInt) {
-            matchedEmployee = emp;
-            break;
-          }
-        }
-
-        if (matchedEmployee) {
-          const token = generateToken();
-          // Support both old (employee_role) and new (employee_roles) format
-          const roles = matchedEmployee.employee_roles || (matchedEmployee.employee_role ? [matchedEmployee.employee_role] : []);
-          const loginResponse = await axios.post("/api/post/login", {
-          // const loginResponse = await api.post("/api/post/login", {
-            token,
-            username: matchedEmployee.employee_username,
-            name: `${matchedEmployee.employee_firstname} ${matchedEmployee.employee_lastname}`,
-            role: matchedEmployee.employee_role || roles[0],
-            roles: roles,
-          });
-
-          if (loginResponse.status === 200) {
-            await checkAuth(true);
-            router.push("/home");
-          } else throw new Error("Failed to set login cookie");
+        if (loginResponse.status === 200 && loginResponse.data?.success) {
+          await checkAuth(true);
+          router.push("/home");
         } else {
           setError("ชื่อผู้ใช้หรือ PIN ไม่ถูกต้อง");
           resetPin();

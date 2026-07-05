@@ -72,14 +72,14 @@ export const TopStepper = memo(function TopStepper({
             <span className={`w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold ${currentStep === 1 ? 'hidden' : 'flex min-[375px]:hidden'}`}>1</span>
           </div>
 
-          <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+          <ChevronRight className="w-3 h-3 text-gray-300 shrink-0" />
 
           {/* Step 2: Set */}
           <div className={`flex items-center gap-1 ${getStepStyle(step2Active, currentStep === 2)}`}>
             {/* แสดงเต็มเมื่ออยู่ขั้นตอนนี้ หรือจอใหญ่กว่า 375px */}
             <div className={`flex items-center gap-1 ${currentStep === 2 ? 'flex' : 'hidden min-[375px]:flex'}`}>
               <span className="opacity-60">Set:</span>
-              <span className='truncate max-w-[80px] sm:max-w-none'>
+              <span className='truncate max-w-20 sm:max-w-none'>
                 {step2 ? step2 : "ยังไม่เลือก"}
               </span>
             </div>

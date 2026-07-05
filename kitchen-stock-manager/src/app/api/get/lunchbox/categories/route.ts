@@ -47,6 +47,8 @@ export async function GET(request: NextRequest) {
         lunchbox_showPrice: matchingLunchbox?.lunchbox_showPrice ?? true,
         lunchbox_AutoRice: matchingLunchbox?.lunchbox_AutoRice ?? false,
         lunchbox_menuid: matchingLunchbox?.lunchbox_menuid || "",
+        lunchbox_dish_type: matchingLunchbox?.lunchbox_dish_type ?? null,
+        lunchbox_meat_type: matchingLunchbox?.lunchbox_meat_type ?? null,
       };
     });
     console.log("result: ", result);

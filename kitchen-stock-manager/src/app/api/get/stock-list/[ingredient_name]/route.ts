@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
 
-export async function GET(request: NextRequest, { params }: { params: { ingredient_name: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ ingredient_name: string }> }) {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
 
-  const { ingredient_name } = params;
+  const { ingredient_name } = await params;
 
   try {
     const result = await prisma.ingredient_transaction.findMany({

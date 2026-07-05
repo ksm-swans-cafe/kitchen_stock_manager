@@ -130,12 +130,12 @@ export async function GET() {
         location: item.location_send,
         sendTime: item.export_time,
         receiveTime: item.receive_time,
-        items: item.lunchbox.map((lunchbox: any) => ({
+        items: (Array.isArray(item.lunchbox) ? item.lunchbox : []).map((lunchbox: any) => ({
           lunchbox_name: lunchbox.lunchbox_name,
           set: lunchbox.lunchbox_set_name,
           quantity: lunchbox.lunchbox_total,
           packaging: lunchbox.lunchbox_packaging || null,
-          lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => ({
+          lunchbox_menu: (Array.isArray(lunchbox.lunchbox_menu) ? lunchbox.lunchbox_menu : []).map((menu: any) => ({
             menu_name: menu.menu_name,
             menu_quantity: menu.menu_total,
             menu_ingredients: menu.menu_ingredients || [],

@@ -19,6 +19,8 @@ export interface MenuItem {
   lunchbox_showPrice?: boolean;
   lunchbox_AutoRice?: boolean;
   lunchbox_menuid?: string | null;
+  lunchbox_dish_type?: string | null;
+  lunchbox_meat_type?: string | null;
 }
 
 export interface DetailIngredient extends Ingredients {

@@ -1,10 +1,14 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   try {
     const { id } = await params;
     const body = await request.json();

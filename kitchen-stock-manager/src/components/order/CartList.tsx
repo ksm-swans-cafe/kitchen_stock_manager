@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { registerLocale, DatePicker } from "react-datepicker";
+// @ts-expect-error - CSS side-effect import has no TypeScript declarations.
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -21,6 +22,7 @@ import { LunchBox } from "@/stores/store";
 import SetFoodSelect from "@/assets/set_food_select.png";
 import Edit from "@/assets/edit.png";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/share/ui/select";
+// @ts-expect-error - CSS side-effect import has no TypeScript declarations.
 import "./style.css";
 registerLocale("th", th);
 
@@ -70,21 +72,10 @@ const useCartList = create<cartList>((set) => ({
   setCustomChannelName: (customChannelName) => set({ customChannelName }),
 }));
 
-const CustomDateInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ value, onClick, onChange, ...props }, ref) => (
-    <input
-      ref={ref}
-      value={value}
-      onClick={onClick}
-      onChange={onChange}
-      readOnly
-      className='w-full border rounded px-3 py-2 font-inherit'
-      style={{ fontFamily: 'inherit' }}
-      {...props}
-    />
-  )
-);
-CustomDateInput.displayName = 'CustomDateInput';
+const CustomDateInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(({ value, onClick, onChange, ...props }, ref) => (
+  <input ref={ref} value={value} onClick={onClick} onChange={onChange} readOnly className='w-full border rounded px-3 py-2 font-inherit' style={{ fontFamily: "inherit" }} {...props} />
+));
+CustomDateInput.displayName = "CustomDateInput";
 
 export default function CartList() {
   const {
@@ -246,7 +237,7 @@ export default function CartList() {
         color: "blue",
         iconColor: "#1877F2",
         svg: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
-        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
       },
       {
         value: "line",
@@ -254,7 +245,7 @@ export default function CartList() {
         color: "green",
         iconColor: "#00C300",
         svg: "M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.27l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.63.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.028 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314",
-        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
       },
       {
         value: "instagram",
@@ -262,7 +253,7 @@ export default function CartList() {
         color: "pink",
         iconColor: "#E4405F",
         svg: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z",
-        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
       },
       {
         value: "others",
@@ -270,10 +261,10 @@ export default function CartList() {
         color: "purple",
         iconColor: "#9333EA",
         svg: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
-        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        svgh: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
       },
-    ]
-  }
+    ],
+  };
 
   const knownChannelValues = formTemplate.SelectContect.filter((c) => c.value !== "others").map((c) => c.value);
   const isCustomChannel = !!channel_access && channel_access !== "others" && !knownChannelValues.includes(channel_access);
@@ -339,7 +330,7 @@ export default function CartList() {
       itemSelected: "bg-emerald-50 text-emerald-900 border-emerald-300 ring-1 ring-emerald-200/80",
       triggerSelected: "border-emerald-400! bg-emerald-50! text-emerald-900! ring-1 ring-emerald-200",
     },
-    "รถกระบะตูทึบ": {
+    รถกระบะตูทึบ: {
       Icon: Truck,
       itemIdle: "text-slate-600",
       itemSelected: "bg-slate-100 text-slate-900 border-slate-400 ring-1 ring-slate-200/80",
@@ -379,7 +370,7 @@ export default function CartList() {
       value: "full",
       label: "เต็มจำนวน",
       icon: (
-        <svg className='!w-5 !h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+        <svg className='w-5! h-5!' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
         </svg>
       ),
@@ -390,7 +381,7 @@ export default function CartList() {
       value: "percent",
       label: "50%",
       icon: (
-        <svg className='!w-5 !h-5' version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
+        <svg className='w-5! h-5!' version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xmlSpace='preserve'>
           <path
             style={{ fill: "#F2B851" }}
             d='M512,256.8l-67.2-54.224l43.2-74.96l-91.2-7.968l-8-87.728L312,68.608L259.2,0l-49.6,70.176
@@ -437,7 +428,17 @@ export default function CartList() {
       value: "paid",
       label: "ชำระแล้ว",
       icon: (
-        <svg xmlns='http://www.w3.org/2000/svg' className='!w-5 !h-5' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          className='w-5! h-5!'
+          width='24'
+          height='24'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'>
           <path d='M12 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
           <path d='m16 19 3 3 3-3' />
           <path d='M18 12h.01' />
@@ -452,7 +453,17 @@ export default function CartList() {
       value: "unpaid",
       label: "ไม่ได้ชำระ",
       icon: (
-        <svg xmlns='http://www.w3.org/2000/svg' className='!w-5 !h-5' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          className='w-5! h-5!'
+          width='24'
+          height='24'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'>
           <path d='M13 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5' />
           <path d='m17 17 5 5' />
           <path d='M18 12h.01' />
@@ -663,9 +674,7 @@ export default function CartList() {
         delivery_date && delivery_date.includes("/")
           ? delivery_date
               .split("/")
-              .map((part, i) =>
-                i === 2 && part.length >= 2 ? part.slice(-2) : part
-              )
+              .map((part, i) => (i === 2 && part.length >= 2 ? part.slice(-2) : part))
               .join("/")
           : delivery_date;
 
@@ -698,14 +707,12 @@ export default function CartList() {
         copyTextLines.push(`ค่าธรรมเนียม ${chargeNumForMessage.toLocaleString("th-TH")} บาท`);
       }
 
-      copyTextLines.push(
-        `รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
-      );
+      copyTextLines.push(`รวมทั้งหมด ${totalCostNumForMessage.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`);
 
       if (pay_deposit && pay_deposit !== "no") {
         copyTextLines.push(
           `มัดจำ ${depositTextForMessage}`,
-          `✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`
+          `✅ชำระ ${Number(depositAmountForMessage.toFixed(2)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`,
         );
       }
 
@@ -1079,8 +1086,9 @@ export default function CartList() {
       {/* Error Notification Toast - Top Right */}
       {errors.length > 0 && (
         <div
-          className={`fixed top-4 right-4 z-50 flex w-3/4 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${isErrorVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
-            }`}>
+          className={`fixed top-4 right-4 z-50 flex w-3/4 h-24 overflow-hidden bg-white shadow-lg max-w-96 rounded-xl transition-all duration-300 ease-in-out ${
+            isErrorVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
+          }`}>
           <svg xmlns='http://www.w3.org/2000/svg' height='96' width='16'>
             <path
               strokeLinecap='round'
@@ -1135,22 +1143,20 @@ export default function CartList() {
 
         <div className='grid grid-cols-2 gap-4 mb-4'>
           <div className='col-span-2 flex flex-col gap-2'>
-            <div className="flex items-center gap-3 w-full">
-              <label className="font-bold whitespace-nowrap">
-                ชื่อผู้สั่ง:
-              </label>
+            <div className='flex items-center gap-3 w-full'>
+              <label className='font-bold whitespace-nowrap'>ชื่อผู้สั่ง:</label>
 
               <textarea
                 rows={1}
                 value={order_name}
                 onChange={(e) => setCustomerInfo({ order_name: e.target.value })}
-                placeholder="ระบุชื่อผู้สั่ง"
-                className="
+                placeholder='ระบุชื่อผู้สั่ง'
+                className='
     flex-1 border rounded px-3 py-2
     resize-none
     leading-relaxed
-  "
-                style={{ fontFamily: 'inherit' }}
+  '
+                style={{ fontFamily: "inherit" }}
               />
             </div>
 
@@ -1164,8 +1170,9 @@ export default function CartList() {
                   <label
                     key={item.value}
                     htmlFor={item.value}
-                    className={`relative flex items-center justify-center gap-2 p-4 mb-2 border-2 rounded-lg cursor-pointer transition-all duration-200 ${isSelected ? ui.activeContainer : ui.inactiveContainer
-                      }`}>
+                    className={`relative flex items-center justify-center gap-2 p-4 mb-2 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                      isSelected ? ui.activeContainer : ui.inactiveContainer
+                    }`}>
                     <input
                       type='radio'
                       id={item.value}
@@ -1178,11 +1185,7 @@ export default function CartList() {
                       }}
                       className='sr-only'
                     />
-                    <svg
-                      className='!w-5 !h-5'
-                      fill='currentColor'
-                      viewBox='0 0 24 24'
-                      style={{ color: isSelected ? item.iconColor : "#6B7280" }}>
+                    <svg className='w-5! h-5!' fill='currentColor' viewBox='0 0 24 24' style={{ color: isSelected ? item.iconColor : "#6B7280" }}>
                       <path d={item.svg} />
                     </svg>
                     <span className={`font-medium ${isSelected ? ui.activeText : "text-gray-700"}`}>{item.label}</span>
@@ -1212,7 +1215,7 @@ export default function CartList() {
                   }}
                   placeholder='ระบุชื่อช่องทาง'
                   className='border rounded px-3 py-2 w-full resize-none leading-relaxed'
-                  style={{ fontFamily: 'inherit' }}
+                  style={{ fontFamily: "inherit" }}
                 />
               </div>
             )}
@@ -1336,7 +1339,7 @@ export default function CartList() {
               onChange={(e) => setCustomerInfo({ location: e.target.value })}
               placeholder='ระบุสถานที่จัดส่ง'
               className='w-full border rounded px-3 py-2 resize-none leading-relaxed overflow-hidden'
-              style={{ fontFamily: 'inherit' }}
+              style={{ fontFamily: "inherit" }}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = "auto";
@@ -1347,16 +1350,37 @@ export default function CartList() {
 
           <div className='flex flex-col gap-1'>
             <label className='font-bold'>ชื่อผู้รับสินค้า</label>
-            <textarea rows={1} value={receive_name} onChange={(e) => setCustomerInfo({ receive_name: e.target.value })} placeholder='ระบุชื่อผู้รับสินค้า' className='border rounded px-3 py-2 resize-none leading-relaxed' style={{ fontFamily: 'inherit' }} />
+            <textarea
+              rows={1}
+              value={receive_name}
+              onChange={(e) => setCustomerInfo({ receive_name: e.target.value })}
+              placeholder='ระบุชื่อผู้รับสินค้า'
+              className='border rounded px-3 py-2 resize-none leading-relaxed'
+              style={{ fontFamily: "inherit" }}
+            />
           </div>
 
           <div className='flex flex-col gap-1'>
             <label className='font-bold'>เบอร์ติดต่อ</label>
-            <textarea rows={1} value={customer_tel} onChange={handle.PhoneChange} placeholder='ระบุเบอร์ติดต่อ' className='border rounded px-3 py-2 resize-none leading-relaxed' style={{ fontFamily: 'inherit' }} />
+            <textarea
+              rows={1}
+              value={customer_tel}
+              onChange={handle.PhoneChange}
+              placeholder='ระบุเบอร์ติดต่อ'
+              className='border rounded px-3 py-2 resize-none leading-relaxed'
+              style={{ fontFamily: "inherit" }}
+            />
           </div>
           <div className='flex flex-col gap-1'>
             <label className='font-bold'>ค่าจัดส่ง</label>
-            <textarea rows={1} value={shipping_cost} onChange={handle.ShippingCostChange} placeholder='ระบุค่าจัดส่ง' className='border rounded px-3 py-2 resize-none leading-relaxed' style={{ fontFamily: 'inherit' }} />
+            <textarea
+              rows={1}
+              value={shipping_cost}
+              onChange={handle.ShippingCostChange}
+              placeholder='ระบุค่าจัดส่ง'
+              className='border rounded px-3 py-2 resize-none leading-relaxed'
+              style={{ fontFamily: "inherit" }}
+            />
           </div>
           <div ref={dropdownRef} className='flex flex-col gap-1 relative'>
             <label className='font-bold'>ส่งโดย</label>
@@ -1368,8 +1392,7 @@ export default function CartList() {
                   ? `w-auto h-auto flex items-center gap-2 rounded px-3 py-2 text-base leading-relaxed min-h-10.5 border! transition-colors ${selectedShippingUi.triggerSelected}`
                   : "w-auto h-auto flex items-center gap-2 border! border-[#e5e5e5]! text-[#000000]! rounded px-3 py-2 text-base leading-relaxed min-h-10.5 hover:bg-gray-50!"
               }
-              style={{ fontFamily: "inherit" }}
-            >
+              style={{ fontFamily: "inherit" }}>
               {selectedShippingUi && ShippingTriggerIcon ? (
                 <>
                   <ShippingTriggerIcon className='shrink-0' size={20} strokeWidth={2} aria-hidden />
@@ -1399,8 +1422,7 @@ export default function CartList() {
                         isSelected
                           ? `w-full flex items-center gap-2 text-left px-3 py-2 rounded-md transition-colors border ${ui.itemSelected}`
                           : "w-full flex items-center gap-2 text-left px-3 py-2 rounded-md transition-colors text-gray-700 hover:bg-gray-100 border border-transparent"
-                      }
-                    >
+                      }>
                       <Icon className={`shrink-0 ${isSelected ? ui.itemIdle : "text-gray-400"}`} size={18} strokeWidth={2} aria-hidden />
                       <span className='flex-1 min-w-0'>{opt.label}</span>
                       {isSelected && <Check className='shrink-0 text-emerald-600' size={18} strokeWidth={2.5} aria-hidden />}
@@ -1431,9 +1453,9 @@ export default function CartList() {
             <textarea
               value={customer_name}
               onChange={(e) => setCustomerInfo({ name: e.target.value })}
-              className='border rounded px-3 py-2 min-h-[80px] resize-none overflow-hidden'
+              className='border rounded px-3 py-2 min-h-20 resize-none overflow-hidden'
               placeholder='ออกบิลในนาม'
-              style={{ fontFamily: 'inherit' }}
+              style={{ fontFamily: "inherit" }}
               rows={3}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
@@ -1453,7 +1475,7 @@ export default function CartList() {
               onChange={(e) => setCustomerInfo({ invoice_tex: e.target.value.replace(/\D/g, "").slice(0, 13) })}
               placeholder='เลขใบกำกับภาษี ( 13 หลัก)'
               inputMode='numeric'
-              style={{ fontFamily: 'inherit' }}
+              style={{ fontFamily: "inherit" }}
               rows={1}
             />
           </div>
@@ -1478,7 +1500,7 @@ export default function CartList() {
                   </button>
                 </div>
               </li>
-            ) : null
+            ) : null,
           )}
         </ul>
 
@@ -1487,7 +1509,7 @@ export default function CartList() {
           <div className='space-y-3 mb-4'>
             <div className='flex items-end'>
               <img className='w-8 h-8' src={SetFoodSelect.src} alt='' />
-              <h3 className='ml-2 !font-bold'>ชุดอาหารที่เลือก</h3>
+              <h3 className='ml-2 font-bold!'>ชุดอาหารที่เลือก</h3>
             </div>
             {selected_lunchboxes
               .slice()
@@ -1528,7 +1550,7 @@ export default function CartList() {
                             }
                           });
                         }}
-                        className='px-2 py-1 w-auto !bg-red-500 !text-white rounded text-sm duration-300 !transition-all ease-in-out hover:!font-semibold hover:!bg-red-700 hover:!scale-105'>
+                        className='px-2 py-1 w-auto bg-red-500! text-white! rounded text-sm duration-300 transition-all! ease-in-out hover:font-semibold! hover:bg-red-700! hover:scale-105!'>
                         ลบ
                       </button>
                     </div>
@@ -1586,7 +1608,7 @@ export default function CartList() {
 
                     <button
                       onClick={() => handle.EditLunchbox(actualIndex)}
-                      className='w-auto mx-auto flex !items-center !justify-center gap-2 px-3 py-2 rounded duration-300 !transition-all ease-in-out hover:!bg-gray-300 hover:!font-semibold hover:!scale-105 text-sm'>
+                      className='w-auto mx-auto flex items-center! justify-center! gap-2 px-3 py-2 rounded duration-300 !transition-all ease-in-out hover:!bg-gray-300 hover:!font-semibold hover:!scale-105 text-sm'>
                       <img className='w-7 h-7' src={Edit.src} alt='' /> แก้ไขทั้งหมด
                     </button>
                   </div>
@@ -1625,9 +1647,10 @@ export default function CartList() {
               }
             }}
             disabled={!validate.BasicInfo()}
-            className={`w-full text-center px-4 py-2 text-white rounded !transition-all duration-300 ${validate.BasicInfo() ? "bg-green-500 hover:bg-green-600 hover:scale-110 hover:font-semibold cursor-pointer" : "bg-gray-400 cursor-not-allowed opacity-60"
-              }`}>
-            <svg viewBox='0 0 1024 1024' className='icon relative -top-0.5 !w-10 !h-10' version='1.1' xmlns='http://www.w3.org/2000/svg'>
+            className={`flex items-center w-auto mx-auto align-middle px-4 py-2 text-white rounded transition-all! duration-300 gap-2 ${
+              validate.BasicInfo() ? "bg-green-500 hover:bg-green-600 hover:scale-110 hover:font-semibold cursor-pointer" : "bg-gray-400 cursor-not-allowed opacity-60"
+            }`}>
+            <svg viewBox='0 0 1024 1024' className='icon relative -top-0.5 w-10! h-10!' version='1.1' xmlns='http://www.w3.org/2000/svg'>
               <path d='M512 512m-448 0a448 448 0 1 0 896 0 448 448 0 1 0-896 0Z' fill={validate.BasicInfo() ? "#4CAF50" : "#9CA3AF"} />
               <path d='M448 298.666667h128v426.666666h-128z' fill='#FFFFFF' />
               <path d='M298.666667 448h426.666666v128H298.666667z' fill='#FFFFFF' />
@@ -1684,17 +1707,10 @@ export default function CartList() {
                         <label
                           key={opt.value}
                           htmlFor={opt.id}
-                          className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${isSelected ? ui.activeContainer : ui.inactiveContainer
-                            }`}>
-                          <input
-                            type='radio'
-                            id={opt.id}
-                            name='deposit'
-                            value={opt.value}
-                            checked={isSelected}
-                            onChange={opt.onSelect}
-                            className='sr-only'
-                          />
+                          className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                            isSelected ? ui.activeContainer : ui.inactiveContainer
+                          }`}>
+                          <input type='radio' id={opt.id} name='deposit' value={opt.value} checked={isSelected} onChange={opt.onSelect} className='sr-only' />
                           <span style={{ color: isSelected ? ui.iconActiveColor : ui.iconInactiveColor }}>{opt.icon}</span>
                           <span className={`font-medium ${isSelected ? ui.activeText : "text-gray-700"}`}>{opt.label}</span>
                         </label>
@@ -1711,7 +1727,7 @@ export default function CartList() {
                     <div className='flex items-center justify-center gap-2 p-4 border-2 rounded-lg border-green-500 bg-green-50 shadow-md'>
                       <svg
                         xmlns='http://www.w3.org/2000/svg'
-                        className='!w-5 !h-5'
+                        className='w-5! h-5!'
                         style={{ color: "#10B981" }}
                         width='24'
                         height='24'
@@ -1747,17 +1763,10 @@ export default function CartList() {
                           <label
                             key={opt.value}
                             htmlFor={opt.id}
-                            className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${isSelected ? ui.activeContainer : ui.inactiveContainer
-                              }`}>
-                            <input
-                              type='radio'
-                              id={opt.id}
-                              name='payment-status'
-                              value={opt.value}
-                              checked={isSelected}
-                              onChange={() => setCustomerInfo({ ispay: opt.value })}
-                              className='sr-only'
-                            />
+                            className={`relative flex items-center justify-center gap-2 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                              isSelected ? ui.activeContainer : ui.inactiveContainer
+                            }`}>
+                            <input type='radio' id={opt.id} name='payment-status' value={opt.value} checked={isSelected} onChange={() => setCustomerInfo({ ispay: opt.value })} className='sr-only' />
                             <span style={{ color: isSelected ? ui.iconActiveColor : "#6B7280" }}>{opt.icon}</span>
                             <span className={`font-medium ${isSelected ? ui.activeText : "text-gray-700"}`}>{opt.label}</span>
                           </label>
@@ -1766,7 +1775,6 @@ export default function CartList() {
                     </div>
                   </div>
                 )}
-
               </>
             )}
 
@@ -1798,14 +1806,13 @@ export default function CartList() {
                   return `${(Number(pay_cost.replace(/[^\d]/g, "") || 0) / 100).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท`;
                 })();
 
-                const remainText =
-                  total_remain
-                    ? (() => {
+                const remainText = total_remain
+                  ? (() => {
                       const remainStr = typeof total_remain === "string" ? total_remain.replace(/,/g, "") : String(total_remain);
                       const remainNum = parseFloat(remainStr) || 0;
                       return remainNum > 0 ? `${remainNum.toFixed(2)} บาท` : "0.00 บาท";
                     })()
-                    : "-";
+                  : "-";
 
                 const summaryRows: Array<{
                   key: string;
@@ -1815,27 +1822,34 @@ export default function CartList() {
                   labelClass: string;
                   valueClass: string;
                 }> = [
-                    { key: "food", label: "ค่าอาหาร", value: <span className='text-lg'>{foodCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                    { key: "shipping", label: "ค่าส่ง", value: <span className='text-lg'>{shipping_cost ? `${shipping_cost} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                    { key: "fee", label: "ค่าธรรมเนียม", value: <span className='text-lg'>{pay_charge ? `${pay_charge} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                    { key: "total", label: "ยอดทั้งหมด", value: <span className='text-lg'>{totalCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
-                    {
-                      key: "deposit",
-                      label: pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ",
-                      value: <span className='text-lg text-orange-600'>{depositText}</span>,
-                      withBorder: true,
-                      labelClass: "font-bold",
-                      valueClass: "",
-                    },
-                    {
-                      key: "remain",
-                      label: "คงเหลือ",
-                      value: <span className='text-xl font-bold text-green-700'>{remainText}</span>,
-                      withBorder: false,
-                      labelClass: "font-bold text-green-700",
-                      valueClass: "",
-                    },
-                  ];
+                  { key: "food", label: "ค่าอาหาร", value: <span className='text-lg'>{foodCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                  {
+                    key: "shipping",
+                    label: "ค่าส่ง",
+                    value: <span className='text-lg'>{shipping_cost ? `${shipping_cost} บาท` : "-"}</span>,
+                    withBorder: true,
+                    labelClass: "font-bold",
+                    valueClass: "",
+                  },
+                  { key: "fee", label: "ค่าธรรมเนียม", value: <span className='text-lg'>{pay_charge ? `${pay_charge} บาท` : "-"}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                  { key: "total", label: "ยอดทั้งหมด", value: <span className='text-lg'>{totalCostText}</span>, withBorder: true, labelClass: "font-bold", valueClass: "" },
+                  {
+                    key: "deposit",
+                    label: pay_deposit === "full" ? "ยอดที่ต้องชำระ" : "ค่ามัดจำ",
+                    value: <span className='text-lg text-orange-600'>{depositText}</span>,
+                    withBorder: true,
+                    labelClass: "font-bold",
+                    valueClass: "",
+                  },
+                  {
+                    key: "remain",
+                    label: "คงเหลือ",
+                    value: <span className='text-xl font-bold text-green-700'>{remainText}</span>,
+                    withBorder: false,
+                    labelClass: "font-bold text-green-700",
+                    valueClass: "",
+                  },
+                ];
 
                 return summaryRows.map((row) => (
                   <div key={row.key} className={`flex justify-between items-center py-2 ${row.withBorder ? "border-b" : ""}`}>
@@ -1855,7 +1869,7 @@ export default function CartList() {
             cursor: loading ? "not-allowed" : "pointer",
             color: "white",
           }}
-          className={`w-full py-2 rounded font-bold !transition-all duration-300 ${loading ? "" : errors.length === 0 ? "hover:!bg-green-500" : "hover:bg-red-400"}`}>
+          className={`w-full py-2 rounded font-bold transition-all! duration-300 ${loading ? "" : errors.length === 0 ? "hover:!bg-green-500" : "hover:bg-red-400"}`}>
           {loading ? "กำลังส่ง..." : "ยืนยันคำสั่งซื้อ"}
         </button>
       </div>

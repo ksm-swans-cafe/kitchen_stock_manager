@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { checkServerAuth } from "@/lib/auth/serverAuth";
 
 interface Ingredient {
   ingredient_name: string;
@@ -8,6 +9,9 @@ interface Ingredient {
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const authResult = await checkServerAuth();
+  if (!authResult.success) return authResult.response!;
+
   const params = await context.params;
   const { id } = params;
 
@@ -66,28 +70,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       );
     }
 
-    let existingMenuItems: {
+    const existingMenuItems: {
       menu_name: string;
       menu_total: number;
       menu_ingredients: Ingredient[];
-    }[] = [];
-    if (cart.menu_items) {
-      try {
-        if (typeof cart.menu_items === "string") {
-          existingMenuItems = JSON.parse(cart.menu_items);
-        } else {
-          console.warn("menu_items is not a string, resetting to empty array");
-          existingMenuItems = [];
-        }
-        if (!Array.isArray(existingMenuItems)) {
-          console.warn("menu_items is not an array, resetting to empty array");
-          existingMenuItems = [];
-        }
-      } catch (parseError) {
-        console.error("Failed to parse menu_items:", parseError);
-        existingMenuItems = [];
-      }
-    }
+    }[] = Array.isArray(cart.menu_items) ? (cart.menu_items as any) : [];
 
     const updatedMenuItems = existingMenuItems.map((item) =>
       item.menu_name === menuName
@@ -117,7 +104,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const result = await prisma.new_cart.update({
       where: { id: id },
       data: {
-        menu_items: JSON.stringify(updatedMenuItems),
+        menu_items: updatedMenuItems as any,
         last_update: new Date().toISOString(),
       },
     });

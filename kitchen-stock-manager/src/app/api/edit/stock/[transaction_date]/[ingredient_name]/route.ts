@@ -26,28 +26,28 @@ export async function PATCH(
     const quantity = formData.get("transaction_quantity");
     const unit = formData.get("transaction_units")?.toString().trim();
 
-    if (!username || !total_price || !ingredientName || !quantity || !unit) {
+    if (!username || !type || !total_price || !ingredientName || !quantity || !unit) {
       return NextResponse.json({ error: "All fields are required." }, { status: 400 });
     }
 
-    const transaction = await prisma.ingredient_transactions.findFirst({
+    const transaction = await prisma.ingredient_transaction.findFirst({
       where: {
-        transaction_date: new Date(rawDateTime),
+        transaction_date: rawDateTime,
         ingredient_name: ingredientName,
       },
     });
 
     if (!transaction) return NextResponse.json({ error: "Transaction not found." }, { status: 404 });
 
-    const result = await prisma.ingredient_transactions.update({
+    const result = await prisma.ingredient_transaction.update({
       where: {
-        transaction_id: transaction.transaction_id,
+        id: transaction.id,
       },
       data: {
         transaction_from_username: username,
         transaction_type: type,
-        transaction_total_price: Number(total_price),
-        transaction_quantity: Number(quantity),
+        transaction_total_price: total_price.toString(),
+        transaction_quantity: quantity.toString(),
         transaction_units: unit,
       },
     });

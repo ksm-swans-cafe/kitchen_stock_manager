@@ -38,7 +38,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       where: { id: id },
       select: {
         id: true,
-        id: true,
         lunchbox: true,
       },
     });
@@ -70,12 +69,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     const updatedLunchboxes = lunchboxes.map((lunchbox: any) => ({
       ...lunchbox,
-      lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => {
+      lunchbox_menu: (lunchbox.lunchbox_menu || []).map((menu: any) => {
         if (menu.menu_name === menuName) {
           menuFound = true;
           return {
             ...menu,
-            menu_ingredients: menu.menu_ingredients.map((ing: any) => {
+            menu_ingredients: (menu.menu_ingredients || []).map((ing: any) => {
               if (ing.ingredient_name === ingredientName) {
                 ingredientFound = true;
                 return { ...ing, ingredient_status: isChecked };

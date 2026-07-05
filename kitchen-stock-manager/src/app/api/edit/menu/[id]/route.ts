@@ -94,6 +94,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     );
   }
 
+  const parsedMenuCost = parseInt(menuCost);
+  if (!Number.isFinite(parsedMenuCost) || parsedMenuCost < 0) {
+    return NextResponse.json({ error: "menu_cost ต้องเป็นจำนวนเต็มที่ไม่ติดลบ" }, { status: 400 });
+  }
+
   let menuIngredients;
   let menuLunchbox = [];
 
@@ -134,7 +139,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         menu_name: menuName.trim(),
         menu_subname: menuSubname.trim(),
         menu_category: menuCategory.trim(),
-        menu_cost: parseInt(menuCost) || 0,
+        menu_cost: parsedMenuCost,
         menu_ingredients: menuIngredients,
         menu_lunchbox: menuLunchbox,
       },
