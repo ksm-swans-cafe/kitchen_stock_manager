@@ -390,83 +390,63 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
     return Number(value).toFixed(2);
   };
 
+  const statusColorClass =
+    status.color === "destructive" ? "bg-red-500 text-white" : status.color === "warning" ? "bg-amber-500 text-white" : "bg-emerald-500 text-white";
+
   return (
     <>
-      <div className='column is-full-mobile is-one-third-tablet is-one-fifth-desktop is-one-sixth-widescreen'>
-        <div className='card flex flex-col h-full'>
-          <div className='card-image'>
-            {/* <figure className="image is-4by3 sm:is-3by2">
-              <img
-                src={
-                  imageUrl ||
-                  "https://bulma.io/assets/images/placeholders/1280x960.png"
-                }
-                alt={title}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  cursor: "pointer",
-                  touchAction: "manipulation",
-                }}
-                onClick={onImageClick}
-                onTouchStart={onImageClick}
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "https://bulma.io/assets/images/placeholders/1280x960.png";
-                }}
-              />
-            </figure> */}
-            {mode === "ingredient" && (
-              <div style={{ color: "#000000" }} className={`mt-2 subtitle text-black is-6 tag is-pulled-right ${status.label === "ใกล้หมด" ? "is-danger" : status.label === "ปานกลาง" ? "is-warning" : "is-success"}`}>
-                {status.label}
+      <div className='flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm'>
+        <div className='relative p-2'>
+          {mode === "ingredient" && (
+            <div className='flex justify-end'>
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColorClass}`}>{status.label}</span>
+            </div>
+          )}
+        </div>
+
+        {mode === "menu" && (
+          <div className='flex flex-col items-center px-2 py-2'>
+            <div className='text-sm font-semibold text-gray-900'>{title}</div>
+          </div>
+        )}
+        {mode === "menu" && (
+          <footer className='flex items-center border-t border-gray-200' style={{ height: "10%" }}>
+            <button className='flex flex-1 items-center justify-center border-r border-gray-200 py-2 text-gray-600 hover:bg-gray-50' onClick={() => removeItem((item as MenuItem).menu_id!)}>
+              <FontAwesomeIcon icon={faMinus} />
+            </button>
+            <div className='flex flex-1 items-center justify-center py-2' style={{ flex: 1 }}>
+              <input type='number' value={total} onChange={(e) => handleChangeQuantity((item as MenuItem).menu_id!, Number(e.target.value))} className='custom-input' />
+            </div>
+            <button className='flex flex-1 items-center justify-center border-l border-gray-200 py-2 text-gray-600 hover:bg-gray-50' onClick={() => addItem(item as MenuItem)}>
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+          </footer>
+        )}
+
+        {mode === "ingredient" && (
+          <div className='mx-2 my-2'>
+            <div className='text-base font-semibold text-gray-900'>{title}</div>
+            <div className='text-xs text-gray-500'>
+              คงเหลือ {formatTotal(total as number)} {unit}
+            </div>
+            {lastUpdate && (
+              <div className='text-xs text-gray-500'>
+                อัปเดตล่าสุด{" "}
+                {new Date(lastUpdate).toLocaleDateString("th-TH", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                น.
               </div>
             )}
           </div>
-
-          {mode === "menu" && (
-            <div className='flex flex-col px-2 py-2 items-center'>
-              <div className='title is-6'>{title}</div>
-            </div>
-          )}
-          {mode === "menu" && (
-            <footer className='card-footer' style={{ height: "10%" }}>
-              <button className='card-footer-item' onClick={() => removeItem((item as MenuItem).menu_id!)}>
-                <FontAwesomeIcon icon={faMinus} />
-              </button>
-              <div className='card-footer-item' style={{ flex: 1 }}>
-                <input type='number' value={total} onChange={(e) => handleChangeQuantity((item as MenuItem).menu_id!, Number(e.target.value))} className='custom-input' />
-              </div>
-              <button className='card-footer-item' onClick={() => addItem(item as MenuItem)}>
-                <FontAwesomeIcon icon={faPlus} />
-              </button>
-            </footer>
-          )}
-
-          {mode === "ingredient" && (
-            <div className='mx-2 my-2'>
-              <div className='subtitle is-5'>{title}</div>
-              <div className='subtitle is-7'>
-                คงเหลือ {formatTotal(total as number)} {unit}
-              </div>
-              {lastUpdate && (
-                <div className='subtitle is-7'>
-                  อัปเดตล่าสุด{" "}
-                  {new Date(lastUpdate).toLocaleDateString("th-TH", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  น.
-                </div>
-              )}
-            </div>
-          )}
-          {mode === "ingredient" && (
-            <footer className='card-footer'>
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        )}
+        {mode === "ingredient" && (
+          <footer className='border-t border-gray-200 p-2'>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <div className='flex items-center justify-center w-full h-full'>
                     <Button style={{ color: "#ffffff" }} className='flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 px-4 py-2 text-white font-semibold rounded-md' disabled={!ingredientItem?.ingredient_id}>
@@ -684,7 +664,6 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
             </footer>
           )}
         </div>
-      </div>
     </>
   );
 }

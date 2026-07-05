@@ -1,11 +1,11 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
 
-  const id = params.id;
+  const { id } = await params;
   try {
     const result = await prisma.ingredients.findMany({
       where: { ingredient_id: Number(id) },

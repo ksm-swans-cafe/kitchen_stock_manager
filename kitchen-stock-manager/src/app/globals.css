@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@import 'bulma/css/bulma.css';
-
 @custom-variant dark (&:is(.dark *));
 
 /*  */

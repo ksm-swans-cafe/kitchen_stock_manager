@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { checkServerAuth } from "@/lib/auth/serverAuth";
+import { checkServerAuth, isElevatedRole } from "@/lib/auth/serverAuth";
 
 export async function PATCH(
   request: NextRequest,
@@ -13,6 +13,10 @@ export async function PATCH(
     const { id } = await context.params;
     const body = await request.json();
     const { employee_roles, employee_firstname, employee_lastname, employee_username, employee_pin } = body;
+
+    if (employee_roles !== undefined && !isElevatedRole(authResult.userRoles)) {
+      return NextResponse.json({ success: false, error: "ไม่มีสิทธิ์แก้ไข Role ของพนักงาน" }, { status: 403 });
+    }
 
     const existingEmployee = await prisma.employee.findUnique({
       where: { id },
@@ -63,6 +67,9 @@ export async function DELETE(
 ): Promise<NextResponse> {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
+  if (!isElevatedRole(authResult.userRoles)) {
+    return NextResponse.json({ success: false, error: "ไม่มีสิทธิ์ลบพนักงาน" }, { status: 403 });
+  }
 
   try {
     const { id } = await context.params;

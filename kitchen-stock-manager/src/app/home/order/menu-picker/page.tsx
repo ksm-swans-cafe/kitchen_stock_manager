@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Send, Minus, Plus, ArrowLeft } from "lucide-react";
 import axios from "axios";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 
 import { useCartStore, calculatePackaging } from "@/stores/store";
@@ -14,13 +15,21 @@ import MobileActionBar from "@/components/order/MobileActionBar";
 import { Loading } from "@/components/loading/loading";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PERMISSIONS } from "@/lib/permissions";
+import { DISH_TYPES, MEAT_TYPES, resolveDishType, resolveMeatType, DEFAULT_MEAT_SURCHARGE } from "@/lib/menu/dishMeatType";
 
 import useLoadingDots from "@/lib/hook/Dots";
 
 import SetFoodIcon from "@/assets/setfood.png";
 import FoodMenuSetIcon from "@/assets/food-menu.png";
 
-type MenuItemWithAutoRice = MenuItem & { lunchbox_AutoRice?: boolean | null; lunchbox_showPrice?: boolean };
+type MenuItemWithAutoRice = MenuItem & {
+  lunchbox_AutoRice?: boolean | null;
+  lunchbox_showPrice?: boolean;
+  lunchbox_dish_type?: string | null;
+  lunchbox_meat_type?: string | null;
+};
+
+const meatSurchargeFetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 type LunchboxOrderSelectItem = {
   lunchbox_menu_category: string;
@@ -147,7 +156,7 @@ function OrderContent() {
 
             // พยายามดึงประเภทเนื้อสัตว์จากเมนูที่เลือกไว้
             for (const menu of editingData.selected_menus) {
-              const meat = getMeatType(menu.menu_name || "");
+              const meat = resolveMeatType(menu);
               if (meat) {
                 setSelectedMeatType(meat);
                 break;
@@ -170,28 +179,26 @@ function OrderContent() {
   }, [lunchboxData]);
 
   // ==================== ตรรกะกลุ่มเมนู ====================
-  // ตัวแปรสำหรับจัดการกลุ่มเมนู
-  const dishOrder = ["กะเพรา", "กระเทียม", "พริกแกง", "พะแนง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
-  const meatOrder = ["หมู", "ไก่", "หมึก", "กุ้ง"];
-  const genericDishTypes = ["กะเพรา", "กระเทียม", "พริกแกง", "พะแนง", "คั่วกลิ้ง", "ผัดผงกะหรี่"];
+  // ตัวแปรสำหรับจัดการกลุ่มเมนู (ใช้ค่าจาก util กลาง — resolveDishType/resolveMeatType จะอ่านค่า
+  // lunchbox_dish_type/lunchbox_meat_type จริงก่อน แล้วค่อย fallback ไปเดาจากชื่อเมนู)
+  const dishOrder: string[] = [...DISH_TYPES];
+  const meatOrder: string[] = [...MEAT_TYPES];
+  const genericDishTypes: string[] = [...DISH_TYPES];
 
-  const getMeatType = (menuName: string): "หมู" | "ไก่" | "หมึก" | "กุ้ง" | null => {
-    if (menuName.includes("หมู")) return "หมู";
-    if (menuName.includes("ไก่")) return "ไก่";
-    if (menuName.includes("หมึก")) return "หมึก";
-    if (menuName.includes("กุ้ง")) return "กุ้ง";
-    return null;
-  };
+  // ตั้งค่าราคาบวกเพิ่มเนื้อสัตว์ (เฉพาะชุด/set ที่กำลังเลือกอยู่ ตั้งค่าได้จากหน้าแอดมิน lunchbox)
+  const meatSurchargeKey =
+    selectedFoodSet && selectedSetMenu
+      ? `/api/get/meat-surcharge?lunchbox_name=${encodeURIComponent(selectedFoodSet)}&lunchbox_set_name=${encodeURIComponent(selectedSetMenu)}`
+      : null;
+  const { data: meatSurchargeData } = useSWR<{ success: boolean; data: { meat_name: string; surcharge: number }[] }>(meatSurchargeKey, meatSurchargeFetcher);
 
-  const getDishType = (menuName: string): string | null => {
-    if (menuName.includes("กะเพรา") || menuName.includes("กระเพรา")) return "กะเพรา";
-    if (menuName.includes("กระเทียม")) return "กระเทียม";
-    if (menuName.includes("พริกแกง") || menuName.includes("พริกเเกง")) return "พริกแกง";
-    if (menuName.includes("พะแนง")) return "พะแนง";
-    if (menuName.includes("คั่วกลิ้ง")) return "คั่วกลิ้ง";
-    if (menuName.includes("ผัดผงกะหรี่")) return "ผัดผงกะหรี่";
-    return null;
-  };
+  const meatSurchargeMap = useMemo(() => {
+    const map: Record<string, number> = { ...DEFAULT_MEAT_SURCHARGE };
+    meatSurchargeData?.data?.forEach((item) => {
+      map[item.meat_name] = item.surcharge;
+    });
+    return map;
+  }, [meatSurchargeData]);
 
   // สถานะสำหรับเมนูที่รอเลือกเนื้อสัตว์
   const [focusedDish, setFocusedDish] = useState<string | null>(null);
@@ -315,6 +322,8 @@ function OrderContent() {
             lunchbox_showPrice: menu.lunchbox_showPrice ?? true,
             lunchbox_AutoRice: menu.lunchbox_AutoRice ?? false,
             lunchbox_menuid: menu.lunchbox_menuid || menu.lunchbox_menuid === "" ? menu.lunchbox_menuid : undefined,
+            lunchbox_dish_type: menu.lunchbox_dish_type ?? null,
+            lunchbox_meat_type: menu.lunchbox_meat_type ?? null,
           }));
           setAvailableMenus(menuItems);
         }
@@ -374,8 +383,7 @@ function OrderContent() {
         // ถ้าไม่ใช่หมวด "กับข้าวที่ 1" หรือ "ข้าว+กับข้าว" ให้ปล่อยผ่าน (ไม่กรอง)
         if (menu.lunchbox_menu_category !== "กับข้าวที่ 1" && menu.lunchbox_menu_category !== "ข้าว+กับข้าว") return true;
 
-        const menuName = menu.menu_name || "";
-        return menuName.includes(selectedMeatType);
+        return resolveMeatType(menu) === selectedMeatType;
       });
     }
 
@@ -398,9 +406,8 @@ function OrderContent() {
   }, [availableMenus, debouncedSearchQuery, selectedMeatType]);
 
   const dynamicMeatTypes = useMemo(() => {
-    const keywords = ["หมู", "ไก่", "หมึก", "กุ้ง"];
     const mainDish1Menus = availableMenus.filter((m) => m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว");
-    return keywords.filter((k) => mainDish1Menus.some((m) => (m.menu_name || "").includes(k)));
+    return meatOrder.filter((k) => mainDish1Menus.some((m) => resolveMeatType(m) === k));
   }, [availableMenus]);
 
   const selectionPrice = useMemo(() => {
@@ -1097,18 +1104,18 @@ function OrderContent() {
     );
 
     conflictingItems.forEach((oldDish) => {
-      const oldMeatType = getMeatType(oldDish.menu_name);
+      const oldMeatType = resolveMeatType(oldDish);
 
       // ถ้าเป็นเมนูที่มีเนื้อสัตว์ และเนื้อสัตว์ไม่ตรงกับที่เลือกใหม่
       if (oldMeatType && oldMeatType !== newMeatType) {
         // ลองหาเมนูใหม่ที่ประเภทเดียวกัน (Swap)
-        const dishType = getDishType(oldDish.menu_name);
+        const dishType = resolveDishType(oldDish);
         const category = oldDish.lunchbox_menu_category;
 
         let newDish = null;
 
         if (dishType) {
-          newDish = availableMenus.find((m) => m.lunchbox_menu_category === category && getDishType(m.menu_name) === dishType && m.menu_name.includes(newMeatType));
+          newDish = availableMenus.find((m) => m.lunchbox_menu_category === category && resolveDishType(m) === dishType && resolveMeatType(m) === newMeatType);
         }
 
         // ลบเมนูเดิมออกเสมอ (เพราะมันไม่ตรงกับ Filter)
@@ -1128,7 +1135,7 @@ function OrderContent() {
 
     // 2. จัดการเมนูที่รอเลือกเนื้อสัตว์ (Pending Focus)
     if (focusedDish) {
-      const matchPending = availableMenus.find((m) => (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") && m.menu_name.includes(focusedDish) && m.menu_name.includes(newMeatType));
+      const matchPending = availableMenus.find((m) => (m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว") && resolveDishType(m) === focusedDish && resolveMeatType(m) === newMeatType);
 
       if (matchPending) {
         const key = buildMenuKey(matchPending);
@@ -1914,7 +1921,7 @@ function OrderContent() {
                                   <div className='flex flex-wrap gap-3 sm:gap-4'>
                                     {genericDishTypes.map((dishType) => {
                                       // ค้นหาเมนูที่ตรงกัน (ถ้าเลือกเนื้อสัตว์แล้ว)
-                                      const matchingMenu = selectedMeatType ? riceWithDishCategory.find((m) => m.menu_name.includes(dishType) && m.menu_name.includes(selectedMeatType)) : null;
+                                      const matchingMenu = selectedMeatType ? riceWithDishCategory.find((m) => resolveDishType(m) === dishType && resolveMeatType(m) === selectedMeatType) : null;
 
                                       // ตรวจสอบสถานะการเลือก
                                       const isDishTypeSelected = selectedMeatType ? (matchingMenu ? selectedMenuItems.includes(buildMenuKey(matchingMenu)) : false) : focusedDish === dishType;
@@ -1931,12 +1938,12 @@ function OrderContent() {
                                       // หาเมนูหมูก่อน (ราคาพื้นฐาน) - ต้องมี dishType และ "หมู"
                                       // ใช้ allRiceWithDishMenus (ไม่ผ่านการกรอง) เพื่อให้หาเมนูหมู/ไก่ได้แม้เลือกกุ้ง/หมึก
                                       const porkMenu = allRiceWithDishMenus.find((m) =>
-                                        m.menu_name.includes(dishType) && m.menu_name.includes("หมู")
+                                        resolveDishType(m) === dishType && resolveMeatType(m) === "หมู"
                                       );
 
                                       // ถ้าไม่มีหมู ให้หาไก่ (ราคาพื้นฐาน) - ต้องมี dishType และ "ไก่"
                                       const chickenMenu = !porkMenu ? allRiceWithDishMenus.find((m) =>
-                                        m.menu_name.includes(dishType) && m.menu_name.includes("ไก่")
+                                        resolveDishType(m) === dishType && resolveMeatType(m) === "ไก่"
                                       ) : null;
 
                                       // ใช้ราคาจากเมนูหมูหรือไก่เท่านั้น (ไม่ใช้ราคาจากเมนูที่มีราคาเพิ่มเติม เช่น หมึก/กุ้ง/ทะเล)
@@ -1948,8 +1955,9 @@ function OrderContent() {
                                       } else {
                                         // ถ้าไม่มีหมูหรือไก่เลย ให้หาเมนูอื่นที่ไม่มีราคาเพิ่มเติม (ไม่ใช่หมึก, กุ้ง, ทะเล)
                                         const fallbackMenu = allRiceWithDishMenus.find((m) => {
-                                          const hasDishType = m.menu_name.includes(dishType);
-                                          const hasExpensiveMeat = m.menu_name.includes("หมึก") || m.menu_name.includes("กุ้ง") || m.menu_name.includes("ทะเล");
+                                          const hasDishType = resolveDishType(m) === dishType;
+                                          const meatType = resolveMeatType(m);
+                                          const hasExpensiveMeat = meatType === "หมึก" || meatType === "กุ้ง" || m.menu_name.includes("ทะเล");
                                           return hasDishType && !hasExpensiveMeat;
                                         });
 
@@ -2031,14 +2039,7 @@ function OrderContent() {
 
                                   <div className={`flex flex-wrap gap-3 sm:gap-4 ${isMeatStepLocked ? "pointer-events-none" : ""}`}>
                                     {dynamicMeatTypes.map((meat) => {
-                                      const meatPriceMap: Record<string, number> = {
-                                        หมู: 0,
-                                        ไก่: 0,
-                                        หมึก: 10,
-                                        กุ้ง: 10,
-                                        ทะเล: 10,
-                                      };
-                                      const additionalPrice = meatPriceMap[meat] || 0;
+                                      const additionalPrice = meatSurchargeMap[meat] || 0;
                                       const isAdditional = additionalPrice > 0;
 
                                       return (
@@ -2073,15 +2074,15 @@ function OrderContent() {
 
                                 // เรียงลำดับเมนู
                                 const sortedMenus = [...menusInCategory].sort((a, b) => {
-                                  const dishA = getDishType(a.menu_name);
-                                  const dishB = getDishType(b.menu_name);
+                                  const dishA = resolveDishType(a);
+                                  const dishB = resolveDishType(b);
                                   const dishIndexA = dishA ? dishOrder.indexOf(dishA) : -1;
                                   const dishIndexB = dishB ? dishOrder.indexOf(dishB) : -1;
 
                                   if (dishIndexA !== -1 && dishIndexB !== -1) {
                                     if (dishIndexA !== dishIndexB) return dishIndexA - dishIndexB;
-                                    const meatA = getMeatType(a.menu_name);
-                                    const meatB = getMeatType(b.menu_name);
+                                    const meatA = resolveMeatType(a);
+                                    const meatB = resolveMeatType(b);
                                     const meatIndexA = meatA ? meatOrder.indexOf(meatA) : -1;
                                     const meatIndexB = meatB ? meatOrder.indexOf(meatB) : -1;
                                     if (meatIndexA !== -1 && meatIndexB !== -1) {
@@ -2092,8 +2093,8 @@ function OrderContent() {
                                     return a.menu_name.localeCompare(b.menu_name, "th");
                                   }
 
-                                  const meatA = getMeatType(a.menu_name);
-                                  const meatB = getMeatType(b.menu_name);
+                                  const meatA = resolveMeatType(a);
+                                  const meatB = resolveMeatType(b);
                                   const indexA = meatA ? meatOrder.indexOf(meatA) : -1;
                                   const indexB = meatB ? meatOrder.indexOf(meatB) : -1;
 
@@ -2173,7 +2174,7 @@ function OrderContent() {
                                           }
                                         }
 
-                                        const menuMeatType = getMeatType(menu.menu_name);
+                                        const menuMeatType = resolveMeatType(menu);
 
                                         return (
                                           <MenuCard

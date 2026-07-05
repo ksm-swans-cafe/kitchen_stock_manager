@@ -30,7 +30,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       where: { id: id },
       select: {
         id: true,
-        id: true,
         lunchbox: true,
         total_cost_lunchbox: true,
       },
@@ -61,9 +60,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     // Update all ingredients status in all menus
     const updatedLunchboxes = lunchboxes.map((lunchbox: any) => ({
       ...lunchbox,
-      lunchbox_menu: lunchbox.lunchbox_menu.map((menu: any) => ({
+      lunchbox_menu: (lunchbox.lunchbox_menu || []).map((menu: any) => ({
         ...menu,
-        menu_ingredients: menu.menu_ingredients.map((ing: any) => ({
+        menu_ingredients: (menu.menu_ingredients || []).map((ing: any) => ({
           ...ing,
           ingredient_status: isChecked,
         })),

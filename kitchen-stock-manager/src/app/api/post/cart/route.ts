@@ -68,14 +68,14 @@ export async function POST(request: NextRequest) {
       lunchbox_name: lunchbox.lunchbox_name || "",
       lunchbox_set_name: lunchbox.lunchbox_set || "",
       lunchbox_limit: parseInt(lunchbox.lunchbox_limit?.toString() || "0"),
-      lunchbox_total: parseInt(lunchbox.lunchbox_quantity || "1"),
+      lunchbox_total: parseInt(lunchbox.lunchbox_quantity ?? "1"),
       lunchbox_total_cost: parseInt((lunchbox.lunchbox_total_cost || "0").toString().replace(/[^\d]/g, "")),
       lunchbox_packaging: lunchbox.lunchbox_packaging || null,
       lunchbox_menu: (lunchbox.lunchbox_menus || []).map((menu: any) => ({
         menu_name: menu.menu_name || "",
         menu_subname: menu.menu_subname || "",
         menu_category: menu.menu_category || "",
-        menu_total: parseInt(menu.menu_total || "1"),
+        menu_total: parseInt(menu.menu_total ?? "1"),
         menu_ingredients: (menu.menu_ingredients || []).map((ingredient: any) => ({
           ingredient_name: ingredient.ingredient_name || "",
           useItem: parseInt(ingredient.useItem || "0"),

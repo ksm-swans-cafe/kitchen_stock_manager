@@ -50,26 +50,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     console.log("Fetched menu_items:", cart.menu_items);
 
-    let menuItems: MenuItem[] = [];
-    if (cart.menu_items) {
-      if (typeof cart.menu_items === "string") {
-        try {
-          menuItems = JSON.parse(cart.menu_items);
-          if (!Array.isArray(menuItems)) {
-            console.error("menu_items is not an array:", menuItems);
-            return NextResponse.json({ error: "ข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
-          }
-        } catch (e) {
-          console.error("JSON parse error:", (e as Error).message, "Raw data:", cart.menu_items);
-          return NextResponse.json({ error: "รูปแบบข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
-        }
-      } else if (Array.isArray(cart.menu_items)) {
-        menuItems = (cart.menu_items as unknown as MenuItem[]).filter((item): item is MenuItem => item !== null);
-      } else {
-        console.error("Invalid menu_items format:", cart.menu_items);
-        return NextResponse.json({ error: "รูปแบบข้อมูลเมนูในตะกร้าไม่ถูกต้อง" }, { status: 400 });
-      }
-    }
+    const menuItems: MenuItem[] = Array.isArray(cart.menu_items) ? (cart.menu_items as unknown as MenuItem[]).filter((item): item is MenuItem => item !== null) : [];
 
     if (menuItems.length === 0) {
       console.warn("Empty menuItems for cart:", id);
@@ -89,7 +70,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const result = await prisma.new_cart.update({
       where: { id: id },
       data: {
-        menu_items: JSON.stringify(updatedMenuItems),
+        menu_items: updatedMenuItems as any,
       },
     });
 

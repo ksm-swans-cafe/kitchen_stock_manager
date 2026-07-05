@@ -26,13 +26,21 @@ export async function POST(
       return NextResponse.json({ error: "All fields are required." }, { status: 400 });
     }
 
-    const result = await prisma.ingredient_transactions.create({
+    const lastTransaction = await prisma.ingredient_transaction.findFirst({
+      orderBy: { transaction_id: "desc" },
+      select: { transaction_id: true },
+    });
+    const nextTransactionId = (lastTransaction?.transaction_id ?? 0) + 1;
+
+    const result = await prisma.ingredient_transaction.create({
       data: {
+        transaction_id: nextTransactionId,
+        transaction_date: new Date().toISOString(),
         transaction_from_username: username,
         transaction_type: type,
         ingredient_name: ingredientName,
-        transaction_total_price: Number(total_price),
-        transaction_quantity: Number(quantity),
+        transaction_total_price: total_price.toString(),
+        transaction_quantity: quantity.toString(),
         transaction_units: unit,
       },
     });
