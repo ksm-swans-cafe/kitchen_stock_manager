@@ -8,14 +8,9 @@ export async function GET() {
 
   try {
     // ดึงข้อมูล lunchbox ทั้งหมดพร้อม id สำหรับการแก้ไข
-    const lunchboxes = await prisma.lunchbox.findMany({
-      orderBy: [
-        { lunchbox_name: "asc" },
-        { lunchbox_set_name: "asc" },
-      ],
-    });
+    const lunchboxes = await prisma.lunchbox.findRaw({});
 
-    const result = lunchboxes.map((lb: any) => ({
+    const result = (lunchboxes as unknown as any[]).map((lb: any) => ({
       id: lb.id,
       lunchbox_name: lb.lunchbox_name,
       lunchbox_set_name: lb.lunchbox_set_name,
@@ -25,6 +20,7 @@ export async function GET() {
       lunchbox_image_path: lb.lunchbox_image_path || null,
       lunchbox_check_all: lb.lunchbox_check_all || false,
       lunchbox_order_select: lb.lunchbox_order_select || [],
+      // lunchbox_order_select: Array.isArray(lb.lunchbox_order_select) ? lb.lunchbox_order_select : [],
     }));
 
     return NextResponse.json({
