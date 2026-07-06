@@ -32,6 +32,10 @@ type MenuItemWithAutoRice = MenuItem & {
 
 const meatSurchargeFetcher = (url: string) => axios.get(url).then((res) => res.data);
 
+// ชุดแบบ "กำหนดเอง" (เลือกอิสระ) — เช็คด้วยชื่อกล่อง รองรับทั้งชื่อเดิม "Custom" และชื่อปัจจุบัน "Lunchbox"
+const CUSTOM_SET_NAMES = ["Custom", "Lunchbox"];
+const isCustomFoodSet = (name?: string | null) => CUSTOM_SET_NAMES.includes(name ?? "");
+
 type LunchboxOrderSelectItem = {
   lunchbox_menu_category: string;
   lunchbox_menu_category_limit?: string | null;
@@ -532,7 +536,7 @@ function OrderContent() {
   const isStepBasedSet = orderSelectSteps.length > 0;
   const stepCategories = useMemo(() => new Set(orderSelectSteps.map((s) => s.category)), [orderSelectSteps]);
   const optionalStepCategories = useMemo(() => new Set(orderSelectSteps.filter((s) => s.limit === null).map((s) => s.category)), [orderSelectSteps]);
-  const isCustomUnlimited = selectedFoodSet === "Custom" && (selectedSetData?.lunchbox_limit ?? 0) === 0;
+  const isCustomUnlimited = isCustomFoodSet(selectedFoodSet) && (selectedSetData?.lunchbox_limit ?? 0) === 0;
 
   // มีเมนูหมวด combo (ข้าว+กับข้าว / กับข้าวที่ 1) ใน set นี้หรือไม่ — ใช้ตัดสินว่า "เนื้อสัตว์" เป็น step เลือกประเภทเนื้อ หรือเป็นหมวดเมนูจริง
   const hasRiceWithDishMenus = useMemo(
@@ -770,7 +774,7 @@ function OrderContent() {
     // ยกเว้น "กับข้าว" และ "เนื้อสัตว์" เลือกได้อย่างละ 1 (เลือกตัวใหม่ = สลับแทนตัวเดิม)
     // NOTE: บางชุดอื่นอาจ limit=0 แต่ยังอยากคุม per-category; เคสนี้ต้องปล่อยอิสระตาม requirement ของ Custom
     const setDataUnlimited = getSetData(foodSet, setMenu);
-    if (foodSet === "Custom" && (setDataUnlimited?.lunchbox_limit ?? 0) === 0) {
+    if (isCustomFoodSet(foodSet) && (setDataUnlimited?.lunchbox_limit ?? 0) === 0) {
       if (category === "กับข้าว" || category === "เนื้อสัตว์") return 1;
       return Number.POSITIVE_INFINITY;
     }
@@ -998,7 +1002,7 @@ function OrderContent() {
               const quantity = menuCountMap.get(menuKey) || 1;
               // สร้าง object ตามจำนวนที่เลือก (สำหรับ Custom Unlimited) หรือ 1 object (ปกติ)
 
-              const isCustomUnlimited = selectedFoodSet === "Custom" && limit === 0;
+              const isCustomUnlimited = isCustomFoodSet(selectedFoodSet) && limit === 0;
               const objectsToCreate = isCustomUnlimited ? quantity : 1;
 
               for (let i = 0; i < objectsToCreate; i++) selectedMenuObjects.push({ ...menu });
@@ -1942,7 +1946,7 @@ function OrderContent() {
                           const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
 
                           // เฉพาะชุด Custom: ให้แสดงหมวด "ข้าว" เป็นหมวดให้เลือกเองด้วย (ชุดอื่นข้าวถูกจัดการอัตโนมัติ)
-                          const showRiceCategory = selectedFoodSet === "Custom";
+                          const showRiceCategory = isCustomFoodSet(selectedFoodSet);
 
                           const allCategories = Object.keys(groupedMenus);
                           const baseSortedCategories = allCategories
