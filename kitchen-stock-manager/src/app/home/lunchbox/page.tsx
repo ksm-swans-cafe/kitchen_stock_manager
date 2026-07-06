@@ -376,8 +376,8 @@ function LunchboxContent() {
     setForm((prev) => ({
       ...prev,
       lunchbox_order_select: [
-        ...prev.lunchbox_order_select,
-        { lunchbox_menu_category: "", lunchbox_menu_category_limit: "1", lunchbox_menu_category_sequence: String(prev.lunchbox_order_select.length + 1) },
+        ...(Array.isArray(prev.lunchbox_order_select) ? prev.lunchbox_order_select : []),
+        { lunchbox_menu_category: "", lunchbox_menu_category_limit: "1", lunchbox_menu_category_sequence: String((Array.isArray(prev.lunchbox_order_select) ? prev.lunchbox_order_select.length : 0) + 1) },
       ],
     }));
   };
@@ -385,14 +385,14 @@ function LunchboxContent() {
   const removeRule = (idx: number) => {
     setForm((prev) => ({
       ...prev,
-      lunchbox_order_select: prev.lunchbox_order_select.filter((_, i) => i !== idx),
+      lunchbox_order_select: (Array.isArray(prev.lunchbox_order_select) ? prev.lunchbox_order_select : []).filter((_, i) => i !== idx),
     }));
   };
 
   const updateRule = (idx: number, field: keyof LunchboxOrderRule, value: string) => {
     setForm((prev) => ({
       ...prev,
-      lunchbox_order_select: prev.lunchbox_order_select.map((rule, i) => (i === idx ? { ...rule, [field]: value } : rule)),
+      lunchbox_order_select: (Array.isArray(prev.lunchbox_order_select) ? prev.lunchbox_order_select : []).map((rule, i) => (i === idx ? { ...rule, [field]: value } : rule)),
     }));
   };
 
@@ -915,7 +915,7 @@ function LunchboxContent() {
               </div>
 
               <div className="flex flex-col gap-2">
-                {form.lunchbox_order_select.length > 0 && (
+                {(Array.isArray(form.lunchbox_order_select) ? form.lunchbox_order_select.length : 0) > 0 && (
                   <div className="flex gap-2 px-1 text-xs font-medium text-gray-500">
                     <span className="flex-1">ชื่อหมวดหมู่</span>
                     <span className="text-center" style={{ width: "90px" }}>จำกัดจำนวนเมนู</span>
@@ -923,7 +923,7 @@ function LunchboxContent() {
                     <span className="w-[52px]" />
                   </div>
                 )}
-                {form.lunchbox_order_select.map((rule, idx) => (
+                {(Array.isArray(form.lunchbox_order_select) ? form.lunchbox_order_select : []).map((rule, idx) => (
                   <div key={idx} className="flex gap-2">
                     <input
                       className={`${inputClass} flex-1 truncate`}
@@ -966,7 +966,7 @@ function LunchboxContent() {
                     </button>
                   </div>
                 ))}
-                {form.lunchbox_order_select.length === 0 && <p className="text-xs text-gray-400">ยังไม่มีหมวดหมู่ในกล่องนี้</p>}
+                {(Array.isArray(form.lunchbox_order_select) ? form.lunchbox_order_select.length : 0) === 0 && <p className="text-xs text-gray-400">ยังไม่มีหมวดหมู่ในกล่องนี้</p>}
               </div>
             </div>
 

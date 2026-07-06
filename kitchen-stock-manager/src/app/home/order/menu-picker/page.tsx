@@ -462,7 +462,7 @@ function OrderContent() {
   // Step definitions (sequence + limit) จาก lunchbox_order_select ของ set ที่เลือก (รองรับ Drinks + Premium Snack Box ฯลฯ)
   const orderSelectSteps = useMemo(() => {
     if (!selectedSetData) return [];
-    const raw = (selectedSetData.lunchbox_order_select ?? []).filter((s) => (s?.lunchbox_menu_category || "").trim().length > 0);
+    const raw = (Array.isArray(selectedSetData.lunchbox_order_select) ? selectedSetData.lunchbox_order_select : []).filter((s) => (s?.lunchbox_menu_category || "").trim().length > 0);
 
     return raw
       .map((s, i) => {
@@ -503,7 +503,7 @@ function OrderContent() {
     };
   }, [selectedCountByCategory, selectedMeatType, focusedDish, hasRiceWithDishMenus]);
   const hasExplicitOrderSequence = useMemo(() => {
-    const raw = selectedSetData?.lunchbox_order_select ?? [];
+    const raw = Array.isArray(selectedSetData?.lunchbox_order_select) ? selectedSetData.lunchbox_order_select : [];
     return raw.some((s) => ((s.lunchbox_menu_category_sequence ?? "").toString().trim().length > 0));
   }, [selectedSetData]);
 
@@ -730,7 +730,7 @@ function OrderContent() {
 
     // Step-based: ใช้ limit ตาม lunchbox_order_select (ถ้า limit ว่าง = ไม่จำกัด/optional)
     const setData = getSetData(foodSet, setMenu);
-    const order = setData?.lunchbox_order_select ?? [];
+    const order = Array.isArray(setData?.lunchbox_order_select) ? setData.lunchbox_order_select : [];
     if (order.length > 0) {
       const matched = order.find((o) => o.lunchbox_menu_category === category);
       if (matched) {
