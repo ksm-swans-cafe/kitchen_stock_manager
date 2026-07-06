@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Bike, Car, CarFront, Check, Truck } from "lucide-react";
 
 import { useCartStore } from "@/stores/store";
+import { mergeSetMenusForDisplay } from "@/lib/menu/combineSetMenus";
 
 import { useAuth } from "@/lib/auth/AuthProvider";
 
@@ -622,7 +623,7 @@ export default function CartList() {
         .map((lb, index) => {
           const lunchboxCost = Number(lb.lunchbox_total_cost.replace(/[^\d]/g, "")) || 0;
           const costPerBox = lunchboxCost / lb.quantity;
-          const menuList = lb.selected_menus.map((menu) => `- ${menu.menu_name}`);
+          const menuList = mergeSetMenusForDisplay(lb.selected_menus, lb.lunchbox_limit).map((menu) => `- ${menu.menu_name}`);
 
           return [
             `${index + 1}.${lb.lunchbox_name} - ${lb.lunchbox_set}`,
@@ -750,7 +751,7 @@ export default function CartList() {
           lunchbox_quantity: lunchbox.quantity,
           lunchbox_total_cost: lunchbox.lunchbox_total_cost.replace(/[^\d]/g, ""),
           lunchbox_packaging: lunchbox.packaging || null,
-          lunchbox_menus: lunchbox.selected_menus.map((menu, menuIndex) => ({
+          lunchbox_menus: mergeSetMenusForDisplay(lunchbox.selected_menus, lunchbox.lunchbox_limit).map((menu, menuIndex) => ({
             menu_name: menu.menu_name,
             menu_subname: menu.menu_subname,
             menu_category: menu.menu_category,
@@ -1516,14 +1517,16 @@ export default function CartList() {
               .reverse()
               .map((lunchbox, reversedIndex) => {
                 const actualIndex = selected_lunchboxes.length - 1 - reversedIndex;
-                const menuGroups = groupMenusByLimit(lunchbox.selected_menus, lunchbox.lunchbox_limit);
+                const displayMenus = mergeSetMenusForDisplay(lunchbox.selected_menus, lunchbox.lunchbox_limit);
+                const menuGroups = groupMenusByLimit(displayMenus, lunchbox.lunchbox_limit);
 
                 return (
                   <div key={actualIndex} className='border p-4 rounded bg-gray-50'>
                     <div className='flex justify-between items-start mb-2'>
                       <div>
                         <h4 className='font-medium'>
-                          {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set}
+                          {lunchbox.lunchbox_name}
+                          {/* {lunchbox.lunchbox_name} - {lunchbox.lunchbox_set} */}
                         </h4>
                       </div>
                       <button

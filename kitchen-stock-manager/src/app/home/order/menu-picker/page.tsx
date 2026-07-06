@@ -15,7 +15,8 @@ import MobileActionBar from "@/components/order/MobileActionBar";
 import { Loading } from "@/components/loading/loading";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PERMISSIONS } from "@/lib/permissions";
-import { DISH_TYPES, MEAT_TYPES, resolveDishType, resolveMeatType, DEFAULT_MEAT_SURCHARGE } from "@/lib/menu/dishMeatType";
+import { DISH_TYPES, MEAT_TYPES, resolveDishType, resolveMeatType, formatRiceWithDishDisplayName, DEFAULT_MEAT_SURCHARGE } from "@/lib/menu/dishMeatType";
+import { mergeSetMenusForDisplay } from "@/lib/menu/combineSetMenus";
 
 import useLoadingDots from "@/lib/hook/Dots";
 
@@ -1028,10 +1029,12 @@ function OrderContent() {
         const setDataInfo2 = lunchboxData.find((item) => item.lunchbox_name === selectedFoodSet && item.lunchbox_set_name === selectedSetMenu);
         const limit2 = setDataInfo2?.lunchbox_limit ?? 0;
 
+        const mergedMenuObjects = mergeSetMenusForDisplay(selectedMenuObjects, limit2);
+
         let totalCost: number;
         const setPrice = extractPriceFromSetName(selectedSetMenu);
         if (setPrice !== null) totalCost = setPrice * lunchboxQuantity;
-        else totalCost = selectedMenuObjects.reduce((total, menu) => total + (menu.lunchbox_cost ?? 0), 0) * lunchboxQuantity;
+        else totalCost = mergedMenuObjects.reduce((total, menu) => total + (menu.lunchbox_cost ?? 0), 0) * lunchboxQuantity;
 
         // คำนวณ packaging จาก set name และ quantity
         const packaging = calculatePackaging(selectedSetMenu, lunchboxQuantity);
@@ -1040,7 +1043,7 @@ function OrderContent() {
           lunchbox_name: selectedFoodSet,
           lunchbox_set: selectedSetMenu.toUpperCase().startsWith("SET") ? selectedSetMenu : `SET ${selectedSetMenu}`,
           lunchbox_limit: limit2,
-          selected_menus: selectedMenuObjects,
+          selected_menus: mergedMenuObjects,
           quantity: lunchboxQuantity,
           lunchbox_total_cost: totalCost.toString(),
           note: note,
@@ -1052,7 +1055,7 @@ function OrderContent() {
         if (isEditMode && editingIndex !== -1) {
           const store = useCartStore.getState();
 
-          store.updateLunchboxMenus(editingIndex, selectedMenuObjects);
+          store.updateLunchboxMenus(editingIndex, mergedMenuObjects);
           store.updateLunchboxNote(editingIndex, note);
           store.updateLunchboxQuantity(editingIndex, lunchboxQuantity);
           store.updateLunchboxTotalCost(editingIndex, newLunchbox.lunchbox_total_cost);
@@ -1239,7 +1242,7 @@ function OrderContent() {
       if (matchingMenu) {
         handle.MenuSelection(buildMenuKey(matchingMenu));
       } else {
-        alert(`ไม่มีเมนู ${dishType}${selectedMeatType}`);
+        alert(`ไม่มีเมนู ${formatRiceWithDishDisplayName(dishType)}${selectedMeatType}`);
       }
     } else {
       // สร้างการรอเลือกเนื้อสัตว์
@@ -2040,7 +2043,7 @@ function OrderContent() {
                                           className='cursor-pointer w-full sm:w-[320px]'
                                           key={dishType}
                                           menuId={`group-${dishType}`}
-                                          name={dishType}
+                                          name={formatRiceWithDishDisplayName(dishType)}
                                           price={displayPrice}
                                           variant='list'
                                           category='กับข้าวที่ 1'

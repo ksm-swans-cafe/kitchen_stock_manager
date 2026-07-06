@@ -42,6 +42,11 @@ export function resolveMeatType(menu: DishMeatSource): MeatType | null {
   return detectMeatType(menu.menu_name ?? "");
 }
 
+/** ชื่อแสดงบนการ์ดหมวด ข้าว+กับข้าว (dishType อย่างเดียว เช่น กะเพรา → ข้าวกะเพรา) */
+export function formatRiceWithDishDisplayName(dishType: string): string {
+  return `ข้าว${dishType}`;
+}
+
 export const DEFAULT_MEAT_SURCHARGE: Record<MeatType, number> = {
   หมู: 0,
   ไก่: 0,
