@@ -19,7 +19,7 @@ export async function GET() {
       id: lb.id,
       lunchbox_name: lb.lunchbox_name,
       lunchbox_set_name: lb.lunchbox_set_name,
-      lunchbox_limit: lb.lunchbox_limit,
+      lunchbox_limit: Number(lb.lunchbox_limit ?? 0),
       lunchbox_name_image: lb.lunchbox_name_image || null,
       lunchbox_set_name_image: lb.lunchbox_set_name_image || null,
       lunchbox_image_path: lb.lunchbox_image_path || null,

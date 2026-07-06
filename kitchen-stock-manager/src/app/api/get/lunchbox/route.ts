@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
 
+function normalizeLunchboxLimit(value: any): number {
+  if (value && typeof value === "object") {
+    if ("$numberLong" in value) return Number(value.$numberLong);
+    if ("$numberInt" in value) return Number(value.$numberInt);
+  }
+  return Number(value ?? 0);
+}
+
 export async function GET() {
   const authResult = await checkServerAuth();
   if (!authResult.success) return authResult.response!;
@@ -32,7 +40,7 @@ export async function GET() {
       return {
         lunchbox_name: lb.lunchbox_name,
         lunchbox_set_name: lb.lunchbox_set_name,
-        lunchbox_limit: lb.lunchbox_limit,
+        lunchbox_limit: normalizeLunchboxLimit(lb.lunchbox_limit),
         lunchbox_name_image: lb.lunchbox_name_image || null,
         lunchbox_set_name_image: lb.lunchbox_set_name_image || null,
         lunchbox_image_path: lb.lunchbox_image_path || null,
