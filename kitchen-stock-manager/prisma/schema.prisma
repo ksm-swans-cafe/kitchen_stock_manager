@@ -287,7 +287,7 @@ model ingredients {
 model lunchbox {
   id                      String          @id @default(auto()) @map("_id") @db.ObjectId
   /// Multiple data types found: Int: 68.8%, BigInt: 31.3% out of 32 sampled entries
-  lunchbox_limit          Json
+  lunchbox_limit          Json?
   lunchbox_name           String
   lunchbox_name_image     String?
   lunchbox_set_name       String
@@ -295,6 +295,7 @@ model lunchbox {
   lunchbox_image_path     String?
   lunchbox_check_all      Boolean         @default(false)
   lunchbox_order_select   Json?
+  lunchbox_order          Int?
 }
 
 model menu {

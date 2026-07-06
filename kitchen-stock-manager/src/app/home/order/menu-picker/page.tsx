@@ -47,6 +47,7 @@ interface LunchBoxFromAPI {
   lunchbox_cost?: number;
   lunchbox_order_select?: LunchboxOrderSelectItem[];
   lunchbox_check_all?: boolean;
+  lunchbox_order?: number | null;
 }
 
 function OrderContent() {
@@ -121,6 +122,47 @@ function OrderContent() {
 
   // เรียงลำดับข้อความ (ไทย/อังกฤษ + ตัวเลข)
   const sortStrings = (values: string[]) => [...values].sort((a, b) => a.localeCompare(b, "th", { numeric: true, sensitivity: "base" }));
+
+  // ลำดับการแสดงผลชุดอาหารแบบกำหนดเอง (fallback เมื่อยังไม่ได้ตั้ง lunchbox_order)
+  const preferredFoodSetOrder = [
+    "อาหารไทย",
+    "ย่าง (คอหมู/ไก่)",
+    "salmon",
+    "spaghetti",
+    "เจ/มังสวิรัติ",
+    "สลัด",
+    "snackbox",
+    "custom-กำหนดเอง",
+    "drinks",
+  ];
+
+  const normalizeSetLabel = (value: string) => value.trim().replace(/^set\s+/i, "").toLowerCase();
+
+  const preferredFoodSetOrderMap = new Map(preferredFoodSetOrder.map((name, index) => [normalizeSetLabel(name), index]));
+
+  const sortFoodSetsByConfiguredOrder = (values: string[], orderMap?: Map<string, number>) =>
+    [...values].sort((a, b) => {
+      // 1) ใช้ลำดับจากฐานข้อมูลก่อน (ถ้ามี)
+      const dbOrderA = orderMap?.get(a);
+      const dbOrderB = orderMap?.get(b);
+      const hasDbOrderA = typeof dbOrderA === "number";
+      const hasDbOrderB = typeof dbOrderB === "number";
+      if (hasDbOrderA && hasDbOrderB && dbOrderA !== dbOrderB) return dbOrderA - dbOrderB;
+      if (hasDbOrderA && !hasDbOrderB) return -1;
+      if (!hasDbOrderA && hasDbOrderB) return 1;
+
+      // 2) fallback: ใช้ลำดับที่กำหนดไว้ในหน้า (รองรับทั้งมี/ไม่มีคำว่า SET)
+      const idxA = preferredFoodSetOrderMap.get(normalizeSetLabel(a));
+      const idxB = preferredFoodSetOrderMap.get(normalizeSetLabel(b));
+      const hasManualOrderA = typeof idxA === "number";
+      const hasManualOrderB = typeof idxB === "number";
+      if (hasManualOrderA && hasManualOrderB && idxA !== idxB) return idxA - idxB;
+      if (hasManualOrderA && !hasManualOrderB) return -1;
+      if (!hasManualOrderA && hasManualOrderB) return 1;
+
+      // 3) fallback สุดท้ายเรียงตามตัวอักษร
+      return a.localeCompare(b, "th", { numeric: true, sensitivity: "base" });
+    });
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -214,7 +256,17 @@ function OrderContent() {
         if (items) {
           setLunchboxData(items);
 
-          const uniqueFoodSets = sortStrings([...new Set(items.map((item: LunchBoxFromAPI) => item.lunchbox_name))]);
+          const orderMap = new Map<string, number>();
+          items.forEach((item) => {
+            const parsedOrder = Number(item.lunchbox_order);
+            if (!Number.isFinite(parsedOrder)) return;
+            const existingOrder = orderMap.get(item.lunchbox_name);
+            if (typeof existingOrder !== "number" || parsedOrder < existingOrder) {
+              orderMap.set(item.lunchbox_name, parsedOrder);
+            }
+          });
+
+          const uniqueFoodSets = sortFoodSetsByConfiguredOrder([...new Set(items.map((item: LunchBoxFromAPI) => item.lunchbox_name))], orderMap);
           setAvailableFoodSets(uniqueFoodSets);
         }
       } catch (error) {

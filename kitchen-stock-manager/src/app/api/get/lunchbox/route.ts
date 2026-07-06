@@ -54,6 +54,7 @@ export async function GET() {
         lunchbox_cost: lunchboxCostMap.get(key) || 0,
         lunchbox_order_select: normalizeOrderSelect(lb.lunchbox_order_select),
         lunchbox_check_all: lb.lunchbox_check_all || false,
+        lunchbox_order: lb.lunchbox_order != null ? Number(lb.lunchbox_order) : null,
       };
     });
 
