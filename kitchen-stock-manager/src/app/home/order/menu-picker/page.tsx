@@ -657,11 +657,8 @@ function OrderContent() {
   // Check if a category is locked (requires previous category to be selected first)
   const isCategoryLocked = useMemo(() => {
     return (category: string) => {
-      // Custom limit=0 (ไม่จำกัด): เลือกอิสระ ยกเว้น "เนื้อสัตว์" ที่เป็นตัวเสริมของกับข้าว ต้องเลือกกับข้าวก่อน
-      if (isCustomUnlimited) {
-        if (category === "เนื้อสัตว์") return getStepCategoryCount("กับข้าว") === 0;
-        return false;
-      }
+      // Custom limit=0 (ไม่จำกัด): ไม่ล็อคหมวด เลือกได้อิสระทุกหมวด
+      if (isCustomUnlimited) return false;
 
       // Step-based: lock ตาม step sequence โดยใช้หมวดที่ "ต้องเลือกครบ limit" เป็นเงื่อนไขปลดล็อค
       if (isStepBasedSet) {
@@ -688,11 +685,8 @@ function OrderContent() {
   // Get the previous category that needs to be selected
   const getPreviousRequiredCategory = useMemo(() => {
     return (category: string) => {
-      // Custom limit=0 (ไม่จำกัด): มีเงื่อนไขเดียวคือ "เนื้อสัตว์" ต้องเลือกกับข้าวก่อน
-      if (isCustomUnlimited) {
-        if (category === "เนื้อสัตว์" && getStepCategoryCount("กับข้าว") === 0) return "กับข้าว";
-        return null;
-      }
+      // Custom limit=0 (ไม่จำกัด): ไม่มีหมวดบังคับก่อนหน้า
+      if (isCustomUnlimited) return null;
 
       // Step-based: ให้แจ้งหมวดล่าสุดที่ "ต้องเลือกให้ครบ limit" แต่ยังเลือกไม่ครบ
       if (isStepBasedSet) {
@@ -742,8 +736,8 @@ function OrderContent() {
 
     // --- กลุ่มที่เลือก "เครื่องเคียง" ได้มากกว่า 1 อย่าง ---
     if (category === "เครื่องเคียง") {
-      // เฉพาะ Set F ของ Lunch Box
-      if (foodSet === "Lunch Box" && setMenu === "F") return 2;
+      // เฉพาะ Set F ของ อาหารไทย (ชื่อเดิม: Lunch Box)
+      if (foodSet === "อาหารไทย" && setMenu === "F") return 2;
     }
 
     // มาตรฐานปกติคือเลือกได้ 1 อย่าง (ระบบจะสลับให้อัตโนมัติ)

@@ -59,6 +59,41 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       data: updateData,
     });
 
+    // Cascade rename: เมนูในชุด (menu_lunchbox) และราคาบวกเพิ่มเนื้อสัตว์ (meat_surcharge) ผูกกับชุดด้วย
+    // "ชื่อกล่อง + ชื่อชุด" ถ้าเปลี่ยนชื่อแล้วไม่ตามไปแก้ ข้อมูลเดิมจะกลายเป็น orphan ทั้งหมด
+    const oldName = existing.lunchbox_name;
+    const oldSet = existing.lunchbox_set_name;
+    const newName = (lunchbox_name as string) || oldName;
+    const newSet = (lunchbox_set_name as string) || oldSet;
+    if (newName !== oldName || newSet !== oldSet) {
+      await prisma.$runCommandRaw({
+        update: "menu",
+        updates: [
+          {
+            q: { menu_lunchbox: { $elemMatch: { lunchbox_name: oldName, lunchbox_set_name: oldSet } } },
+            u: {
+              $set: {
+                "menu_lunchbox.$[e].lunchbox_name": newName,
+                "menu_lunchbox.$[e].lunchbox_set_name": newSet,
+              },
+            },
+            arrayFilters: [{ "e.lunchbox_name": oldName, "e.lunchbox_set_name": oldSet }],
+            multi: true,
+          },
+        ],
+      });
+      await prisma.$runCommandRaw({
+        update: "meat_surcharge",
+        updates: [
+          {
+            q: { lunchbox_name: oldName, lunchbox_set_name: oldSet },
+            u: { $set: { lunchbox_name: newName, lunchbox_set_name: newSet } },
+            multi: true,
+          },
+        ],
+      });
+    }
+
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     console.error("Error updating lunchbox:", error);
