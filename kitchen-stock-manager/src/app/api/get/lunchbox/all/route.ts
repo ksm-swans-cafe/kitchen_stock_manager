@@ -24,7 +24,7 @@ export async function GET() {
       lunchbox_set_name_image: lb.lunchbox_set_name_image || null,
       lunchbox_image_path: lb.lunchbox_image_path || null,
       lunchbox_check_all: lb.lunchbox_check_all || false,
-      lunchbox_order_select: lb.lunchbox_order_select || [],
+      lunchbox_order_select: Array.isArray(lb.lunchbox_order_select) ? lb.lunchbox_order_select : [],
     }));
 
     return NextResponse.json({

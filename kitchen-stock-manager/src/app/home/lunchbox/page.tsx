@@ -572,7 +572,7 @@ function LunchboxContent() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredLunchboxes.map((lb) => {
-              const rules = [...(lb.lunchbox_order_select || [])].sort(
+              const rules = [...(Array.isArray(lb.lunchbox_order_select) ? lb.lunchbox_order_select : [])].sort(
                 (a, b) => Number(a.lunchbox_menu_category_sequence) - Number(b.lunchbox_menu_category_sequence)
               );
 

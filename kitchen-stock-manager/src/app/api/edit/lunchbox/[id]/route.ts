@@ -43,13 +43,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (lunchbox_limit !== undefined) updateData.lunchbox_limit = Number(lunchbox_limit);
     if (lunchbox_check_all !== undefined) updateData.lunchbox_check_all = Boolean(lunchbox_check_all);
     if (Array.isArray(lunchbox_order_select)) {
-      updateData.lunchbox_order_select = {
-        set: lunchbox_order_select.map((rule: any) => ({
-          lunchbox_menu_category: String(rule.lunchbox_menu_category || ""),
-          lunchbox_menu_category_limit: String(rule.lunchbox_menu_category_limit || ""),
-          lunchbox_menu_category_sequence: String(rule.lunchbox_menu_category_sequence || ""),
-        })),
-      };
+      updateData.lunchbox_order_select = lunchbox_order_select.map((rule: any) => ({
+        lunchbox_menu_category: String(rule.lunchbox_menu_category || ""),
+        lunchbox_menu_category_limit: String(rule.lunchbox_menu_category_limit || ""),
+        lunchbox_menu_category_sequence: String(rule.lunchbox_menu_category_sequence || ""),
+      }));
     }
 
     if (Object.keys(updateData).length === 0) {
