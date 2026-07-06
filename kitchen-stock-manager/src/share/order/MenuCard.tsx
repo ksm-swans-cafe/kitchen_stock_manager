@@ -12,6 +12,7 @@ import { useCartStore } from "@/stores/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { ensureWebP } from "@/lib/utils/imageConverter";
 type Mode = "menu" | "ingredient";
 
 interface MenuCardProps {
@@ -286,7 +287,9 @@ export default function MenuCard({ mode, item, onImageClick }: MenuCardProps) {
       // formData.append("ingredient_sub_category", Ingredient.ingredient_sub_category?.trim() || "");
       formData.append("ingredient_price", String(Ingredient.ingredient_price ?? 0));
       if (selectedImage) {
-        formData.append("ingredient_image", selectedImage);
+        // Convert image to WebP format with high quality
+        const webpFile = await ensureWebP(selectedImage, { quality: 0.9 });
+        formData.append("ingredient_image", webpFile);
       }
 
       // console.log(

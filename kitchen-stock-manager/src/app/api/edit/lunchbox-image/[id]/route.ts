@@ -64,9 +64,9 @@ export async function PATCH(
     if (file && file.name && file.size > 0) {
       // ดึง path จาก db หรือใช้ค่าจาก env เป็น fallback
       const lunchboxImagePath = (existingLunchbox as any).lunchbox_image_path || process.env.NEXT_PUBLIC_LUNCHBOX_IMAGE_PATH || "img/lunchbox-set-img";
-      
-      // สร้างชื่อไฟล์ใหม่
-      const fileExtension = file.name.split(".").pop() || "jpg";
+
+      // สร้างชื่อไฟล์ใหม่ - ใช้ .webp extension เสมอเนื่องจากไฟล์ถูกแปลงเป็น WebP แล้ว
+      const fileExtension = file.name.split(".").pop() || "webp";
       const uniqueName = `${randomUUID()}.${fileExtension}`;
       const blobPath = `${lunchboxImagePath}/${uniqueName}`;
 
@@ -80,8 +80,8 @@ export async function PATCH(
       newImageName = urlParts[urlParts.length - 1];
 
       // ลบรูปภาพเก่าถ้ามี
-      const oldImageName = imageType === "lunchbox_name_image" 
-        ? existingLunchbox.lunchbox_name_image 
+      const oldImageName = imageType === "lunchbox_name_image"
+        ? existingLunchbox.lunchbox_name_image
         : existingLunchbox.lunchbox_set_name_image;
 
       if (oldImageName) {

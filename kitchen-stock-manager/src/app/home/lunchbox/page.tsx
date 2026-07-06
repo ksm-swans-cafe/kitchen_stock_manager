@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ensureWebP } from "@/lib/utils/imageConverter";
 import { PERMISSIONS } from "@/lib/permissions";
 import { Dialog, DialogContent, DialogTitle } from "@/share/ui/dialog";
 import { MEAT_TYPES, DEFAULT_MEAT_SURCHARGE, resolveMeatType } from "@/lib/menu/dishMeatType";
@@ -333,8 +334,11 @@ function LunchboxContent() {
     setUploadingImageType(imageType);
     setFormError(null);
     try {
+      // Convert image to WebP format with high quality
+      const webpFile = await ensureWebP(file, { quality: 0.9 });
+
       const payload = new FormData();
-      payload.append("image", file);
+      payload.append("image", webpFile);
       payload.append("image_type", imageType);
 
       const res = await axios.patch(`/api/edit/lunchbox-image/${editingId}`, payload);

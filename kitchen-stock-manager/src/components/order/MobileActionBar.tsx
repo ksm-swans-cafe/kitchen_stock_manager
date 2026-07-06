@@ -177,17 +177,17 @@ export const MobileActionBar = memo(function MobileActionBar({
               onClick={onSubmit}
               disabled={saving || !canSubmit}
               className={cn(
-                "w-full inline-flex items-center justify-center gap-2 rounded-full px-3 py-3 transition-all duration-300 active:scale-95 border border-gray-100",
+                "w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-4 min-h-[52px] transition-all duration-200 active:scale-95 border border-gray-100",
                 saving || !canSubmit
                   ? "bg-gray-50 text-gray-300 cursor-not-allowed"
-                  : "bg-white text-gray-700 shadow-sm hover:shadow-md"
+                  : "bg-white text-gray-700 shadow-sm hover:shadow-md active:shadow-lg"
               )}>
               {saving ? (
                 <span className='inline-block w-4 h-4 rounded-full border-2 border-white/30 border-t-orange-500 animate-spin' />
               ) : (
                 <Send className='w-4 h-4 text-gray-400' />
               )}
-              <span className="text-[11px] font-black tracking-tight truncate">
+              <span className="text-[12px] font-black tracking-tight truncate">
                 {saving ? "Saving..." : resolvedSubmitLabel}
               </span>
             </button>

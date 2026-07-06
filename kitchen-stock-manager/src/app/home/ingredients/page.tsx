@@ -25,6 +25,7 @@ import useSWR from "swr";
 import axios from "axios";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PERMISSIONS } from "@/lib/permissions";
+import { ensureWebP } from "@/lib/utils/imageConverter";
 
 
 const normalizeThaiVowel = (text: string): string => {
@@ -124,7 +125,11 @@ function IngredientManagementContent() {
       formDataIngredient.append("ingredient_unit", ingredient.ingredient_unit.trim());
       formDataIngredient.append("ingredient_total_alert", String(alert));
       formDataIngredient.append("ingredient_price", String(ingredient.ingredient_price ?? 0).trim());
-      if (imageFile) formDataIngredient.append("ingredient_image", imageFile);
+      if (imageFile) {
+        // Convert image to WebP format with high quality
+        const webpFile = await ensureWebP(imageFile, { quality: 0.9 });
+        formDataIngredient.append("ingredient_image", webpFile);
+      }
       const res = await axios.post("/api/post/ingredients", formDataIngredient);
 
       const result = res.data;

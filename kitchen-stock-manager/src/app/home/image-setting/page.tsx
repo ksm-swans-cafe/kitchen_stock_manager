@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { usePermission } from "@/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/lib/permissions";
+import { ensureWebP } from "@/lib/utils/imageConverter";
 
 interface LunchboxItem {
   id: string;
@@ -49,6 +50,7 @@ function ImageSettingContent() {
   const [groupPreviewUrl, setGroupPreviewUrl] = useState<string | null>(null);
   const [showGroupDeleteModal, setShowGroupDeleteModal] = useState(false);
   const [groupDeleteType, setGroupDeleteType] = useState<"lunchbox_name_image" | "lunchbox_set_name_image" | "both" | null>(null);
+  const [isConvertingToWebP, setIsConvertingToWebP] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const groupFileInputRef = useRef<HTMLInputElement>(null);
   const pathDropdownRef = useRef<HTMLDivElement>(null);
@@ -187,8 +189,11 @@ function ImageSettingContent() {
 
     setIsUploading(true);
     try {
+      // Convert image to WebP format with high quality
+      const webpFile = await ensureWebP(selectedFile, { quality: 0.9 });
+
       const formData = new FormData();
-      formData.append("image", selectedFile);
+      formData.append("image", webpFile);
       formData.append("image_type", selectedImageType);
 
       const response = await fetch(`/api/edit/lunchbox-image/${selectedItem.id}`, {
@@ -436,12 +441,15 @@ function ImageSettingContent() {
 
     setIsUploading(true);
     try {
+      // Convert image to WebP format with high quality
+      const webpFile = await ensureWebP(groupSelectedFile, { quality: 0.9 });
+
       let successCount = 0;
       let errorCount = 0;
 
       for (const item of selectedGroupItems) {
         const formData = new FormData();
-        formData.append("image", groupSelectedFile);
+        formData.append("image", webpFile);
         formData.append("image_type", groupImageType);
 
         const response = await fetch(`/api/edit/lunchbox-image/${item.id}`, {
@@ -497,15 +505,15 @@ function ImageSettingContent() {
       let errorCount = 0;
       let skippedCount = 0;
 
-      const typesToDelete = groupDeleteType === "both" 
-        ? ["lunchbox_name_image", "lunchbox_set_name_image"] 
+      const typesToDelete = groupDeleteType === "both"
+        ? ["lunchbox_name_image", "lunchbox_set_name_image"]
         : [groupDeleteType];
 
       for (const item of selectedGroupItems) {
         for (const imageType of typesToDelete) {
           // ตรวจสอบว่ามีรูปภาพหรือไม่ก่อนลบ
-          const hasImage = imageType === "lunchbox_name_image" 
-            ? item.lunchbox_name_image 
+          const hasImage = imageType === "lunchbox_name_image"
+            ? item.lunchbox_name_image
             : item.lunchbox_set_name_image;
 
           if (!hasImage) {
@@ -545,6 +553,101 @@ function ImageSettingContent() {
     }
   };
 
+  const handleConvertAllToWebP = async () => {
+    if (!confirm("คุณต้องการแปลงรูปภาพทั้งหมดเป็น WebP หรือไม่? การดำเนินการนี้อาจใช้เวลาสักครู่")) {
+      return;
+    }
+
+    setIsConvertingToWebP(true);
+    try {
+      let convertedCount = 0;
+      let errorCount = 0;
+
+      // Convert each image client-side
+      for (const item of lunchboxes) {
+        const lunchboxPath = item.lunchbox_image_path || defaultLunchboxImagePath;
+
+        // Convert lunchbox_name_image
+        if (item.lunchbox_name_image && !item.lunchbox_name_image.toLowerCase().endsWith('.webp')) {
+          try {
+            const oldUrl = buildImageUrl(item.lunchbox_name_image, lunchboxPath);
+            if (!oldUrl) continue;
+
+            // Fetch image
+            const response = await fetch(oldUrl);
+            const blob = await response.blob();
+            const file = new File([blob], item.lunchbox_name_image, { type: blob.type });
+
+            // Convert to WebP
+            const webpFile = await ensureWebP(file, { quality: 0.9 });
+
+            // Upload converted image
+            const formData = new FormData();
+            formData.append("image", webpFile);
+            formData.append("image_type", "lunchbox_name_image");
+
+            const uploadResponse = await fetch(`/api/edit/lunchbox-image/${item.id}`, {
+              method: "PATCH",
+              body: formData,
+            });
+
+            if (uploadResponse.ok) {
+              convertedCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            console.error("Error converting lunchbox_name_image:", error);
+            errorCount++;
+          }
+        }
+
+        // Convert lunchbox_set_name_image
+        if (item.lunchbox_set_name_image && !item.lunchbox_set_name_image.toLowerCase().endsWith('.webp')) {
+          try {
+            const oldUrl = buildImageUrl(item.lunchbox_set_name_image, lunchboxPath);
+            if (!oldUrl) continue;
+
+            // Fetch image
+            const response = await fetch(oldUrl);
+            const blob = await response.blob();
+            const file = new File([blob], item.lunchbox_set_name_image, { type: blob.type });
+
+            // Convert to WebP
+            const webpFile = await ensureWebP(file, { quality: 0.9 });
+
+            // Upload converted image
+            const formData = new FormData();
+            formData.append("image", webpFile);
+            formData.append("image_type", "lunchbox_set_name_image");
+
+            const uploadResponse = await fetch(`/api/edit/lunchbox-image/${item.id}`, {
+              method: "PATCH",
+              body: formData,
+            });
+
+            if (uploadResponse.ok) {
+              convertedCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            console.error("Error converting lunchbox_set_name_image:", error);
+            errorCount++;
+          }
+        }
+      }
+
+      toast.success(`แปลงรูปภาพสำเร็จ ${convertedCount} รูป${errorCount > 0 ? `, ล้มเหลว ${errorCount} รูป` : ""}`);
+      await fetchLunchboxes();
+    } catch (error) {
+      console.error("Error converting images to WebP:", error);
+      toast.error("เกิดข้อผิดพลาดในการแปลงรูปภาพ");
+    } finally {
+      setIsConvertingToWebP(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -578,13 +681,33 @@ function ImageSettingContent() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={fetchLunchboxes}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              title="รีเฟรชข้อมูล"
-            >
-              <RefreshCw className="w-5 h-5 text-gray-600" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleConvertAllToWebP}
+                disabled={isConvertingToWebP}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="แปลงรูปภาพทั้งหมดเป็น WebP"
+              >
+                {isConvertingToWebP ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    กำลังแปลง...
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-4 h-4" />
+                    แปลงเป็น WebP
+                  </>
+                )}
+              </button>
+              <button
+                onClick={fetchLunchboxes}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                title="รีเฟรชข้อมูล"
+              >
+                <RefreshCw className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
