@@ -481,6 +481,12 @@ function OrderContent() {
   const optionalStepCategories = useMemo(() => new Set(orderSelectSteps.filter((s) => s.limit === null).map((s) => s.category)), [orderSelectSteps]);
   const isCustomUnlimited = selectedFoodSet === "Custom" && (selectedSetData?.lunchbox_limit ?? 0) === 0;
 
+  // มีเมนูหมวด combo (ข้าว+กับข้าว / กับข้าวที่ 1) ใน set นี้หรือไม่ — ใช้ตัดสินว่า "เนื้อสัตว์" เป็น step เลือกประเภทเนื้อ หรือเป็นหมวดเมนูจริง
+  const hasRiceWithDishMenus = useMemo(
+    () => availableMenus.some((m) => m.lunchbox_menu_category === "กับข้าวที่ 1" || m.lunchbox_menu_category === "ข้าว+กับข้าว"),
+    [availableMenus]
+  );
+
   // นับจำนวนตาม step (รองรับ "ข้าว+กับข้าว" รวม "กับข้าวที่ 1", และ "เนื้อสัตว์" = selectedMeatType)
   const getStepCategoryCount = useMemo(() => {
     return (stepCategory: string): number => {
@@ -491,10 +497,11 @@ function OrderContent() {
         if (fromMenus > 0) return fromMenus;
         return focusedDish ? 1 : 0;
       }
-      if (stepCategory === "เนื้อสัตว์") return selectedMeatType ? 1 : 0;
+      // "เนื้อสัตว์" นับจาก meat chip เฉพาะชุดแบบ combo — ชุดที่มีเมนูจริงในหมวดนี้ (เช่น Custom) ให้นับเมนูตามปกติ
+      if (stepCategory === "เนื้อสัตว์" && hasRiceWithDishMenus) return selectedMeatType ? 1 : 0;
       return selectedCountByCategory.get(stepCategory) || 0;
     };
-  }, [selectedCountByCategory, selectedMeatType, focusedDish]);
+  }, [selectedCountByCategory, selectedMeatType, focusedDish, hasRiceWithDishMenus]);
   const hasExplicitOrderSequence = useMemo(() => {
     const raw = selectedSetData?.lunchbox_order_select ?? [];
     return raw.some((s) => ((s.lunchbox_menu_category_sequence ?? "").toString().trim().length > 0));
@@ -601,6 +608,9 @@ function OrderContent() {
 
     if (selectionCount.total === 0) return false;
 
+    // Custom limit=0 (ไม่จำกัด): เลือกอิสระ อย่างน้อย 1 รายการ ไม่บังคับครบทุก step
+    if (isCustomUnlimited) return true;
+
     // Step-based: ตรวจสอบตาม step/limit ของแต่ละหมวด + ห้ามเลือกนอกหมวดที่กำหนด (ยกเว้นข้าว)
     if (isStepBasedSet) {
       const overallLimit = selectedSetData?.lunchbox_limit ?? 0;
@@ -624,7 +634,7 @@ function OrderContent() {
     const limit = getSetLimit(selectedFoodSet, selectedSetMenu);
     if (limit > 0) return selectionCount.total === limit;
     return true;
-  }, [selectedFoodSet, selectedSetMenu, selectionCount.total, isStepBasedSet, isRiceDishMeatComboSet, comboComplete, orderSelectSteps, getStepCategoryCount, stepCategories, selectedSetData]);
+  }, [selectedFoodSet, selectedSetMenu, selectionCount.total, isStepBasedSet, isCustomUnlimited, isRiceDishMeatComboSet, comboComplete, orderSelectSteps, getStepCategoryCount, stepCategories, selectedSetData]);
 
   // ==================== Sequential Category Selection Logic ====================
   // Get list of categories that have been selected (excluding rice)
@@ -647,8 +657,11 @@ function OrderContent() {
   // Check if a category is locked (requires previous category to be selected first)
   const isCategoryLocked = useMemo(() => {
     return (category: string) => {
-      // Custom limit=0 (ไม่จำกัด): ไม่ล็อคหมวด (เลือกได้อิสระ)
-      if (isCustomUnlimited) return false;
+      // Custom limit=0 (ไม่จำกัด): เลือกอิสระ ยกเว้น "เนื้อสัตว์" ที่เป็นตัวเสริมของกับข้าว ต้องเลือกกับข้าวก่อน
+      if (isCustomUnlimited) {
+        if (category === "เนื้อสัตว์") return getStepCategoryCount("กับข้าว") === 0;
+        return false;
+      }
 
       // Step-based: lock ตาม step sequence โดยใช้หมวดที่ "ต้องเลือกครบ limit" เป็นเงื่อนไขปลดล็อค
       if (isStepBasedSet) {
@@ -675,8 +688,11 @@ function OrderContent() {
   // Get the previous category that needs to be selected
   const getPreviousRequiredCategory = useMemo(() => {
     return (category: string) => {
-      // Custom limit=0 (ไม่จำกัด): ไม่มีหมวดบังคับก่อนหน้า
-      if (isCustomUnlimited) return null;
+      // Custom limit=0 (ไม่จำกัด): มีเงื่อนไขเดียวคือ "เนื้อสัตว์" ต้องเลือกกับข้าวก่อน
+      if (isCustomUnlimited) {
+        if (category === "เนื้อสัตว์" && getStepCategoryCount("กับข้าว") === 0) return "กับข้าว";
+        return null;
+      }
 
       // Step-based: ให้แจ้งหมวดล่าสุดที่ "ต้องเลือกให้ครบ limit" แต่ยังเลือกไม่ครบ
       if (isStepBasedSet) {
@@ -704,9 +720,11 @@ function OrderContent() {
     if (category === "ข้าว") return 1;
 
     // Custom + limit=0 (ไม่จำกัด): เลือกได้กี่อย่างก็ได้ในทุกหมวด
+    // ยกเว้น "กับข้าว" และ "เนื้อสัตว์" เลือกได้อย่างละ 1 (เลือกตัวใหม่ = สลับแทนตัวเดิม)
     // NOTE: บางชุดอื่นอาจ limit=0 แต่ยังอยากคุม per-category; เคสนี้ต้องปล่อยอิสระตาม requirement ของ Custom
     const setDataUnlimited = getSetData(foodSet, setMenu);
     if (foodSet === "Custom" && (setDataUnlimited?.lunchbox_limit ?? 0) === 0) {
+      if (category === "กับข้าว" || category === "เนื้อสัตว์") return 1;
       return Number.POSITIVE_INFINITY;
     }
 
@@ -758,7 +776,7 @@ function OrderContent() {
           // ตรวจสอบว่า set มี explicit order sequence หรือมี step ที่บังคับ (limit !== null) หรือไม่
           // ถ้าไม่มีทั้งสองอย่าง แสดงว่า set ไม่ได้บังคับให้เลือกตามลำดับ จึงไม่ควรลบเมนูที่ตามมา
           const hasRequiredSteps = orderSelectSteps.some((step) => step.limit !== null);
-          const shouldResetFollowingSteps = isStepBasedSet && orderSelectSteps.length > 0 && (hasExplicitOrderSequence || hasRequiredSteps) && !isRiceMenu;
+          const shouldResetFollowingSteps = isStepBasedSet && !isCustomUnlimited && orderSelectSteps.length > 0 && (hasExplicitOrderSequence || hasRequiredSteps) && !isRiceMenu;
 
           if (shouldResetFollowingSteps) {
             const unselectedCategory = selectedMenu.lunchbox_menu_category;
@@ -873,7 +891,8 @@ function OrderContent() {
       const limit = setDataInfo?.lunchbox_limit ?? 0;
 
       // Step-based: ตรวจสอบตาม step/limit ของแต่ละหมวด (limit ว่าง = optional/unlimited)
-      if (isStepBasedSet) {
+      // Custom limit=0 (ไม่จำกัด): เลือกอิสระ ไม่ต้องตรวจตาม step
+      if (isStepBasedSet && !isCustomUnlimited) {
         if (!isRiceDishMeatComboSet) {
           if (limit > 0 && selectionCount.total !== limit) {
             alert(`กรุณาเลือกเมนูให้ครบ ${limit} เมนู (เลือกแล้ว ${selectionCount.total} เมนู)`);
@@ -1048,7 +1067,7 @@ function OrderContent() {
         // ตรวจสอบว่า set มี explicit order sequence หรือมี step ที่บังคับ (limit !== null) หรือไม่
         // ถ้าไม่มีทั้งสองอย่าง แสดงว่า set ไม่ได้บังคับให้เลือกตามลำดับ จึงไม่ควรลบเมนูที่ตามมา
         const hasRequiredSteps = orderSelectSteps.some((step) => step.limit !== null);
-        const shouldResetFollowingSteps = isStepBasedSet && orderSelectSteps.length > 0 && (hasExplicitOrderSequence || hasRequiredSteps);
+        const shouldResetFollowingSteps = isStepBasedSet && !isCustomUnlimited && orderSelectSteps.length > 0 && (hasExplicitOrderSequence || hasRequiredSteps);
 
         if (shouldResetFollowingSteps) {
           // หา step "เนื้อสัตว์"
@@ -1873,6 +1892,9 @@ function OrderContent() {
                           // กำหนดลำดับหมวดหมู่ (เอา "กับข้าวที่ 1" และ "ข้าว+กับข้าว" ออกก่อน)
                           const categoryOrder = ["ข้าว", "ข้าวผัด", "ราดข้าว", "กับข้าว", "กับข้าวที่ 1", "กับข้าวที่ 2", "ผัด", "พริกเเกง", "แกง", "ต้ม", "ไข่", "สเต็ก", "สปาเกตตี้", "สลัด", "ย่าง", "ยำ", "ซุป", "เครื่องเคียง", "ซอส", "เครื่องดื่ม", "ผลไม้", "ขนมปัง", "ของหวาน", "เค้ก", "อื่นๆ"];
 
+                          // เฉพาะชุด Custom: ให้แสดงหมวด "ข้าว" เป็นหมวดให้เลือกเองด้วย (ชุดอื่นข้าวถูกจัดการอัตโนมัติ)
+                          const showRiceCategory = selectedFoodSet === "Custom";
+
                           const allCategories = Object.keys(groupedMenus);
                           const baseSortedCategories = allCategories
                             .sort((a, b) => {
@@ -1885,13 +1907,13 @@ function OrderContent() {
                               // หรือเรียงตามตัวอักษร
                               return a.localeCompare(b, "th");
                             })
-                            .filter((category) => category !== "ข้าว" && category !== "กับข้าวที่ 1" && category !== "ข้าว+กับข้าว");
+                            .filter((category) => (category !== "ข้าว" || showRiceCategory) && category !== "กับข้าวที่ 1" && category !== "ข้าว+กับข้าว");
 
                           const sortedCategories = (() => {
                             // Step-based: ให้เรียงหมวดตาม orderSelectSteps ก่อน และซ่อนหมวดที่ไม่อยู่ใน step (ยกเว้น rice/หมวดพิเศษที่ถูกกรองไว้แล้ว)
                             if (isStepBasedSet && orderSelectSteps.length > 0) {
                               const stepCats = orderSelectSteps.map((s) => s.category).filter((c) => allCategories.includes(c));
-                              const dedupStepCats = [...new Set(stepCats)].filter((c) => c !== "ข้าว" && c !== "กับข้าวที่ 1" && c !== "ข้าว+กับข้าว");
+                              const dedupStepCats = [...new Set(stepCats)].filter((c) => (c !== "ข้าว" || showRiceCategory) && c !== "กับข้าวที่ 1" && c !== "ข้าว+กับข้าว");
                               return dedupStepCats;
                             }
                             return baseSortedCategories;
