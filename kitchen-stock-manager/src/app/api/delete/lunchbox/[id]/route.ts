@@ -28,6 +28,22 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
     await prisma.lunchbox.delete({ where: { id } });
 
+    // Cascade: ถอด binding ของชุดนี้ออกจากทุกเมนู และลบราคาบวกเพิ่มเนื้อสัตว์ กันข้อมูลค้างเป็น orphan
+    await prisma.$runCommandRaw({
+      update: "menu",
+      updates: [
+        {
+          q: { menu_lunchbox: { $elemMatch: { lunchbox_name: existing.lunchbox_name, lunchbox_set_name: existing.lunchbox_set_name } } },
+          u: { $pull: { menu_lunchbox: { lunchbox_name: existing.lunchbox_name, lunchbox_set_name: existing.lunchbox_set_name } } },
+          multi: true,
+        },
+      ],
+    });
+    await prisma.$runCommandRaw({
+      delete: "meat_surcharge",
+      deletes: [{ q: { lunchbox_name: existing.lunchbox_name, lunchbox_set_name: existing.lunchbox_set_name }, limit: 0 }],
+    });
+
     return NextResponse.json({ success: true, message: "ลบชุดกล่องอาหารสำเร็จ" });
   } catch (error) {
     console.error("Error deleting lunchbox:", error);

@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { checkServerAuth } from "@/lib/auth/serverAuth";
 
+// Prisma client รุ่นเก่าเคยเขียน Json field เป็น { set: [...] } — unwrap ให้กลับเป็น array เสมอ
+function normalizeOrderSelect(value: any): any[] {
+  if (Array.isArray(value)) return value;
+  if (value && Array.isArray(value.set)) return value.set;
+  return [];
+}
+
 function normalizeLunchboxLimit(value: any): number {
   if (value && typeof value === "object") {
     if ("$numberLong" in value) return Number(value.$numberLong);
@@ -45,7 +52,7 @@ export async function GET() {
         lunchbox_set_name_image: lb.lunchbox_set_name_image || null,
         lunchbox_image_path: lb.lunchbox_image_path || null,
         lunchbox_cost: lunchboxCostMap.get(key) || 0,
-        lunchbox_order_select: Array.isArray(lb.lunchbox_order_select) ? lb.lunchbox_order_select : [],
+        lunchbox_order_select: normalizeOrderSelect(lb.lunchbox_order_select),
         lunchbox_check_all: lb.lunchbox_check_all || false,
       };
     });
