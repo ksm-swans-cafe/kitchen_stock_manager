@@ -4,6 +4,8 @@ export interface DayItem {
   name: string;
   qty: number | string;
   lunchbox_name?: string;
+  menu_category?: string;
+  menu_subname?: string;
   menu_ingredients?: MenuIngredient[];
   menu_description?: MenuItemDescription[];
 }
@@ -51,6 +53,8 @@ export interface DayCard {
   totalText: string;
   isPinned?: boolean;
   minutesToSend?: number;
+  minutesToReceive?: number;
+  status?: string;
   description: CartDescription[];
   packaging: PackagingInfo;
 }
@@ -85,6 +89,8 @@ export interface ApiResponse {
       lunchbox_menu: Array<{
         menu_name: string;
         menu_quantity: number;
+        menu_category?: string;
+        menu_subname?: string;
         menu_ingredients: MenuIngredient[];
         menu_description: MenuItemDescription[];
       }>;
@@ -92,5 +98,6 @@ export interface ApiResponse {
     description: CartDescription[];
     pinned: boolean;
     packaging_note: string;
+    status?: string;
   }>;
 }

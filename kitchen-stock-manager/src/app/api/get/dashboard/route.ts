@@ -99,6 +99,7 @@ export async function GET() {
             description: 1,
             pinned: 1,
             packaging_note: 1,
+            status: 1,
           },
         },
       ],
@@ -138,6 +139,8 @@ export async function GET() {
           lunchbox_menu: (Array.isArray(lunchbox.lunchbox_menu) ? lunchbox.lunchbox_menu : []).map((menu: any) => ({
             menu_name: menu.menu_name,
             menu_quantity: menu.menu_total,
+            menu_category: menu.menu_category || "",
+            menu_subname: menu.menu_subname || "",
             menu_ingredients: menu.menu_ingredients || [],
             menu_description: menu.menu_description || [],
           })),
@@ -145,6 +148,7 @@ export async function GET() {
         description: item.description || [],
         pinned: item.pinned || false,
         packaging_note: item.packaging_note || "",
+        status: item.status || "",
       };
     });
     

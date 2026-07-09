@@ -17,7 +17,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 // Import from local files
 import { dayColor, dayNoteColor, dayNoteTextColor, dayAuraColor, dayColorLegend } from "./constants";
 import { DayItem, MenuIngredient, MenuItemDescription, CartDescription, DayCard, PackagingNote, PackagingInfo, EditCardState, ApiResponse } from "./types";
-import { cleanTime, getMonthNameShort, getTimeAlertInfo, calculatePackaging, calculateMinutesToSend } from "./helpers";
+import { cleanTime, getMonthNameShort, getTimeAlertInfo, calculatePackaging, calculateMinutesToSend, calculateMinutesToTime, compareMenuItems, getStatusInfo } from "./helpers";
 import { SaveButton, CancelButton, DeleteButton, AddNoteButton, PackagingNoteForm, PackagingItem } from "./components";
 
 // --- Main Component ---
@@ -602,6 +602,8 @@ function DashboardContent() {
               name: menu.menu_name,
               qty: menu.menu_quantity,
               lunchbox_name: lunchbox.lunchbox_name,
+              menu_category: menu.menu_category || "",
+              menu_subname: menu.menu_subname || "",
               menu_ingredients: menu.menu_ingredients || [],
               menu_description: menu.menu_description || [],
             });
@@ -647,39 +649,13 @@ function DashboardContent() {
           return acc;
         }, [] as DayItem[]);
 
-        const topKeywords = ["ข้าว", "กับข้าวหลัก", "กับข้าวรอง"];
-        const bottomKeywords = ["เครื่องเคียง", "ผลไม้", "ขนม", "น้ำ"];
-
-        const getTopIndex = (name: string) => topKeywords.findIndex((keyword) => name.includes(keyword));
-        const getBottomIndex = (name: string) => bottomKeywords.findIndex((keyword) => name.includes(keyword));
-
-        const sortedItems = aggregatedItems.sort((a, b) => {
-          const aTopIndex = getTopIndex(a.name);
-          const bTopIndex = getTopIndex(b.name);
-          const aBottomIndex = getBottomIndex(a.name);
-          const bBottomIndex = getBottomIndex(b.name);
-
-          const aIsTop = aTopIndex !== -1;
-          const bIsTop = bTopIndex !== -1;
-          const aIsBottom = aBottomIndex !== -1;
-          const bIsBottom = bBottomIndex !== -1;
-
-          if (aIsTop && bIsTop) {
-            if (aTopIndex !== bTopIndex) return aTopIndex - bTopIndex;
-            return a.name.localeCompare(b.name, "th");
-          }
-          if (aIsBottom && bIsBottom) {
-            if (aBottomIndex !== bBottomIndex) return aBottomIndex - bBottomIndex;
-            return a.name.localeCompare(b.name, "th");
-          }
-          if (aIsTop) return -1;
-          if (bIsTop) return 1;
-          if (aIsBottom) return 1;
-          if (bIsBottom) return -1;
-          return a.name.localeCompare(b.name, "th");
-        });
+        // เรียงตามประเภทเมนู (menu_category จาก DB): ข้าว → กับข้าว/ของคาว → ต้ม → แกง →
+        // เครื่องเคียง → ขนม → ผลไม้ → น้ำ แล้วเรียงเนื้อสัตว์: หมู → ไก่ → กุ้ง → หมึก → ทะเล → แซลมอน
+        const sortedItems = aggregatedItems.sort(compareMenuItems);
 
         const minutesToSend = calculateMinutesToSend(item.date, item.sendTime);
+        // นาทีจนถึงเวลารับ - ใช้ตัดสินว่าการ์ดควรหายไปหรือยัง (ถ้าไม่มีเวลารับ ใช้เวลาส่งแทน)
+        const minutesToReceive = calculateMinutesToTime(item.date, item.receiveTime) ?? minutesToSend;
 
         // แปลงปี พ.ศ. เป็น 2 หลักท้าย (เช่น 2569 -> 69)
         const shortYear = String(year).slice(-2);
@@ -732,11 +708,14 @@ function DashboardContent() {
           totalText: `รวม ${totalQty} ชุด`,
           isPinned: item.pinned || false,
           minutesToSend,
+          minutesToReceive,
+          status: item.status || "",
           description: item.description || [],
           packaging,
         };
       })
-      .filter((card) => card.minutesToSend >= 0)
+      // การ์ดจะหายไปเมื่อเลยเวลารับ (ตัวจับเวลายังนับจากเวลาส่งเหมือนเดิม)
+      .filter((card) => (card.minutesToReceive ?? card.minutesToSend) >= 0)
       // Sort: pinned cards มาก่อน
       .sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
@@ -797,6 +776,7 @@ function DashboardContent() {
 
     const headerGradient = dayColor[day.dayOfWeek] || "from-teal-400 to-teal-500";
     const timeAlert = getTimeAlertInfo(day.minutesToSend);
+    const statusInfo = getStatusInfo(day.status);
     const isPinned = day.isPinned || false;
     const auraConfig = dayAuraColor[day.dayOfWeek] || { class: "ring-2 ring-gray-400 animate-auraGlow", style: { "--aura-color": "rgba(156,163,175,0.4)" } as React.CSSProperties };
 
@@ -890,9 +870,14 @@ function DashboardContent() {
             </div>
           </div>
 
-          {timeAlert && (
-            <div className='mt-3 flex justify-start'>
-              <div className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium ${timeAlert.className}`}>{timeAlert.label}</div>
+          {(timeAlert || statusInfo) && (
+            <div className='mt-3 flex justify-start items-center gap-2 flex-wrap'>
+              {statusInfo && (
+                <div className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium ${statusInfo.className}`}>{statusInfo.label}</div>
+              )}
+              {timeAlert && (
+                <div className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium ${timeAlert.className}`}>{timeAlert.label}</div>
+              )}
             </div>
           )}
         </div>
